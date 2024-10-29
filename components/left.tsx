@@ -27,22 +27,49 @@ const formatTime = (time: string | undefined): string => {
   return `${hour12}:${minutes} ${ampm}`;
 };
 
-const isOpeningSoon = (availableAt: string | undefined): boolean => {
+const MINIMUM_USEFUL_TIME = 30; // minimum minutes needed for the room to be useful
+
+const isOpeningSoon = (
+  availableAt: string | undefined,
+  nextClassStart: string | undefined,
+): boolean => {
   if (!availableAt) return false;
 
   const [hours, minutes] = availableAt.split(":");
-
-  // Create moment objects in CST
-  const now = moment().tz("America/Chicago");
+  const now = moment().utc().tz("America/Chicago");
   const availableTime = moment()
+    .utc()
     .tz("America/Chicago")
     .hours(parseInt(hours, 10))
     .minutes(parseInt(minutes, 10))
     .seconds(0);
 
+  // If there's no next class, just check if it's available within 20 minutes
+  if (!nextClassStart) {
+    const diffInMinutes = availableTime.diff(now, "minutes");
+    return diffInMinutes > 0 && diffInMinutes <= 20;
+  }
+
+  // Calculate available duration until next class
+  const [nextHours, nextMinutes] = nextClassStart.split(":");
+  const nextClassTime = moment()
+    .utc()
+    .tz("America/Chicago")
+    .hours(parseInt(nextHours, 10))
+    .minutes(parseInt(nextMinutes, 10))
+    .seconds(0);
+
+  const availableDuration = nextClassTime.diff(availableTime, "minutes");
   const diffInMinutes = availableTime.diff(now, "minutes");
 
-  return diffInMinutes > 0 && diffInMinutes <= 20; // opening soon if room available within 20 minutes
+  // Only show "Opening Soon" if:
+  // 1. The room will be available within 20 minutes
+  // 2. There will be at least MINIMUM_USEFUL_TIME minutes until the next class
+  return (
+    diffInMinutes > 0 &&
+    diffInMinutes <= 20 &&
+    availableDuration >= MINIMUM_USEFUL_TIME
+  );
 };
 
 interface LeftSidebarProps {
@@ -310,42 +337,63 @@ export default function LeftSidebar({
                                       </span>
                                       <Badge
                                         variant="outline"
-                                        className={`
-                                          ${
-                                            isOpeningSoon(room.availableAt)
-                                              ? "bg-yellow-50 text-yellow-700 border-yellow-300"
-                                              : "bg-red-50 text-red-700 border-red-300"
-                                          }
-                                        `}
+                                        className="bg-red-50 text-red-700 border-red-300"
                                       >
-                                        {isOpeningSoon(room.availableAt)
-                                          ? "Opening Soon"
-                                          : room.currentClass
-                                            ? "Occupied"
-                                            : "Passing Period"}
+                                        {room.currentClass
+                                          ? "Occupied"
+                                          : "Passing Period"}
                                       </Badge>
                                     </div>
                                     {room.currentClass ? (
-                                      <p className="text-xs text-muted-foreground">
-                                        Current: {room.currentClass.course} -{" "}
-                                        {room.currentClass.title}
-                                      </p>
-                                    ) : room.nextClass ? (
-                                      <p className="text-xs text-muted-foreground">
-                                        Passing period until{" "}
-                                        {room.nextClass.course} at{" "}
-                                        {formatTime(room.nextClass.time.start)}
-                                      </p>
+                                      <>
+                                        <p className="text-xs text-muted-foreground">
+                                          Current: {room.currentClass.course} -{" "}
+                                          {room.currentClass.title}
+                                        </p>
+                                        {room.nextClass ? (
+                                          moment(
+                                            room.nextClass.time.start,
+                                            "HH:mm",
+                                          ).diff(
+                                            moment(
+                                              room.currentClass.time.end,
+                                              "HH:mm",
+                                            ),
+                                            "minutes",
+                                          ) < 15 ? (
+                                            <p className="text-xs text-muted-foreground">
+                                              Next class:{" "}
+                                              {room.nextClass.course} at{" "}
+                                              {formatTime(
+                                                room.nextClass.time.start,
+                                              )}
+                                            </p>
+                                          ) : (
+                                            <p className="text-xs text-muted-foreground">
+                                              Available at:{" "}
+                                              {formatTime(
+                                                room.currentClass.time.end,
+                                              )}
+                                            </p>
+                                          )
+                                        ) : (
+                                          <p className="text-xs text-muted-foreground">
+                                            Available at:{" "}
+                                            {formatTime(
+                                              room.currentClass.time.end,
+                                            )}
+                                          </p>
+                                        )}
+                                      </>
                                     ) : (
-                                      <p className="text-xs text-muted-foreground">
-                                        Passing period until next class
-                                      </p>
-                                    )}
-                                    {room.availableAt && (
-                                      <p className="text-xs text-muted-foreground">
-                                        Available at:{" "}
-                                        {formatTime(room.availableAt)}
-                                      </p>
+                                      room.nextClass && (
+                                        <p className="text-xs text-muted-foreground">
+                                          Next class: {room.nextClass.course} at{" "}
+                                          {formatTime(
+                                            room.nextClass.time.start,
+                                          )}
+                                        </p>
+                                      )
                                     )}
                                   </div>
                                 ))}
