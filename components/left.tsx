@@ -286,23 +286,78 @@ export default function LeftSidebar({
                                       </span>
                                       <Badge
                                         variant="outline"
-                                        className="bg-green-50 text-green-700 border-green-300"
+                                        className={`
+                                          ${
+                                            isOpeningSoon(
+                                              room.availableAt,
+                                              room.nextClass?.time.start,
+                                            )
+                                              ? "bg-yellow-50 text-yellow-700 border-yellow-300"
+                                              : "bg-red-50 text-red-700 border-red-300"
+                                          }
+                                        `}
                                       >
-                                        Available
+                                        {isOpeningSoon(
+                                          room.availableAt,
+                                          room.nextClass?.time.start,
+                                        )
+                                          ? "Opening Soon"
+                                          : room.currentClass
+                                            ? "Occupied"
+                                            : "Passing Period"}
                                       </Badge>
                                     </div>
-                                    {room.nextClass && (
-                                      <p className="text-xs text-muted-foreground">
-                                        Next: {room.nextClass.course} at{" "}
-                                        {formatTime(room.nextClass.time.start)}
-                                      </p>
+                                    {room.currentClass ? (
+                                      <>
+                                        <p className="text-xs text-muted-foreground">
+                                          Current: {room.currentClass.course} -{" "}
+                                          {room.currentClass.title}
+                                        </p>
+                                        {room.nextClass ? (
+                                          moment(
+                                            room.nextClass.time.start,
+                                            "HH:mm",
+                                          ).diff(
+                                            moment(
+                                              room.currentClass.time.end,
+                                              "HH:mm",
+                                            ),
+                                            "minutes",
+                                          ) < 15 ? (
+                                            <p className="text-xs text-muted-foreground">
+                                              Next class:{" "}
+                                              {room.nextClass.course} at{" "}
+                                              {formatTime(
+                                                room.nextClass.time.start,
+                                              )}
+                                            </p>
+                                          ) : (
+                                            <p className="text-xs text-muted-foreground">
+                                              Available at:{" "}
+                                              {formatTime(
+                                                room.currentClass.time.end,
+                                              )}
+                                            </p>
+                                          )
+                                        ) : (
+                                          <p className="text-xs text-muted-foreground">
+                                            Available at:{" "}
+                                            {formatTime(
+                                              room.currentClass.time.end,
+                                            )}
+                                          </p>
+                                        )}
+                                      </>
+                                    ) : (
+                                      room.nextClass && (
+                                        <p className="text-xs text-muted-foreground">
+                                          Next class: {room.nextClass.course} at{" "}
+                                          {formatTime(
+                                            room.nextClass.time.start,
+                                          )}
+                                        </p>
+                                      )
                                     )}
-                                    <p className="text-xs text-muted-foreground">
-                                      Available until:{" "}
-                                      {room.availableUntil
-                                        ? formatTime(room.availableUntil)
-                                        : "End of day"}
-                                    </p>
                                   </div>
                                 ))}
                             </div>
