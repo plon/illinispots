@@ -41,7 +41,7 @@ const isOpeningSoon = (availableAt: string | undefined): boolean => {
     .seconds(0);
 
   const diffInMinutes = availableTime.diff(now, "minutes");
-  console.log(diffInMinutes);
+
   return diffInMinutes > 0 && diffInMinutes <= 20; // opening soon if room available within 20 minutes
 };
 

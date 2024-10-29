@@ -25,8 +25,6 @@ export async function GET() {
     minimum_useful_minutes: 30,
   });
 
-  console.log("Raw PostgreSQL Response:", JSON.stringify(data, null, 2));
-
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
