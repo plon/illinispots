@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, useRef, Dispatch, SetStateAction } from "react";
 import {
   Accordion,
