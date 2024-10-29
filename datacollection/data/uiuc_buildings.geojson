@@ -1,0 +1,436 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Literatures, Cultures, & Ling"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.2261774023806,
+          40.1062796749417
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Engineering Hall"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22697738439302,
+          40.110860577936535
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Education Building"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22963848024656,
+          40.10208788895545
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Wohlers Hall"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22986247815153,
+          40.103616754740074
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Gregory Hall"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22809719732614,
+          40.10568121305013
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Armory"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.23197530788798,
+          40.104770081147365
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "David Kinley Hall"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22835896455715,
+          40.103619414916636
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lincoln Hall"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22816881447793,
+          40.10663949376405
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Turner Hall"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22420967253437,
+          40.10294421570373
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Henry Administration Bldg"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22825099142705,
+          40.108368163803135
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Architecture Building"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22908555167923,
+          40.103305927572364
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Bevier Hall"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22427210505388,
+          40.10481905594051
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Mumford Hall"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22603917391396,
+          40.10363530771548
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Agricultural Engr Sciences Bld"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22634716351016,
+          40.10162249908899
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Campus Instructional Facility"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22829043072797,
+          40.11247391774697
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Business Instructional Fac"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.23089287860155,
+          40.10380417961363
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Transportation Building"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22520881656054,
+          40.111706378625456
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "English Building"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22816881342536,
+          40.10758905293639
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Davenport Hall"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22619165071363,
+          40.10721998832133
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Sidney Lu Mech Engr Bldg"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22472942010009,
+          40.11083302586286
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Noyes Laboratory"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22609502081586,
+          40.10844985188464
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Psychology Building"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22995127301564,
+          40.10747990727842
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Everitt Laboratory"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22826365912114,
+          40.110911863857666
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Loomis Laboratory"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22321734496734,
+          40.11099600622066
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Electrical & Computer Eng Bldg"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22804895675479,
+          40.114955854028864
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Music Building"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.2232567447939,
+          40.10631667329207
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Siebel Center for Comp Sci"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.2247336803035,
+          40.11383687791036
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Natural History Building"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22602412010296,
+          40.10950674217128
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Burrill Hall"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22492434959888,
+          40.10918942760395
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Flagg Hall"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.23394645318491,
+          40.10280701161048
+        ],
+        "type": "Point"
+      },
+      "id": 30
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Art and Design Building"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.23251080032063,
+          40.10184963892951
+        ],
+        "type": "Point"
+      },
+      "id": 31
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Newmark Civil Engineering Bldg"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.2265859773538,
+          40.11398169893394
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Chemistry Annex"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22608368107242,
+          40.10780804722546
+        ],
+        "type": "Point"
+      }
+    }
+  ]
+}
