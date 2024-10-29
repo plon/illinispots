@@ -5,9 +5,9 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "IlliniSpots - Find Available Study Spaces at UIUC",
+  title: "IlliniSpots - Real-Time UIUC Study Spots & Empty Classroom Finder",
   description:
-    "Find open classrooms and study spaces across UIUC campus in real-time",
+    "Find available UIUC study spaces and empty classrooms in real-time. Interactive campus map showing open rooms at University of Illinois Urbana-Champaign.",
   icons: {
     icon: [
       {
@@ -43,6 +43,10 @@ export default function RootLayout({
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="robots" content="index, follow" />
+        <meta
+          name="google-site-verification"
+          content="VDVWq1BdAlOLD14tNM033IajP3Z_GVrXo2P23Rg3gAA"
+        />
         <link rel="canonical" href="https://illinispots.vercel.app/" />
         <link
           rel="stylesheet"
