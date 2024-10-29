@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, useRef, Dispatch, SetStateAction } from "react";
 import {
   Accordion,
@@ -105,7 +103,7 @@ export default function LeftSidebar({
   }
 
   return (
-    <div className="h-full bg-background border-t md:border-t-0 md:border-l">
+    <div className="h-full bg-background border-t md:border-t-0 md:border-l flex flex-col">
       <div className="p-4 border-b flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">
@@ -169,7 +167,7 @@ export default function LeftSidebar({
           </Popover>
         </div>
       </div>
-      <ScrollArea className="h-[calc(100%-5rem)]" ref={scrollAreaRef}>
+      <ScrollArea className="flex-1" ref={scrollAreaRef}>
         <Accordion type="multiple" value={expandedBuildings} className="w-full">
           {buildingData &&
             Object.entries(buildingData.buildings)
