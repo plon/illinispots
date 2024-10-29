@@ -8,7 +8,7 @@ export async function GET() {
     process.env.SUPABASE_KEY!,
   );
 
-  const now = moment().tz("America/Chicago");
+  const now = moment().utc().tz("America/Chicago");
   const dayMap: { [key: number]: string } = {
     0: "U",
     1: "M",
