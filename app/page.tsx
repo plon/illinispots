@@ -32,13 +32,13 @@ export default function IlliniSpotsPage() {
 
   return (
     <div className="h-screen flex md:flex-row flex-col">
-      {/* Map container - top third on mobile, right 3/4 on desktop */}
-      <div className="h-[33vh] md:h-screen md:w-3/4 w-full order-1 md:order-2">
+      {/* Map container - half on mobile, right 3/4 on desktop */}
+      <div className="h-[50vh] md:h-screen md:w-3/4 w-full order-1 md:order-2">
         <Map buildingData={buildingData} onMarkerClick={handleMarkerClick} />
       </div>
 
-      {/* Content container - bottom two-thirds on mobile, left 1/4 on desktop */}
-      <div className="flex-1 md:w-1/4 w-full h-[67vh] md:h-screen overflow-hidden order-2 md:order-1">
+      {/* Content container - half on mobile, left 1/4 on desktop */}
+      <div className="flex-1 md:w-1/4 w-full h-[50vh] md:h-screen overflow-hidden order-2 md:order-1">
         <LeftSidebar
           buildingData={buildingData}
           loading={loading}

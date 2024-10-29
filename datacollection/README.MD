@@ -5,7 +5,7 @@ This directory contains scripts for collecting and processing UIUC course and bu
 ## Scripts & Data Flow
 
 1. **oneshotscraper.py**
-   - Scrapes course data from courses.illinois.edu
+   - Scrapes all course data from courses.illinois.edu (currently only scraping 2024 fall potB in person courses with fixed meeting location and times)
    - Output: `subject_data.json`
 
 2. **subject_to_buildings.py**
