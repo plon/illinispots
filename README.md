@@ -44,7 +44,7 @@ Example: Room 101 has class 3:00-4:00 PM = occupied
 - **Implementation**: For each room:
     1. Starts at first available time
     2. Checks interval to next class
-    3. If gap >= minimum_useful_minutes, marks as available period
+    3. If gap >= minimum_useful_minutes (configured at 30), marks as available period
     4. Repeats until finding valid gap or reaching building close
 ```
 Example: 3:00-4:00, 5:00-6:00

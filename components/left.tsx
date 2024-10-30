@@ -115,13 +115,13 @@ export default function LeftSidebar({
 
   return (
     <div className="h-full bg-background border-t md:border-t-0 md:border-l flex flex-col">
-      <div className="p-4 border-b flex justify-between items-center">
+      <div className="py-1 pl-3 pr-3 md:p-4 border-b flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-xl md:text-2xl font-bold">
             <span style={{ color: "#FF5F05" }}>illini</span>
             <span style={{ color: "#13294B" }}>Spots</span>
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs md:text-sm text-muted-foreground">
             Find available study spaces
           </p>
         </div>
@@ -130,12 +130,12 @@ export default function LeftSidebar({
             href="https://github.com/plon/illinispots"
             target="_blank"
             rel="noopener noreferrer"
-            className="h-8 w-8 rounded-full flex items-center justify-center border-2 border-foreground/20 hover:bg-muted"
+            className="h-6 w-6 md:h-8 md:w-8 rounded-full flex items-center justify-center border-2 border-foreground/20 hover:bg-muted"
           >
             <svg
               viewBox="0 0 24 24"
-              width="16"
-              height="16"
+              width="12"
+              height="12"
               stroke="currentColor"
               strokeWidth="2"
               fill="none"
@@ -150,7 +150,7 @@ export default function LeftSidebar({
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-full border-2 border-foreground/20 font-bold"
+                className="h-6 w-6 md:h-8 md:w-8 rounded-full border-2 border-foreground/20 font-bold"
               >
                 !
                 <span className="sr-only">Warning about room availability</span>
