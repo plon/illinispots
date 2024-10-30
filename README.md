@@ -10,10 +10,10 @@ IlliniSpots is a web application that helps UIUC students find available study s
   - Number of available/occupied rooms
   - Current classes in session
   - Upcoming class schedules
-  - Room availability times
+  - Room availability times and length
 - Responsive design for both desktop and mobile
 
-## Technology Stack
+## Tech Stack
 
 ### Frontend
 - Next.js 14 (App Router)
@@ -25,11 +25,19 @@ IlliniSpots is a web application that helps UIUC students find available study s
 ### Backend
 - Supabase (PostgreSQL database)
 - Next.js API Routes
-- PostgreSQL Functions (for `get_current_building_status`, defined in datacollection/get_current_building_status.pgsql)
+- PostgreSQL Functions (for `get_current_building_status`)
+
+## Data Source
+
+All data used for calculating room availability is sourced from the University of Illinois at Urbana-Champaign's official resources:
+
+- **Class Data**: Sourced from the [Course Explorer](https://courses.illinois.edu/). This includes  information about when classes meet, which is used to determine room occupancy. For more details on the data collection process, please refer to the [data collection README](datacollection/README.MD).
+- **Building Hours**: Sourced from the [Facility Scheduling and Resources](https://operations.illinois.edu/facility-scheduling-and-resources/daily-event-summaries/).
 
 ## Core Algorithm
+### [get_current_building_status.sql](database/functions/get_current_building_status.sql)
 
-The application's availability logic is handled by a PostgreSQL function that processes building and room status through three main stages:
+The availability logic is handled by a PostgreSQL function that processes building and room status through three main stages:
 
 1. **State Detection**
 - **How**: Uses a series of CTEs that join current time against class_schedule table
@@ -63,7 +71,7 @@ Duration = (4:00 - 3:15) = 45 minutes available
 ```
 
 ### Return structure
-```json
+```
 {
     "timestamp": "2024-10-29T14:30:00Z",
     "buildings": {
