@@ -27,49 +27,31 @@ const formatTime = (time: string | undefined): string => {
   return `${hour12}:${minutes} ${ampm}`;
 };
 
-const MINIMUM_USEFUL_TIME = 30; // minimum minutes needed for the room to be useful
+const formatDuration = (minutes: number | undefined): string => {
+  if (!minutes) return "";
+  if (minutes < 60) return `${Math.floor(minutes)} min`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = Math.floor(minutes % 60);
+  return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+};
 
 const isOpeningSoon = (
   availableAt: string | undefined,
-  nextClassStart: string | undefined,
+  availableFor: number | undefined,
 ): boolean => {
-  if (!availableAt) return false;
+  if (!availableAt || !availableFor) return false;
 
-  const [hours, minutes] = availableAt.split(":");
-  const now = moment().utc().tz("America/Chicago");
+  const [availableHours, availableMinutes] = availableAt.split(":");
+  const now = moment().tz("America/Chicago");
   const availableTime = moment()
-    .utc()
     .tz("America/Chicago")
-    .hours(parseInt(hours, 10))
-    .minutes(parseInt(minutes, 10))
+    .hours(parseInt(availableHours, 10))
+    .minutes(parseInt(availableMinutes, 10))
     .seconds(0);
 
-  // If there's no next class, just check if it's available within 20 minutes
-  if (!nextClassStart) {
-    const diffInMinutes = availableTime.diff(now, "minutes");
-    return diffInMinutes > 0 && diffInMinutes <= 20;
-  }
-
-  // Calculate available duration until next class
-  const [nextHours, nextMinutes] = nextClassStart.split(":");
-  const nextClassTime = moment()
-    .utc()
-    .tz("America/Chicago")
-    .hours(parseInt(nextHours, 10))
-    .minutes(parseInt(nextMinutes, 10))
-    .seconds(0);
-
-  const availableDuration = nextClassTime.diff(availableTime, "minutes");
   const diffInMinutes = availableTime.diff(now, "minutes");
 
-  // Only show "Opening Soon" if:
-  // 1. The room will be available within 20 minutes
-  // 2. There will be at least MINIMUM_USEFUL_TIME minutes until the next class
-  return (
-    diffInMinutes > 0 &&
-    diffInMinutes <= 20 &&
-    availableDuration >= MINIMUM_USEFUL_TIME
-  );
+  return diffInMinutes <= 20 && diffInMinutes > 0 && availableFor >= 30;
 };
 
 interface LeftSidebarProps {
@@ -288,75 +270,46 @@ export default function LeftSidebar({
                                         variant="outline"
                                         className={`
                                           ${
-                                            isOpeningSoon(
-                                              room.availableAt,
-                                              room.nextClass?.time.start,
-                                            )
-                                              ? "bg-yellow-50 text-yellow-700 border-yellow-300"
-                                              : "bg-red-50 text-red-700 border-red-300"
+                                            room.passingPeriod
+                                              ? "bg-gray-50 text-gray-700 border-gray-300"
+                                              : "bg-green-50 text-green-700 border-green-300"
                                           }
                                         `}
                                       >
-                                        {isOpeningSoon(
-                                          room.availableAt,
-                                          room.nextClass?.time.start,
-                                        )
-                                          ? "Opening Soon"
-                                          : room.currentClass
-                                            ? "Occupied"
-                                            : "Passing Period"}
+                                        {room.passingPeriod
+                                          ? "Passing Period"
+                                          : "Available"}
                                       </Badge>
                                     </div>
-                                    {room.currentClass ? (
+                                    {room.passingPeriod && room.nextClass ? (
+                                      <p className="text-xs text-muted-foreground">
+                                        {room.nextClass.course} -{" "}
+                                        {room.nextClass.title} at{" "}
+                                        {formatTime(room.nextClass.time.start)}
+                                      </p>
+                                    ) : (
                                       <>
-                                        <p className="text-xs text-muted-foreground">
-                                          Current: {room.currentClass.course} -{" "}
-                                          {room.currentClass.title}
-                                        </p>
-                                        {room.nextClass ? (
-                                          moment(
-                                            room.nextClass.time.start,
-                                            "HH:mm",
-                                          ).diff(
-                                            moment(
-                                              room.currentClass.time.end,
-                                              "HH:mm",
-                                            ),
-                                            "minutes",
-                                          ) < 15 ? (
-                                            <p className="text-xs text-muted-foreground">
-                                              Next class:{" "}
-                                              {room.nextClass.course} at{" "}
-                                              {formatTime(
-                                                room.nextClass.time.start,
-                                              )}
-                                            </p>
-                                          ) : (
-                                            <p className="text-xs text-muted-foreground">
-                                              Available at:{" "}
-                                              {formatTime(
-                                                room.currentClass.time.end,
-                                              )}
-                                            </p>
-                                          )
-                                        ) : (
+                                        {room.availableFor && (
                                           <p className="text-xs text-muted-foreground">
-                                            Available at:{" "}
+                                            Available for{" "}
+                                            {formatDuration(room.availableFor)}
+                                          </p>
+                                        )}
+                                        {room.availableUntil && (
+                                          <p className="text-xs text-muted-foreground">
+                                            Until{" "}
+                                            {formatTime(room.availableUntil)}
+                                          </p>
+                                        )}
+                                        {room.nextClass && (
+                                          <p className="text-xs text-muted-foreground">
+                                            Next: {room.nextClass.course} at{" "}
                                             {formatTime(
-                                              room.currentClass.time.end,
+                                              room.nextClass.time.start,
                                             )}
                                           </p>
                                         )}
                                       </>
-                                    ) : (
-                                      room.nextClass && (
-                                        <p className="text-xs text-muted-foreground">
-                                          Next class: {room.nextClass.course} at{" "}
-                                          {formatTime(
-                                            room.nextClass.time.start,
-                                          )}
-                                        </p>
-                                      )
                                     )}
                                   </div>
                                 ))}
@@ -392,63 +345,46 @@ export default function LeftSidebar({
                                       </span>
                                       <Badge
                                         variant="outline"
-                                        className="bg-red-50 text-red-700 border-red-300"
+                                        className={`
+                                          ${
+                                            isOpeningSoon(
+                                              room.availableAt,
+                                              room.availableFor,
+                                            )
+                                              ? "bg-yellow-50 text-yellow-700 border-yellow-300"
+                                              : "bg-red-50 text-red-700 border-red-300"
+                                          }
+                                        `}
                                       >
-                                        {room.currentClass
-                                          ? "Occupied"
-                                          : "Passing Period"}
+                                        {isOpeningSoon(
+                                          room.availableAt,
+                                          room.availableFor,
+                                        )
+                                          ? "Opening Soon"
+                                          : "Occupied"}
                                       </Badge>
                                     </div>
-                                    {room.currentClass ? (
-                                      <>
-                                        <p className="text-xs text-muted-foreground">
-                                          Current: {room.currentClass.course} -{" "}
-                                          {room.currentClass.title}
-                                        </p>
-                                        {room.nextClass ? (
-                                          moment(
-                                            room.nextClass.time.start,
-                                            "HH:mm",
-                                          ).diff(
-                                            moment(
-                                              room.currentClass.time.end,
-                                              "HH:mm",
-                                            ),
-                                            "minutes",
-                                          ) < 15 ? (
-                                            <p className="text-xs text-muted-foreground">
-                                              Next class:{" "}
-                                              {room.nextClass.course} at{" "}
-                                              {formatTime(
-                                                room.nextClass.time.start,
+                                    {room.currentClass && (
+                                      <p className="text-xs text-muted-foreground">
+                                        Current: {room.currentClass.course} -{" "}
+                                        {room.currentClass.title}
+                                      </p>
+                                    )}
+                                    {room.availableAt && (
+                                      <div className="text-xs text-muted-foreground">
+                                        <p>
+                                          Available at:{" "}
+                                          {formatTime(room.availableAt)}
+                                          {room.availableFor && (
+                                            <span className="ml-1">
+                                              for{" "}
+                                              {formatDuration(
+                                                room.availableFor,
                                               )}
-                                            </p>
-                                          ) : (
-                                            <p className="text-xs text-muted-foreground">
-                                              Available at:{" "}
-                                              {formatTime(
-                                                room.currentClass.time.end,
-                                              )}
-                                            </p>
-                                          )
-                                        ) : (
-                                          <p className="text-xs text-muted-foreground">
-                                            Available at:{" "}
-                                            {formatTime(
-                                              room.currentClass.time.end,
-                                            )}
-                                          </p>
-                                        )}
-                                      </>
-                                    ) : (
-                                      room.nextClass && (
-                                        <p className="text-xs text-muted-foreground">
-                                          Next class: {room.nextClass.course} at{" "}
-                                          {formatTime(
-                                            room.nextClass.time.start,
+                                            </span>
                                           )}
                                         </p>
-                                      )
+                                      </div>
                                     )}
                                   </div>
                                 ))}

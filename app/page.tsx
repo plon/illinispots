@@ -13,7 +13,7 @@ export default function IlliniSpotsPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("/api/status");
+        const response = await fetch("/api/buildings-availability");
         const data = await response.json();
         setBuildingData(data);
       } finally {

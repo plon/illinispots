@@ -43,8 +43,18 @@ export default function Map({ buildingData, onMarkerClick }: MapProps) {
       }
     };
 
-    // Initial text size setting
-    map.current.on("load", handleResize);
+    // Move sky and light settings inside the load event
+    map.current.on("load", () => {
+      handleResize();
+
+      // Set sky and light after map is loaded
+      map.current!.setSky({
+        "sky-color": "#192c4a",
+        "sky-horizon-blend": 0.5,
+        "horizon-color": "#fbe7b6",
+        "horizon-fog-blend": 0.5,
+      });
+    });
 
     // Add resize listener
     window.addEventListener("resize", handleResize);
@@ -60,11 +70,11 @@ export default function Map({ buildingData, onMarkerClick }: MapProps) {
       }),
     );
 
+    // Cleanup function
     return () => {
       window.removeEventListener("resize", handleResize);
       if (map.current) {
         map.current.remove();
-        map.current = null;
       }
     };
   }, []);

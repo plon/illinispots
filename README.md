@@ -29,20 +29,86 @@ IlliniSpots is a web application that helps UIUC students find available study s
 
 ## Core Algorithm
 
-The `get_current_building_status` PostgreSQL function that efficiently determines room availability:
+The application's availability logic is handled by a PostgreSQL function that processes building and room status through three main stages:
 
-### Room Availability Logic
+1. **State Detection**
+- **How**: Uses a series of CTEs that join current time against class_schedule table
+- **Implementation**: First maps day codes (M-U) to hours via CASE statements, then performs time window overlap with check_time
+```
+current time (3:15 PM) → finds active classes → determines if room occupied
+Example: Room 101 has class 3:00-4:00 PM = occupied
+```
 
-1. **Current Status Calculation**
-   - A room is considered "occupied" if:
-     - There is an ongoing class at check time
-     - The next class starts within the minimum useful time window (default 30 min)
-   - Otherwise, the room is marked as "available"
+2. **Gap Analysis**
+- **How**: Recursive CTE traverses chronologically sorted class times
+- **Implementation**: For each room:
+    1. Starts at first available time
+    2. Checks interval to next class
+    3. If gap >= minimum_useful_minutes, marks as available period
+    4. Repeats until finding valid gap or reaching building close
+```
+Example: 3:00-4:00, 5:00-6:00
+Gap found: 4:00-5:00 (60min) = valid gap > minimum_useful_minutes
+```
 
-2. **Time Windows**
-   - `availableAt`: When an occupied room becomes available (current class end time)
-   - `availableUntil`: When an available room becomes occupied (next class start time or building closing time)
+3. **Duration Calculation**
+- **How**: Epoch time arithmetic between current_time and next constraint
+- **Implementation**: Takes earliest of:
+    - Next class start time
+    - Building closure time
+    - End of current gap
+```
+Example: Current 3:15, Next class 4:00
+Duration = (4:00 - 3:15) = 45 minutes available
+```
 
+### Return structure
+```json
+{
+    "timestamp": "2024-10-29T14:30:00Z",
+    "buildings": {
+        "David Kinley Hall": {
+            "name": "David Kinley Hall",
+            "coordinates": {
+                "latitude": 40.10361941,
+                "longitude": -88.22835896
+            },
+            "hours": {
+                "open": "07:00:00",
+                "close": "23:59:00"
+            },
+            "isOpen": true,
+            "roomCounts": {
+                "available": 15,
+                "total": 28
+            },
+            "rooms": {
+                "106": {
+                    "status": "occupied" | "available",
+                    "available": false,
+                    "currentClass": {
+                        "course": "PS 318",
+                        "title": "Interests Grps & Soc Movements",
+                        "time": {
+                            "start": "11:00:00",
+                            "end": "12:20:00"
+                        }
+                    },
+                    "nextClass": {
+                        // same structure as currentClass
+                    },
+                    "passingPeriod": false,
+                    "availableAt": "15:30",
+                    "availableFor": 60,      // minutes
+                    "availableUntil": "16:30"
+                }
+                // ... more rooms
+            }
+        }
+        // ... more buildings
+    }
+}
+```
 ## Getting Started
 
 ### Prerequisites
@@ -85,9 +151,9 @@ Open [http://localhost:3000](http://localhost:3000) to view the app.
 - Rooms may be occupied by unofficial meetings or study groups
 - Different schedules may apply during exam periods
 
-## Inspiration & Attribution
+## Inspiration
 
-This project was inspired by [Spots](https://spots.aksharbarot.com/), created by [Akshar Barot](https://github.com/notAkki/spots). Spots provides a similar service for University of Waterloo students.
+This project was inspired by [Spots](https://spots.aksharbarot.com/), a similar service for University of Waterloo students.
 
 ## License
 

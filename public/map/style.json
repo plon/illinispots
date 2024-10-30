@@ -5494,7 +5494,8 @@
                     "Noto Sans Regular"
                 ],
                 "text-rotation-alignment": "viewport",
-                "text-size": 10
+                "text-size": 10,
+                "visibility": "none"
             }
         },
         {
