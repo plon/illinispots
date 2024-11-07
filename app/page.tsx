@@ -10,8 +10,11 @@ export default function IlliniSpotsPage() {
   const [loading, setLoading] = useState(true);
   const [expandedBuildings, setExpandedBuildings] = useState<string[]>([]);
 
-  // state variable to control map visibility
-  const [showMap, setShowMap] = useState(true);
+  // Initialize showMap state from localStorage
+  const [showMap, setShowMap] = useState(() => {
+    const storedShowMap = localStorage.getItem("showMap");
+    return storedShowMap !== null ? storedShowMap === "true" : true;
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -26,6 +29,11 @@ export default function IlliniSpotsPage() {
 
     fetchData();
   }, []);
+
+  // Save map visibility setting to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("showMap", showMap.toString());
+  }, [showMap]);
 
   const handleMarkerClick = (buildingName: string) => {
     setExpandedBuildings((prev) =>
