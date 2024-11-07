@@ -10,6 +10,9 @@ export default function IlliniSpotsPage() {
   const [loading, setLoading] = useState(true);
   const [expandedBuildings, setExpandedBuildings] = useState<string[]>([]);
 
+  // state variable to control map visibility
+  const [showMap, setShowMap] = useState(true);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -31,19 +34,29 @@ export default function IlliniSpotsPage() {
   };
 
   return (
-    <div className="h-screen flex md:flex-row flex-col">
-      {/* Map container - 2/5 on mobile, right 3/4 on desktop */}
-      <div className="h-[40vh] md:h-screen md:w-3/4 w-full order-1 md:order-2">
-        <Map buildingData={buildingData} onMarkerClick={handleMarkerClick} />
-      </div>
+    <div className={`h-screen flex ${showMap ? "md:flex-row" : ""} flex-col`}>
+      {/* Map container - Conditionally render based on showMap */}
+      {showMap && (
+        // 2/5 on mobile, right 3/4 on desktop
+        <div className="h-[40vh] md:h-screen md:w-3/4 w-full order-1 md:order-2">
+          <Map buildingData={buildingData} onMarkerClick={handleMarkerClick} />
+        </div>
+      )}
 
-      {/* Content container - 3/5 on mobile, left 1/4 on desktop */}
-      <div className="flex-1 md:w-1/4 w-full h-[60vh] md:h-screen overflow-hidden order-2 md:order-1">
+      {/* Sidebar container - Adjust width based on showMap */}
+      <div
+        className={`${
+          // 3/5 on mobile, left 1/4 on desktop
+          showMap ? "md:w-1/4 h-[60vh] md:h-screen" : "h-screen"
+        } w-full flex-1 overflow-hidden order-2 md:order-1`}
+      >
         <LeftSidebar
           buildingData={buildingData}
           loading={loading}
           expandedBuildings={expandedBuildings}
           setExpandedBuildings={setExpandedBuildings}
+          showMap={showMap}
+          setShowMap={setShowMap}
         />
       </div>
     </div>
