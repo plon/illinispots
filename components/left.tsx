@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, Dispatch, SetStateAction } from "react";
+import {
+  useState,
+  useRef,
+  Dispatch,
+  SetStateAction,
+  useLayoutEffect,
+} from "react";
 import {
   Accordion,
   AccordionContent,
@@ -76,15 +82,18 @@ export default function LeftSidebar({
   const accordionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const lastExpanded = expandedBuildings[expandedBuildings.length - 1];
     if (lastExpanded && accordionRefs.current[lastExpanded]) {
       const element = accordionRefs.current[lastExpanded];
       if (element) {
-        element.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
+        // Small timeout to let the accordion start expanding
+        setTimeout(() => {
+          element.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }, 100); // 100ms autoscroll delay
       }
     }
   }, [expandedBuildings]);
