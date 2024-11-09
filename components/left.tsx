@@ -70,6 +70,11 @@ interface LeftSidebarProps {
   setShowMap: Dispatch<SetStateAction<boolean>>;
 }
 
+// Create a type for accordion refs to improve type safety
+type AccordionRefs = {
+  [key: string]: HTMLDivElement | null;
+};
+
 export default function LeftSidebar({
   buildingData,
   loading,
@@ -79,27 +84,36 @@ export default function LeftSidebar({
   setShowMap,
 }: LeftSidebarProps) {
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
-  const accordionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const accordionRefs = useRef<AccordionRefs>({});
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
 
-  useLayoutEffect(() => {
-    const lastExpanded = expandedBuildings[expandedBuildings.length - 1];
-    if (lastExpanded && accordionRefs.current[lastExpanded]) {
-      const element = accordionRefs.current[lastExpanded];
-      if (element) {
-        // Small timeout to let the accordion start expanding
-        setTimeout(() => {
-          element.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-        }, 100); // 100ms autoscroll delay
-      }
+  const scrollToAccordion = (accordionId: string) => {
+    const element = accordionRefs.current[accordionId];
+    if (element) {
+      setTimeout(() => {
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 100);
     }
-  }, [expandedBuildings]);
+  };
+
+  useLayoutEffect(() => {
+    const lastExpandedBuilding =
+      expandedBuildings[expandedBuildings.length - 1];
+    if (lastExpandedBuilding) {
+      scrollToAccordion(lastExpandedBuilding);
+    }
+
+    const lastExpandedSection = expandedSections[expandedSections.length - 1];
+    if (lastExpandedSection) {
+      scrollToAccordion(lastExpandedSection);
+    }
+  }, [expandedBuildings, expandedSections]);
 
   const toggleBuilding = (building: string) => {
-    setExpandedBuildings((prev: string[]) =>
+    setExpandedBuildings((prev) =>
       prev.includes(building)
         ? prev.filter((b) => b !== building)
         : [...prev, building],
@@ -107,7 +121,7 @@ export default function LeftSidebar({
   };
 
   const toggleSection = (section: string) => {
-    setExpandedSections((prev: string[]) =>
+    setExpandedSections((prev) =>
       prev.includes(section)
         ? prev.filter((s) => s !== section)
         : [...prev, section],
@@ -146,7 +160,7 @@ export default function LeftSidebar({
             rel="noopener noreferrer"
             className="h-6 w-6 md:h-8 md:w-8 rounded-full flex items-center justify-center border-2 border-foreground/20 hover:bg-muted"
           >
-            <Github size={12} />
+            <Github size={14.5} />
           </a>
           <Popover>
             <PopoverTrigger asChild>
@@ -203,9 +217,7 @@ export default function LeftSidebar({
                   value={building.name}
                   key={building.name}
                   ref={(el) => {
-                    if (el) {
-                      accordionRefs.current[building.name] = el;
-                    }
+                    accordionRefs.current[building.name] = el;
                   }}
                 >
                   <AccordionTrigger
@@ -256,7 +268,14 @@ export default function LeftSidebar({
                         className="w-full"
                       >
                         {/* Available Rooms Section */}
-                        <AccordionItem value={`${building.name}-available`}>
+                        <AccordionItem
+                          value={`${building.name}-available`}
+                          ref={(el) => {
+                            accordionRefs.current[
+                              `${building.name}-available`
+                            ] = el;
+                          }}
+                        >
                           <AccordionTrigger
                             onClick={() =>
                               toggleSection(`${building.name}-available`)
@@ -333,7 +352,13 @@ export default function LeftSidebar({
                         </AccordionItem>
 
                         {/* Occupied Rooms Section */}
-                        <AccordionItem value={`${building.name}-occupied`}>
+                        <AccordionItem
+                          value={`${building.name}-occupied`}
+                          ref={(el) => {
+                            accordionRefs.current[`${building.name}-occupied`] =
+                              el;
+                          }}
+                        >
                           <AccordionTrigger
                             onClick={() =>
                               toggleSection(`${building.name}-occupied`)
