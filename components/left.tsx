@@ -84,6 +84,12 @@ export default function LeftSidebar({
   setShowMap,
 }: LeftSidebarProps) {
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
+  const [lastExpandedBuilding, setLastExpandedBuilding] = useState<
+    string | null
+  >(null);
+  const [lastExpandedSection, setLastExpandedSection] = useState<string | null>(
+    null,
+  );
   const accordionRefs = useRef<AccordionRefs>({});
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
 
@@ -100,32 +106,38 @@ export default function LeftSidebar({
   };
 
   useLayoutEffect(() => {
-    const lastExpandedBuilding =
-      expandedBuildings[expandedBuildings.length - 1];
     if (lastExpandedBuilding) {
       scrollToAccordion(lastExpandedBuilding);
-    }
-
-    const lastExpandedSection = expandedSections[expandedSections.length - 1];
-    if (lastExpandedSection) {
+      setLastExpandedBuilding(null);
+    } else if (lastExpandedSection) {
       scrollToAccordion(lastExpandedSection);
+      setLastExpandedSection(null);
     }
-  }, [expandedBuildings, expandedSections]);
+  }, [lastExpandedBuilding, lastExpandedSection]);
 
   const toggleBuilding = (building: string) => {
-    setExpandedBuildings((prev) =>
-      prev.includes(building)
-        ? prev.filter((b) => b !== building)
-        : [...prev, building],
-    );
+    setExpandedBuildings((prev) => {
+      if (prev.includes(building)) {
+        // It's being collapsed
+        return prev.filter((b) => b !== building);
+      } else {
+        // It's being expanded
+        setLastExpandedBuilding(building);
+        return [...prev, building];
+      }
+    });
   };
 
   const toggleSection = (section: string) => {
-    setExpandedSections((prev) =>
-      prev.includes(section)
-        ? prev.filter((s) => s !== section)
-        : [...prev, section],
-    );
+    setExpandedSections((prev) => {
+      if (prev.includes(section)) {
+        // It's being collapsed
+        return prev.filter((s) => s !== section);
+      } else {
+        setLastExpandedSection(section);
+        return [...prev, section];
+      }
+    });
   };
 
   if (loading) {
