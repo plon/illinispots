@@ -19,12 +19,10 @@ interface TimeBlockProps {
     end: string;
     available: boolean;
   };
+  totalMinutes: number;
 }
 
-const TimeBlock = ({
-  slot,
-  totalMinutes,
-}: TimeBlockProps & { totalMinutes: number }) => {
+const TimeBlock = ({ slot, totalMinutes }: TimeBlockProps) => {
   const startTime = moment.tz(`1970-01-01T${slot.start}`, "America/Chicago");
   const endTime = moment.tz(`1970-01-01T${slot.end}`, "America/Chicago");
 
@@ -71,6 +69,26 @@ interface RoomScheduleProps {
 }
 
 const RoomSchedule = ({ slots }: RoomScheduleProps) => {
+  const calculateTotalMinutes = () => {
+    if (slots.length === 0) return 0;
+
+    const firstSlotStart = moment.tz(
+      `1970-01-01T${slots[0].start}`,
+      "America/Chicago",
+    );
+    const lastSlotEnd = moment.tz(
+      `1970-01-01T${slots[slots.length - 1].end}`,
+      "America/Chicago",
+    );
+
+    let totalMinutes = lastSlotEnd.diff(firstSlotStart, "minutes");
+    if (totalMinutes < 0) {
+      totalMinutes = lastSlotEnd.add(1, "day").diff(firstSlotStart, "minutes");
+    }
+
+    return totalMinutes;
+  };
+
   const getSlotDuration = () => {
     if (slots.length === 0) return 0;
 
@@ -89,6 +107,7 @@ const RoomSchedule = ({ slots }: RoomScheduleProps) => {
     return duration;
   };
 
+  const totalMinutes = calculateTotalMinutes();
   const slotDuration = getSlotDuration();
 
   return (
@@ -96,7 +115,7 @@ const RoomSchedule = ({ slots }: RoomScheduleProps) => {
       <ScrollArea className="w-full">
         <div className="flex flex-wrap gap-1">
           {slots.map((slot, index) => (
-            <TimeBlock key={index} slot={slot} />
+            <TimeBlock key={index} slot={slot} totalMinutes={totalMinutes} />
           ))}
         </div>
       </ScrollArea>
