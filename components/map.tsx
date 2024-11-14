@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import maplibregl from "maplibre-gl";
 import { BuildingStatus, APIResponse } from "@/types";
 
@@ -48,14 +48,14 @@ export default function Map({
   const map = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<{ [key: string]: maplibregl.Marker }>({});
   const activePopupRef = useRef<maplibregl.Popup | null>(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
 
-  // Initialize map
   useEffect(() => {
     if (!mapContainer.current) return;
 
     map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: "map/style.json",
+      style: "/map/style.json",
       center: [-88.22726, 40.106936],
       zoom: 16,
       pitch: 60,
@@ -77,6 +77,7 @@ export default function Map({
     };
 
     map.current.on("load", () => {
+      setIsMapLoaded(true);
       handleResize();
       map.current!.setSky({
         "sky-color": "#192c4a",
@@ -106,7 +107,7 @@ export default function Map({
   }, []);
 
   useEffect(() => {
-    if (!map.current || !map.current.loaded()) return;
+    if (!map.current || !isMapLoaded) return;
 
     Object.values(markersRef.current).forEach((marker) => marker.remove());
     if (activePopupRef.current) {
@@ -153,14 +154,14 @@ export default function Map({
 
     markerDataArray.forEach((data) => {
       const markerEl = document.createElement("div");
-      const markerSize = isMobile ? "11px" : "16px"; // Smaller size for mobile
+      const markerSize = isMobile ? "11px" : "16px";
       markerEl.style.width = markerSize;
       markerEl.style.height = markerSize;
       markerEl.style.borderRadius = "50%";
       markerEl.style.cursor = "pointer";
 
       if (!data.isOpen) {
-        markerEl.style.background = "#6b7280"; // gray-500 for closed buildings
+        markerEl.style.background = "#6b7280";
         markerEl.style.boxShadow = `0 0 ${isMobile ? "6px" : "10px"} #6b7280`;
       } else {
         const hasAvailable = data.available > 0;
@@ -170,7 +171,7 @@ export default function Map({
         }`;
       }
 
-      markerEl.style.border = `${isMobile ? "1px" : "2px"} solid white`; // Thinner border for mobile
+      markerEl.style.border = `${isMobile ? "1px" : "2px"} solid white`;
 
       const marker = new maplibregl.Marker({ element: markerEl })
         .setLngLat(data.coordinates)
@@ -223,7 +224,7 @@ export default function Map({
         activePopupRef.current = null;
       }
     };
-  }, [buildingData, libraryData, onMarkerClick]);
+  }, [buildingData, libraryData, onMarkerClick, isMapLoaded]);
 
   return <div ref={mapContainer} className="w-full h-full" />;
 }
