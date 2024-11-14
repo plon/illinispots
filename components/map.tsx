@@ -191,6 +191,14 @@ export default function Map({
           activePopupRef.current.remove();
           activePopupRef.current = null;
         }
+
+        map.current?.flyTo({
+          center: data.coordinates,
+          zoom: 17,
+          duration: 1000,
+          essential: true,
+        });
+
         onMarkerClick(data.name, data.isLibrary);
         e.stopPropagation();
       });
