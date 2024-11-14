@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { RoomReservations } from "@/types";
+import {
+  LibraryRoomAvailabilityProps,
+  TimeBlockProps,
+  RoomScheduleProps,
+} from "@/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Image as ImageIcon } from "lucide-react";
@@ -12,14 +16,6 @@ import {
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import moment from "moment-timezone";
 import Image from "next/image";
-
-interface TimeBlockProps {
-  slot: {
-    start: string;
-    end: string;
-    available: boolean;
-  };
-}
 
 const TimeBlock = ({ slot }: TimeBlockProps) => {
   const startTime = moment.tz(`1970-01-01T${slot.start}`, "America/Chicago");
@@ -67,14 +63,6 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
   );
 };
 
-interface RoomScheduleProps {
-  slots: {
-    start: string;
-    end: string;
-    available: boolean;
-  }[];
-}
-
 const RoomSchedule = ({ slots }: RoomScheduleProps) => {
   const getSlotDuration = () => {
     if (slots.length === 0) return 0;
@@ -121,11 +109,6 @@ const RoomSchedule = ({ slots }: RoomScheduleProps) => {
     </div>
   );
 };
-
-interface LibraryRoomAvailabilityProps {
-  roomName: string;
-  room: RoomReservations[string];
-}
 
 export default function LibraryRoomAvailability({
   roomName,

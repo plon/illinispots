@@ -23,7 +23,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { BuildingStatus, APIResponse, TimeSlot } from "@/types";
+import { BuildingStatus, APIResponse, TimeSlot, AccordionRefs } from "@/types";
 import moment from "moment-timezone";
 import { Github, Map, TriangleAlert } from "lucide-react";
 import LibraryRoomAvailability from "@/components/LibraryRoomAvailability";
@@ -98,10 +98,6 @@ interface LeftSidebarProps {
   expandedItems: string[];
   setExpandedItems: Dispatch<SetStateAction<string[]>>;
 }
-
-type AccordionRefs = {
-  [key: string]: HTMLDivElement | null;
-};
 
 const LeftSidebar: React.FC<LeftSidebarProps> = ({
   buildingData,

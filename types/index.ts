@@ -132,3 +132,54 @@ export interface RegexGroups {
   thumbnail: string;
   [key: string]: string;
 }
+
+export interface LibraryCoordinates {
+  name: string;
+  coordinates: [number, number];
+}
+
+export interface MapProps {
+  buildingData: BuildingStatus | null;
+  libraryData: APIResponse | null;
+  onMarkerClick: (name: string, isLibrary?: boolean) => void;
+}
+
+export interface MarkerData {
+  name: string;
+  coordinates: [number, number];
+  isOpen: boolean;
+  available: number;
+  total: number;
+  isLibrary: boolean;
+}
+
+export interface TimeBlockProps {
+  slot: {
+    start: string;
+    end: string;
+    available: boolean;
+  };
+}
+
+export interface RoomScheduleProps {
+  slots: {
+    start: string;
+    end: string;
+    available: boolean;
+  }[];
+}
+
+export interface LibraryRoomAvailabilityProps {
+  roomName: string;
+  room: RoomReservations[string];
+}
+
+export interface AccordionRefs {
+  [key: string]: HTMLDivElement | null;
+}
+
+export interface RoomBadgeProps {
+  availableAt?: string;
+  availableFor?: number;
+  available: boolean;
+}

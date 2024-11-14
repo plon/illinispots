@@ -2,12 +2,7 @@
 import React from "react";
 import { useRef, useEffect, useState } from "react";
 import maplibregl from "maplibre-gl";
-import { BuildingStatus, APIResponse } from "@/types";
-
-interface LibraryCoordinates {
-  name: string;
-  coordinates: [number, number];
-}
+import { MarkerData, LibraryCoordinates, MapProps } from "@/types";
 
 const LIBRARY_COORDINATES: LibraryCoordinates[] = [
   {
@@ -23,21 +18,6 @@ const LIBRARY_COORDINATES: LibraryCoordinates[] = [
     coordinates: [-88.22883490200387, 40.1047194114613],
   },
 ];
-
-interface MapProps {
-  buildingData: BuildingStatus | null;
-  libraryData: APIResponse | null;
-  onMarkerClick: (name: string, isLibrary?: boolean) => void;
-}
-
-interface MarkerData {
-  name: string;
-  coordinates: [number, number];
-  isOpen: boolean;
-  available: number;
-  total: number;
-  isLibrary: boolean;
-}
 
 export default function Map({
   buildingData,
