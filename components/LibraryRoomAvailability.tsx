@@ -21,7 +21,10 @@ interface TimeBlockProps {
   };
 }
 
-const TimeBlock = ({ slot }: TimeBlockProps) => {
+const TimeBlock = ({
+  slot,
+  totalMinutes,
+}: TimeBlockProps & { totalMinutes: number }) => {
   const startTime = moment.tz(`1970-01-01T${slot.start}`, "America/Chicago");
   const endTime = moment.tz(`1970-01-01T${slot.end}`, "America/Chicago");
 
@@ -30,7 +33,7 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
     durationMinutes = endTime.add(1, "day").diff(startTime, "minutes");
   }
 
-  const width = Math.max((durationMinutes / 60) * 56, 14);
+  const widthPercentage = (durationMinutes / totalMinutes) * 100;
 
   return (
     <TooltipProvider delayDuration={50}>
@@ -39,13 +42,14 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
           <div
             className={`h-14 border border-border ${
               slot.available ? "bg-green-200" : "bg-red-200"
-            } hover:opacity-80 transition-opacity`}
-            style={{ width: `${width}px` }}
+            } min-w-[2rem] hover:opacity-80 transition-opacity`}
+            style={{
+              width: `clamp(2rem, ${widthPercentage}%, 8rem)`,
+            }}
           />
         </HybridTooltipTrigger>
         <HybridTooltipContent className="w-fit p-1.5">
           <p className="font-medium text-[13px] leading-tight">
-            {" "}
             {startTime.format("hh:mm A")} - {endTime.format("hh:mm A")}
           </p>
           <p className="text-[12px] leading-tight mt-0.5">
@@ -89,7 +93,7 @@ const RoomSchedule = ({ slots }: RoomScheduleProps) => {
 
   return (
     <div className="mt-2">
-      <ScrollArea className="w-full max-w-[336px]">
+      <ScrollArea className="w-full">
         <div className="flex flex-wrap gap-1">
           {slots.map((slot, index) => (
             <TimeBlock key={index} slot={slot} />
