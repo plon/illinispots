@@ -4,11 +4,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Image as ImageIcon } from "lucide-react";
 import {
-  Tooltip,
-  TooltipContent,
+  HybridTooltip,
+  HybridTooltipContent,
+  HybridTooltipTrigger,
   TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/components/ui/HybridTooltip";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import moment from "moment-timezone";
 import Image from "next/image";
@@ -34,23 +34,26 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
 
   return (
     <TooltipProvider delayDuration={50}>
-      <Tooltip>
-        <TooltipTrigger asChild>
+      <HybridTooltip>
+        <HybridTooltipTrigger asChild>
           <div
             className={`h-14 border border-border ${
               slot.available ? "bg-green-200" : "bg-red-200"
             } hover:opacity-80 transition-opacity`}
             style={{ width: `${width}px` }}
           />
-        </TooltipTrigger>
-        <TooltipContent>
-          <p className="font-medium">
+        </HybridTooltipTrigger>
+        <HybridTooltipContent className="w-fit p-1.5">
+          <p className="font-medium text-[14px] leading-tight">
+            {" "}
             {startTime.format("hh:mm A")} - {endTime.format("hh:mm A")}
           </p>
-          <p className="text-sm">{slot.available ? "Available" : "Reserved"}</p>
-          <p className="text-sm">{durationMinutes} minutes</p>
-        </TooltipContent>
-      </Tooltip>
+          <p className="text-[12px] leading-tight mt-0.5">
+            {slot.available ? "Available" : "Reserved"}
+          </p>
+          <p className="text-[12px] leading-tight">{durationMinutes} minutes</p>
+        </HybridTooltipContent>
+      </HybridTooltip>
     </TooltipProvider>
   );
 };
