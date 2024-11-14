@@ -9,8 +9,8 @@ export default function IlliniSpotsPage() {
   const [buildingData, setBuildingData] = useState<BuildingStatus | null>(null);
   const [libraryData, setLibraryData] = useState<APIResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [expandedBuildings, setExpandedBuildings] = useState<string[]>([]);
   const [showMap, setShowMap] = useState(true);
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchBuildingData = async () => {
@@ -53,9 +53,13 @@ export default function IlliniSpotsPage() {
   }, [showMap]);
 
   const handleMarkerClick = (buildingName: string) => {
-    setExpandedBuildings((prev) =>
-      prev.includes(buildingName) ? prev : [...prev, buildingName],
-    );
+    const buildingItem = `building-${buildingName}`;
+    setExpandedItems((prev) => {
+      if (!prev.includes(buildingItem)) {
+        return [...prev, buildingItem];
+      }
+      return prev;
+    });
   };
 
   return (
@@ -75,8 +79,8 @@ export default function IlliniSpotsPage() {
           buildingData={buildingData}
           libraryData={libraryData}
           loading={loading}
-          expandedBuildings={expandedBuildings}
-          setExpandedBuildings={setExpandedBuildings}
+          expandedItems={expandedItems}
+          setExpandedItems={setExpandedItems}
           showMap={showMap}
           setShowMap={setShowMap}
         />
