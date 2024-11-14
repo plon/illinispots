@@ -27,6 +27,7 @@ import { BuildingStatus, APIResponse, TimeSlot } from "@/types";
 import moment from "moment-timezone";
 import { Github, Map, TriangleAlert } from "lucide-react";
 import LibraryRoomAvailability from "@/components/LibraryRoomAvailability";
+import { getLibraryHoursMessage } from "@/utils/libraryHours";
 
 const formatTime = (time: string | undefined): string => {
   if (!time) return "";
@@ -251,61 +252,82 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     <div className="flex items-center justify-between flex-1 mr-2">
                       <span>{libraryName}</span>
                       <div className="ml-2">
-                        <Badge
-                          variant="outline"
-                          className={`${
-                            library.currently_available > 0
-                              ? "bg-green-50 text-green-700 border-green-300"
-                              : "bg-red-50 text-red-700 border-red-300"
-                          }`}
-                        >
-                          {library.currently_available}/{library.room_count}
-                        </Badge>
+                        {!library.isOpen ? (
+                          <Badge
+                            variant="outline"
+                            className="bg-gray-50 text-gray-700 border-gray-300"
+                          >
+                            CLOSED
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className={`${
+                              library.currently_available > 0
+                                ? "bg-green-50 text-green-700 border-green-300"
+                                : "bg-red-50 text-red-700 border-red-300"
+                            }`}
+                          >
+                            {library.currently_available}/{library.room_count}
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <Accordion
-                      type="multiple"
-                      value={expandedItems}
-                      className="w-full"
-                    >
-                      {Object.entries(library.rooms).map(([roomName, room]) => (
-                        <AccordionItem
-                          value={`library-${libraryName}-room-${roomName}`}
-                          key={`library-${libraryName}-room-${roomName}`}
-                          ref={(el) => {
-                            accordionRefs.current[
-                              `library-${libraryName}-room-${roomName}`
-                            ] = el;
-                          }}
-                        >
-                          <AccordionTrigger
-                            onClick={() =>
-                              toggleItem(
-                                `library-${libraryName}-room-${roomName}`,
-                              )
-                            }
-                            className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm"
-                          >
-                            <div className="flex items-center justify-between flex-1 mr-2">
-                              <span>{roomName}</span>
-                              <RoomBadge
-                                available={isLibraryRoomAvailable(room.slots)}
-                                availableAt={room.nextAvailable || undefined}
-                                availableFor={room.available_duration}
-                              />
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            <LibraryRoomAvailability
-                              roomName={roomName}
-                              room={room}
-                            />
-                          </AccordionContent>
-                        </AccordionItem>
-                      ))}
-                    </Accordion>
+                    {!library.isOpen ? (
+                      <div className="px-4 py-2 text-sm text-muted-foreground">
+                        {getLibraryHoursMessage(libraryName)}
+                      </div>
+                    ) : (
+                      <Accordion
+                        type="multiple"
+                        value={expandedItems}
+                        className="w-full"
+                      >
+                        {Object.entries(library.rooms).map(
+                          ([roomName, room]) => (
+                            <AccordionItem
+                              value={`library-${libraryName}-room-${roomName}`}
+                              key={`library-${libraryName}-room-${roomName}`}
+                              ref={(el) => {
+                                accordionRefs.current[
+                                  `library-${libraryName}-room-${roomName}`
+                                ] = el;
+                              }}
+                            >
+                              <AccordionTrigger
+                                onClick={() =>
+                                  toggleItem(
+                                    `library-${libraryName}-room-${roomName}`,
+                                  )
+                                }
+                                className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm"
+                              >
+                                <div className="flex items-center justify-between flex-1 mr-2">
+                                  <span>{roomName}</span>
+                                  <RoomBadge
+                                    available={isLibraryRoomAvailable(
+                                      room.slots,
+                                    )}
+                                    availableAt={
+                                      room.nextAvailable || undefined
+                                    }
+                                    availableFor={room.available_duration}
+                                  />
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                <LibraryRoomAvailability
+                                  roomName={roomName}
+                                  room={room}
+                                />
+                              </AccordionContent>
+                            </AccordionItem>
+                          ),
+                        )}
+                      </Accordion>
+                    )}
                   </AccordionContent>
                 </AccordionItem>
               ))}

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, memo } from "react";
 import LeftSidebar from "@/components/left";
 import Map from "@/components/map";
 import { BuildingStatus, APIResponse } from "@/types";
+import { isLibraryOpen } from "@/utils/libraryHours";
 
 const IlliniSpotsPage: React.FC = () => {
   const [buildingData, setBuildingData] = useState<BuildingStatus | null>(null);
@@ -16,18 +17,39 @@ const IlliniSpotsPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [buildingRes, libraryRes] = await Promise.all([
-          fetch("/api/buildings-availability"),
-          fetch("/api/libraries-availability"),
-        ]);
-
-        const [buildingJson, libraryJson] = await Promise.all([
-          buildingRes.json(),
-          libraryRes.json(),
-        ]);
-
+        const buildingRes = await fetch("/api/buildings-availability");
+        const buildingJson = await buildingRes.json();
         setBuildingData(buildingJson);
-        setLibraryData(libraryJson);
+
+        const anyLibraryOpen = [
+          "Grainger Library",
+          "Funk ACES Library",
+          "Main Library",
+        ].some((library) => isLibraryOpen(library));
+
+        if (anyLibraryOpen) {
+          const libraryRes = await fetch("/api/libraries-availability");
+          const libraryJson: APIResponse = await libraryRes.json();
+
+          // Create new object with modified data
+          const modifiedLibraryData: APIResponse = {
+            timezone: libraryJson.timezone,
+            current_time: libraryJson.current_time,
+            data: Object.fromEntries(
+              Object.entries(libraryJson.data).map(([name, libraryData]) => [
+                name,
+                {
+                  ...libraryData,
+                  isOpen: isLibraryOpen(name),
+                },
+              ]),
+            ),
+          };
+
+          setLibraryData(modifiedLibraryData);
+        } else {
+          setLibraryData(null);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -92,5 +114,4 @@ const IlliniSpotsPage: React.FC = () => {
   );
 };
 
-// Memoize to prevent unnecessary re-renders
 export default memo(IlliniSpotsPage);
