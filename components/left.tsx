@@ -1,11 +1,13 @@
 "use client";
 
-import {
-  useState,
+import React, {
   useRef,
   Dispatch,
   SetStateAction,
-  useLayoutEffect,
+  useEffect,
+  useMemo,
+  useCallback,
+  memo,
 } from "react";
 import {
   Accordion,
@@ -21,9 +23,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { BuildingStatus } from "@/types";
+import { BuildingStatus, APIResponse, TimeSlot, AccordionRefs } from "@/types";
 import moment from "moment-timezone";
 import { Github, Map, TriangleAlert } from "lucide-react";
+import LibraryRoomAvailability from "@/components/LibraryRoomAvailability";
+import { getLibraryHoursMessage } from "@/utils/libraryHours";
 
 const formatTime = (time: string | undefined): string => {
   if (!time) return "";
@@ -42,58 +46,71 @@ const formatDuration = (minutes: number | undefined): string => {
   return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
 };
 
-const isOpeningSoon = (
-  availableAt: string | undefined,
-  availableFor: number | undefined,
-): boolean => {
-  if (!availableAt || !availableFor) return false;
+const RoomBadge: React.FC<{
+  availableAt?: string;
+  availableFor?: number;
+  available: boolean;
+}> = memo(({ availableAt, availableFor, available }) => {
+  const isOpening = useMemo(() => {
+    if (!availableAt || !availableFor) return false;
+    const [availableHours, availableMinutes] = availableAt.split(":");
+    const now = moment().tz("America/Chicago");
+    const availableTime = moment()
+      .tz("America/Chicago")
+      .hours(parseInt(availableHours, 10))
+      .minutes(parseInt(availableMinutes, 10))
+      .seconds(0);
+    const diffInMinutes = availableTime.diff(now, "minutes");
+    return diffInMinutes <= 20 && diffInMinutes > 0 && availableFor >= 30;
+  }, [availableAt, availableFor]);
 
-  const [availableHours, availableMinutes] = availableAt.split(":");
-  const now = moment().tz("America/Chicago");
-  const availableTime = moment()
-    .tz("America/Chicago")
-    .hours(parseInt(availableHours, 10))
-    .minutes(parseInt(availableMinutes, 10))
-    .seconds(0);
+  return (
+    <Badge
+      variant="outline"
+      className={`${
+        available
+          ? "bg-green-50 text-green-700 border-green-300"
+          : isOpening
+            ? "bg-yellow-50 text-yellow-700 border-yellow-300"
+            : "bg-red-50 text-red-700 border-red-300"
+      }`}
+    >
+      {available ? "Available" : isOpening ? "Opening Soon" : "Reserved"}
+    </Badge>
+  );
+});
 
-  const diffInMinutes = availableTime.diff(now, "minutes");
+RoomBadge.displayName = "RoomBadge";
 
-  return diffInMinutes <= 20 && diffInMinutes > 0 && availableFor >= 30;
+const isLibraryRoomAvailable = (slots: TimeSlot[]): boolean => {
+  const currentTime = moment().tz("America/Chicago").format("HH:mm:ss");
+  return slots.some(
+    (slot) =>
+      slot.available && slot.start <= currentTime && slot.end > currentTime,
+  );
 };
 
 interface LeftSidebarProps {
   buildingData: BuildingStatus | null;
-  loading: boolean;
-  expandedBuildings: string[];
-  setExpandedBuildings: Dispatch<SetStateAction<string[]>>;
+  libraryData: APIResponse | null;
   showMap: boolean;
   setShowMap: Dispatch<SetStateAction<boolean>>;
+  expandedItems: string[];
+  setExpandedItems: Dispatch<SetStateAction<string[]>>;
 }
 
-// Create a type for accordion refs to improve type safety
-type AccordionRefs = {
-  [key: string]: HTMLDivElement | null;
-};
-
-export default function LeftSidebar({
+const LeftSidebar: React.FC<LeftSidebarProps> = ({
   buildingData,
-  loading,
-  expandedBuildings,
-  setExpandedBuildings,
+  libraryData,
   showMap,
   setShowMap,
-}: LeftSidebarProps) {
-  const [expandedSections, setExpandedSections] = useState<string[]>([]);
-  const [lastExpandedBuilding, setLastExpandedBuilding] = useState<
-    string | null
-  >(null);
-  const [lastExpandedSection, setLastExpandedSection] = useState<string | null>(
-    null,
-  );
+  expandedItems,
+  setExpandedItems,
+}) => {
   const accordionRefs = useRef<AccordionRefs>({});
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
 
-  const scrollToAccordion = (accordionId: string) => {
+  const scrollToAccordion = useCallback((accordionId: string) => {
     const element = accordionRefs.current[accordionId];
     if (element) {
       setTimeout(() => {
@@ -103,55 +120,32 @@ export default function LeftSidebar({
         });
       }, 100);
     }
-  };
+  }, []);
 
-  useLayoutEffect(() => {
-    if (lastExpandedBuilding) {
-      scrollToAccordion(lastExpandedBuilding);
-      setLastExpandedBuilding(null);
-    } else if (lastExpandedSection) {
-      scrollToAccordion(lastExpandedSection);
-      setLastExpandedSection(null);
-    }
-  }, [lastExpandedBuilding, lastExpandedSection]);
+  const toggleItem = useCallback(
+    (itemId: string) => {
+      setExpandedItems((prev) => {
+        if (prev.includes(itemId)) {
+          return prev.filter((item) => item !== itemId);
+        } else {
+          return [...prev, itemId];
+        }
+      });
+    },
+    [setExpandedItems],
+  );
 
-  const toggleBuilding = (building: string) => {
-    setExpandedBuildings((prev) => {
-      if (prev.includes(building)) {
-        // It's being collapsed
-        return prev.filter((b) => b !== building);
-      } else {
-        // It's being expanded
-        setLastExpandedBuilding(building);
-        return [...prev, building];
-      }
-    });
-  };
+  const prevExpandedItemsRef = useRef<string[]>([]);
 
-  const toggleSection = (section: string) => {
-    setExpandedSections((prev) => {
-      if (prev.includes(section)) {
-        // It's being collapsed
-        return prev.filter((s) => s !== section);
-      } else {
-        setLastExpandedSection(section);
-        return [...prev, section];
-      }
-    });
-  };
-
-  if (loading) {
-    return (
-      <div className="h-full bg-background border-t md:border-t-0 md:border-l p-4">
-        <div className="h-12 bg-muted animate-pulse rounded-md mb-4" />
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-muted animate-pulse rounded-md" />
-          ))}
-        </div>
-      </div>
+  useEffect(() => {
+    const addedItems = expandedItems.filter(
+      (item) => !prevExpandedItemsRef.current.includes(item),
     );
-  }
+    if (addedItems.length > 0) {
+      scrollToAccordion(addedItems[0]);
+    }
+    prevExpandedItemsRef.current = expandedItems;
+  }, [expandedItems, scrollToAccordion]);
 
   return (
     <div className="h-full bg-background border-t md:border-t-0 md:border-l flex flex-col">
@@ -205,7 +199,6 @@ export default function LeftSidebar({
               </div>
             </PopoverContent>
           </Popover>
-          {/* Button to toggle map visibility */}
           <Button
             variant="outline"
             size="icon"
@@ -220,20 +213,122 @@ export default function LeftSidebar({
         </div>
       </div>
       <ScrollArea className="flex-1" ref={scrollAreaRef}>
-        <Accordion type="multiple" value={expandedBuildings} className="w-full">
+        {/* Libraries Accordion */}
+        <Accordion type="multiple" value={expandedItems} className="w-full">
+          {libraryData &&
+            Object.entries(libraryData.data)
+              .sort()
+              .map(([libraryName, library]) => (
+                <AccordionItem
+                  value={`library-${libraryName}`}
+                  key={`library-${libraryName}`}
+                  ref={(el) => {
+                    accordionRefs.current[`library-${libraryName}`] = el;
+                  }}
+                >
+                  <AccordionTrigger
+                    onClick={() => toggleItem(`library-${libraryName}`)}
+                    className="px-4 py-2 hover:no-underline hover:bg-muted group"
+                  >
+                    <div className="flex items-center justify-between flex-1 mr-2">
+                      <span>{libraryName}</span>
+                      <div className="ml-2">
+                        {!library.isOpen ? (
+                          <Badge
+                            variant="outline"
+                            className="bg-gray-50 text-gray-700 border-gray-300"
+                          >
+                            CLOSED
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className={`${
+                              library.currently_available > 0
+                                ? "bg-green-50 text-green-700 border-green-300"
+                                : "bg-red-50 text-red-700 border-red-300"
+                            }`}
+                          >
+                            {library.currently_available}/{library.room_count}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    {!library.isOpen ? (
+                      <div className="px-4 py-2 text-sm text-muted-foreground">
+                        {getLibraryHoursMessage(libraryName)}
+                      </div>
+                    ) : (
+                      <Accordion
+                        type="multiple"
+                        value={expandedItems}
+                        className="w-full"
+                      >
+                        {Object.entries(library.rooms).map(
+                          ([roomName, room]) => (
+                            <AccordionItem
+                              value={`library-${libraryName}-room-${roomName}`}
+                              key={`library-${libraryName}-room-${roomName}`}
+                              ref={(el) => {
+                                accordionRefs.current[
+                                  `library-${libraryName}-room-${roomName}`
+                                ] = el;
+                              }}
+                            >
+                              <AccordionTrigger
+                                onClick={() =>
+                                  toggleItem(
+                                    `library-${libraryName}-room-${roomName}`,
+                                  )
+                                }
+                                className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm"
+                              >
+                                <div className="flex items-center justify-between flex-1 mr-2">
+                                  <span>{roomName}</span>
+                                  <RoomBadge
+                                    available={isLibraryRoomAvailable(
+                                      room.slots,
+                                    )}
+                                    availableAt={
+                                      room.nextAvailable || undefined
+                                    }
+                                    availableFor={room.available_duration}
+                                  />
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                <LibraryRoomAvailability
+                                  roomName={roomName}
+                                  room={room}
+                                />
+                              </AccordionContent>
+                            </AccordionItem>
+                          ),
+                        )}
+                      </Accordion>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+        </Accordion>
+
+        {/* Buildings Accordion */}
+        <Accordion type="multiple" value={expandedItems} className="w-full">
           {buildingData &&
             Object.entries(buildingData.buildings)
               .sort(([, a], [, b]) => a.name.localeCompare(b.name))
               .map(([, building]) => (
                 <AccordionItem
-                  value={building.name}
-                  key={building.name}
+                  value={`building-${building.name}`}
+                  key={`building-${building.name}`}
                   ref={(el) => {
-                    accordionRefs.current[building.name] = el;
+                    accordionRefs.current[`building-${building.name}`] = el;
                   }}
                 >
                   <AccordionTrigger
-                    onClick={() => toggleBuilding(building.name)}
+                    onClick={() => toggleItem(`building-${building.name}`)}
                     className="px-4 py-2 hover:no-underline hover:bg-muted group"
                   >
                     <div className="flex items-center justify-between flex-1 mr-2">
@@ -249,14 +344,18 @@ export default function LeftSidebar({
                         <Badge
                           variant="outline"
                           className={`
-                            ${
-                              Object.values(building.rooms || {}).filter(
-                                (room) => room?.available,
-                              ).length > 0
-                                ? "bg-green-50 text-green-700 border-green-300"
-                                : "bg-red-50 text-red-700 border-red-300"
-                            }
-                          `}
+                                                          ${
+                                                            Object.values(
+                                                              building.rooms ||
+                                                                {},
+                                                            ).filter(
+                                                              (room) =>
+                                                                room?.available,
+                                                            ).length > 0
+                                                              ? "bg-green-50 text-green-700 border-green-300"
+                                                              : "bg-red-50 text-red-700 border-red-300"
+                                                          }
+                                                        `}
                         >
                           {
                             Object.values(building.rooms || {}).filter(
@@ -276,21 +375,21 @@ export default function LeftSidebar({
                     ) : (
                       <Accordion
                         type="multiple"
-                        value={expandedSections}
+                        value={expandedItems}
                         className="w-full"
                       >
                         {/* Available Rooms Section */}
                         <AccordionItem
-                          value={`${building.name}-available`}
+                          value={`building-${building.name}-available`}
                           ref={(el) => {
                             accordionRefs.current[
-                              `${building.name}-available`
+                              `building-${building.name}-available`
                             ] = el;
                           }}
                         >
                           <AccordionTrigger
                             onClick={() =>
-                              toggleSection(`${building.name}-available`)
+                              toggleItem(`building-${building.name}-available`)
                             }
                             className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm"
                           >
@@ -312,20 +411,10 @@ export default function LeftSidebar({
                                       <span className="font-medium">
                                         {roomNumber}
                                       </span>
-                                      <Badge
-                                        variant="outline"
-                                        className={`
-                                          ${
-                                            room.passingPeriod
-                                              ? "bg-gray-50 text-gray-700 border-gray-300"
-                                              : "bg-green-50 text-green-700 border-green-300"
-                                          }
-                                        `}
-                                      >
-                                        {room.passingPeriod
-                                          ? "Passing Period"
-                                          : "Available"}
-                                      </Badge>
+                                      <RoomBadge
+                                        available={true}
+                                        availableFor={room.availableFor}
+                                      />
                                     </div>
                                     {room.passingPeriod && room.nextClass ? (
                                       <p className="text-xs text-muted-foreground">
@@ -365,15 +454,16 @@ export default function LeftSidebar({
 
                         {/* Occupied Rooms Section */}
                         <AccordionItem
-                          value={`${building.name}-occupied`}
+                          value={`building-${building.name}-occupied`}
                           ref={(el) => {
-                            accordionRefs.current[`${building.name}-occupied`] =
-                              el;
+                            accordionRefs.current[
+                              `building-${building.name}-occupied`
+                            ] = el;
                           }}
                         >
                           <AccordionTrigger
                             onClick={() =>
-                              toggleSection(`${building.name}-occupied`)
+                              toggleItem(`building-${building.name}-occupied`)
                             }
                             className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm"
                           >
@@ -395,26 +485,11 @@ export default function LeftSidebar({
                                       <span className="font-medium">
                                         {roomNumber}
                                       </span>
-                                      <Badge
-                                        variant="outline"
-                                        className={`
-                                          ${
-                                            isOpeningSoon(
-                                              room.availableAt,
-                                              room.availableFor,
-                                            )
-                                              ? "bg-yellow-50 text-yellow-700 border-yellow-300"
-                                              : "bg-red-50 text-red-700 border-red-300"
-                                          }
-                                        `}
-                                      >
-                                        {isOpeningSoon(
-                                          room.availableAt,
-                                          room.availableFor,
-                                        )
-                                          ? "Opening Soon"
-                                          : "Occupied"}
-                                      </Badge>
+                                      <RoomBadge
+                                        available={false}
+                                        availableAt={room.availableAt}
+                                        availableFor={room.availableFor}
+                                      />
                                     </div>
                                     {room.currentClass && (
                                       <p className="text-xs text-muted-foreground">
@@ -452,4 +527,8 @@ export default function LeftSidebar({
       </ScrollArea>
     </div>
   );
-}
+};
+
+LeftSidebar.displayName = "LeftSidebar";
+
+export default memo(LeftSidebar);
