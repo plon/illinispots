@@ -1,6 +1,14 @@
 "use client";
 
-import { useRef, Dispatch, SetStateAction, useEffect } from "react";
+import React, {
+  useRef,
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useMemo,
+  useCallback,
+  memo,
+} from "react";
 import {
   Accordion,
   AccordionContent,
@@ -15,7 +23,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { BuildingStatus, APIResponse, RoomReservations } from "@/types";
+import { BuildingStatus, APIResponse, TimeSlot } from "@/types";
 import moment from "moment-timezone";
 import { Github, Map, TriangleAlert } from "lucide-react";
 import LibraryRoomAvailability from "@/components/LibraryRoomAvailability";
@@ -37,31 +45,48 @@ const formatDuration = (minutes: number | undefined): string => {
   return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
 };
 
-const isRoomAvailable = (room: RoomReservations[string]): boolean => {
+const RoomBadge: React.FC<{
+  availableAt?: string;
+  availableFor?: number;
+  available: boolean;
+}> = memo(({ availableAt, availableFor, available }) => {
+  const isOpening = useMemo(() => {
+    if (!availableAt || !availableFor) return false;
+    const [availableHours, availableMinutes] = availableAt.split(":");
+    const now = moment().tz("America/Chicago");
+    const availableTime = moment()
+      .tz("America/Chicago")
+      .hours(parseInt(availableHours, 10))
+      .minutes(parseInt(availableMinutes, 10))
+      .seconds(0);
+    const diffInMinutes = availableTime.diff(now, "minutes");
+    return diffInMinutes <= 20 && diffInMinutes > 0 && availableFor >= 30;
+  }, [availableAt, availableFor]);
+
+  return (
+    <Badge
+      variant="outline"
+      className={`${
+        available
+          ? "bg-green-50 text-green-700 border-green-300"
+          : isOpening
+            ? "bg-yellow-50 text-yellow-700 border-yellow-300"
+            : "bg-red-50 text-red-700 border-red-300"
+      }`}
+    >
+      {available ? "Available" : isOpening ? "Opening Soon" : "Reserved"}
+    </Badge>
+  );
+});
+
+RoomBadge.displayName = "RoomBadge";
+
+const isLibraryRoomAvailable = (slots: TimeSlot[]): boolean => {
   const currentTime = moment().tz("America/Chicago").format("HH:mm:ss");
-  return room.slots.some(
+  return slots.some(
     (slot) =>
       slot.available && slot.start <= currentTime && slot.end > currentTime,
   );
-};
-
-const isOpeningSoon = (
-  availableAt: string | undefined,
-  availableFor: number | undefined,
-): boolean => {
-  if (!availableAt || !availableFor) return false;
-
-  const [availableHours, availableMinutes] = availableAt.split(":");
-  const now = moment().tz("America/Chicago");
-  const availableTime = moment()
-    .tz("America/Chicago")
-    .hours(parseInt(availableHours, 10))
-    .minutes(parseInt(availableMinutes, 10))
-    .seconds(0);
-
-  const diffInMinutes = availableTime.diff(now, "minutes");
-
-  return diffInMinutes <= 20 && diffInMinutes > 0 && availableFor >= 30;
 };
 
 interface LeftSidebarProps {
@@ -78,7 +103,7 @@ type AccordionRefs = {
   [key: string]: HTMLDivElement | null;
 };
 
-export default function LeftSidebar({
+const LeftSidebar: React.FC<LeftSidebarProps> = ({
   buildingData,
   libraryData,
   loading,
@@ -86,11 +111,11 @@ export default function LeftSidebar({
   setShowMap,
   expandedItems,
   setExpandedItems,
-}: LeftSidebarProps) {
+}) => {
   const accordionRefs = useRef<AccordionRefs>({});
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
 
-  const scrollToAccordion = (accordionId: string) => {
+  const scrollToAccordion = useCallback((accordionId: string) => {
     const element = accordionRefs.current[accordionId];
     if (element) {
       setTimeout(() => {
@@ -100,17 +125,20 @@ export default function LeftSidebar({
         });
       }, 100);
     }
-  };
+  }, []);
 
-  const toggleItem = (itemId: string) => {
-    setExpandedItems((prev) => {
-      if (prev.includes(itemId)) {
-        return prev.filter((item) => item !== itemId);
-      } else {
-        return [...prev, itemId];
-      }
-    });
-  };
+  const toggleItem = useCallback(
+    (itemId: string) => {
+      setExpandedItems((prev) => {
+        if (prev.includes(itemId)) {
+          return prev.filter((item) => item !== itemId);
+        } else {
+          return [...prev, itemId];
+        }
+      });
+    },
+    [setExpandedItems],
+  );
 
   const prevExpandedItemsRef = useRef<string[]>([]);
 
@@ -122,7 +150,7 @@ export default function LeftSidebar({
       scrollToAccordion(addedItems[0]);
     }
     prevExpandedItemsRef.current = expandedItems;
-  }, [expandedItems]);
+  }, [expandedItems, scrollToAccordion]);
 
   if (loading) {
     return (
@@ -262,18 +290,11 @@ export default function LeftSidebar({
                           >
                             <div className="flex items-center justify-between flex-1 mr-2">
                               <span>{roomName}</span>
-                              <Badge
-                                variant="outline"
-                                className={`${
-                                  isRoomAvailable(room)
-                                    ? "bg-green-50 text-green-700 border-green-300"
-                                    : "bg-red-50 text-red-700 border-red-300"
-                                }`}
-                              >
-                                {isRoomAvailable(room)
-                                  ? "Available"
-                                  : "Reserved"}
-                              </Badge>
+                              <RoomBadge
+                                available={isLibraryRoomAvailable(room.slots)}
+                                availableAt={room.nextAvailable || undefined}
+                                availableFor={room.available_duration}
+                              />
                             </div>
                           </AccordionTrigger>
                           <AccordionContent>
@@ -320,15 +341,18 @@ export default function LeftSidebar({
                         <Badge
                           variant="outline"
                           className={`
-                                    ${
-                                      Object.values(
-                                        building.rooms || {},
-                                      ).filter((room) => room?.available)
-                                        .length > 0
-                                        ? "bg-green-50 text-green-700 border-green-300"
-                                        : "bg-red-50 text-red-700 border-red-300"
-                                    }
-                                  `}
+                                                          ${
+                                                            Object.values(
+                                                              building.rooms ||
+                                                                {},
+                                                            ).filter(
+                                                              (room) =>
+                                                                room?.available,
+                                                            ).length > 0
+                                                              ? "bg-green-50 text-green-700 border-green-300"
+                                                              : "bg-red-50 text-red-700 border-red-300"
+                                                          }
+                                                        `}
                         >
                           {
                             Object.values(building.rooms || {}).filter(
@@ -384,20 +408,10 @@ export default function LeftSidebar({
                                       <span className="font-medium">
                                         {roomNumber}
                                       </span>
-                                      <Badge
-                                        variant="outline"
-                                        className={`
-                                              ${
-                                                room.passingPeriod
-                                                  ? "bg-gray-50 text-gray-700 border-gray-300"
-                                                  : "bg-green-50 text-green-700 border-green-300"
-                                              }
-                                            `}
-                                      >
-                                        {room.passingPeriod
-                                          ? "Passing Period"
-                                          : "Available"}
-                                      </Badge>
+                                      <RoomBadge
+                                        available={true}
+                                        availableFor={room.availableFor}
+                                      />
                                     </div>
                                     {room.passingPeriod && room.nextClass ? (
                                       <p className="text-xs text-muted-foreground">
@@ -468,26 +482,11 @@ export default function LeftSidebar({
                                       <span className="font-medium">
                                         {roomNumber}
                                       </span>
-                                      <Badge
-                                        variant="outline"
-                                        className={`
-                                              ${
-                                                isOpeningSoon(
-                                                  room.availableAt,
-                                                  room.availableFor,
-                                                )
-                                                  ? "bg-yellow-50 text-yellow-700 border-yellow-300"
-                                                  : "bg-red-50 text-red-700 border-red-300"
-                                              }
-                                            `}
-                                      >
-                                        {isOpeningSoon(
-                                          room.availableAt,
-                                          room.availableFor,
-                                        )
-                                          ? "Opening Soon"
-                                          : "Occupied"}
-                                      </Badge>
+                                      <RoomBadge
+                                        available={false}
+                                        availableAt={room.availableAt}
+                                        availableFor={room.availableFor}
+                                      />
                                     </div>
                                     {room.currentClass && (
                                       <p className="text-xs text-muted-foreground">
@@ -525,4 +524,8 @@ export default function LeftSidebar({
       </ScrollArea>
     </div>
   );
-}
+};
+
+LeftSidebar.displayName = "LeftSidebar";
+
+export default memo(LeftSidebar);

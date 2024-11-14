@@ -1,42 +1,44 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, memo } from "react";
 import LeftSidebar from "@/components/left";
 import Map from "@/components/map";
 import { BuildingStatus, APIResponse } from "@/types";
 
-export default function IlliniSpotsPage() {
+const IlliniSpotsPage: React.FC = () => {
   const [buildingData, setBuildingData] = useState<BuildingStatus | null>(null);
   const [libraryData, setLibraryData] = useState<APIResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [showMap, setShowMap] = useState(true);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
+  // Fetch building and library data
   useEffect(() => {
-    const fetchBuildingData = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch("/api/buildings-availability");
-        const data = await response.json();
-        setBuildingData(data);
+        const [buildingRes, libraryRes] = await Promise.all([
+          fetch("/api/buildings-availability"),
+          fetch("/api/libraries-availability"),
+        ]);
+
+        const [buildingJson, libraryJson] = await Promise.all([
+          buildingRes.json(),
+          libraryRes.json(),
+        ]);
+
+        setBuildingData(buildingJson);
+        setLibraryData(libraryJson);
+      } catch (error) {
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    const fetchLibraryData = async () => {
-      try {
-        const response = await fetch("/api/libraries-availability");
-        const data = await response.json();
-        setLibraryData(data);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBuildingData();
-    fetchLibraryData();
+    fetchData();
   }, []);
 
+  // Retrieve map visibility from localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedShowMap = localStorage.getItem("showMap");
@@ -46,13 +48,14 @@ export default function IlliniSpotsPage() {
     }
   }, []);
 
+  // Persist map visibility to localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem("showMap", showMap.toString());
     }
   }, [showMap]);
 
-  const handleMarkerClick = (buildingName: string) => {
+  const handleMarkerClick = useCallback((buildingName: string) => {
     const buildingItem = `building-${buildingName}`;
     setExpandedItems((prev) => {
       if (!prev.includes(buildingItem)) {
@@ -60,7 +63,7 @@ export default function IlliniSpotsPage() {
       }
       return prev;
     });
-  };
+  }, []);
 
   return (
     <div className={`h-screen flex ${showMap ? "md:flex-row" : ""} flex-col`}>
@@ -87,4 +90,7 @@ export default function IlliniSpotsPage() {
       </div>
     </div>
   );
-}
+};
+
+// Memoize to prevent unnecessary re-renders
+export default memo(IlliniSpotsPage);
