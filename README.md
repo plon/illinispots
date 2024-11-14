@@ -11,6 +11,11 @@ IlliniSpots is a web application that helps UIUC students find available study s
   - Current classes in session
   - Upcoming class schedules
   - Room availability times and length
+- Library-specific features:
+  - Real-time study room availability
+  - Reservation slot visualization
+  - Direct reservation links
+  - Room images and details
 - Responsive design for both desktop and mobile
 
 ## Tech Stack
@@ -33,6 +38,7 @@ All data used for calculating room availability is sourced from the University o
 
 - **Class Data**: Sourced from the [Course Explorer](https://courses.illinois.edu/). This includes  information about when classes meet, which is used to determine room occupancy. For more details on the data collection process, please refer to the [data collection README](datacollection/README.MD).
 - **Building Hours**: Sourced from the [Facility Scheduling and Resources](https://operations.illinois.edu/facility-scheduling-and-resources/daily-event-summaries/).
+- **Library Data**: Sourced from UIUC Library's [Room Reservation System](https://uiuc.libcal.com/).
 
 ## Core Algorithm
 ### [get_current_building_status.sql](database/functions/get_current_building_status.sql)
@@ -117,6 +123,29 @@ Duration = (4:00 - 3:15) = 45 minutes available
     }
 }
 ```
+
+## Library Availability System
+The library availability system operates through a three-stage pipeline handling UIUC's LibCal reservation data:
+
+1. **Room Data Extraction**
+- Scrapes LibCal's client-side JavaScript resource declarations using regex pattern matching
+- Extracts embedded room metadata including IDs, capacities, and asset URLs
+- Maps rooms to their parent libraries using facility IDs
+
+2. **Reservation Status Collection**
+- Sends concurrent POST requests to LibCal's availability grid endpoint for each library
+- Special case for Funk ACES (room reservation closes at 2 AM): Retrieves 48hr window vs standard 24hr
+- Accumulates slot data chronologically with booking status flags
+
+3. **Availability Processing**
+- Links room metadata with current reservation states
+- Calculates real-time metrics per room:
+  - Current occupancy status
+  - Time until next available slot
+  - Duration of current available period
+  - Chronological sequence of free/busy periods
+- Aggregates library-level statistics (total rooms, currently available)
+
 ## Getting Started
 
 ### Prerequisites
