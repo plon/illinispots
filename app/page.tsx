@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, memo } from "react";
 import LeftSidebar from "@/components/left";
 import Map from "@/components/map";
+import LoadingScreen from "@/components/LoadingScreen";
 import { BuildingStatus, APIResponse } from "@/types";
 import { isLibraryOpen } from "@/utils/libraryHours";
 
@@ -22,7 +23,7 @@ const IlliniSpotsPage: React.FC = () => {
         setBuildingData(buildingJson);
 
         const anyLibraryOpen = [
-          "Grainger Library",
+          "Grainger Engineering Library",
           "Funk ACES Library",
           "Main Library",
         ].some((library) => isLibraryOpen(library));
@@ -31,7 +32,6 @@ const IlliniSpotsPage: React.FC = () => {
           const libraryRes = await fetch("/api/libraries-availability");
           const libraryJson: APIResponse = await libraryRes.json();
 
-          // Create new object with modified data
           const modifiedLibraryData: APIResponse = {
             timezone: libraryJson.timezone,
             current_time: libraryJson.current_time,
@@ -77,21 +77,29 @@ const IlliniSpotsPage: React.FC = () => {
     }
   }, [showMap]);
 
-  const handleMarkerClick = useCallback((buildingName: string) => {
-    const buildingItem = `building-${buildingName}`;
+  const handleMarkerClick = useCallback((name: string, isLibrary?: boolean) => {
+    const itemId = isLibrary ? `library-${name}` : `building-${name}`;
     setExpandedItems((prev) => {
-      if (!prev.includes(buildingItem)) {
-        return [...prev, buildingItem];
+      if (!prev.includes(itemId)) {
+        return [...prev, itemId];
       }
       return prev;
     });
   }, []);
 
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   return (
     <div className={`h-screen flex ${showMap ? "md:flex-row" : ""} flex-col`}>
       {showMap && (
         <div className="h-[40vh] md:h-screen md:w-2/3 w-full order-1 md:order-2">
-          <Map buildingData={buildingData} onMarkerClick={handleMarkerClick} />
+          <Map
+            buildingData={buildingData}
+            libraryData={libraryData}
+            onMarkerClick={handleMarkerClick}
+          />
         </div>
       )}
 
@@ -103,7 +111,6 @@ const IlliniSpotsPage: React.FC = () => {
         <LeftSidebar
           buildingData={buildingData}
           libraryData={libraryData}
-          loading={loading}
           expandedItems={expandedItems}
           setExpandedItems={setExpandedItems}
           showMap={showMap}

@@ -93,7 +93,6 @@ const isLibraryRoomAvailable = (slots: TimeSlot[]): boolean => {
 interface LeftSidebarProps {
   buildingData: BuildingStatus | null;
   libraryData: APIResponse | null;
-  loading: boolean;
   showMap: boolean;
   setShowMap: Dispatch<SetStateAction<boolean>>;
   expandedItems: string[];
@@ -107,7 +106,6 @@ type AccordionRefs = {
 const LeftSidebar: React.FC<LeftSidebarProps> = ({
   buildingData,
   libraryData,
-  loading,
   showMap,
   setShowMap,
   expandedItems,
@@ -152,19 +150,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     }
     prevExpandedItemsRef.current = expandedItems;
   }, [expandedItems, scrollToAccordion]);
-
-  if (loading) {
-    return (
-      <div className="h-full bg-background border-t md:border-t-0 md:border-l p-4">
-        <div className="h-12 bg-muted animate-pulse rounded-md mb-4" />
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-muted animate-pulse rounded-md" />
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="h-full bg-background border-t md:border-t-0 md:border-l flex flex-col">
