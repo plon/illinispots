@@ -57,9 +57,7 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        <TouchProvider>
-          <TooltipProvider>{children}</TooltipProvider>
-        </TouchProvider>
+        <TouchProvider>{children}</TouchProvider>
       </body>
     </html>
   );

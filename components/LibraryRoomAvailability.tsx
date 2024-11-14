@@ -44,7 +44,7 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
           />
         </HybridTooltipTrigger>
         <HybridTooltipContent className="w-fit p-1.5">
-          <p className="font-medium text-[14px] leading-tight">
+          <p className="font-medium text-[13px] leading-tight">
             {" "}
             {startTime.format("hh:mm A")} - {endTime.format("hh:mm A")}
           </p>
