@@ -3,18 +3,17 @@
 import { useState, useEffect } from "react";
 import LeftSidebar from "@/components/left";
 import Map from "@/components/map";
-import { BuildingStatus } from "@/types";
+import { BuildingStatus, APIResponse } from "@/types";
 
 export default function IlliniSpotsPage() {
   const [buildingData, setBuildingData] = useState<BuildingStatus | null>(null);
+  const [libraryData, setLibraryData] = useState<APIResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedBuildings, setExpandedBuildings] = useState<string[]>([]);
-
-  // Initialize showMap to true by default
   const [showMap, setShowMap] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchBuildingData = async () => {
       try {
         const response = await fetch("/api/buildings-availability");
         const data = await response.json();
@@ -24,10 +23,20 @@ export default function IlliniSpotsPage() {
       }
     };
 
-    fetchData();
+    const fetchLibraryData = async () => {
+      try {
+        const response = await fetch("/api/libraries-availability");
+        const data = await response.json();
+        setLibraryData(data);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBuildingData();
+    fetchLibraryData();
   }, []);
 
-  // Load map visibility setting from localStorage on client side
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedShowMap = localStorage.getItem("showMap");
@@ -37,7 +46,6 @@ export default function IlliniSpotsPage() {
     }
   }, []);
 
-  // Save map visibility setting to localStorage whenever it changes
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem("showMap", showMap.toString());
@@ -52,23 +60,20 @@ export default function IlliniSpotsPage() {
 
   return (
     <div className={`h-screen flex ${showMap ? "md:flex-row" : ""} flex-col`}>
-      {/* Map container - Conditionally render based on showMap */}
       {showMap && (
-        // 2/5 on mobile, right 3/4 on desktop
-        <div className="h-[40vh] md:h-screen md:w-3/4 w-full order-1 md:order-2">
+        <div className="h-[40vh] md:h-screen md:w-2/3 w-full order-1 md:order-2">
           <Map buildingData={buildingData} onMarkerClick={handleMarkerClick} />
         </div>
       )}
 
-      {/* Sidebar container - Adjust width based on showMap */}
       <div
         className={`${
-          // 3/5 on mobile, left 1/4 on desktop
-          showMap ? "md:w-1/4 h-[60vh] md:h-screen" : "h-screen"
+          showMap ? "md:w-1/3 h-[60vh] md:h-screen" : "h-screen"
         } w-full flex-1 overflow-hidden order-2 md:order-1`}
       >
         <LeftSidebar
           buildingData={buildingData}
+          libraryData={libraryData}
           loading={loading}
           expandedBuildings={expandedBuildings}
           setExpandedBuildings={setExpandedBuildings}
