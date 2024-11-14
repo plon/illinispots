@@ -33,7 +33,7 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
   const width = Math.max((durationMinutes / 60) * 56, 14);
 
   return (
-    <TooltipProvider delayDuration={100}>
+    <TooltipProvider delayDuration={50}>
       <Tooltip>
         <TooltipTrigger asChild>
           <div
