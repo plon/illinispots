@@ -31,19 +31,27 @@ const TimeBlock = ({ slot, totalMinutes }: TimeBlockProps) => {
     durationMinutes = endTime.add(1, "day").diff(startTime, "minutes");
   }
 
-  const widthPercentage = (durationMinutes / totalMinutes) * 100;
+  const getWidth = () => {
+    switch (durationMinutes) {
+      case 15:
+        return "w-3.5"; // 1/4 of height
+      case 30:
+        return "w-7"; // 1/2 of height
+      case 60:
+        return "w-14"; // equal to height (h-14)
+      default:
+        return "w-14";
+    }
+  };
 
   return (
     <TooltipProvider delayDuration={50}>
       <HybridTooltip>
         <HybridTooltipTrigger asChild>
           <div
-            className={`h-14 border border-border ${
+            className={`h-14 border border-border ${getWidth()} ${
               slot.available ? "bg-green-200" : "bg-red-200"
-            } min-w-[2rem] hover:opacity-80 transition-opacity`}
-            style={{
-              width: `clamp(2rem, ${widthPercentage}%, 8rem)`,
-            }}
+            } hover:opacity-80 transition-opacity`}
           />
         </HybridTooltipTrigger>
         <HybridTooltipContent className="w-fit p-1.5">
