@@ -97,7 +97,7 @@ export interface LibraryData {
   room_count: number;
   currently_available: number;
   rooms: RoomReservations;
-  address: string;
+  address?: string;
   isOpen?: boolean;
 }
 

@@ -42,17 +42,27 @@ export const LIBRARY_HOURS: LibraryHours = {
 
 export const isLibraryOpen = (libraryName: string): boolean => {
   const now = moment().tz("America/Chicago");
-  const dayOfWeek = now.format("dddd");
   const currentTime = now.format("HH:mm");
+  const dayOfWeek = now.format("dddd");
 
   const hours = LIBRARY_HOURS[libraryName]?.[dayOfWeek];
   if (!hours) return false;
+
+  // Get previous day's hours to check if library is still open from previous day (Funk ACES case)
+  const previousDay = moment().tz("America/Chicago").subtract(1, "day");
+  const previousDayOfWeek = previousDay.format("dddd");
+  const previousHours = LIBRARY_HOURS[libraryName]?.[previousDayOfWeek];
+
+  // Check if we're in the early hours of the current day and the previous day's hours extend to today
+  if (previousHours?.nextDay && currentTime <= previousHours.close) {
+    return true;
+  }
 
   const { open, close, nextDay } = hours;
 
   if (nextDay) {
     // If library closes after midnight
-    if (currentTime >= open || currentTime <= close) {
+    if (currentTime >= open) {
       return true;
     }
   } else {

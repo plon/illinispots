@@ -18,38 +18,57 @@ const IlliniSpotsPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Always fetch building data
         const buildingRes = await fetch("/api/buildings-availability");
         const buildingJson = await buildingRes.json();
         setBuildingData(buildingJson);
 
-        const anyLibraryOpen = [
-          "Grainger Engineering Library",
-          "Funk ACES Library",
-          "Main Library",
-        ].some((library) => isLibraryOpen(library));
+        const baseLibraryData: APIResponse = {
+          timezone: "America/Chicago",
+          current_time: new Date().toISOString(),
+          data: {
+            "Grainger Engineering Library": {
+              isOpen: isLibraryOpen("Grainger Engineering Library"),
+              room_count: 0,
+              currently_available: 0,
+              rooms: {},
+            },
+            "Funk ACES Library": {
+              isOpen: isLibraryOpen("Funk ACES Library"),
+              room_count: 0,
+              currently_available: 0,
+              rooms: {},
+            },
+            "Main Library": {
+              isOpen: isLibraryOpen("Main Library"),
+              room_count: 0,
+              currently_available: 0,
+              rooms: {},
+            },
+          },
+        };
+
+        // Only fetch detailed availability if any library is open
+        const anyLibraryOpen = Object.values(baseLibraryData.data).some(
+          (lib) => lib.isOpen,
+        );
 
         if (anyLibraryOpen) {
           const libraryRes = await fetch("/api/libraries-availability");
           const libraryJson: APIResponse = await libraryRes.json();
 
-          const modifiedLibraryData: APIResponse = {
-            timezone: libraryJson.timezone,
-            current_time: libraryJson.current_time,
-            data: Object.fromEntries(
-              Object.entries(libraryJson.data).map(([name, libraryData]) => [
-                name,
-                {
-                  ...libraryData,
-                  isOpen: isLibraryOpen(name),
-                },
-              ]),
-            ),
-          };
-
-          setLibraryData(modifiedLibraryData);
-        } else {
-          setLibraryData(null);
+          // Merge availability data with base data
+          Object.entries(libraryJson.data).forEach(([name, data]) => {
+            if (baseLibraryData.data[name].isOpen) {
+              baseLibraryData.data[name] = {
+                ...data,
+                isOpen: true,
+              };
+            }
+          });
         }
+
+        setLibraryData(baseLibraryData);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
