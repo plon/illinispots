@@ -138,7 +138,9 @@ async function getReservation(lid: string): Promise<ReservationResponse> {
     const responseTomorrow = await axios.post(
       url,
       new URLSearchParams(payload),
-      { headers },
+      {
+        headers,
+      },
     );
     const reservationsTomorrow = responseTomorrow.data as ReservationResponse;
 
@@ -160,6 +162,11 @@ function linkRoomsReservations(
   );
   const todayCST = moment().tz("America/Chicago");
   const currentTime = todayCST.format("HH:mm:ss");
+  const tomorrowTwoAM = todayCST
+    .clone()
+    .add(1, "day")
+    .startOf("day")
+    .add(2, "hours");
 
   for (const room of roomsData) {
     if (!libraryIds.has(room.lid)) continue;
@@ -170,12 +177,10 @@ function linkRoomsReservations(
     let available_duration: number = 0;
     let isCurrentlyBooked = false;
 
-    // Sort slots chronologically
     const roomSpecificSlots = reservationsData.slots
       .filter((slot) => slot.itemId === roomId)
       .sort((a, b) => moment(a.start).valueOf() - moment(b.start).valueOf());
 
-    // Process all slots for the day
     for (const slot of roomSpecificSlots) {
       const startTime = moment.tz(slot.start, "America/Chicago");
       const endTime = moment.tz(slot.end, "America/Chicago");
@@ -183,37 +188,143 @@ function linkRoomsReservations(
       const slotEndTime = endTime.format("HH:mm:ss");
       const isAvailable = slot.className !== "s-lc-eq-checkout";
 
-      // Add all slots for today (and early morning next day for Funk ACES)
+      // Check if slot should be included based on library and time
       if (
         startTime.isSame(todayCST, "day") ||
         (room.lid === 3604 &&
-          startTime.clone().subtract(1, "day").isSame(todayCST, "day") &&
-          startTime.hour() < 2)
+          startTime.isAfter(todayCST) &&
+          startTime.isBefore(tomorrowTwoAM))
       ) {
         roomSlots.push({
           start: slotStartTime,
           end: slotEndTime,
           available: isAvailable,
         });
-      }
 
-      // Check current availability and calculate duration separately
-      if (slotStartTime <= currentTime && slotEndTime > currentTime) {
-        isCurrentlyBooked = !isAvailable;
-        if (isAvailable) {
-          available_duration = endTime.diff(todayCST, "minutes");
+        // Check current availability
+        if (slotStartTime <= currentTime && slotEndTime > currentTime) {
+          isCurrentlyBooked = !isAvailable;
+          if (isAvailable) {
+            const currentMoment = moment().tz("America/Chicago");
+            let slotEndMoment = endTime;
+
+            // For Funk ACES, cap the end time at 2 AM if slot extends beyond
+            if (room.lid === 3604 && slotEndMoment.isAfter(tomorrowTwoAM)) {
+              slotEndMoment = tomorrowTwoAM;
+            }
+
+            // Calculate initial duration from current time to slot end
+            available_duration = slotEndMoment.diff(currentMoment, "minutes");
+
+            // Find current slot index
+            const currentSlotIndex = roomSpecificSlots.findIndex(
+              (s) => s === slot,
+            );
+
+            // Check subsequent slots for continuous availability
+            if (currentSlotIndex !== -1) {
+              let nextIndex = currentSlotIndex + 1;
+              let lastEndMoment = slotEndMoment;
+
+              while (nextIndex < roomSpecificSlots.length) {
+                const nextSlot = roomSpecificSlots[nextIndex];
+                if (nextSlot.className === "s-lc-eq-checkout") break;
+
+                const nextStartMoment = moment.tz(
+                  nextSlot.start,
+                  "America/Chicago",
+                );
+                let nextEndMoment = moment.tz(nextSlot.end, "America/Chicago");
+
+                // Skip if not continuous
+                if (
+                  lastEndMoment.format("HH:mm:ss") !==
+                  nextStartMoment.format("HH:mm:ss")
+                ) {
+                  break;
+                }
+
+                // For Funk ACES, only include slots up to 2 AM next day
+                if (room.lid === 3604) {
+                  if (nextStartMoment.isAfter(tomorrowTwoAM)) {
+                    break;
+                  }
+                  if (nextEndMoment.isAfter(tomorrowTwoAM)) {
+                    nextEndMoment = tomorrowTwoAM;
+                  }
+                } else if (!nextStartMoment.isSame(todayCST, "day")) {
+                  break;
+                }
+
+                available_duration += nextEndMoment.diff(
+                  nextStartMoment,
+                  "minutes",
+                );
+                lastEndMoment = nextEndMoment;
+                nextIndex++;
+              }
+            }
+          }
         }
       }
     }
 
-    // Calculate next available time if currently booked
+    // Handle next available time if currently not available
     if (isCurrentlyBooked) {
-      for (const slot of roomSpecificSlots) {
-        const startTime = moment.tz(slot.start, "America/Chicago");
-        const isAvailable = slot.className !== "s-lc-eq-checkout";
+      // Find future available slots
+      const futureSlots = roomSpecificSlots.filter((slot) => {
+        const slotStart = moment.tz(slot.start, "America/Chicago");
+        if (room.lid === 3604) {
+          return (
+            slotStart.isAfter(todayCST) && slotStart.isBefore(tomorrowTwoAM)
+          );
+        }
+        return slotStart.isAfter(todayCST) && slotStart.isSame(todayCST, "day");
+      });
 
-        if (isAvailable && startTime.isAfter(todayCST)) {
+      // Find first available slot
+      for (let i = 0; i < futureSlots.length; i++) {
+        const slot = futureSlots[i];
+        if (slot.className !== "s-lc-eq-checkout") {
+          const startTime = moment.tz(slot.start, "America/Chicago");
+          let endTime = moment.tz(slot.end, "America/Chicago");
+
+          // Cap end time at 2 AM for Funk ACES
+          if (room.lid === 3604 && endTime.isAfter(tomorrowTwoAM)) {
+            endTime = tomorrowTwoAM;
+          }
+
           nextAvailable = startTime.format("HH:mm:ss");
+          available_duration = endTime.diff(startTime, "minutes");
+
+          // Check consecutive available slots
+          let j = i + 1;
+          let lastEndTime = endTime;
+
+          while (j < futureSlots.length) {
+            const nextSlot = futureSlots[j];
+            const nextStartTime = moment.tz(nextSlot.start, "America/Chicago");
+            let nextEndTime = moment.tz(nextSlot.end, "America/Chicago");
+
+            // Stop if not continuous or reaches past 2 AM for Funk ACES
+            if (
+              nextSlot.className === "s-lc-eq-checkout" ||
+              lastEndTime.format("HH:mm:ss") !==
+                nextStartTime.format("HH:mm:ss") ||
+              (room.lid === 3604 && nextStartTime.isAfter(tomorrowTwoAM))
+            ) {
+              break;
+            }
+
+            // Cap at 2 AM for Funk ACES
+            if (room.lid === 3604 && nextEndTime.isAfter(tomorrowTwoAM)) {
+              nextEndTime = tomorrowTwoAM;
+            }
+
+            available_duration += nextEndTime.diff(nextStartTime, "minutes");
+            lastEndTime = nextEndTime;
+            j++;
+          }
           break;
         }
       }
@@ -258,13 +369,12 @@ async function getFormattedLibraryData(): Promise<FormattedLibraryData> {
           libraryRooms[roomTitle] = data;
 
           // Check if room is currently available
-          const isAvailable = data.slots.some((slot) => {
-            return (
+          const isAvailable = data.slots.some(
+            (slot) =>
               slot.available &&
               slot.start <= currentTimeStr &&
-              slot.end > currentTimeStr
-            );
-          });
+              slot.end > currentTimeStr,
+          );
 
           if (isAvailable) {
             availableCount++;

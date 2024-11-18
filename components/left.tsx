@@ -83,11 +83,21 @@ const RoomBadge: React.FC<{
 RoomBadge.displayName = "RoomBadge";
 
 const isLibraryRoomAvailable = (slots: TimeSlot[]): boolean => {
-  const currentTime = moment().tz("America/Chicago").format("HH:mm:ss");
-  return slots.some(
-    (slot) =>
-      slot.available && slot.start <= currentTime && slot.end > currentTime,
-  );
+  const currentMoment = moment().tz("America/Chicago");
+  const currentTime = currentMoment.format("HH:mm:ss");
+
+  const todaySlot = slots.find((slot) => {
+    // If time is between midnight and 2am, check if this is a continuation from previous day
+    if (currentTime < "02:00:00" && slot.start > "20:00:00") {
+      return false; // previous day's slot
+    }
+    if (currentTime > "20:00:00" && slot.start < "02:00:00") {
+      return false; // next day's slot
+    }
+    return slot.start <= currentTime && slot.end > currentTime;
+  });
+
+  return todaySlot ? todaySlot.available : false;
 };
 
 interface LeftSidebarProps {
@@ -286,7 +296,32 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                 className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm"
                               >
                                 <div className="flex items-center justify-between flex-1 mr-2">
-                                  <span>{roomName}</span>
+                                  <div className="flex flex-col items-start text-left">
+                                    <span className="font-medium">
+                                      {roomName}
+                                    </span>
+                                    {isLibraryRoomAvailable(room.slots) ? (
+                                      room.available_duration && (
+                                        <span className="text-xs text-muted-foreground">
+                                          Available for{" "}
+                                          {formatDuration(
+                                            room.available_duration,
+                                          )}
+                                        </span>
+                                      )
+                                    ) : room.nextAvailable ? (
+                                      <span className="text-xs text-muted-foreground">
+                                        {`Available at ${formatTime(room.nextAvailable)}`}
+                                        {room.available_duration
+                                          ? ` for ${formatDuration(room.available_duration)}`
+                                          : ""}
+                                      </span>
+                                    ) : (
+                                      <span className="text-xs text-muted-foreground">
+                                        Fully booked
+                                      </span>
+                                    )}
+                                  </div>
                                   <RoomBadge
                                     available={isLibraryRoomAvailable(
                                       room.slots,
