@@ -270,7 +270,7 @@ function linkRoomsReservations(
     }
 
     // Handle next available time if currently not available
-    if (isCurrentlyBooked) {
+    if (isCurrentlyBooked || (!isCurrentlyBooked && available_duration === 0)) {
       // Find future available slots
       const futureSlots = roomSpecificSlots.filter((slot) => {
         const slotStart = moment.tz(slot.start, "America/Chicago");
