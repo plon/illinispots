@@ -50,7 +50,8 @@ const RoomBadge: React.FC<{
   availableAt?: string;
   availableFor?: number;
   available: boolean;
-}> = memo(({ availableAt, availableFor, available }) => {
+  passingPeriod?: boolean;
+}> = memo(({ availableAt, availableFor, available, passingPeriod }) => {
   const isOpening = useMemo(() => {
     if (!availableAt || !availableFor) return false;
     const [availableHours, availableMinutes] = availableAt.split(":");
@@ -69,13 +70,21 @@ const RoomBadge: React.FC<{
       variant="outline"
       className={`${
         available
-          ? "bg-green-50 text-green-700 border-green-300"
+          ? passingPeriod
+            ? "bg-gray-50 text-gray-700 border-gray-300"
+            : "bg-green-50 text-green-700 border-green-300"
           : isOpening
             ? "bg-yellow-50 text-yellow-700 border-yellow-300"
             : "bg-red-50 text-red-700 border-red-300"
       }`}
     >
-      {available ? "Available" : isOpening ? "Opening Soon" : "Reserved"}
+      {available
+        ? passingPeriod
+          ? "Passing Period"
+          : "Available"
+        : isOpening
+          ? "Opening Soon"
+          : "Reserved"}
     </Badge>
   );
 });
@@ -449,6 +458,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                       <RoomBadge
                                         available={true}
                                         availableFor={room.availableFor}
+                                        passingPeriod={room.passingPeriod}
                                       />
                                     </div>
                                     {room.passingPeriod && room.nextClass ? (
