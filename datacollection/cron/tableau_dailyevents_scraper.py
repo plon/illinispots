@@ -5,8 +5,14 @@ from pathlib import Path
 from seleniumbase import SB
 import time
 import traceback
+import gzip
+from utils.tableauparser import TableauDataParser
+import json
+import re
+from supabase.client import create_client
+from dotenv import load_dotenv
+import os
 
-# Set up logging
 log_dir = Path(__file__).parent / "logs"
 log_dir.mkdir(exist_ok=True)
 
@@ -19,11 +25,14 @@ logging.basicConfig(
     ]
 )
 
+load_dotenv()
+
+supabase = create_client(
+    os.getenv("SUPABASE_URL"),
+    os.getenv("SUPABASE_KEY")
+)
 
 def wait_for_specific_request(sb, timeout: int = 30) -> bool:
-    """
-    Waits for the specific Tableau bootstrap session request
-    """
     start_time = time.time()
     target_url_pattern = 'DailyEventSummary/v/DailyEvents/bootstrapSession/sessions/'
 
@@ -70,7 +79,31 @@ def get_tableau_session(max_retries: int = 3, timeout: int = 30):
 
     return None
 
-def main():
+def decompress_response(request) -> str:
+    try:
+        if not request or not request.response:
+            logging.error("No valid response in request object")
+            return ""
+
+        content_encoding = request.response.headers.get('content-encoding', '').lower()
+
+        if content_encoding == 'gzip':
+            try:
+                decompressed_content = gzip.decompress(request.response.body).decode('utf-8')
+                logging.debug("Successfully decompressed gzipped content")
+                return decompressed_content
+            except Exception as e:
+                logging.error(f"Failed to decompress gzipped content: {str(e)}")
+                raise
+        else:
+            return request.response.body.decode('utf-8')
+
+    except Exception as e:
+        logging.error(f"Error processing response: {str(e)}")
+        logging.error(traceback.format_exc())
+        raise
+
+if __name__ == "__main__":
     try:
         logging.info("Starting Tableau session scraper")
         request = get_tableau_session()
@@ -79,16 +112,32 @@ def main():
             logging.info("Successfully retrieved request:")
             logging.info(f"URL: {request.url}")
             logging.info(f"Session ID: {request.response.headers.get('x-session-id')}")
-            print(request.response.body)
+
+            content = decompress_response(request)
+            dataReg = re.search(r"\d+;({.*})\d+;({.*})", content, re.MULTILINE)
+            if dataReg:
+                data = dataReg.group(2)
+            else:
+                logging.error("Failed to find data pattern in content")
+                sys.exit(1)
+            try:
+                json_data = json.loads(data)
+
+                parser = TableauDataParser(json_data)
+
+                all_data = parser.to_dict()
+
+                print(json.dumps(all_data, indent=4, ensure_ascii=False))
+
+            except json.JSONDecodeError as e:
+                logging.error(f"Failed to parse JSON content: {str(e)}")
+                sys.exit(1)
+
         else:
             logging.error("Failed to retrieve session info after all attempts")
             sys.exit(1)
-
 
     except Exception as e:
         logging.error(f"Critical error in main execution: {str(e)}")
         logging.error(traceback.format_exc())
         sys.exit(1)
-
-if __name__ == "__main__":
-    main()

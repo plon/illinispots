@@ -43,3 +43,6 @@ __pycache__/
 
 # seleniumbase
 /downloaded_files
+
+# Cron
+logs/

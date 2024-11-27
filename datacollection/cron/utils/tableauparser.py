@@ -1,4 +1,4 @@
-import json
+from .buildingnames import alias_map
 
 class TableauDataParser:
     def __init__(self, json_data):
@@ -58,34 +58,47 @@ class TableauDataParser:
             return []
 
     def to_dict(self, columns_to_skip=None):
-        """Convert all data to dictionary format, excluding specified columns"""
+        """Convert data to nested dictionary format organized by buildings and rooms"""
         if columns_to_skip is None:
             columns_to_skip = ["Measure Names", "Measure Values", "Open/Close",
-                              "Customer/Contact", "StartDate", "CustomerContact"]
+                              "Customer/Contact", "StartDate", "CustomerContact", "Customer"]
 
-        result = {}
+        # Get all column data
+        all_data = {}
         for col_name in self.get_column_names():
             if col_name not in columns_to_skip:
-                result[col_name] = self.get_column_data(col_name)
+                all_data[col_name] = self.get_column_data(col_name)
+
+        result = {"buildings": {}}
+
+        for i in range(len(all_data.get("Building", []))):
+            building = all_data["Building"][i]
+
+            # Skip if building not in alias mapping
+            if building not in alias_map:
+                continue
+
+            room = all_data["Room"][i]
+            event_name = all_data["EventName"][i]
+            start_time = all_data["StartTime"][i][:-3] # removes seconds
+
+            full_end_time = all_data["ATTR(EndTime)"][i]
+            end_time = full_end_time.split()[1][:-3]
+
+            if building not in result["buildings"]:
+                result["buildings"][building] = {"rooms": {}}
+
+            if room not in result["buildings"][building]["rooms"]:
+                result["buildings"][building]["rooms"][room] = []
+
+            event_info = {
+                "event_name": event_name,
+                "time": {
+                    "start": start_time,
+                    "end": end_time
+                }
+            }
+
+            result["buildings"][building]["rooms"][room].append(event_info)
+
         return result
-
-
-with open('data.json', 'r') as f:
-    json_data = f.read()
-
-json_data = json.loads(json_data)
-
-parser = TableauDataParser(json_data)
-
-# # Get column names
-# columns = parser.get_column_names()
-# print("Columns:", columns)
-
-# # Get data for specific column
-# building_data = parser.get_column_data("Building")
-# print("Building data:", building_data)
-
-all_data = parser.to_dict()
-
-with open('output.json', 'w', encoding='utf-8') as f:
-    json.dump(all_data, f, indent=4, ensure_ascii=False)
