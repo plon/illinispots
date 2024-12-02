@@ -51,43 +51,48 @@ const RoomBadge: React.FC<{
   availableFor?: number;
   available: boolean;
   passingPeriod?: boolean;
-}> = memo(({ availableAt, availableFor, available, passingPeriod }) => {
-  const isOpening = useMemo(() => {
-    if (!availableAt || !availableFor) return false;
-    const [availableHours, availableMinutes] = availableAt.split(":");
-    const now = moment().tz("America/Chicago");
-    const availableTime = moment()
-      .tz("America/Chicago")
-      .hours(parseInt(availableHours, 10))
-      .minutes(parseInt(availableMinutes, 10))
-      .seconds(0);
-    const diffInMinutes = availableTime.diff(now, "minutes");
-    return diffInMinutes <= 20 && diffInMinutes > 0 && availableFor >= 30;
-  }, [availableAt, availableFor]);
+  isLibrary?: boolean;
+}> = memo(
+  ({ availableAt, availableFor, available, passingPeriod, isLibrary }) => {
+    const isOpening = useMemo(() => {
+      if (!availableAt || !availableFor) return false;
+      const [availableHours, availableMinutes] = availableAt.split(":");
+      const now = moment().tz("America/Chicago");
+      const availableTime = moment()
+        .tz("America/Chicago")
+        .hours(parseInt(availableHours, 10))
+        .minutes(parseInt(availableMinutes, 10))
+        .seconds(0);
+      const diffInMinutes = availableTime.diff(now, "minutes");
+      return diffInMinutes <= 20 && diffInMinutes > 0 && availableFor >= 30;
+    }, [availableAt, availableFor]);
 
-  return (
-    <Badge
-      variant="outline"
-      className={`${
-        available
+    return (
+      <Badge
+        variant="outline"
+        className={`${
+          available
+            ? passingPeriod
+              ? "bg-gray-50 text-gray-700 border-gray-300"
+              : "bg-green-50 text-green-700 border-green-300"
+            : isOpening
+              ? "bg-yellow-50 text-yellow-700 border-yellow-300"
+              : "bg-red-50 text-red-700 border-red-300"
+        }`}
+      >
+        {available
           ? passingPeriod
-            ? "bg-gray-50 text-gray-700 border-gray-300"
-            : "bg-green-50 text-green-700 border-green-300"
+            ? "Passing Period"
+            : "Available"
           : isOpening
-            ? "bg-yellow-50 text-yellow-700 border-yellow-300"
-            : "bg-red-50 text-red-700 border-red-300"
-      }`}
-    >
-      {available
-        ? passingPeriod
-          ? "Passing Period"
-          : "Available"
-        : isOpening
-          ? "Opening Soon"
-          : "Reserved"}
-    </Badge>
-  );
-});
+            ? "Opening Soon"
+            : isLibrary
+              ? "Reserved"
+              : "Occupied"}
+      </Badge>
+    );
+  },
+);
 
 RoomBadge.displayName = "RoomBadge";
 
@@ -339,6 +344,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                       room.nextAvailable || undefined
                                     }
                                     availableFor={room.available_duration}
+                                    isLibrary={true}
                                   />
                                 </div>
                               </AccordionTrigger>
@@ -459,6 +465,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                         available={true}
                                         availableFor={room.availableFor}
                                         passingPeriod={room.passingPeriod}
+                                        isLibrary={false}
                                       />
                                     </div>
                                     {room.passingPeriod && room.nextClass ? (
@@ -534,6 +541,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                         available={false}
                                         availableAt={room.availableAt}
                                         availableFor={room.availableFor}
+                                        isLibrary={false}
                                       />
                                     </div>
                                     {room.currentClass && (
