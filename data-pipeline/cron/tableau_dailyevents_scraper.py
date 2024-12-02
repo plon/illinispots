@@ -11,6 +11,9 @@ import gzip
 from utils.tableauparser import TableauDataParser
 import json
 import re
+from supabase import create_client
+import os
+from dotenv import load_dotenv
 
 log_dir = Path(__file__).parent / "logs"
 log_dir.mkdir(exist_ok=True)
@@ -22,6 +25,14 @@ logging.basicConfig(
         logging.FileHandler(log_dir / f'tableau_scraper_{datetime.now(timezone.utc).strftime("%Y%m%d")}.log'),
         logging.StreamHandler(sys.stdout)
     ]
+)
+
+
+load_dotenv('.env.local')
+
+supabase = create_client(
+    os.getenv("NEXT_PUBLIC_SUPABASE_URL"),
+    os.getenv("SUPABASE_KEY")
 )
 
 def wait_for_specific_request(driver, timeout: int = 30) -> bool:
@@ -108,6 +119,46 @@ def decompress_response(request) -> str:
         logging.error(traceback.format_exc())
         raise
 
+def load_events_to_db(event_data):
+    try:
+        events_to_insert = []
+        today_str = datetime.now(timezone.utc).date().isoformat()
+
+        # Clear existing events for today first
+        delete_result = supabase.table('daily_events').delete().eq('event_date', today_str).execute()
+        logging.info(f"Cleared existing events for {today_str}")
+
+        for building_name, building_data in event_data['buildings'].items():
+            for room_number, events in building_data['rooms'].items():
+                for event in events:
+                    events_to_insert.append({
+                        'building_name': building_name,
+                        'room_number': room_number,
+                        'event_name': event['event_name'],
+                        'occupant': event['occupant'],
+                        'start_time': event['time']['start'],
+                        'end_time': event['time']['end'],
+                        'event_date': today_str
+                    })
+
+        if events_to_insert:
+            batch_size = 100
+            for i in range(0, len(events_to_insert), batch_size):
+                batch = events_to_insert[i:i + batch_size]
+                result = supabase.table('daily_events').insert(batch).execute()
+                logging.info(f"Inserted batch of {len(batch)} events")
+
+            logging.info(f"Successfully inserted total of {len(events_to_insert)} events")
+            return True
+        else:
+            logging.info("No events to insert")
+            return False
+
+    except Exception as e:
+        logging.error(f"Error loading events to database: {str(e)}")
+        logging.error(traceback.format_exc())
+        return False
+
 if __name__ == "__main__":
     try:
         logging.info("Starting Tableau session scraper")
@@ -127,14 +178,18 @@ if __name__ == "__main__":
                 sys.exit(1)
             try:
                 json_data = json.loads(data)
-
                 parser = TableauDataParser(json_data)
-
                 all_data = parser.to_dict()
 
-                logging.info(f"Final parsed data:\n{json.dumps(all_data, indent=4, ensure_ascii=False)}")
+                logging.info("Parsed data successfully, attempting database upload...")
 
-                print(json.dumps(all_data, indent=4, ensure_ascii=False))
+                if load_events_to_db(all_data):
+                    logging.info("Successfully uploaded events to database")
+                else:
+                    logging.error("Failed to upload events to database")
+                    sys.exit(1)
+
+                logging.info(f"Final parsed data:\n{json.dumps(all_data, indent=4, ensure_ascii=False)}")
 
             except json.JSONDecodeError as e:
                 logging.error(f"Failed to parse JSON content: {str(e)}")

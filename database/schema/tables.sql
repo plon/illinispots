@@ -34,3 +34,16 @@ CREATE TABLE class_schedule (
     day_of_week CHAR(1) NOT NULL,
     FOREIGN KEY (building_name, room_number) REFERENCES rooms(building_name, room_number)
 );
+
+CREATE TABLE daily_events (
+    id SERIAL PRIMARY KEY,
+    building_name TEXT NOT NULL,
+    room_number TEXT NOT NULL,
+    event_name TEXT NOT NULL,
+    occupant TEXT NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    event_date DATE NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    FOREIGN KEY (building_name, room_number) REFERENCES rooms(building_name, room_number)
+);

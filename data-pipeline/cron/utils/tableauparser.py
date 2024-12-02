@@ -61,7 +61,7 @@ class TableauDataParser:
         """Convert data to nested dictionary format organized by buildings and rooms"""
         if columns_to_skip is None:
             columns_to_skip = ["Measure Names", "Measure Values", "Open/Close",
-                              "Customer/Contact", "StartDate", "CustomerContact", "Customer"]
+                            "Customer/Contact", "StartDate", "CustomerContact"]
 
         # Get all column data
         all_data = {}
@@ -78,27 +78,31 @@ class TableauDataParser:
             if building not in alias_map:
                 continue
 
+            # Use the alias mapping instead of the original building name
+            building_alias = alias_map[building]
+
             room = all_data["Room"][i]
             event_name = all_data["EventName"][i]
             start_time = all_data["StartTime"][i][:-3] # removes seconds
-
+            occupant = all_data["Customer"][i]
             full_end_time = all_data["ATTR(EndTime)"][i]
             end_time = full_end_time.split()[1][:-3]
 
-            if building not in result["buildings"]:
-                result["buildings"][building] = {"rooms": {}}
+            if building_alias not in result["buildings"]:
+                result["buildings"][building_alias] = {"rooms": {}}
 
-            if room not in result["buildings"][building]["rooms"]:
-                result["buildings"][building]["rooms"][room] = []
+            if room not in result["buildings"][building_alias]["rooms"]:
+                result["buildings"][building_alias]["rooms"][room] = []
 
             event_info = {
                 "event_name": event_name,
+                "occupant": occupant,
                 "time": {
                     "start": start_time,
                     "end": end_time
                 }
             }
 
-            result["buildings"][building]["rooms"][room].append(event_info)
+            result["buildings"][building_alias]["rooms"][room].append(event_info)
 
         return result
