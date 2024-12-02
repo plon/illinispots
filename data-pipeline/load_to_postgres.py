@@ -44,9 +44,9 @@ from typing import List, Dict, Set
 from datetime import datetime
 import os
 import asyncio
-from dotenv import load_dotenv
+from dotenv import load_dotenv,find_dotenv
 
-load_dotenv('.env.local')
+load_dotenv(find_dotenv('.env.local'))
 
 supabase = create_client(
     os.getenv("NEXT_PUBLIC_SUPABASE_URL"),

@@ -13,7 +13,7 @@ import json
 import re
 from supabase import create_client
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
 log_dir = Path(__file__).parent / "logs"
 log_dir.mkdir(exist_ok=True)
@@ -28,7 +28,7 @@ logging.basicConfig(
 )
 
 
-load_dotenv('.env.local')
+load_dotenv(find_dotenv('.env.local'))
 
 supabase = create_client(
     os.getenv("NEXT_PUBLIC_SUPABASE_URL"),
