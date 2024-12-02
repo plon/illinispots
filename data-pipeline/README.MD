@@ -5,7 +5,7 @@ This directory contains scripts for collecting and processing UIUC course and bu
 ## Scripts & Data Flow
 
 1. **oneshotscraper.py**
-   - Scrapes all course data from courses.illinois.edu (currently only scraping 2024 fall potB in person courses with fixed meeting location and times)
+   - Scrapes all course data from courses.illinois.edu
    - Output: `subject_data.json`
 
 2. **subject_to_buildings.py**
@@ -33,6 +33,11 @@ This directory contains scripts for collecting and processing UIUC course and bu
    - Input: `filtered_buildings.json`
    - Creates and populates database tables
 
+7. **tableau_dailyevents_scraper.py**
+   - Scrapes daily event data from [Tableau](https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents) and loads it into PostgreSQL
+   - Updates the `daily_events` table with current day's events
+   - **Note:** This script is intended to run as a cron job daily to keep the `daily_events` table up-to-date.
+
 ## Data Flow Diagram
 ```
 Web Data → subject_data.json → building_data.json → filtered_buildings.json
@@ -40,13 +45,17 @@ Web Data → subject_data.json → building_data.json → filtered_buildings.jso
                                             [+ building hours & coordinates]
                                                           ↓
                                                     Database Load
+                                                          ↓
+                                            [+ daily events from Tableau]
+                                                          ↓
+                                                    Database Update
 ```
 
 ## Setup
 
 1. Install required packages:
 ```bash
-pip install curl-cffi==0.7.3 beautifulsoup4==4.12.3 supabase==1.0.4 python-dotenv==1.0.0
+pip install curl-cffi==0.7.3 beautifulsoup4==4.12.3 supabase==1.0.4 python-dotenv==1.0.0 selenium==4.27.1 selenium-wire==5.1.0
 ```
 
 2. Run the scripts in sequence:
@@ -92,6 +101,19 @@ CREATE TABLE class_schedule (
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     day_of_week CHAR(1) NOT NULL,
+    FOREIGN KEY (building_name, room_number) REFERENCES rooms(building_name, room_number)
+);
+
+CREATE TABLE daily_events (
+    id SERIAL PRIMARY KEY,
+    building_name TEXT NOT NULL,
+    room_number TEXT NOT NULL,
+    event_name TEXT NOT NULL,
+    occupant TEXT NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    event_date DATE NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
     FOREIGN KEY (building_name, room_number) REFERENCES rooms(building_name, room_number)
 );
 ```

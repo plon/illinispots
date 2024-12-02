@@ -11,6 +11,7 @@ IlliniSpots is a web application that helps UIUC students find available study s
   - Current classes in session
   - Upcoming class schedules
   - Room availability times and length
+- Integration of updated daily events for a comprehensive and up-to-date view of room usage
 - Library-specific features:
   - Real-time study room availability
   - Reservation slot visualization
@@ -21,10 +22,11 @@ IlliniSpots is a web application that helps UIUC students find available study s
 ## Tech Stack
 
 ### Frontend
-- Next.js 14 (App Router)
+- Next.js
+- React (memo, hooks)
 - TypeScript
 - Tailwind CSS
-- shadcn/ui (Radix UI components)
+- shadcn/ui
 - MapLibre GL JS (with special thanks to [openfreemap](https://openfreemap.org/) and its creator [Zsolt Ero](https://x.com/hyperknot) for providing free map tiles)
 
 ### Backend
@@ -36,9 +38,10 @@ IlliniSpots is a web application that helps UIUC students find available study s
 
 All data used for calculating room availability is sourced from the University of Illinois at Urbana-Champaign's official resources:
 
-- **Class Data**: Sourced from the [Course Explorer](https://courses.illinois.edu/). This includes  information about when classes meet, which is used to determine room occupancy. For more details on the data collection process, please refer to the [data collection README](datacollection/README.MD).
+- **Class Data**: Sourced from the [Course Explorer](https://courses.illinois.edu/). This includes  information about when classes meet, which is used to determine room occupancy. For more details on the data collection process, please refer to the [data-pipeline README](data-pipeline/README.MD).
 - **Building Hours**: Sourced from the [Facility Scheduling and Resources](https://operations.illinois.edu/facility-scheduling-and-resources/daily-event-summaries/).
-- **Library Data**: Sourced from UIUC Library's [Room Reservation System](https://uiuc.libcal.com/).
+- **Library Data**: Sourced from UIUC Library's [Room Reservation System](https://uiuc.libcal.com/allspaces).
+- **Daily Events**: Sourced from the [Tableau Daily Event Summary](https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents).
 
 ## Core Algorithm
 ### [get_current_building_status.sql](database/functions/get_current_building_status.sql)
@@ -46,18 +49,18 @@ All data used for calculating room availability is sourced from the University o
 The availability logic is handled by a PostgreSQL function that processes building and room status through three main stages:
 
 1. **State Detection**
-- **How**: Uses a series of CTEs that join current time against class_schedule table
+- **How**: Uses a series of CTEs that join current time against class_schedule and daily_events tables
 - **Implementation**: First maps day codes (M-U) to hours via CASE statements, then performs time window overlap with check_time
 ```
-current time (3:15 PM) → finds active classes → determines if room occupied
+current time (3:15 PM) → finds active classes/events → determines if room occupied
 Example: Room 101 has class 3:00-4:00 PM = occupied
 ```
 
 2. **Gap Analysis**
-- **How**: Recursive CTE traverses chronologically sorted class times
+- **How**: Recursive CTE traverses chronologically sorted class/event times
 - **Implementation**: For each room:
     1. Starts at first available time
-    2. Checks interval to next class
+    2. Checks interval to next class/event
     3. If gap >= minimum_useful_minutes (configured at 30), marks as available period
     4. Repeats until finding valid gap or reaching building close
 ```
@@ -68,7 +71,7 @@ Gap found: 4:00-5:00 (60min) = valid gap > minimum_useful_minutes
 3. **Duration Calculation**
 - **How**: Epoch time arithmetic between current_time and next constraint
 - **Implementation**: Takes earliest of:
-    - Next class start time
+    - Next class/event start time
     - Building closure time
     - End of current gap
 ```

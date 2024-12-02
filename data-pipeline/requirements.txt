@@ -2,3 +2,5 @@ curl_cffi==0.7.3
 beautifulsoup4==4.12.3
 supabase==1.0.4
 python-dotenv==1.0.0
+selenium==4.27.1
+selenium-wire==5.1.0
