@@ -39,32 +39,76 @@ BEGIN
             END as close_time
         FROM buildings b
     ),
-    current_classes AS (
+    current_occupancy AS (
+        -- Classes currently in session
         SELECT
             building_name,
             room_number,
-            course_code,
-            course_title,
+            course_code as identifier,
+            course_title as title,
             start_time,
-            end_time
+            end_time,
+            'class' as source_type
         FROM class_schedule
         WHERE day_of_week = check_day
         AND check_time BETWEEN start_time AND end_time
+
+        UNION ALL
+
+        -- Current daily events
+        SELECT
+            building_name,
+            room_number,
+            occupant as identifier,
+            event_name as title,
+            start_time,
+            end_time,
+            'event' as source_type
+        FROM daily_events
+        WHERE event_date = CURRENT_DATE
+        AND check_time BETWEEN start_time AND end_time
     ),
-    next_classes AS (
+    next_occupancy AS (
         SELECT DISTINCT ON (building_name, room_number)
             building_name,
             room_number,
-            course_code,
-            course_title,
+            identifier,
+            title,
             start_time,
-            end_time
-        FROM class_schedule
-        WHERE day_of_week = check_day
-        AND start_time > check_time
+            end_time,
+            source_type
+        FROM (
+            -- Next scheduled classes
+            SELECT
+                building_name,
+                room_number,
+                course_code as identifier,
+                course_title as title,
+                start_time,
+                end_time,
+                'class' as source_type
+            FROM class_schedule
+            WHERE day_of_week = check_day
+            AND start_time > check_time
+
+            UNION ALL
+
+            -- Next daily events
+            SELECT
+                building_name,
+                room_number,
+                occupant as identifier,
+                event_name as title,
+                start_time,
+                end_time,
+                'event' as source_type
+            FROM daily_events
+            WHERE event_date = CURRENT_DATE
+            AND start_time > check_time
+        ) combined
         ORDER BY building_name, room_number, start_time
     ),
-    remaining_classes AS (
+    remaining_occupancy AS (
         SELECT
             building_name,
             room_number,
@@ -75,9 +119,21 @@ BEGIN
                 )
                 ORDER BY start_time
             ) as class_sequence
-        FROM class_schedule
-        WHERE day_of_week = check_day
-        AND start_time > check_time
+        FROM (
+            -- Remaining classes
+            SELECT building_name, room_number, start_time, end_time
+            FROM class_schedule
+            WHERE day_of_week = check_day
+            AND start_time > check_time
+
+            UNION ALL
+
+            -- Remaining events
+            SELECT building_name, room_number, start_time, end_time
+            FROM daily_events
+            WHERE event_date = CURRENT_DATE
+            AND start_time > check_time
+        ) combined
         GROUP BY building_name, room_number
     ),
     room_status AS (
@@ -85,36 +141,38 @@ BEGIN
             r.building_name,
             r.room_number,
             CASE
-                WHEN cc.room_number IS NOT NULL THEN 'occupied'
+                WHEN co.room_number IS NOT NULL THEN 'occupied'
                 ELSE 'available'
             END as status,
-            cc.end_time as available_at,
-            nc.start_time as available_until,
-            CASE WHEN cc.room_number IS NOT NULL THEN
+            co.end_time as available_at,
+            no.start_time as available_until,
+            CASE WHEN co.room_number IS NOT NULL THEN
                 jsonb_build_object(
-                    'course', cc.course_code,
-                    'title', cc.course_title,
+                    'type', co.source_type,
+                    'course', co.identifier,
+                    'title', co.title,
                     'time', jsonb_build_object(
-                        'start', cc.start_time::text,
-                        'end', cc.end_time::text
+                        'start', co.start_time::text,
+                        'end', co.end_time::text
                     )
                 )
             ELSE NULL END as current_class,
-            CASE WHEN nc.room_number IS NOT NULL THEN
+            CASE WHEN no.room_number IS NOT NULL THEN
                 jsonb_build_object(
-                    'course', nc.course_code,
-                    'title', nc.course_title,
+                    'type', no.source_type,
+                    'course', no.identifier,
+                    'title', no.title,
                     'time', jsonb_build_object(
-                        'start', nc.start_time::text,
-                        'end', nc.end_time::text
+                        'start', no.start_time::text,
+                        'end', no.end_time::text
                     )
                 )
             ELSE NULL END as next_class
         FROM rooms r
-        LEFT JOIN current_classes cc ON r.building_name = cc.building_name
-            AND r.room_number = cc.room_number
-        LEFT JOIN next_classes nc ON r.building_name = nc.building_name
-            AND r.room_number = nc.room_number
+        LEFT JOIN current_occupancy co ON r.building_name = co.building_name
+            AND r.room_number = co.room_number
+        LEFT JOIN next_occupancy no ON r.building_name = no.building_name
+            AND r.room_number = no.room_number
     ),
     meaningful_gap AS (
         SELECT
@@ -128,7 +186,7 @@ BEGIN
                             rc.class_sequence,
                             dh.close_time
                         FROM room_status rs2
-                        LEFT JOIN remaining_classes rc
+                        LEFT JOIN remaining_occupancy rc
                             ON rs2.building_name = rc.building_name
                             AND rs2.room_number = rc.room_number
                         CROSS JOIN day_hours dh
@@ -248,9 +306,9 @@ BEGIN
                                 'nextClass', rs.next_class,
                                 'passingPeriod',
                                 CASE
-                                    WHEN cc.room_number IS NULL
-                                    AND nc.room_number IS NOT NULL
-                                    AND (nc.start_time - check_time) < minimum_useful_interval
+                                    WHEN co.room_number IS NULL
+                                    AND no.room_number IS NOT NULL
+                                    AND (no.start_time - check_time) < minimum_useful_interval
                                     THEN true
                                     ELSE false
                                 END,
@@ -260,7 +318,7 @@ BEGIN
                                     THEN COALESCE(mgp.meaningful_available_at::text, dh.close_time::text)
                                     ELSE NULL
                                 END,
-                                'availableFor',
+'availableFor',
                                 CASE
                                     WHEN rs.status = 'occupied' THEN
                                         CASE
@@ -292,10 +350,10 @@ BEGIN
                             )
                         )
                         FROM room_status rs
-                        LEFT JOIN current_classes cc ON rs.building_name = cc.building_name
-                            AND rs.room_number = cc.room_number
-                        LEFT JOIN next_classes nc ON rs.building_name = nc.building_name
-                            AND rs.room_number = nc.room_number
+                        LEFT JOIN current_occupancy co ON rs.building_name = co.building_name
+                            AND rs.room_number = co.room_number
+                        LEFT JOIN next_occupancy no ON rs.building_name = no.building_name
+                            AND rs.room_number = no.room_number
                         LEFT JOIN meaningful_gap_parsed mgp ON rs.building_name = mgp.building_name
                             AND rs.room_number = mgp.room_number
                         WHERE rs.building_name = dh.name
@@ -317,9 +375,7 @@ BEGIN
 
     RETURN result;
 END;
-$$
-
-LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_class_schedule_day_time
@@ -333,3 +389,9 @@ CREATE INDEX IF NOT EXISTS idx_rooms_building_room
 
 CREATE INDEX IF NOT EXISTS idx_class_schedule_room_day
     ON class_schedule(building_name, room_number, day_of_week);
+
+CREATE INDEX IF NOT EXISTS idx_daily_events_date_time
+    ON daily_events(event_date, start_time, end_time);
+
+CREATE INDEX IF NOT EXISTS idx_daily_events_room
+    ON daily_events(building_name, room_number);

@@ -34,3 +34,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Python
+.mypy_cache
+.ropeproject
+__pycache__/
+*.pyc
+
+# seleniumbase
+/downloaded_files
+
+# Cron
+logs/
