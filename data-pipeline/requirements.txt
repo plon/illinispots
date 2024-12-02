@@ -4,3 +4,4 @@ supabase==1.0.4
 python-dotenv==1.0.0
 selenium==4.27.1
 selenium-wire==5.1.0
+blinker==1.7.0
