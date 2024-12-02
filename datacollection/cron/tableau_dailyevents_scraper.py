@@ -2,16 +2,15 @@ import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from seleniumbase import SB
+from seleniumwire import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 import time
 import traceback
 import gzip
 from utils.tableauparser import TableauDataParser
 import json
 import re
-from supabase.client import create_client
-from dotenv import load_dotenv
-import os
 
 log_dir = Path(__file__).parent / "logs"
 log_dir.mkdir(exist_ok=True)
@@ -25,19 +24,12 @@ logging.basicConfig(
     ]
 )
 
-load_dotenv()
-
-supabase = create_client(
-    os.getenv("SUPABASE_URL"),
-    os.getenv("SUPABASE_KEY")
-)
-
-def wait_for_specific_request(sb, timeout: int = 30) -> bool:
+def wait_for_specific_request(driver, timeout: int = 30) -> bool:
     start_time = time.time()
     target_url_pattern = 'DailyEventSummary/v/DailyEvents/bootstrapSession/sessions/'
 
     while time.time() - start_time < timeout:
-        for request in sb.driver.requests:
+        for request in driver.requests:
             if target_url_pattern in request.url:
                 if request.response and request.response.headers:
                     logging.info("Found target request!")
@@ -47,7 +39,6 @@ def wait_for_specific_request(sb, timeout: int = 30) -> bool:
     logging.warning(f"Target request not found within {timeout} seconds")
     return False
 
-
 def get_tableau_session(max_retries: int = 3, timeout: int = 30):
     """
     Attempts to get Tableau session information and returns the request object
@@ -56,17 +47,31 @@ def get_tableau_session(max_retries: int = 3, timeout: int = 30):
         try:
             logging.info(f"Attempt {attempt + 1} of {max_retries}")
 
-            with SB(wire=True, test=False, headless=True) as sb:
-                sb.driver.get("https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents")
-                if wait_for_specific_request(sb, timeout):
-                    for request in sb.driver.requests:
+            options = Options()
+            options.add_argument('--headless')
+            options.add_argument('--no-sandbox')
+            options.add_argument('--disable-dev-shm-usage')
+            options.binary_location = "/usr/bin/chromium-browser"
+            service = Service('/usr/bin/chromedriver')
+
+            driver = webdriver.Chrome(
+                service=service,
+                options=options,
+                seleniumwire_options={}
+            )
+
+            try:
+                driver.get("https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents")
+                if wait_for_specific_request(driver, timeout):
+                    for request in driver.requests:
                         if 'vizql/w/DailyEventSummary/v/DailyEvents/bootstrapSession/sessions/' in request.url:
                             if request.response and request.response.headers:
                                 for header_name, header_value in request.response.headers.items():
                                     if 'x-session-id' in header_name.lower():
                                         return request
-
                 logging.warning(f"Session ID not found in attempt {attempt + 1}")
+            finally:
+                driver.quit()
 
         except Exception as e:
             logging.error(f"Error in attempt {attempt + 1}: {str(e)}")
