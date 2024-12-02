@@ -46,12 +46,10 @@ import os
 import asyncio
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+load_dotenv('.env.local')
 
-# Initialize Supabase client
 supabase = create_client(
-    os.getenv("SUPABASE_URL"),
+    os.getenv("NEXT_PUBLIC_SUPABASE_URL"),
     os.getenv("SUPABASE_KEY")
 )
 
