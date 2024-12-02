@@ -132,6 +132,8 @@ if __name__ == "__main__":
 
                 all_data = parser.to_dict()
 
+                logging.info(f"Final parsed data:\n{json.dumps(all_data, indent=4, ensure_ascii=False)}")
+
                 print(json.dumps(all_data, indent=4, ensure_ascii=False))
 
             except json.JSONDecodeError as e:
