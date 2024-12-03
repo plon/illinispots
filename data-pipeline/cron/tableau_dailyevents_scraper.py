@@ -124,9 +124,9 @@ def load_events_to_db(event_data):
         events_to_insert = []
         today_str = datetime.now(timezone.utc).date().isoformat()
 
-        # Clear existing events for today first
-        delete_result = supabase.table('daily_events').delete().eq('event_date', today_str).execute()
-        logging.info(f"Cleared existing events for {today_str}")
+        # Clear table
+        delete_result = supabase.table('daily_events').delete().neq('event_name', None).execute()
+        logging.info("Cleared all existing events")
 
         for building_name, building_data in event_data['buildings'].items():
             for room_number, events in building_data['rooms'].items():
