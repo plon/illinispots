@@ -121,6 +121,9 @@ def decompress_response(request) -> str:
 
 def load_events_to_db(event_data):
     try:
+        result = supabase.table('rooms').select('building_name,room_number').execute()
+        valid_rooms = {(room['building_name'], room['room_number']) for room in result.data}
+
         events_to_insert = []
         today_str = datetime.now(timezone.utc).date().isoformat()
 
@@ -128,18 +131,29 @@ def load_events_to_db(event_data):
         delete_result = supabase.table('daily_events').delete().neq('event_name', None).execute()
         logging.info("Cleared all existing events")
 
+        skipped_rooms = set()  # To keep track of skipped rooms for logging
+
         for building_name, building_data in event_data['buildings'].items():
             for room_number, events in building_data['rooms'].items():
-                for event in events:
-                    events_to_insert.append({
-                        'building_name': building_name,
-                        'room_number': room_number,
-                        'event_name': event['event_name'],
-                        'occupant': event['occupant'],
-                        'start_time': event['time']['start'],
-                        'end_time': event['time']['end'],
-                        'event_date': today_str
-                    })
+                # Check if room exists in valid_rooms set
+                if (building_name, room_number) in valid_rooms:
+                    for event in events:
+                        events_to_insert.append({
+                            'building_name': building_name,
+                            'room_number': room_number,
+                            'event_name': event['event_name'],
+                            'occupant': event['occupant'],
+                            'start_time': event['time']['start'],
+                            'end_time': event['time']['end'],
+                            'event_date': today_str
+                        })
+                else:
+                    skipped_rooms.add((building_name, room_number))
+
+        if skipped_rooms:
+            logging.warning(f"Skipped events for {len(skipped_rooms)} rooms not present in rooms table:")
+            for building, room in sorted(skipped_rooms):
+                logging.warning(f"- {building}: Room {room}")
 
         if events_to_insert:
             batch_size = 100
