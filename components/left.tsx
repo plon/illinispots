@@ -478,19 +478,27 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                       <>
                                         {room.availableFor && (
                                           <p className="text-xs text-muted-foreground">
-                                            Available for{" "}
+                                            <span className="font-medium text-foreground/70">
+                                              Available for:
+                                            </span>{" "}
                                             {formatDuration(room.availableFor)}
                                           </p>
                                         )}
                                         {room.availableUntil && (
                                           <p className="text-xs text-muted-foreground">
-                                            Until{" "}
+                                            <span className="font-medium text-foreground/70">
+                                              Until:
+                                            </span>{" "}
                                             {formatTime(room.availableUntil)}
                                           </p>
                                         )}
                                         {room.nextClass && (
                                           <p className="text-xs text-muted-foreground">
-                                            Next: {room.nextClass.course} at{" "}
+                                            <span className="font-medium text-foreground/70">
+                                              Next:
+                                            </span>{" "}
+                                            {room.nextClass.course} -{" "}
+                                            {room.nextClass.title} at{" "}
                                             {formatTime(
                                               room.nextClass.time.start,
                                             )}
@@ -546,14 +554,19 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                     </div>
                                     {room.currentClass && (
                                       <p className="text-xs text-muted-foreground">
-                                        Current: {room.currentClass.course} -{" "}
+                                        <span className="font-medium text-foreground/70">
+                                          Current:
+                                        </span>{" "}
+                                        {room.currentClass.course} -{" "}
                                         {room.currentClass.title}
                                       </p>
                                     )}
                                     {room.availableAt && (
                                       <div className="text-xs text-muted-foreground">
                                         <p>
-                                          Available at:{" "}
+                                          <span className="font-medium text-foreground/70">
+                                            Available at:
+                                          </span>{" "}
                                           {formatTime(room.availableAt)}
                                           {room.availableFor && (
                                             <span className="ml-1">
