@@ -470,6 +470,9 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                     </div>
                                     {room.passingPeriod && room.nextClass ? (
                                       <p className="text-xs text-muted-foreground">
+                                        <span className="font-medium text-foreground/70">
+                                          Next:
+                                        </span>{" "}
                                         {room.nextClass.course} -{" "}
                                         {room.nextClass.title} at{" "}
                                         {formatTime(room.nextClass.time.start)}
@@ -498,10 +501,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                               Next:
                                             </span>{" "}
                                             {room.nextClass.course} -{" "}
-                                            {room.nextClass.title} at{" "}
-                                            {formatTime(
-                                              room.nextClass.time.start,
-                                            )}
+                                            {room.nextClass.title}
                                           </p>
                                         )}
                                       </>
