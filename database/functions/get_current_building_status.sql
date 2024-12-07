@@ -8,6 +8,8 @@ DECLARE
     result JSONB;
     minimum_useful_interval INTERVAL;
 BEGIN
+    SET TIME ZONE 'America/Chicago';
+
     IF check_day NOT IN ('M','T','W','R','F','S','U') THEN
         RAISE EXCEPTION 'Invalid day_of_week: %', check_day;
     END IF;
