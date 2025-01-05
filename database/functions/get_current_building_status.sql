@@ -386,9 +386,6 @@ CREATE INDEX IF NOT EXISTS idx_class_schedule_day_time
 CREATE INDEX IF NOT EXISTS idx_class_schedule_next
     ON class_schedule(day_of_week, start_time);
 
-CREATE INDEX IF NOT EXISTS idx_rooms_building_room
-    ON rooms(building_name, room_number);
-
 CREATE INDEX IF NOT EXISTS idx_class_schedule_room_day
     ON class_schedule(building_name, room_number, day_of_week);
 
