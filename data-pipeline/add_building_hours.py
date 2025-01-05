@@ -7,7 +7,7 @@ class BuildingHoursProcessor:
     def __init__(self):
         self.data_dir = Path(__file__).parent / "data"
         self.buildings_file = self.data_dir / "filtered_buildings.json"
-        self.hours_file = self.data_dir / "buildinghours.json"
+        self.hours_file = self.data_dir / "building_hours.json"
         self.days_mapping = {
             "M-TH": ["monday", "tuesday", "wednesday", "thursday"],
             "F": ["friday"],
@@ -16,7 +16,6 @@ class BuildingHoursProcessor:
         }
 
     def load_data(self) -> tuple[Dict[str, Any], Dict[str, Any]]:
-        """Load building data and hours data from JSON files."""
         with open(self.buildings_file, 'r') as f:
             buildings_data = json.load(f)
 
@@ -26,12 +25,10 @@ class BuildingHoursProcessor:
         return buildings_data, hours_data
 
     def save_data(self, data: Dict[str, Any]) -> None:
-        """Save updated building data to JSON file."""
         with open(self.buildings_file, 'w') as f:
             json.dump(data, f, indent=2)
 
     def convert_time_format(self, time_str: str) -> Optional[str]:
-        """Convert time string to 24-hour format."""
         if time_str == "LOCKED":
             return None
 
@@ -46,7 +43,6 @@ class BuildingHoursProcessor:
             raise e
 
     def parse_building_hours(self, hours_dict: Dict[str, str]) -> Dict[str, Dict[str, Optional[str]]]:
-        """Parse building hours into standardized format."""
         formatted_hours = {}
 
         for day_group, hours in hours_dict.items():
@@ -73,11 +69,8 @@ class BuildingHoursProcessor:
         return formatted_hours
 
     def process(self) -> None:
-        """Main process to add building hours."""
-        # Load data
         buildings_data, hours_data = self.load_data()
 
-        # Process each building
         buildings_updated = 0
         for building_name in buildings_data['buildings']:
             if building_name in hours_data:
@@ -86,10 +79,8 @@ class BuildingHoursProcessor:
                 buildings_updated += 1
                 print(f"Updated hours for: {building_name}")
 
-        # Save updated data
         self.save_data(buildings_data)
 
-        # Print summary
         print(f"\nProcessing complete!")
         print(f"Updated hours for {buildings_updated} buildings")
 

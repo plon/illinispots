@@ -1,42 +1,3 @@
-"""
-CREATE TABLE buildings (
-    name TEXT PRIMARY KEY,
-    latitude DECIMAL(10,8),
-    longitude DECIMAL(10,8),
-    monday_open TIME,
-    monday_close TIME,
-    tuesday_open TIME,
-    tuesday_close TIME,
-    wednesday_open TIME,
-    wednesday_close TIME,
-    thursday_open TIME,
-    thursday_close TIME,
-    friday_open TIME,
-    friday_close TIME,
-    saturday_open TIME,
-    saturday_close TIME,
-    sunday_open TIME,
-    sunday_close TIME
-);
-
-CREATE TABLE rooms (
-    building_name TEXT REFERENCES buildings(name),
-    room_number TEXT,
-    PRIMARY KEY (building_name, room_number)
-);
-
-CREATE TABLE class_schedule (
-    building_name TEXT,
-    room_number TEXT,
-    course_code TEXT NOT NULL,
-    course_title TEXT NOT NULL,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL,
-    day_of_week CHAR(1) NOT NULL,
-    FOREIGN KEY (building_name, room_number) REFERENCES rooms(building_name, room_number)
-);
-"""
-
 from pathlib import Path
 from supabase import create_client
 import json
@@ -59,7 +20,6 @@ class DataValidationError(Exception):
     pass
 
 def validate_json_structure(json_data: Dict) -> None:
-    """Validate the JSON structure matches expected format"""
     if 'buildings' not in json_data:
         raise DataValidationError("Missing 'buildings' key in JSON")
 
@@ -160,7 +120,6 @@ def verify_data_counts(json_data: Dict, buildings: List[Dict], rooms: List[Dict]
         raise DataValidationError(f"Schedule count mismatch. Expected: {expected_schedules}, Got: {len(schedules)}")
 
 def bulk_insert(table_name: str, records: List[Dict]) -> Set:
-    """Insert records in chunks and verify insertion"""
     inserted_ids = set()
     failed_chunks = []
 
@@ -173,16 +132,13 @@ def bulk_insert(table_name: str, records: List[Dict]) -> Set:
             response = supabase.table(table_name).insert(chunk).execute()
             print(f"Inserted chunk {chunk_num}/{total_chunks} into {table_name}")
 
-            # Verify chunk insertion by counting
             start_id = i
             end_id = min(i + CHUNK_SIZE, len(records))
             expected_count = end_id - start_id
 
-            # Verify the count after each chunk
             current_count = supabase.table(table_name).select('*', count='exact').execute().count
             print(f"Current total count in {table_name}: {current_count}")
 
-            # Track inserted records
             for record in chunk:
                 if table_name == 'buildings':
                     key = record['name']
@@ -200,7 +156,6 @@ def bulk_insert(table_name: str, records: List[Dict]) -> Set:
     if failed_chunks:
         raise DataValidationError(f"Failed to insert {len(failed_chunks)} chunks into {table_name}")
 
-    # Final count verification
     final_count = supabase.table(table_name).select('*', count='exact').execute().count
     if final_count != len(records):
         raise DataValidationError(
@@ -211,8 +166,6 @@ def bulk_insert(table_name: str, records: List[Dict]) -> Set:
     return inserted_ids
 
 def verify_database_contents(buildings: List[Dict], rooms: List[Dict], schedules: List[Dict]) -> None:
-    """Verify that all data was inserted correctly using COUNT queries"""
-    # Verify buildings count
     db_buildings_count = supabase.table('buildings').select('*', count='exact').execute()
     building_count = db_buildings_count.count
     if building_count != len(buildings):
@@ -221,7 +174,6 @@ def verify_database_contents(buildings: List[Dict], rooms: List[Dict], schedules
         )
     print(f"Verified buildings count: {building_count}")
 
-    # Verify rooms count
     db_rooms_count = supabase.table('rooms').select('*', count='exact').execute()
     room_count = db_rooms_count.count
     if room_count != len(rooms):
@@ -230,7 +182,6 @@ def verify_database_contents(buildings: List[Dict], rooms: List[Dict], schedules
         )
     print(f"Verified rooms count: {room_count}")
 
-    # Verify schedules count
     db_schedules_count = supabase.table('class_schedule').select('*', count='exact').execute()
     schedule_count = db_schedules_count.count
     if schedule_count != len(schedules):
@@ -243,7 +194,6 @@ def verify_database_contents(buildings: List[Dict], rooms: List[Dict], schedules
 
 def main():
     try:
-        # Load and validate JSON
         data_dir = Path(__file__).parent / "data"
         print("Loading and validating JSON data...")
         with open(data_dir / 'filtered_buildings.json', 'r') as f:
@@ -252,20 +202,17 @@ def main():
         validate_json_structure(json_data)
         print("JSON structure validated successfully")
 
-        # Prepare and validate data
         print("\nPreparing and validating data...")
         buildings, rooms, schedules = prepare_and_validate_data(json_data)
         verify_data_counts(json_data, buildings, rooms, schedules)
         print("Data preparation validated successfully")
 
-        # Clear existing data
         print("\nClearing existing data...")
         supabase.table('class_schedule').delete().neq('building_name', '').execute()
         supabase.table('rooms').delete().neq('building_name', '').execute()
         supabase.table('buildings').delete().neq('name', '').execute()
         print("Existing data cleared successfully")
 
-        # Insert and verify data
         print("\nInserting and verifying data...")
         building_ids = bulk_insert('buildings', buildings)
         print(f"Inserted {len(building_ids)} buildings")
@@ -276,11 +223,9 @@ def main():
         schedule_ids = bulk_insert('class_schedule', schedules)
         print(f"Inserted {len(schedule_ids)} schedules")
 
-        # Final verification
         print("\nPerforming final database verification...")
         verify_database_contents(buildings, rooms, schedules)
 
-        # Print summary
         print("\nFinal Summary:")
         print(f"Buildings inserted and verified: {len(building_ids)}")
         print(f"Rooms inserted and verified: {len(room_ids)}")

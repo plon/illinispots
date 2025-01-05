@@ -112,12 +112,11 @@ def scrape_sections(html_content) -> List[Section]:
                 end_date_str = data['sectionDateRange'].split('-')[1].strip()
                 end_date = datetime.strptime(end_date_str, '%m/%d/%y').date()
 
-                # Skip if the section has already ended
                 if end_date < current_date:
                     continue
             except Exception as e:
                 print(f"Error parsing date range: {str(e)}")
-                # If we can't parse the date, we'll include the section to be safe
+                # If cannot parse date, include the section to be safe
                 pass
 
         times = re.findall(r'<div class="app-meeting">(.*?)</div>', data['time'])
@@ -158,7 +157,6 @@ def scrape_sections(html_content) -> List[Section]:
                 location_obj = parse_location(location_str)
                 days_list = parse_days(day_str)
 
-                # Create a tuple of the unique identifying components
                 section_key = (
                     time_obj.start,
                     time_obj.end,
@@ -184,35 +182,30 @@ def scrape_sections(html_content) -> List[Section]:
 
 def save_subject_data(subjects: List[Subject]):
     data_dir = Path(__file__).parent / "data"
-    # Convert all dataclasses to dictionaries
+
     data = {
         "last_updated": datetime.now().isoformat(),
         "subjects": [asdict(subject) for subject in subjects]
     }
 
-    # Save to file
-    output_file = data_dir / "subject_data.json"
+    output_file = data_dir / "subjects.json"
     with open(output_file, "w") as f:
         json.dump(data, f, indent=2)
 
 def scrape_all_data():
-    # Get all subjects first
     print("Fetching subjects...")
     r = requests.get("https://courses.illinois.edu/schedule/DEFAULT/DEFAULT")
     subjects = scrape_subjects(r.text)
 
     total_subjects = len(subjects)
 
-    # For each subject, get all courses
     for i, subject in enumerate(subjects, 1):
         print(f"Processing subject {i}/{total_subjects}: {subject.code}")
 
         try:
-            # Get courses for this subject
             r = requests.get(f"https://courses.illinois.edu/schedule/2024/fall/{subject.code}")
             courses = scrape_courses(r.text)
 
-            # For each course, get sections
             for j, course in enumerate(courses):
                 try:
                     course_number = course.number.split()[1]
@@ -232,10 +225,8 @@ def scrape_all_data():
             print(f"Error processing subject {subject.code}: {str(e)}")
             continue
 
-    # Remove subjects with no courses
     subjects = [subject for subject in subjects if len(subject.courses) > 0]
 
-    # Save the data
     save_subject_data(subjects)
 
     return subjects
