@@ -5,7 +5,9 @@ from curl_cffi import requests
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, date
 import json
-from typing import List
+from typing import List, Optional
+
+VALID_TERMS = {'spring', 'summer', 'fall', 'winter'}
 
 @dataclass
 class TimeSlot:
@@ -163,61 +165,74 @@ def scrape_sections(html_content) -> List[Section]:
 
     return sections
 
-def save_subject_data(subjects: List[Subject]):
+def save_subject_data(subjects: List[Subject], year: int, term: str):
     data_dir = Path(__file__).parent / "data"
+    data_dir.mkdir(exist_ok=True)
 
     data = {
         "last_updated": datetime.now().isoformat(),
+        "year": year,
+        "term": term,
         "subjects": [asdict(subject) for subject in subjects]
     }
 
     output_file = data_dir / "subjects.json"
+
     with open(output_file, "w") as f:
         json.dump(data, f, indent=2)
 
-def scrape_all_data():
-    print("Fetching subjects...")
+def scrape_all_data(year: Optional[int] = None, term: Optional[str] = None) -> List[Subject]:
+    if year is None:
+        year = 2024
+    if term is None:
+        term = "fall"
+
+    term_lower = term.lower()
+    if term_lower not in VALID_TERMS:
+        raise ValueError(f"Invalid term: {term}. Must be one of: {VALID_TERMS}")
+
+    print(f"Fetching subjects for {term} {year}...")
     r = requests.get("https://courses.illinois.edu/schedule/DEFAULT/DEFAULT")
     subjects = scrape_subjects(r.text)
-
     total_subjects = len(subjects)
 
-    for i, subject in enumerate(subjects, 1):
-        print(f"Processing subject {i}/{total_subjects}: {subject.code}")
+    try:
+        for i, subject in enumerate(subjects, 1):
+            print(f"Processing subject {i}/{total_subjects}: {subject.code}")
 
-        try:
-            r = requests.get(f"https://courses.illinois.edu/schedule/2024/fall/{subject.code}")
+            r = requests.get(f"https://courses.illinois.edu/schedule/{year}/{term}/{subject.code}")
             courses = scrape_courses(r.text)
 
-            for j, course in enumerate(courses):
-                try:
-                    course_number = course.number.split()[1]
-                    course_url = f"https://courses.illinois.edu/schedule/2024/fall/{subject.code}/{course_number}"
-                    course_response = requests.get(course_url)
-                    sections = scrape_sections(course_response.text)
+            for course in courses:
+                course_number = course.number.split()[1]
+                course_url = f"https://courses.illinois.edu/schedule/{year}/{term}/{subject.code}/{course_number}"
+                course_response = requests.get(course_url)
+                sections = scrape_sections(course_response.text)
 
-                    if len(sections) > 0:
-                        course.sections = sections
-                        subject.courses.append(course)
+                if len(sections) > 0:
+                    course.sections = sections
+                    subject.courses.append(course)
 
-                except Exception as e:
-                    print(f"Error processing course {course.number}: {str(e)}")
-                    continue
-
-        except Exception as e:
-            print(f"Error processing subject {subject.code}: {str(e)}")
-            continue
+    except KeyboardInterrupt:
+        print("\nScraping interrupted, saving partial results...")
 
     subjects = [subject for subject in subjects if len(subject.courses) > 0]
-
-    save_subject_data(subjects)
-
+    save_subject_data(subjects, year=year, term=term)
     return subjects
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Scrape UIUC course data')
+    parser.add_argument('--year', type=int, default=2025)
+    parser.add_argument('--term', type=str, default="spring")
+
+    args = parser.parse_args()
+
     print("Starting scraper...")
-    subjects = scrape_all_data()
+    print("Press Ctrl+C at any time to stop and save partial results")
+
+    subjects = scrape_all_data(year=args.year, term=args.term)
     print("\nScraping complete!")
     print(f"Scraped {len(subjects)} subjects")
-    total_courses = sum(len(subject.courses) for subject in subjects)
-    print(f"Total courses: {total_courses}")
+    print(f"Total courses: {sum(len(subject.courses) for subject in subjects)}")
