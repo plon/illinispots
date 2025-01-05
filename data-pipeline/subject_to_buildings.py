@@ -37,7 +37,8 @@ class SubjectToBuildingsProcessor:
                     section_info = {
                         'course': f"{course['number']}" if course['number'].startswith(subject['code']) else f"{subject['code']} {course['number']}",
                         'time': section['time'],
-                        'days': section['days']
+                        'days': section['days'],
+                        'part_of_term': section['part_of_term']
                     }
                     buildings[building_name]['rooms'][room]['sections'].append(section_info)
                     buildings[building_name]['total_sections'] += 1

@@ -32,9 +32,11 @@ CREATE TABLE class_schedule (
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     day_of_week CHAR(1) NOT NULL,
+    part_of_term CHAR(1) NOT NULL,
     FOREIGN KEY (building_name, room_number) REFERENCES rooms(building_name, room_number),
-    CONSTRAINT valid_class_day CHECK (day_of_week IN ('1','2','3','4','5','6','7')),
-    CONSTRAINT valid_class_times CHECK (end_time > start_time)
+    CONSTRAINT valid_class_day CHECK (day_of_week IN ('M','T','W','R','F','S','U')),
+    CONSTRAINT valid_class_times CHECK (end_time > start_time),
+    CONSTRAINT valid_class_part_of_term CHECK (part_of_term IN ('1', 'A', 'B'))
 );
 CREATE INDEX idx_class_schedule_day_time ON class_schedule(day_of_week, start_time, end_time);
 CREATE INDEX idx_class_schedule_next ON class_schedule(day_of_week, start_time);

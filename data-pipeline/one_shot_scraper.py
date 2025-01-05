@@ -22,6 +22,7 @@ class Section:
     time: TimeSlot
     location: Location
     days: List[str]  # e.g. ["M", "W", "F"]
+    part_of_term: str # "1", "A", or "B"
 
 @dataclass
 class Course:
@@ -39,7 +40,6 @@ def scrape_subjects(html_content) -> List[Subject]:
     soup = BeautifulSoup(html_content, 'html.parser')
     subjects = []
 
-    # Find all rows that contain subject codes and names
     rows = soup.find_all('tr')
 
     for row in rows:
@@ -47,7 +47,7 @@ def scrape_subjects(html_content) -> List[Subject]:
         if len(cols) >= 2:  # Ensure we have both code and name
             code = cols[0].text.strip()
             name = cols[1].text.strip()
-            if code and name:  # Only add if both values exist
+            if code and name:
                 subjects.append(Subject(code=code, name=name))
 
     return subjects
@@ -56,7 +56,6 @@ def scrape_courses(html_content) -> List[Course]:
     soup = BeautifulSoup(html_content, 'html.parser')
     courses = []
 
-    # Find all rows that contain course info
     rows = soup.find_all('tr')
 
     for row in rows:
@@ -64,7 +63,7 @@ def scrape_courses(html_content) -> List[Course]:
         if len(cols) >= 2:  # Ensure we have both number and title
             number = cols[0].text.strip()
             title = cols[1].text.strip()
-            if number and title:  # Only add if both values exist
+            if number and title:
                 courses.append(Course(number=number, title=title))
 
     return courses
@@ -87,7 +86,6 @@ def parse_time(time_str: str) -> TimeSlot:
     """Convert '09:30AM - 10:50AM' to 24-hour format"""
     start, end = time_str.split(' - ')
 
-    # Convert to 24-hour format
     start_24 = datetime.strptime(start, '%I:%M%p').strftime('%H:%M')
     end_24 = datetime.strptime(end, '%I:%M%p').strftime('%H:%M')
 
@@ -102,26 +100,11 @@ def scrape_sections(html_content) -> List[Section]:
     unique_sections = set()
     sections = []
 
-    current_date = date.today()
-
     for data in section_data:
-        # Check section date range
-        if 'sectionDateRange' in data:
-            try:
-                # Extract end date from the range string (format: "Meets MM/DD/YY-MM/DD/YY")
-                end_date_str = data['sectionDateRange'].split('-')[1].strip()
-                end_date = datetime.strptime(end_date_str, '%m/%d/%y').date()
-
-                if end_date < current_date:
-                    continue
-            except Exception as e:
-                print(f"Error parsing date range: {str(e)}")
-                # If cannot parse date, include the section to be safe
-                pass
-
         times = re.findall(r'<div class="app-meeting">(.*?)</div>', data['time'])
         locations = re.findall(r'<div class="app-meeting">(.*?)</div>', data['location'])
         days = re.findall(r'<div class="app-meeting">(.*?)</div>', data['day'])
+        part_of_term = data['partOfTerm']
 
         # If no matches found with div tags, try getting the raw strings
         if not times:
@@ -139,7 +122,6 @@ def scrape_sections(html_content) -> List[Section]:
             if day_str:
                 days = [day_str]
 
-        # Skip if any required data is missing
         if not times or not locations or not days:
             continue
 
@@ -162,16 +144,17 @@ def scrape_sections(html_content) -> List[Section]:
                     time_obj.end,
                     location_obj.building,
                     location_obj.room,
-                    tuple(sorted(days_list))  # Convert list to tuple for hashing
+                    tuple(sorted(days_list)),
+                    part_of_term
                 )
 
-                # Only add if this combination hasn't been seen before
                 if section_key not in unique_sections:
                     unique_sections.add(section_key)
                     sections.append(Section(
                         time=time_obj,
                         location=location_obj,
-                        days=days_list
+                        days=days_list,
+                        part_of_term=part_of_term
                     ))
 
             except Exception as e:

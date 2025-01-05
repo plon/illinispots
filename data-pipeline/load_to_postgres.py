@@ -25,7 +25,7 @@ def validate_json_structure(json_data: Dict) -> None:
 
     required_building_keys = {'hours', 'coordinates', 'rooms'}
     required_hours_keys = {'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'}
-    required_class_keys = {'course', 'title', 'time', 'days'}
+    required_class_keys = {'course', 'title', 'time', 'days', 'part_of_term'}
 
     for building_name, building_data in json_data['buildings'].items():
         missing_keys = required_building_keys - set(building_data.keys())
@@ -98,7 +98,8 @@ def prepare_and_validate_data(json_data: Dict) -> tuple[List[Dict], List[Dict], 
                         'course_title': class_info['title'],
                         'start_time': class_info['time']['start'],
                         'end_time': class_info['time']['end'],
-                        'day_of_week': day
+                        'day_of_week': day,
+                        'part_of_term': class_info['part_of_term']
                     })
 
     return buildings, rooms, schedules
@@ -145,7 +146,7 @@ def bulk_insert(table_name: str, records: List[Dict]) -> Set:
                 elif table_name == 'rooms':
                     key = f"{record['building_name']}_{record['room_number']}"
                 else:  # class_schedule
-                    key = f"{record['building_name']}_{record['room_number']}_{record['day_of_week']}_{record['start_time']}"
+                    key = f"{record['building_name']}_{record['room_number']}_{record['day_of_week']}_{record['start_time']}_{record['part_of_term']}"
                 inserted_ids.add(key)
 
         except Exception as e:
