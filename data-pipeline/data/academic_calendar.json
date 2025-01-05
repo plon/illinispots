@@ -1,0 +1,296 @@
+[
+  {
+    "academic_year": "2024-2025",
+    "term": "Fall",
+    "part_of_term": 1,
+    "start_date": "2024-08-26",
+    "end_date": "2024-10-18"
+  },
+  {
+    "academic_year": "2024-2025",
+    "term": "Fall",
+    "part_of_term": 2,
+    "start_date": "2024-10-21",
+    "end_date": "2024-12-11"
+  },
+  {
+    "academic_year": "2024-2025",
+    "term": "Winter",
+    "part_of_term": 1,
+    "start_date": "2024-12-20",
+    "end_date": "2025-01-17"
+  },
+  {
+    "academic_year": "2024-2025",
+    "term": "Spring",
+    "part_of_term": 1,
+    "start_date": "2025-01-21",
+    "end_date": "2025-03-14"
+  },
+  {
+    "academic_year": "2024-2025",
+    "term": "Spring",
+    "part_of_term": 2,
+    "start_date": "2025-03-24",
+    "end_date": "2025-05-07"
+  },
+  {
+    "academic_year": "2024-2025",
+    "term": "Summer",
+    "part_of_term": 1,
+    "start_date": "2025-05-19",
+    "end_date": "2025-06-14"
+  },
+  {
+    "academic_year": "2024-2025",
+    "term": "Summer",
+    "part_of_term": 2,
+    "start_date": "2025-06-16",
+    "end_date": "2025-08-07"
+  },
+  {
+    "academic_year": "2025-2026",
+    "term": "Fall",
+    "part_of_term": 1,
+    "start_date": "2025-08-25",
+    "end_date": "2025-10-17"
+  },
+  {
+    "academic_year": "2025-2026",
+    "term": "Fall",
+    "part_of_term": 2,
+    "start_date": "2025-10-20",
+    "end_date": "2025-12-10"
+  },
+  {
+    "academic_year": "2025-2026",
+    "term": "Winter",
+    "part_of_term": 1,
+    "start_date": "2025-12-22",
+    "end_date": "2026-01-16"
+  },
+  {
+    "academic_year": "2025-2026",
+    "term": "Spring",
+    "part_of_term": 1,
+    "start_date": "2026-01-20",
+    "end_date": "2026-03-13"
+  },
+  {
+    "academic_year": "2025-2026",
+    "term": "Spring",
+    "part_of_term": 2,
+    "start_date": "2026-03-23",
+    "end_date": "2026-05-06"
+  },
+  {
+    "academic_year": "2025-2026",
+    "term": "Summer",
+    "part_of_term": 1,
+    "start_date": "2026-05-18",
+    "end_date": "2026-06-13"
+  },
+  {
+    "academic_year": "2025-2026",
+    "term": "Summer",
+    "part_of_term": 2,
+    "start_date": "2026-06-15",
+    "end_date": "2026-08-06"
+  },
+  {
+    "academic_year": "2026-2027",
+    "term": "Fall",
+    "part_of_term": 1,
+    "start_date": "2026-08-24",
+    "end_date": "2026-10-16"
+  },
+  {
+    "academic_year": "2026-2027",
+    "term": "Fall",
+    "part_of_term": 2,
+    "start_date": "2026-10-19",
+    "end_date": "2026-12-09"
+  },
+  {
+    "academic_year": "2026-2027",
+    "term": "Winter",
+    "part_of_term": 1,
+    "start_date": "2026-12-21",
+    "end_date": "2027-01-15"
+  },
+  {
+    "academic_year": "2026-2027",
+    "term": "Spring",
+    "part_of_term": 1,
+    "start_date": "2027-01-19",
+    "end_date": "2027-03-12"
+  },
+  {
+    "academic_year": "2026-2027",
+    "term": "Spring",
+    "part_of_term": 2,
+    "start_date": "2027-03-22",
+    "end_date": "2027-05-05"
+  },
+  {
+    "academic_year": "2026-2027",
+    "term": "Summer",
+    "part_of_term": 1,
+    "start_date": "2027-05-17",
+    "end_date": "2027-06-12"
+  },
+  {
+    "academic_year": "2026-2027",
+    "term": "Summer",
+    "part_of_term": 2,
+    "start_date": "2027-06-14",
+    "end_date": "2027-08-05"
+  },
+  {
+    "academic_year": "2027-2028",
+    "term": "Fall",
+    "part_of_term": 1,
+    "start_date": "2027-08-23",
+    "end_date": "2027-10-15"
+  },
+  {
+    "academic_year": "2027-2028",
+    "term": "Fall",
+    "part_of_term": 2,
+    "start_date": "2027-10-18",
+    "end_date": "2027-12-08"
+  },
+  {
+    "academic_year": "2027-2028",
+    "term": "Winter",
+    "part_of_term": 1,
+    "start_date": "2027-12-20",
+    "end_date": "2028-01-14"
+  },
+  {
+    "academic_year": "2027-2028",
+    "term": "Spring",
+    "part_of_term": 1,
+    "start_date": "2028-01-18",
+    "end_date": "2028-03-10"
+  },
+  {
+    "academic_year": "2027-2028",
+    "term": "Spring",
+    "part_of_term": 2,
+    "start_date": "2028-03-20",
+    "end_date": "2028-05-03"
+  },
+  {
+    "academic_year": "2027-2028",
+    "term": "Summer",
+    "part_of_term": 1,
+    "start_date": "2028-05-15",
+    "end_date": "2028-06-10"
+  },
+  {
+    "academic_year": "2027-2028",
+    "term": "Summer",
+    "part_of_term": 2,
+    "start_date": "2028-06-12",
+    "end_date": "2028-08-03"
+  },
+  {
+    "academic_year": "2028-2029",
+    "term": "Fall",
+    "part_of_term": 1,
+    "start_date": "2028-08-21",
+    "end_date": "2028-10-13"
+  },
+  {
+    "academic_year": "2028-2029",
+    "term": "Fall",
+    "part_of_term": 2,
+    "start_date": "2028-10-16",
+    "end_date": "2028-12-06"
+  },
+  {
+    "academic_year": "2028-2029",
+    "term": "Winter",
+    "part_of_term": 1,
+    "start_date": "2028-12-18",
+    "end_date": "2029-01-12"
+  },
+  {
+    "academic_year": "2028-2029",
+    "term": "Spring",
+    "part_of_term": 1,
+    "start_date": "2029-01-16",
+    "end_date": "2029-03-09"
+  },
+  {
+    "academic_year": "2028-2029",
+    "term": "Spring",
+    "part_of_term": 2,
+    "start_date": "2029-03-19",
+    "end_date": "2029-05-02"
+  },
+  {
+    "academic_year": "2028-2029",
+    "term": "Summer",
+    "part_of_term": 1,
+    "start_date": "2029-05-14",
+    "end_date": "2029-06-09"
+  },
+  {
+    "academic_year": "2028-2029",
+    "term": "Summer",
+    "part_of_term": 2,
+    "start_date": "2029-06-11",
+    "end_date": "2029-08-02"
+  },
+  {
+    "academic_year": "2029-2030",
+    "term": "Fall",
+    "part_of_term": 1,
+    "start_date": "2029-08-20",
+    "end_date": "2029-10-12"
+  },
+  {
+    "academic_year": "2029-2030",
+    "term": "Fall",
+    "part_of_term": 2,
+    "start_date": "2029-10-15",
+    "end_date": "2029-12-05"
+  },
+  {
+    "academic_year": "2029-2030",
+    "term": "Winter",
+    "part_of_term": 1,
+    "start_date": "2029-12-17",
+    "end_date": "2030-01-11"
+  },
+  {
+    "academic_year": "2029-2030",
+    "term": "Spring",
+    "part_of_term": 1,
+    "start_date": "2030-01-14",
+    "end_date": "2030-03-08"
+  },
+  {
+    "academic_year": "2029-2030",
+    "term": "Spring",
+    "part_of_term": 2,
+    "start_date": "2030-03-18",
+    "end_date": "2030-05-01"
+  },
+  {
+    "academic_year": "2029-2030",
+    "term": "Summer",
+    "part_of_term": 1,
+    "start_date": "2030-05-13",
+    "end_date": "2030-06-08"
+  },
+  {
+    "academic_year": "2029-2030",
+    "term": "Summer",
+    "part_of_term": 2,
+    "start_date": "2030-06-10",
+    "end_date": "2030-08-01"
+  }
+]
