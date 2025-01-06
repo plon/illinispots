@@ -50,10 +50,13 @@ The availability logic is handled by a PostgreSQL function that processes buildi
 
 1. **State Detection**
 - **How**: Uses a series of CTEs that join current time against class_schedule and daily_events tables
-- **Implementation**: First maps day codes (M-U) to hours via CASE statements, then performs time window overlap with check_time
+- **Implementation**: First extracts day code (M-U) from input date, maps to hours via CASE statements, then performs time window overlap with check_time and date range validation
 ```
-current time (3:15 PM) → finds active classes/events → determines if room occupied
-Example: Room 101 has class 3:00-4:00 PM = occupied
+input (2024-01-23 3:15 PM) →
+    1. converts to day 'W'
+    2. checks if date falls within class date ranges
+    3. finds active classes/events → determines if room occupied
+Example: Room 101 has class 3:00-4:00 PM on Wednesdays in Spring 2024 part of term B = unoccupied
 ```
 
 2. **Gap Analysis**
@@ -69,7 +72,7 @@ Gap found: 4:00-5:00 (60min) = valid gap > minimum_useful_minutes
 ```
 
 3. **Duration Calculation**
-- **How**: Epoch time arithmetic between current_time and next constraint
+- **How**: Epoch time arithmetic between check_time and next constraint
 - **Implementation**: Takes earliest of:
     - Next class/event start time
     - Building closure time
