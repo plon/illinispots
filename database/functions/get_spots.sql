@@ -1,14 +1,23 @@
 CREATE OR REPLACE FUNCTION get_spots(
     check_time TIME,
-    check_day TEXT,
+    check_date DATE,
     minimum_useful_minutes INTEGER DEFAULT 30
 )
 RETURNS JSONB AS $$
 DECLARE
     result JSONB;
     minimum_useful_interval INTERVAL;
+    check_day TEXT;
 BEGIN
-    SET TIME ZONE 'America/Chicago';
+    check_day := CASE EXTRACT(DOW FROM check_date)
+        WHEN 1 THEN 'M'
+        WHEN 2 THEN 'T'
+        WHEN 3 THEN 'W'
+        WHEN 4 THEN 'R'
+        WHEN 5 THEN 'F'
+        WHEN 6 THEN 'S'
+        WHEN 0 THEN 'U'
+    END;
 
     minimum_useful_interval := (minimum_useful_minutes || ' minutes')::interval;
 
@@ -50,7 +59,7 @@ BEGIN
         FROM class_schedule
         WHERE day_of_week = check_day
         AND check_time BETWEEN start_time AND end_time
-        AND CURRENT_DATE <@ date_range
+        AND check_date <@ date_range
 
         UNION ALL
 
@@ -64,7 +73,7 @@ BEGIN
             end_time,
             'event' as source_type
         FROM daily_events
-        WHERE event_date = CURRENT_DATE
+        WHERE event_date = check_date
         AND check_time BETWEEN start_time AND end_time
     ),
     next_occupancy AS (
@@ -89,7 +98,7 @@ BEGIN
             FROM class_schedule
             WHERE day_of_week = check_day
             AND start_time > check_time
-            AND CURRENT_DATE <@ date_range
+            AND check_date <@ date_range
 
             UNION ALL
 
@@ -103,7 +112,7 @@ BEGIN
                 end_time,
                 'event' as source_type
             FROM daily_events
-            WHERE event_date = CURRENT_DATE
+            WHERE event_date = check_date
             AND start_time > check_time
         ) combined
         ORDER BY building_name, room_number, start_time
@@ -125,14 +134,14 @@ BEGIN
             FROM class_schedule
             WHERE day_of_week = check_day
             AND start_time > check_time
-            AND CURRENT_DATE <@ date_range
+            AND check_date <@ date_range
 
             UNION ALL
 
             -- Remaining events
             SELECT building_name, room_number, start_time, end_time
             FROM daily_events
-            WHERE event_date = CURRENT_DATE
+            WHERE event_date = check_date
             AND start_time > check_time
         ) combined
         GROUP BY building_name, room_number

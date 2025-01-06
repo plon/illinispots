@@ -11,19 +11,10 @@ export async function GET() {
   );
 
   const now = moment().tz("America/Chicago");
-  const dayMap: { [key: number]: string } = {
-    0: "U",
-    1: "M",
-    2: "T",
-    3: "W",
-    4: "R",
-    5: "F",
-    6: "S",
-  };
 
   const { data, error } = await supabase.rpc("get_spots", {
     check_time: now.format("HH:mm:ss"),
-    check_day: dayMap[now.day()],
+    check_date: now.format("YYYY-MM-DD"),
     minimum_useful_minutes: 30,
   });
 
