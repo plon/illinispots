@@ -3,7 +3,7 @@ from pathlib import Path
 import re
 from curl_cffi import requests
 from dataclasses import dataclass, field, asdict
-from datetime import datetime, date
+from datetime import datetime
 import json
 from typing import List, Optional
 
@@ -24,7 +24,8 @@ class Section:
     time: TimeSlot
     location: Location
     days: List[str]  # e.g. ["M", "W", "F"]
-    part_of_term: str # "1", "A", or "B"
+    start_date: str # e.g. "2024-01-15"
+    end_date: str # e.g. "2024-05-10"
 
 @dataclass
 class Course:
@@ -106,7 +107,6 @@ def scrape_sections(html_content) -> List[Section]:
         times = re.findall(r'<div class="app-meeting">(.*?)</div>', data['time'])
         locations = re.findall(r'<div class="app-meeting">(.*?)</div>', data['location'])
         days = re.findall(r'<div class="app-meeting">(.*?)</div>', data['day'])
-        part_of_term = data['partOfTerm']
 
         # If no matches found with div tags, try getting the raw strings
         if not times:
@@ -127,16 +127,23 @@ def scrape_sections(html_content) -> List[Section]:
         if not times or not locations or not days:
             continue
 
-        # Create a section for each meeting time
+        invalid_meeting = False
         for time_str, location_str, day_str in zip(times, locations, days):
             if (time_str.upper() == 'ARRANGED' or
-                location_str.lower() == 'n.a.' or
-                'arr' in location_str.lower() or
+                location_str.lower() in ['n.a.', 'arranged', 'arr', 'location pending'] or
                 day_str.lower() in ['n.a.', 'arranged', '', 'arr']):
-                continue
+                invalid_meeting = True
+                break
 
+        if invalid_meeting:
+            continue
+
+        date_range = data['sectionDateRange'].split('-')
+        start_date = datetime.strptime(date_range[0].replace('Meets ', '').strip(), '%m/%d/%y').strftime('%Y-%m-%d')
+        end_date = datetime.strptime(date_range[1].strip(), '%m/%d/%y').strftime('%Y-%m-%d')
+
+        for time_str, location_str, day_str in zip(times, locations, days):
             try:
-                # Create time and location objects for comparison
                 time_obj = parse_time(time_str)
                 location_obj = parse_location(location_str)
                 days_list = parse_days(day_str)
@@ -147,7 +154,8 @@ def scrape_sections(html_content) -> List[Section]:
                     location_obj.building,
                     location_obj.room,
                     tuple(sorted(days_list)),
-                    part_of_term
+                    start_date,
+                    end_date
                 )
 
                 if section_key not in unique_sections:
@@ -156,13 +164,13 @@ def scrape_sections(html_content) -> List[Section]:
                         time=time_obj,
                         location=location_obj,
                         days=days_list,
-                        part_of_term=part_of_term
+                        start_date=start_date,
+                        end_date=end_date
                     ))
 
             except Exception as e:
                 print(f"Error parsing section: {str(e)}")
                 continue
-
     return sections
 
 def save_subject_data(subjects: List[Subject], year: int, term: str):

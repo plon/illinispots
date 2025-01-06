@@ -4,13 +4,12 @@ import json
 from typing import List, Dict, Set
 from datetime import datetime
 import os
-import asyncio
 from dotenv import load_dotenv,find_dotenv
 
 load_dotenv(find_dotenv('.env.local'))
 
 supabase = create_client(
-    os.getenv("NEXT_PUBLIC_SUPABASE_URL"),
+    os.getenv("SUPABASE_URL"),
     os.getenv("SUPABASE_KEY")
 )
 
@@ -25,7 +24,7 @@ def validate_json_structure(json_data: Dict) -> None:
 
     required_building_keys = {'hours', 'coordinates', 'rooms'}
     required_hours_keys = {'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'}
-    required_class_keys = {'course', 'title', 'time', 'days', 'part_of_term'}
+    required_class_keys = {'course', 'title', 'time', 'days', 'start_date', 'end_date'}
 
     for building_name, building_data in json_data['buildings'].items():
         missing_keys = required_building_keys - set(building_data.keys())
@@ -46,6 +45,26 @@ def validate_json_structure(json_data: Dict) -> None:
                     raise DataValidationError(
                         f"Class in room '{room_number}', building '{building_name}' missing keys: {missing_class_keys}"
                     )
+
+def validate_academic_terms_structure(terms_data: List[Dict]) -> None:
+    required_keys = {'academic_year', 'term', 'part_of_term', 'start_date', 'end_date'}
+    valid_parts_of_term = {'A', 'B'}
+
+    for term in terms_data:
+        missing_keys = required_keys - set(term.keys())
+        if missing_keys:
+            raise DataValidationError(f"Academic term missing keys: {missing_keys}")
+
+        if term['part_of_term'] not in valid_parts_of_term:
+            raise DataValidationError(f"Invalid part_of_term: {term['part_of_term']}")
+
+        try:
+            start_date = datetime.strptime(term['start_date'], '%Y-%m-%d').date()
+            end_date = datetime.strptime(term['end_date'], '%Y-%m-%d').date()
+            if end_date <= start_date:
+                raise DataValidationError(f"End date must be after start date for term: {term}")
+        except ValueError as e:
+            raise DataValidationError(f"Invalid date format in term: {term}") from e
 
 def prepare_and_validate_data(json_data: Dict) -> tuple[List[Dict], List[Dict], List[Dict]]:
     buildings = []
@@ -99,7 +118,8 @@ def prepare_and_validate_data(json_data: Dict) -> tuple[List[Dict], List[Dict], 
                         'start_time': class_info['time']['start'],
                         'end_time': class_info['time']['end'],
                         'day_of_week': day,
-                        'part_of_term': class_info['part_of_term']
+                        'start_date': class_info['start_date'],
+                        'end_date': class_info['end_date']
                     })
 
     return buildings, rooms, schedules
@@ -133,10 +153,6 @@ def bulk_insert(table_name: str, records: List[Dict]) -> Set:
             response = supabase.table(table_name).insert(chunk).execute()
             print(f"Inserted chunk {chunk_num}/{total_chunks} into {table_name}")
 
-            start_id = i
-            end_id = min(i + CHUNK_SIZE, len(records))
-            expected_count = end_id - start_id
-
             current_count = supabase.table(table_name).select('*', count='exact').execute().count
             print(f"Current total count in {table_name}: {current_count}")
 
@@ -145,8 +161,10 @@ def bulk_insert(table_name: str, records: List[Dict]) -> Set:
                     key = record['name']
                 elif table_name == 'rooms':
                     key = f"{record['building_name']}_{record['room_number']}"
+                elif table_name == 'academic_terms':
+                    key = f"{record['academic_year']}_{record['term']}_{record['start_date']}_{record['end_date']}"
                 else:  # class_schedule
-                    key = f"{record['building_name']}_{record['room_number']}_{record['day_of_week']}_{record['start_time']}_{record['part_of_term']}"
+                    key = f"{record['building_name']}_{record['room_number']}_{record['day_of_week']}_{record['start_time']}_{record['start_date']}_{record['end_date']}"
                 inserted_ids.add(key)
 
         except Exception as e:
@@ -193,15 +211,41 @@ def verify_database_contents(buildings: List[Dict], rooms: List[Dict], schedules
 
     print("All count verifications passed successfully!")
 
+def clear_table(table_name: str) -> None:
+    """Clear all records from a table safely."""
+    try:
+        if table_name == 'buildings':
+            supabase.table(table_name).delete().not_.is_('name', 'null').execute()
+        elif table_name == 'rooms':
+            supabase.table(table_name).delete().not_.is_('building_name', 'null').execute()
+        elif table_name == 'academic_terms':
+            supabase.table(table_name).delete().not_.is_('academic_year', 'null').execute()
+        elif table_name == 'class_schedule':
+            supabase.table(table_name).delete().not_.is_('building_name', 'null').execute()
+
+        count = supabase.table(table_name).select('*', count='exact').execute().count
+        if count != 0:
+            raise DataValidationError(f"Failed to clear table {table_name}. {count} records remaining.")
+        print(f"Successfully cleared table {table_name}")
+    except Exception as e:
+        print(f"Error clearing table {table_name}: {str(e)}")
+        raise
+
 def main():
     try:
         data_dir = Path(__file__).parent / "data"
+        print("Warning: This script will clear all data in the database.")
         print("Loading and validating JSON data...")
+
         with open(data_dir / 'filtered_buildings.json', 'r') as f:
             json_data = json.load(f)
 
+        with open(data_dir / 'academic_calendar.json', 'r') as f:
+            academic_terms_data = json.load(f)
+
         validate_json_structure(json_data)
-        print("JSON structure validated successfully")
+        validate_academic_terms_structure(academic_terms_data)
+        print("JSON structures validated successfully")
 
         print("\nPreparing and validating data...")
         buildings, rooms, schedules = prepare_and_validate_data(json_data)
@@ -209,12 +253,17 @@ def main():
         print("Data preparation validated successfully")
 
         print("\nClearing existing data...")
-        supabase.table('class_schedule').delete().neq('building_name', '').execute()
-        supabase.table('rooms').delete().neq('building_name', '').execute()
-        supabase.table('buildings').delete().neq('name', '').execute()
+        # Clear tables and verify
+        tables = ['class_schedule', 'rooms', 'buildings', 'academic_terms']
+        for table in tables:
+            clear_table(table)
         print("Existing data cleared successfully")
 
         print("\nInserting and verifying data...")
+
+        academic_terms_ids = bulk_insert('academic_terms', academic_terms_data)
+        print(f"Inserted {len(academic_terms_ids)} academic terms")
+
         building_ids = bulk_insert('buildings', buildings)
         print(f"Inserted {len(building_ids)} buildings")
 
@@ -227,7 +276,15 @@ def main():
         print("\nPerforming final database verification...")
         verify_database_contents(buildings, rooms, schedules)
 
+        db_terms_count = supabase.table('academic_terms').select('*', count='exact').execute()
+        if db_terms_count.count != len(academic_terms_data):
+            raise DataValidationError(
+                f"Academic terms count mismatch. Expected: {len(academic_terms_data)}, Got: {db_terms_count.count}"
+            )
+        print(f"Verified academic terms count: {db_terms_count.count}")
+
         print("\nFinal Summary:")
+        print(f"Academic terms inserted and verified: {len(academic_terms_ids)}")
         print(f"Buildings inserted and verified: {len(building_ids)}")
         print(f"Rooms inserted and verified: {len(room_ids)}")
         print(f"Class schedules inserted and verified: {len(schedule_ids)}")

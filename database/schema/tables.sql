@@ -1,7 +1,7 @@
 CREATE TABLE buildings (
     name TEXT PRIMARY KEY,
-    latitude DECIMAL(10,8),
-    longitude DECIMAL(10,8),
+    latitude DECIMAL(10, 8),
+    longitude DECIMAL(10, 8),
     monday_open TIME,
     monday_close TIME,
     tuesday_open TIME,
@@ -32,15 +32,31 @@ CREATE TABLE class_schedule (
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     day_of_week CHAR(1) NOT NULL,
-    part_of_term CHAR(1) NOT NULL,
-    FOREIGN KEY (building_name, room_number) REFERENCES rooms(building_name, room_number),
-    CONSTRAINT valid_class_day CHECK (day_of_week IN ('M','T','W','R','F','S','U')),
-    CONSTRAINT valid_class_times CHECK (end_time > start_time),
-    CONSTRAINT valid_class_part_of_term CHECK (part_of_term IN ('1', 'A', 'B'))
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    date_range tsrange GENERATED ALWAYS AS (
+        tsrange(start_date, end_date, '[]')
+    ) STORED,
+
+    FOREIGN KEY (building_name, room_number)
+        REFERENCES rooms(building_name, room_number),
+
+    CONSTRAINT valid_class_day
+        CHECK (day_of_week IN ('M','T','W','R','F','S','U')),
+    CONSTRAINT valid_class_times
+        CHECK (end_time > start_time),
+    CONSTRAINT valid_term_dates
+        CHECK (end_date >= start_date)
 );
-CREATE INDEX idx_class_schedule_day_time ON class_schedule(day_of_week, start_time, end_time);
-CREATE INDEX idx_class_schedule_next ON class_schedule(day_of_week, start_time);
-CREATE INDEX idx_class_schedule_room_day ON class_schedule(building_name, room_number, day_of_week);
+
+CREATE INDEX idx_class_schedule_day_time
+    ON class_schedule(day_of_week, start_time, end_time);
+CREATE INDEX idx_class_schedule_next
+    ON class_schedule(day_of_week, start_time);
+CREATE INDEX idx_class_schedule_room_day
+    ON class_schedule(building_name, room_number, day_of_week);
+CREATE INDEX idx_class_schedule_daterange
+    ON class_schedule USING gist (date_range);
 
 CREATE TABLE daily_events (
     id SERIAL PRIMARY KEY,
@@ -52,11 +68,17 @@ CREATE TABLE daily_events (
     end_time TIME NOT NULL,
     event_date DATE NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    FOREIGN KEY (building_name, room_number) REFERENCES rooms(building_name, room_number),
-    CONSTRAINT valid_event_times CHECK (end_time > start_time)
+
+    FOREIGN KEY (building_name, room_number)
+        REFERENCES rooms(building_name, room_number),
+    CONSTRAINT valid_event_times
+        CHECK (end_time > start_time)
 );
-CREATE INDEX idx_daily_events_date_time ON daily_events(event_date, start_time, end_time);
-CREATE INDEX idx_daily_events_room ON daily_events(building_name, room_number);
+
+CREATE INDEX idx_daily_events_date_time
+    ON daily_events(event_date, start_time, end_time);
+CREATE INDEX idx_daily_events_room
+    ON daily_events(building_name, room_number);
 
 CREATE TABLE academic_terms (
     id SERIAL PRIMARY KEY,
@@ -65,7 +87,12 @@ CREATE TABLE academic_terms (
     part_of_term CHAR(1),
     start_date DATE,
     end_date DATE,
-    CONSTRAINT valid_part_of_term CHECK (part_of_term IN ('A', 'B')),
-    CONSTRAINT valid_term_dates CHECK (end_date > start_date)
+
+    CONSTRAINT valid_part_of_term
+        CHECK (part_of_term IN ('A', 'B')),
+    CONSTRAINT valid_term_dates
+        CHECK (end_date > start_date)
 );
-CREATE INDEX idx_academic_terms_dates ON academic_terms(start_date, end_date);
+
+CREATE INDEX idx_academic_terms_dates
+    ON academic_terms(start_date, end_date);

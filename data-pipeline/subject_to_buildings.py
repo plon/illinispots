@@ -1,8 +1,7 @@
 from pathlib import Path
 import json
-from dataclasses import asdict
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict
 
 class SubjectToBuildingsProcessor:
     def __init__(self):
@@ -30,17 +29,17 @@ class SubjectToBuildingsProcessor:
                         }
 
                     if room not in buildings[building_name]['rooms']:
-                        buildings[building_name]['rooms'][room] = {
-                            'sections': []
-                        }
+                        buildings[building_name]['rooms'][room] = []
 
                     section_info = {
                         'course': f"{course['number']}" if course['number'].startswith(subject['code']) else f"{subject['code']} {course['number']}",
+                        'title': course['title'],
                         'time': section['time'],
                         'days': section['days'],
-                        'part_of_term': section['part_of_term']
+                        'start_date': section['start_date'],
+                        'end_date': section['end_date']
                     }
-                    buildings[building_name]['rooms'][room]['sections'].append(section_info)
+                    buildings[building_name]['rooms'][room].append(section_info)
                     buildings[building_name]['total_sections'] += 1
 
         return {
@@ -64,7 +63,7 @@ class SubjectToBuildingsProcessor:
 
         num_buildings = len(building_data['buildings'])
         total_sections = sum(b['total_sections'] for b in building_data['buildings'].values())
-        print(f"\nProcessing complete!")
+        print("\nProcessing complete!")
         print(f"Processed {num_buildings} buildings")
         print(f"Total sections: {total_sections}")
 
