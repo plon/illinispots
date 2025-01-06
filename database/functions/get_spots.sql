@@ -50,6 +50,7 @@ BEGIN
         FROM class_schedule
         WHERE day_of_week = check_day
         AND check_time BETWEEN start_time AND end_time
+        AND CURRENT_DATE <@ date_range
 
         UNION ALL
 
@@ -88,6 +89,7 @@ BEGIN
             FROM class_schedule
             WHERE day_of_week = check_day
             AND start_time > check_time
+            AND CURRENT_DATE <@ date_range
 
             UNION ALL
 
@@ -123,6 +125,7 @@ BEGIN
             FROM class_schedule
             WHERE day_of_week = check_day
             AND start_time > check_time
+            AND CURRENT_DATE <@ date_range
 
             UNION ALL
 
@@ -316,7 +319,7 @@ BEGIN
                                     THEN COALESCE(mgp.meaningful_available_at::text, dh.close_time::text)
                                     ELSE NULL
                                 END,
-'availableFor',
+                                'availableFor',
                                 CASE
                                     WHEN rs.status = 'occupied' THEN
                                         CASE
