@@ -21,7 +21,7 @@ export async function GET() {
     6: "S",
   };
 
-  const { data, error } = await supabase.rpc("get_current_building_status", {
+  const { data, error } = await supabase.rpc("get_spots", {
     check_time: now.format("HH:mm:ss"),
     check_day: dayMap[now.day()],
     minimum_useful_minutes: 30,

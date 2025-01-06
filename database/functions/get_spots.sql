@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION get_current_building_status(
+CREATE OR REPLACE FUNCTION get_spots(
     check_time TIME,
     check_day TEXT,
     minimum_useful_minutes INTEGER DEFAULT 30
@@ -9,10 +9,6 @@ DECLARE
     minimum_useful_interval INTERVAL;
 BEGIN
     SET TIME ZONE 'America/Chicago';
-
-    IF check_day NOT IN ('M','T','W','R','F','S','U') THEN
-        RAISE EXCEPTION 'Invalid day_of_week: %', check_day;
-    END IF;
 
     minimum_useful_interval := (minimum_useful_minutes || ' minutes')::interval;
 
@@ -378,6 +374,7 @@ BEGIN
     RETURN result;
 END;
 $$ LANGUAGE plpgsql;
+
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_class_schedule_day_time

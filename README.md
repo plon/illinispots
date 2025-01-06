@@ -32,7 +32,7 @@ IlliniSpots is a web application that helps UIUC students find available study s
 ### Backend
 - Supabase (PostgreSQL database)
 - Next.js API Routes
-- PostgreSQL Functions (for `get_current_building_status`)
+- PostgreSQL Functions (for `get_spots`)
 
 ## Data Source
 
@@ -44,7 +44,7 @@ All data used for calculating room availability is sourced from the University o
 - **Daily Events**: Sourced from the [Tableau Daily Event Summary](https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents).
 
 ## Core Algorithm
-### [get_current_building_status.sql](database/functions/get_current_building_status.sql)
+### [get_spots.sql](database/functions/get_spots.sql)
 
 The availability logic is handled by a PostgreSQL function that processes building and room status through three main stages:
 
@@ -173,7 +173,7 @@ npm install
 3. Set up environment variables:
 Create a `.env.local` file with the following:
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+SUPABASE_URL=your_supabase_url
 SUPABASE_KEY=your_supabase_key
 ```
 
