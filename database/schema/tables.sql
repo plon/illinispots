@@ -34,8 +34,8 @@ CREATE TABLE class_schedule (
     day_of_week CHAR(1) NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
-    date_range tsrange GENERATED ALWAYS AS (
-        tsrange(start_date, end_date, '[]')
+    date_range daterange GENERATED ALWAYS AS (
+        daterange(start_date, end_date, '[]')
     ) STORED,
 
     FOREIGN KEY (building_name, room_number)
