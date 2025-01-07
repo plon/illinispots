@@ -14,7 +14,6 @@ const IlliniSpotsPage: React.FC = () => {
   const [showMap, setShowMap] = useState(true);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
-  // Fetch building and library data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -113,7 +112,7 @@ const IlliniSpotsPage: React.FC = () => {
   return (
     <div className={`h-screen flex ${showMap ? "md:flex-row" : ""} flex-col`}>
       {showMap && (
-        <div className="h-[40vh] md:h-screen md:w-2/3 w-full order-1 md:order-2">
+        <div className="h-[40vh] md:h-screen md:w-[63%] w-full order-1 md:order-2">
           <Map
             buildingData={buildingData}
             libraryData={libraryData}
@@ -124,7 +123,7 @@ const IlliniSpotsPage: React.FC = () => {
 
       <div
         className={`${
-          showMap ? "md:w-1/3 h-[60vh] md:h-screen" : "h-screen"
+          showMap ? "md:w-[37%] h-[60vh] md:h-screen" : "h-screen"
         } w-full flex-1 overflow-hidden order-2 md:order-1`}
       >
         <LeftSidebar
