@@ -31,7 +31,7 @@ logging.basicConfig(
 load_dotenv(find_dotenv('.env.local'))
 
 supabase = create_client(
-    os.getenv("NEXT_PUBLIC_SUPABASE_URL"),
+    os.getenv("SUPABASE_URL"),
     os.getenv("SUPABASE_KEY")
 )
 
