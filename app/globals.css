@@ -97,3 +97,18 @@ body {
 .maplibregl-popup-content {
     padding: 8px !important;
 }
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+.loading-bar {
+    animation: shimmer 2s infinite linear;
+    background: linear-gradient(90deg, #13294b 0%, #ff5f05 50%, #13294b 100%);
+    background-size: 200% 100%;
+}
