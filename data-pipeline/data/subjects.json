@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-01-06T01:22:09.287330",
+  "last_updated": "2025-01-19T19:52:21.421185",
   "year": 2025,
   "term": "spring",
   "subjects": [
@@ -1337,6 +1337,21 @@
             },
             {
               "time": {
+                "start": "11:00",
+                "end": "11:50"
+              },
+              "location": {
+                "building": "Business Instructional Fac",
+                "room": "2011"
+              },
+              "days": [
+                "F"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
                 "start": "10:00",
                 "end": "10:50"
               },
@@ -2442,22 +2457,6 @@
           "number": "ACCY 510",
           "title": "Financial Reporting Standards",
           "sections": [
-            {
-              "time": {
-                "start": "08:00",
-                "end": "09:20"
-              },
-              "location": {
-                "building": "Business Instructional Fac",
-                "room": "2041"
-              },
-              "days": [
-                "M",
-                "W"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
             {
               "time": {
                 "start": "11:00",
@@ -4265,22 +4264,6 @@
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "13:00",
-                "end": "14:20"
-              },
-              "location": {
-                "building": "National Soybean Res Ctr",
-                "room": "337"
-              },
-              "days": [
-                "M",
-                "W"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
             }
           ]
         },
@@ -5593,8 +5576,8 @@
                 "end": "15:20"
               },
               "location": {
-                "building": "Gregory Hall",
-                "room": "327"
+                "building": "Education Building",
+                "room": "166"
               },
               "days": [
                 "T",
@@ -5968,8 +5951,8 @@
                 "end": "15:20"
               },
               "location": {
-                "building": "Gregory Hall",
-                "room": "327"
+                "building": "Education Building",
+                "room": "166"
               },
               "days": [
                 "T",
@@ -6073,27 +6056,6 @@
               },
               "days": [
                 "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
-          "number": "ADV 598",
-          "title": "Professional Project",
-          "sections": [
-            {
-              "time": {
-                "start": "10:00",
-                "end": "11:50"
-              },
-              "location": {
-                "building": "Gregory Hall",
-                "room": "336"
-              },
-              "days": [
-                "W"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -6225,6 +6187,22 @@
           "sections": [
             {
               "time": {
+                "start": "09:00",
+                "end": "10:20"
+              },
+              "location": {
+                "building": "Transportation Building",
+                "room": "203"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
                 "start": "17:00",
                 "end": "17:50"
               },
@@ -6296,8 +6274,8 @@
                 "end": "09:50"
               },
               "location": {
-                "building": "Engineering Hall",
-                "room": "106B8"
+                "building": "Sidney Lu Mech Engr Bldg",
+                "room": "3101"
               },
               "days": [
                 "M",
@@ -6395,27 +6373,6 @@
                 "M",
                 "W",
                 "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
-          "number": "AE 398",
-          "title": "Special Topics",
-          "sections": [
-            {
-              "time": {
-                "start": "11:00",
-                "end": "12:50"
-              },
-              "location": {
-                "building": "Transportation Building",
-                "room": "203"
-              },
-              "days": [
-                "T"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -7811,8 +7768,8 @@
                 "end": "17:30"
               },
               "location": {
-                "building": "English Building",
-                "room": "149"
+                "building": "Literatures, Cultures, & Ling",
+                "room": "1140"
               },
               "days": [
                 "W"
@@ -8454,22 +8411,6 @@
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "14:00",
-                "end": "15:20"
-              },
-              "location": {
-                "building": "Literatures, Cultures, & Ling",
-                "room": "G20"
-              },
-              "days": [
-                "T",
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
             }
           ]
         },
@@ -8507,28 +8448,6 @@
               "location": {
                 "building": "1207 W Oregon",
                 "room": "103"
-              },
-              "days": [
-                "T",
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
-          "number": "AIS 459",
-          "title": "Topics in American Indian Lit",
-          "sections": [
-            {
-              "time": {
-                "start": "11:00",
-                "end": "12:20"
-              },
-              "location": {
-                "building": "Davenport Hall",
-                "room": "136"
               },
               "days": [
                 "T",
@@ -8824,21 +8743,6 @@
                 "M",
                 "W",
                 "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "15:00",
-                "end": "15:50"
-              },
-              "location": {
-                "building": "Turner Hall",
-                "room": "W109"
-              },
-              "days": [
-                "W"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -10101,8 +10005,8 @@
                 "end": "12:20"
               },
               "location": {
-                "building": "Lincoln Hall",
-                "room": "1000"
+                "building": "Everitt Laboratory",
+                "room": "1306"
               },
               "days": [
                 "T",
@@ -10125,28 +10029,6 @@
               "location": {
                 "building": "Pennsylvania Lounge Bld - PAR",
                 "room": "111A"
-              },
-              "days": [
-                "T",
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
-          "number": "ANTH 112",
-          "title": "Language, Race, and Ethnicity in the United States",
-          "sections": [
-            {
-              "time": {
-                "start": "14:00",
-                "end": "15:20"
-              },
-              "location": {
-                "building": "David Kinley Hall",
-                "room": "307"
               },
               "days": [
                 "T",
@@ -10902,21 +10784,6 @@
             {
               "time": {
                 "start": "14:00",
-                "end": "16:50"
-              },
-              "location": {
-                "building": "David Kinley Hall",
-                "room": "206"
-              },
-              "days": [
-                "W"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "14:00",
                 "end": "15:20"
               },
               "location": {
@@ -11283,6 +11150,44 @@
           ]
         },
         {
+          "number": "ARCH 274",
+          "title": "Fundamentals of Design II",
+          "sections": [
+            {
+              "time": {
+                "start": "10:00",
+                "end": "11:50"
+              },
+              "location": {
+                "building": "Architecture Building",
+                "room": "111"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "09:00",
+                "end": "09:50"
+              },
+              "location": {
+                "building": "Architecture Building",
+                "room": "120"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "ARCH 372",
           "title": "Intermediate Design II",
           "sections": [
@@ -11294,6 +11199,22 @@
               "location": {
                 "building": "Architecture Building",
                 "room": "200"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "13:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Architecture Building",
+                "room": "315"
               },
               "days": [
                 "M",
@@ -11499,6 +11420,54 @@
               "location": {
                 "building": "Chicago IL",
                 "room": "ARR"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "13:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Architecture Building",
+                "room": "300"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "13:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Architecture Building",
+                "room": "403"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "13:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Architecture Building",
+                "room": "410"
               },
               "days": [
                 "M",
@@ -11797,6 +11766,212 @@
           ]
         },
         {
+          "number": "ARCH 571",
+          "title": "Design: Detail and Architectonics",
+          "sections": [
+            {
+              "time": {
+                "start": "13:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "217"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "13:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "205"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
+          "number": "ARCH 572",
+          "title": "Design: Health and Well-being",
+          "sections": [
+            {
+              "time": {
+                "start": "13:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "211"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "13:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "305"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "13:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "307"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
+          "number": "ARCH 573",
+          "title": "Design: Technology and Performance",
+          "sections": [
+            {
+              "time": {
+                "start": "13:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "301"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "13:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "311"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
+          "number": "ARCH 574",
+          "title": "Design: Architecture and Urban Design",
+          "sections": [
+            {
+              "time": {
+                "start": "13:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "317"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
+          "number": "ARCH 575",
+          "title": "Integrative Architecture Design Studio",
+          "sections": [
+            {
+              "time": {
+                "start": "13:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "201"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "13:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "207"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "13:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "301"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "ARCH 576",
           "title": "Architectural Design Seminar",
           "sections": [
@@ -11950,8 +12125,8 @@
                 "end": "13:50"
               },
               "location": {
-                "building": "Armory",
-                "room": "243"
+                "building": "Architecture Building",
+                "room": "6E"
               },
               "days": [
                 "R"
@@ -12460,22 +12635,6 @@
               "days": [
                 "M",
                 "W"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "17:00",
-                "end": "19:40"
-              },
-              "location": {
-                "building": "Art and Design Building",
-                "room": "208"
-              },
-              "days": [
-                "T",
-                "R"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -13125,6 +13284,21 @@
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "16:00",
+                "end": "18:40"
+              },
+              "location": {
+                "building": "Art and Design Building",
+                "room": "33"
+              },
+              "days": [
+                "T"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
             }
           ]
         },
@@ -13670,7 +13844,7 @@
               },
               "location": {
                 "building": "Literatures, Cultures, & Ling",
-                "room": "1030"
+                "room": "G23"
               },
               "days": [
                 "M",
@@ -14191,7 +14365,7 @@
               },
               "location": {
                 "building": "Art and Design Building",
-                "room": "40"
+                "room": "9"
               },
               "days": [
                 "T",
@@ -14420,8 +14594,8 @@
                 "end": "11:40"
               },
               "location": {
-                "building": "Art and Design Building",
-                "room": "40"
+                "building": "Flagg Hall",
+                "room": "50"
               },
               "days": [
                 "M",
@@ -14850,8 +15024,8 @@
                 "end": "17:50"
               },
               "location": {
-                "building": "Everitt Laboratory",
-                "room": "2101"
+                "building": "Henry Administration Bldg",
+                "room": "138"
               },
               "days": [
                 "M",
@@ -15628,8 +15802,8 @@
                 "end": "21:20"
               },
               "location": {
-                "building": "Campus Instructional Facility",
-                "room": "3031"
+                "building": "Astronomy Building",
+                "room": "134"
               },
               "days": [
                 "T",
@@ -16155,7 +16329,7 @@
               },
               "location": {
                 "building": "Natural History Building",
-                "room": "2020A"
+                "room": "1071"
               },
               "days": [
                 "M",
@@ -16318,29 +16492,6 @@
           ]
         },
         {
-          "number": "ATMS 411",
-          "title": "Satellite Remote Sensing",
-          "sections": [
-            {
-              "time": {
-                "start": "10:00",
-                "end": "10:50"
-              },
-              "location": {
-                "building": "Natural History Building",
-                "room": "1071"
-              },
-              "days": [
-                "M",
-                "W",
-                "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
           "number": "ATMS 420",
           "title": "Atmospheric Chemistry",
           "sections": [
@@ -16364,6 +16515,28 @@
           ]
         },
         {
+          "number": "ATMS 450",
+          "title": "Foundations of Academic Research and Creative Activity",
+          "sections": [
+            {
+              "time": {
+                "start": "11:00",
+                "end": "12:20"
+              },
+              "location": {
+                "building": "Noyes Laboratory",
+                "room": "163"
+              },
+              "days": [
+                "T",
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "ATMS 491",
           "title": "Adv Topics in Atmospheric Sci",
           "sections": [
@@ -16380,22 +16553,6 @@
                 "M",
                 "W",
                 "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "11:00",
-                "end": "12:20"
-              },
-              "location": {
-                "building": "Noyes Laboratory",
-                "room": "163"
-              },
-              "days": [
-                "T",
-                "R"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -17977,28 +18134,6 @@
               "days": [
                 "T",
                 "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
-          "number": "BADM 373",
-          "title": "Quantitative Foundations for Business Analytics",
-          "sections": [
-            {
-              "time": {
-                "start": "09:30",
-                "end": "10:50"
-              },
-              "location": {
-                "building": "Wohlers Hall",
-                "room": "226"
-              },
-              "days": [
-                "M",
-                "W"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -20183,43 +20318,6 @@
           ]
         },
         {
-          "number": "BIOE 306",
-          "title": "Biofabrication Lab",
-          "sections": [
-            {
-              "time": {
-                "start": "09:30",
-                "end": "11:20"
-              },
-              "location": {
-                "building": "Everitt Laboratory",
-                "room": "3109"
-              },
-              "days": [
-                "T",
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "09:30",
-                "end": "10:20"
-              },
-              "location": {
-                "building": "Everitt Laboratory",
-                "room": "3109"
-              },
-              "days": [
-                "M"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
           "number": "BIOE 310",
           "title": "Computational Tools for Biological Data",
           "sections": [
@@ -21533,29 +21631,6 @@
               "end_date": "2025-05-07"
             }
           ]
-        },
-        {
-          "number": "BTW 490",
-          "title": "Special Topics Prof Writing",
-          "sections": [
-            {
-              "time": {
-                "start": "12:00",
-                "end": "12:50"
-              },
-              "location": {
-                "building": "English Building",
-                "room": "36"
-              },
-              "days": [
-                "M",
-                "W",
-                "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
         }
       ]
     },
@@ -22230,6 +22305,28 @@
           ]
         },
         {
+          "number": "CEE 330",
+          "title": "Environmental Engineering",
+          "sections": [
+            {
+              "time": {
+                "start": "12:30",
+                "end": "13:50"
+              },
+              "location": {
+                "building": "Civil & Envir Eng Bldg",
+                "room": "1017"
+              },
+              "days": [
+                "T",
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "CEE 350",
           "title": "Water Resources Engineering",
           "sections": [
@@ -22749,6 +22846,28 @@
           ]
         },
         {
+          "number": "CEE 468",
+          "title": "Prestressed Concrete",
+          "sections": [
+            {
+              "time": {
+                "start": "14:00",
+                "end": "15:20"
+              },
+              "location": {
+                "building": "Newmark Civil Engineering Bldg",
+                "room": "1310"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "CEE 470",
           "title": "Structural Analysis",
           "sections": [
@@ -22808,6 +22927,28 @@
               },
               "days": [
                 "M",
+                "W",
+                "F"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
+          "number": "CEE 490",
+          "title": "Computer Methods",
+          "sections": [
+            {
+              "time": {
+                "start": "14:00",
+                "end": "15:20"
+              },
+              "location": {
+                "building": "Newmark Civil Engineering Bldg",
+                "room": "1311"
+              },
+              "days": [
                 "W",
                 "F"
               ],
@@ -23031,6 +23172,28 @@
           ]
         },
         {
+          "number": "CEE 570",
+          "title": "Finite Element Methods",
+          "sections": [
+            {
+              "time": {
+                "start": "11:00",
+                "end": "12:20"
+              },
+              "location": {
+                "building": "Newmark Civil Engineering Bldg",
+                "room": "2311"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "CEE 572",
           "title": "Earthquake Engineering",
           "sections": [
@@ -23097,6 +23260,28 @@
           ]
         },
         {
+          "number": "CEE 585",
+          "title": "Deep Foundations",
+          "sections": [
+            {
+              "time": {
+                "start": "15:30",
+                "end": "16:50"
+              },
+              "location": {
+                "building": "Newmark Civil Engineering Bldg",
+                "room": "2312"
+              },
+              "days": [
+                "T",
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "CEE 589",
           "title": "Computational Geomechanics",
           "sections": [
@@ -23151,7 +23336,7 @@
               },
               "location": {
                 "building": "Newmark Civil Engineering Bldg",
-                "room": "3310"
+                "room": "2311"
               },
               "days": [
                 "F"
@@ -23161,15 +23346,15 @@
             },
             {
               "time": {
-                "start": "12:00",
-                "end": "12:50"
+                "start": "11:00",
+                "end": "11:50"
               },
               "location": {
                 "building": "Newmark Civil Engineering Bldg",
-                "room": "1310"
+                "room": "3310"
               },
               "days": [
-                "M"
+                "F"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -23210,6 +23395,21 @@
                 "end": "12:50"
               },
               "location": {
+                "building": "Newmark Civil Engineering Bldg",
+                "room": "1310"
+              },
+              "days": [
+                "M"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "12:00",
+                "end": "12:50"
+              },
+              "location": {
                 "building": "Civil & Envir Eng Bldg",
                 "room": "1017"
               },
@@ -23225,6 +23425,22 @@
           "number": "CEE 598",
           "title": "Special Topics",
           "sections": [
+            {
+              "time": {
+                "start": "11:00",
+                "end": "12:20"
+              },
+              "location": {
+                "building": "Newmark Civil Engineering Bldg",
+                "room": "2312"
+              },
+              "days": [
+                "T",
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
             {
               "time": {
                 "start": "13:00",
@@ -28597,7 +28813,7 @@
               },
               "location": {
                 "building": "Noyes Laboratory",
-                "room": "217"
+                "room": "161"
               },
               "days": [
                 "M",
@@ -28686,7 +28902,7 @@
               },
               "location": {
                 "building": "Noyes Laboratory",
-                "room": "161"
+                "room": "217"
               },
               "days": [
                 "M",
@@ -28743,21 +28959,6 @@
               },
               "days": [
                 "T"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "13:00",
-                "end": "16:50"
-              },
-              "location": {
-                "building": "Noyes Laboratory",
-                "room": "463"
-              },
-              "days": [
-                "F"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -28907,12 +29108,42 @@
             },
             {
               "time": {
+                "start": "11:00",
+                "end": "11:50"
+              },
+              "location": {
+                "building": "Noyes Laboratory",
+                "room": "165"
+              },
+              "days": [
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
                 "start": "16:00",
                 "end": "16:50"
               },
               "location": {
                 "building": "Noyes Laboratory",
                 "room": "157"
+              },
+              "days": [
+                "M"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "11:00",
+                "end": "11:50"
+              },
+              "location": {
+                "building": "Noyes Laboratory",
+                "room": "165"
               },
               "days": [
                 "M"
@@ -29464,6 +29695,29 @@
               },
               "days": [
                 "M"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
+          "number": "CHEM 542",
+          "title": "Quantum Mech and Spectroscopy",
+          "sections": [
+            {
+              "time": {
+                "start": "11:00",
+                "end": "12:20"
+              },
+              "location": {
+                "building": "Noyes Laboratory",
+                "room": "163"
+              },
+              "days": [
+                "M",
+                "W",
+                "F"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -30222,8 +30476,8 @@
                 "end": "11:50"
               },
               "location": {
-                "building": "Armory",
-                "room": "241"
+                "building": "David Kinley Hall",
+                "room": "212"
               },
               "days": [
                 "W"
@@ -30713,7 +30967,7 @@
               },
               "location": {
                 "building": "Noyes Laboratory",
-                "room": "163"
+                "room": "162"
               },
               "days": [
                 "F"
@@ -30813,21 +31067,6 @@
             },
             {
               "time": {
-                "start": "15:30",
-                "end": "16:20"
-              },
-              "location": {
-                "building": "English Building",
-                "room": "69"
-              },
-              "days": [
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
                 "start": "15:00",
                 "end": "15:50"
               },
@@ -30894,6 +31133,21 @@
               "location": {
                 "building": "Lincoln Hall",
                 "room": "1022"
+              },
+              "days": [
+                "F"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "11:00",
+                "end": "11:50"
+              },
+              "location": {
+                "building": "Noyes Laboratory",
+                "room": "165"
               },
               "days": [
                 "F"
@@ -30996,8 +31250,8 @@
                 "end": "15:50"
               },
               "location": {
-                "building": "Davenport Hall",
-                "room": "313"
+                "building": "Armory",
+                "room": "429"
               },
               "days": [
                 "T",
@@ -34010,8 +34264,8 @@
                 "end": "09:50"
               },
               "location": {
-                "building": "National Soybean Res Ctr",
-                "room": "149"
+                "building": "Turner Hall",
+                "room": "W9"
               },
               "days": [
                 "T",
@@ -34199,6 +34453,22 @@
           "sections": [
             {
               "time": {
+                "start": "15:30",
+                "end": "17:00"
+              },
+              "location": {
+                "building": "National Soybean Res Ctr",
+                "room": "337"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
                 "start": "16:00",
                 "end": "16:50"
               },
@@ -34211,6 +34481,22 @@
               ],
               "start_date": "2025-03-17",
               "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "16:30",
+                "end": "18:00"
+              },
+              "location": {
+                "building": "National Soybean Res Ctr",
+                "room": "337"
+              },
+              "days": [
+                "T",
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-03-14"
             }
           ]
         },
@@ -34706,21 +34992,6 @@
               },
               "days": [
                 "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "09:00",
-                "end": "10:20"
-              },
-              "location": {
-                "building": "901 W Oregon",
-                "room": "101"
-              },
-              "days": [
-                "M"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -35619,21 +35890,6 @@
             },
             {
               "time": {
-                "start": "09:30",
-                "end": "10:50"
-              },
-              "location": {
-                "building": "Siebel Center for Comp Sci",
-                "room": "0218"
-              },
-              "days": [
-                "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
                 "start": "14:00",
                 "end": "15:20"
               },
@@ -35815,7 +36071,7 @@
             {
               "time": {
                 "start": "14:00",
-                "end": "15:30"
+                "end": "15:20"
               },
               "location": {
                 "building": "Campus Instructional Facility",
@@ -37035,7 +37291,7 @@
               },
               "location": {
                 "building": "Siebel Center for Comp Sci",
-                "room": "1304"
+                "room": "1302"
               },
               "days": [
                 "T",
@@ -38061,21 +38317,6 @@
           "sections": [
             {
               "time": {
-                "start": "16:00",
-                "end": "16:50"
-              },
-              "location": {
-                "building": "Siebel Center for Comp Sci",
-                "room": "1302"
-              },
-              "days": [
-                "W"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
                 "start": "15:30",
                 "end": "16:45"
               },
@@ -38101,6 +38342,21 @@
               },
               "days": [
                 "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "15:30",
+                "end": "16:50"
+              },
+              "location": {
+                "building": "Siebel Center for Comp Sci",
+                "room": "0216"
+              },
+              "days": [
                 "W"
               ],
               "start_date": "2025-01-21",
@@ -38142,8 +38398,8 @@
                 "end": "13:50"
               },
               "location": {
-                "building": "Siebel Center for Comp Sci",
-                "room": "1214"
+                "building": "Electrical & Computer Eng Bldg",
+                "room": "2013"
               },
               "days": [
                 "F"
@@ -38222,22 +38478,6 @@
             },
             {
               "time": {
-                "start": "14:00",
-                "end": "15:15"
-              },
-              "location": {
-                "building": "Siebel Center for Comp Sci",
-                "room": "1304"
-              },
-              "days": [
-                "T",
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
                 "start": "11:00",
                 "end": "12:15"
               },
@@ -38248,22 +38488,6 @@
               "days": [
                 "T",
                 "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "14:00",
-                "end": "15:15"
-              },
-              "location": {
-                "building": "Everitt Laboratory",
-                "room": "3217"
-              },
-              "days": [
-                "W",
-                "F"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -38328,22 +38552,6 @@
               "days": [
                 "M",
                 "W"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "11:00",
-                "end": "12:15"
-              },
-              "location": {
-                "building": "Ceramics Building",
-                "room": "214"
-              },
-              "days": [
-                "W",
-                "F"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -38398,24 +38606,24 @@
             },
             {
               "time": {
-                "start": "11:00",
-                "end": "12:15"
+                "start": "15:30",
+                "end": "16:45"
               },
               "location": {
-                "building": "Sidney Lu Mech Engr Bldg",
-                "room": "2200"
+                "building": "Siebel Center for Comp Sci",
+                "room": "1304"
               },
               "days": [
-                "W",
-                "F"
+                "T",
+                "R"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
             },
             {
               "time": {
-                "start": "15:30",
-                "end": "16:45"
+                "start": "14:00",
+                "end": "15:15"
               },
               "location": {
                 "building": "Siebel Center for Comp Sci",
@@ -38436,22 +38644,6 @@
               "location": {
                 "building": "Campus Instructional Facility",
                 "room": "4039"
-              },
-              "days": [
-                "T",
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "14:00",
-                "end": "15:15"
-              },
-              "location": {
-                "building": "Materials Science & Eng Bld",
-                "room": "305"
               },
               "days": [
                 "T",
@@ -38510,22 +38702,6 @@
             },
             {
               "time": {
-                "start": "14:00",
-                "end": "15:15"
-              },
-              "location": {
-                "building": "Engineering Hall",
-                "room": "106B3"
-              },
-              "days": [
-                "M",
-                "W"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
                 "start": "12:30",
                 "end": "13:50"
               },
@@ -38568,22 +38744,6 @@
               "days": [
                 "W",
                 "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "15:30",
-                "end": "16:45"
-              },
-              "location": {
-                "building": "Campus Instructional Facility",
-                "room": "1035"
-              },
-              "days": [
-                "T",
-                "R"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -39069,6 +39229,28 @@
           ]
         },
         {
+          "number": "CSE 551",
+          "title": "Finite Element Methods",
+          "sections": [
+            {
+              "time": {
+                "start": "11:00",
+                "end": "12:20"
+              },
+              "location": {
+                "building": "Newmark Civil Engineering Bldg",
+                "room": "2311"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "CSE 553",
           "title": "Computational Inelasticity",
           "sections": [
@@ -39123,10 +39305,12 @@
                 "end": "13:50"
               },
               "location": {
-                "building": "Literatures, Cultures, & Ling",
-                "room": "1040"
+                "building": "Noyes Laboratory",
+                "room": "162"
               },
               "days": [
+                "M",
+                "W",
                 "F"
               ],
               "start_date": "2025-01-21",
@@ -39167,7 +39351,7 @@
               },
               "location": {
                 "building": "English Building",
-                "room": "61"
+                "room": "303"
               },
               "days": [
                 "T",
@@ -41125,8 +41309,8 @@
                 "end": "08:50"
               },
               "location": {
-                "building": "Dance Studio",
-                "room": "103"
+                "building": "Krannert Center for Perf Arts",
+                "room": "2500"
               },
               "days": [
                 "T",
@@ -41421,14 +41605,28 @@
                 "end": "11:50"
               },
               "location": {
+                "building": "Krannert Center for Perf Arts",
+                "room": "2500"
+              },
+              "days": [
+                "T",
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "10:35",
+                "end": "11:50"
+              },
+              "location": {
                 "building": "Dance Studio",
                 "room": "103"
               },
               "days": [
                 "M",
-                "T",
-                "W",
-                "R"
+                "W"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -42226,8 +42424,8 @@
                 "end": "11:50"
               },
               "location": {
-                "building": "Gregory Hall",
-                "room": "313"
+                "building": "Literatures, Cultures, & Ling",
+                "room": "1120"
               },
               "days": [
                 "F"
@@ -42254,6 +42452,21 @@
               "time": {
                 "start": "13:00",
                 "end": "13:50"
+              },
+              "location": {
+                "building": "Literatures, Cultures, & Ling",
+                "room": "1128"
+              },
+              "days": [
+                "F"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "11:00",
+                "end": "11:50"
               },
               "location": {
                 "building": "Literatures, Cultures, & Ling",
@@ -42334,12 +42547,42 @@
             },
             {
               "time": {
+                "start": "12:00",
+                "end": "12:50"
+              },
+              "location": {
+                "building": "Lincoln Hall",
+                "room": "1057"
+              },
+              "days": [
+                "F"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
                 "start": "11:00",
                 "end": "11:50"
               },
               "location": {
                 "building": "Literatures, Cultures, & Ling",
                 "room": "1048"
+              },
+              "days": [
+                "F"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "14:00",
+                "end": "14:50"
+              },
+              "location": {
+                "building": "Lincoln Hall",
+                "room": "1024"
               },
               "days": [
                 "F"
@@ -42419,7 +42662,7 @@
               },
               "location": {
                 "building": "Literatures, Cultures, & Ling",
-                "room": "1030"
+                "room": "G23"
               },
               "days": [
                 "M",
@@ -42468,28 +42711,6 @@
               "days": [
                 "T",
                 "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
-          "number": "EALC 369",
-          "title": "Hanguk Hip Hop",
-          "sections": [
-            {
-              "time": {
-                "start": "16:00",
-                "end": "17:20"
-              },
-              "location": {
-                "building": "Literatures, Cultures, & Ling",
-                "room": "G36"
-              },
-              "days": [
-                "M",
-                "W"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -42759,6 +42980,21 @@
               },
               "days": [
                 "M"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "15:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Gregory Hall",
+                "room": "311"
+              },
+              "days": [
+                "W"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -43033,21 +43269,6 @@
               },
               "days": [
                 "W"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "09:00",
-                "end": "11:50"
-              },
-              "location": {
-                "building": "Electrical & Computer Eng Bldg",
-                "room": "1001"
-              },
-              "days": [
-                "M"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -44175,28 +44396,6 @@
           ]
         },
         {
-          "number": "ECE 298",
-          "title": "Special Topics",
-          "sections": [
-            {
-              "time": {
-                "start": "09:30",
-                "end": "10:50"
-              },
-              "location": {
-                "building": "Everitt Laboratory",
-                "room": "3217"
-              },
-              "days": [
-                "T",
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
           "number": "ECE 305",
           "title": "Quantum Systems I",
           "sections": [
@@ -44585,7 +44784,7 @@
               },
               "location": {
                 "building": "Electrical & Computer Eng Bldg",
-                "room": "2015"
+                "room": "1015"
               },
               "days": [
                 "M",
@@ -46290,21 +46489,6 @@
             },
             {
               "time": {
-                "start": "14:00",
-                "end": "16:05"
-              },
-              "location": {
-                "building": "Electrical & Computer Eng Bldg",
-                "room": "5076"
-              },
-              "days": [
-                "T"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
                 "start": "09:00",
                 "end": "11:50"
               },
@@ -46468,8 +46652,8 @@
                 "end": "13:50"
               },
               "location": {
-                "building": "Electrical & Computer Eng Bldg",
-                "room": "3081"
+                "building": "Engineering Hall",
+                "room": "106B8"
               },
               "days": [
                 "T",
@@ -47542,6 +47726,28 @@
           ]
         },
         {
+          "number": "ECE 575",
+          "title": "Wave Physics in Wireless: from Fundamentals to Frontiers",
+          "sections": [
+            {
+              "time": {
+                "start": "11:00",
+                "end": "12:20"
+              },
+              "location": {
+                "building": "Electrical & Computer Eng Bldg",
+                "room": "1005"
+              },
+              "days": [
+                "T",
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "ECE 576",
           "title": "Power System Dynm & Stability",
           "sections": [
@@ -47774,22 +47980,6 @@
               "location": {
                 "building": "Electrical & Computer Eng Bldg",
                 "room": "3020"
-              },
-              "days": [
-                "T",
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "11:00",
-                "end": "12:20"
-              },
-              "location": {
-                "building": "Electrical & Computer Eng Bldg",
-                "room": "1005"
               },
               "days": [
                 "T",
@@ -48450,21 +48640,6 @@
             },
             {
               "time": {
-                "start": "08:00",
-                "end": "08:50"
-              },
-              "location": {
-                "building": "David Kinley Hall",
-                "room": "119"
-              },
-              "days": [
-                "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
                 "start": "09:00",
                 "end": "09:50"
               },
@@ -48892,8 +49067,7 @@
                 "room": "321"
               },
               "days": [
-                "M",
-                "W"
+                "M"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -49112,8 +49286,8 @@
                 "end": "09:50"
               },
               "location": {
-                "building": "Armory",
-                "room": "134"
+                "building": "Gregory Hall",
+                "room": "321"
               },
               "days": [
                 "F"
@@ -49127,8 +49301,8 @@
                 "end": "10:50"
               },
               "location": {
-                "building": "Armory",
-                "room": "134"
+                "building": "Gregory Hall",
+                "room": "321"
               },
               "days": [
                 "F"
@@ -49142,8 +49316,8 @@
                 "end": "11:50"
               },
               "location": {
-                "building": "Armory",
-                "room": "134"
+                "building": "Gregory Hall",
+                "room": "321"
               },
               "days": [
                 "F"
@@ -49157,8 +49331,8 @@
                 "end": "12:50"
               },
               "location": {
-                "building": "Armory",
-                "room": "134"
+                "building": "Gregory Hall",
+                "room": "321"
               },
               "days": [
                 "F"
@@ -50065,22 +50239,6 @@
               },
               "location": {
                 "building": "David Kinley Hall",
-                "room": "206"
-              },
-              "days": [
-                "T",
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "11:00",
-                "end": "12:20"
-              },
-              "location": {
-                "building": "David Kinley Hall",
                 "room": "113"
               },
               "days": [
@@ -50270,6 +50428,22 @@
               "days": [
                 "M",
                 "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "11:00",
+                "end": "12:20"
+              },
+              "location": {
+                "building": "David Kinley Hall",
+                "room": "206"
+              },
+              "days": [
+                "T",
+                "R"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -50563,7 +50737,7 @@
               },
               "location": {
                 "building": "Inst Labor &  Industrial Rel",
-                "room": "35/43"
+                "room": "51"
               },
               "days": [
                 "T"
@@ -51614,6 +51788,28 @@
       "name": "Engineering",
       "courses": [
         {
+          "number": "ENG 100",
+          "title": "Grainger Engineering Orientation Seminar",
+          "sections": [
+            {
+              "time": {
+                "start": "16:00",
+                "end": "16:50"
+              },
+              "location": {
+                "building": "Engineering Hall",
+                "room": "106B6"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "ENG 101",
           "title": "Engineering at Illinois",
           "sections": [
@@ -51835,7 +52031,7 @@
                 "T"
               ],
               "start_date": "2025-01-21",
-              "end_date": "2025-03-14"
+              "end_date": "2025-05-07"
             },
             {
               "time": {
@@ -51843,8 +52039,8 @@
                 "end": "18:50"
               },
               "location": {
-                "building": "Campus Instructional Facility",
-                "room": "0018"
+                "building": "Transportation Building",
+                "room": "203"
               },
               "days": [
                 "W"
@@ -51985,7 +52181,7 @@
                 "M"
               ],
               "start_date": "2025-01-21",
-              "end_date": "2025-03-14"
+              "end_date": "2025-05-07"
             },
             {
               "time": {
@@ -52009,22 +52205,22 @@
               },
               "location": {
                 "building": "Campus Instructional Facility",
-                "room": "3018"
+                "room": "2036"
               },
               "days": [
                 "M"
               ],
-              "start_date": "2025-01-21",
+              "start_date": "2025-03-17",
               "end_date": "2025-05-07"
             },
             {
               "time": {
-                "start": "17:30",
-                "end": "18:50"
+                "start": "16:00",
+                "end": "17:20"
               },
               "location": {
-                "building": "Campus Instructional Facility",
-                "room": "4035"
+                "building": "Transportation Building",
+                "room": "204"
               },
               "days": [
                 "M"
@@ -52051,21 +52247,6 @@
                 "M"
               ],
               "start_date": "2025-03-17",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "17:00",
-                "end": "19:50"
-              },
-              "location": {
-                "building": "Transportation Building",
-                "room": "206"
-              },
-              "days": [
-                "T"
-              ],
-              "start_date": "2025-01-21",
               "end_date": "2025-05-07"
             },
             {
@@ -52268,10 +52449,10 @@
               },
               "location": {
                 "building": "Campus Instructional Facility",
-                "room": "2018"
+                "room": "0018"
               },
               "days": [
-                "M"
+                "T"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -52407,29 +52588,6 @@
       "code": "ENGL",
       "name": "English",
       "courses": [
-        {
-          "number": "ENGL 101",
-          "title": "Intro to Poetry",
-          "sections": [
-            {
-              "time": {
-                "start": "09:00",
-                "end": "09:50"
-              },
-              "location": {
-                "building": "Lincoln Hall",
-                "room": "1028"
-              },
-              "days": [
-                "M",
-                "W",
-                "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
         {
           "number": "ENGL 103",
           "title": "Intro to Fiction",
@@ -52959,8 +53117,8 @@
                 "end": "10:45"
               },
               "location": {
-                "building": "Noyes Laboratory",
-                "room": "162"
+                "building": "English Building",
+                "room": "61"
               },
               "days": [
                 "T",
@@ -53868,28 +54026,6 @@
           ]
         },
         {
-          "number": "ENGL 459",
-          "title": "Topics in American Indian Lit",
-          "sections": [
-            {
-              "time": {
-                "start": "11:00",
-                "end": "12:20"
-              },
-              "location": {
-                "building": "Davenport Hall",
-                "room": "136"
-              },
-              "days": [
-                "T",
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
           "number": "ENGL 461",
           "title": "Advanced Topics in Literature and Culture",
           "sections": [
@@ -54479,28 +54615,6 @@
           ]
         },
         {
-          "number": "ENVS 516",
-          "title": "Reprod & Dev Toxicology",
-          "sections": [
-            {
-              "time": {
-                "start": "15:00",
-                "end": "15:50"
-              },
-              "location": {
-                "building": "Vet Med Basic Sciences Bldg",
-                "room": "3526"
-              },
-              "days": [
-                "W",
-                "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
           "number": "ENVS 596",
           "title": "Interdisciplinary Tox Sem",
           "sections": [
@@ -54764,27 +54878,6 @@
           ]
         },
         {
-          "number": "EPOL 421",
-          "title": "Education for Global Environmental Sustainability",
-          "sections": [
-            {
-              "time": {
-                "start": "14:00",
-                "end": "16:50"
-              },
-              "location": {
-                "building": "David Kinley Hall",
-                "room": "322"
-              },
-              "days": [
-                "W"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
           "number": "EPOL 471",
           "title": "Business Principles for Human Resource Development",
           "sections": [
@@ -54832,15 +54925,15 @@
           "sections": [
             {
               "time": {
-                "start": "13:00",
-                "end": "15:50"
+                "start": "15:00",
+                "end": "17:50"
               },
               "location": {
-                "building": "David Kinley Hall",
-                "room": "222"
+                "building": "Education Building",
+                "room": "382"
               },
               "days": [
-                "W"
+                "R"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -54962,8 +55055,8 @@
                 "end": "18:50"
               },
               "location": {
-                "building": "Architecture Building",
-                "room": "301"
+                "building": "Education Building",
+                "room": "389"
               },
               "days": [
                 "W"
@@ -55630,36 +55723,6 @@
               },
               "location": {
                 "building": "Education Building",
-                "room": "188S"
-              },
-              "days": [
-                "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "09:00",
-                "end": "11:50"
-              },
-              "location": {
-                "building": "Education Building",
-                "room": "188S"
-              },
-              "days": [
-                "W"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "09:00",
-                "end": "11:50"
-              },
-              "location": {
-                "building": "Education Building",
                 "room": "382"
               },
               "days": [
@@ -55720,7 +55783,7 @@
             {
               "time": {
                 "start": "09:30",
-                "end": "11:00"
+                "end": "10:50"
               },
               "location": {
                 "building": "Psychology Building",
@@ -55934,27 +55997,6 @@
       "name": "Education Research & Methods",
       "courses": [
         {
-          "number": "ERAM 510",
-          "title": "Uses and Abuses of Educational Research",
-          "sections": [
-            {
-              "time": {
-                "start": "13:00",
-                "end": "15:50"
-              },
-              "location": {
-                "building": "Education Building",
-                "room": "382"
-              },
-              "days": [
-                "W"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
           "number": "ERAM 566",
           "title": "Quantitative Methods for Education Policy 2",
           "sections": [
@@ -55986,7 +56028,7 @@
               },
               "location": {
                 "building": "Education Building",
-                "room": "389"
+                "room": "4F"
               },
               "days": [
                 "W"
@@ -56743,7 +56785,7 @@
               },
               "location": {
                 "building": "Literatures, Cultures, & Ling",
-                "room": "G13"
+                "room": "G52"
               },
               "days": [
                 "M",
@@ -56760,7 +56802,7 @@
               },
               "location": {
                 "building": "Literatures, Cultures, & Ling",
-                "room": "G13"
+                "room": "G52"
               },
               "days": [
                 "M",
@@ -56913,7 +56955,7 @@
               },
               "location": {
                 "building": "Literatures, Cultures, & Ling",
-                "room": "G52"
+                "room": "G27"
               },
               "days": [
                 "M",
@@ -57021,7 +57063,7 @@
               },
               "location": {
                 "building": "Literatures, Cultures, & Ling",
-                "room": "G52"
+                "room": "G13"
               },
               "days": [
                 "M",
@@ -57055,7 +57097,7 @@
               },
               "location": {
                 "building": "Literatures, Cultures, & Ling",
-                "room": "G13"
+                "room": "G23"
               },
               "days": [
                 "M",
@@ -57136,28 +57178,6 @@
           ]
         },
         {
-          "number": "ESL 504",
-          "title": "English Pronunciation for ITAs",
-          "sections": [
-            {
-              "time": {
-                "start": "09:30",
-                "end": "10:50"
-              },
-              "location": {
-                "building": "Literatures, Cultures, & Ling",
-                "room": "G48"
-              },
-              "days": [
-                "M",
-                "W"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
           "number": "ESL 506",
           "title": "Oral Communication for ITAs",
           "sections": [
@@ -57221,7 +57241,7 @@
               },
               "location": {
                 "building": "Literatures, Cultures, & Ling",
-                "room": "G8B"
+                "room": "G18"
               },
               "days": [
                 "T"
@@ -57252,6 +57272,21 @@
               "location": {
                 "building": "Literatures, Cultures, & Ling",
                 "room": "G24"
+              },
+              "days": [
+                "M"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "17:00",
+                "end": "18:50"
+              },
+              "location": {
+                "building": "Literatures, Cultures, & Ling",
+                "room": "G48"
               },
               "days": [
                 "M"
@@ -57329,44 +57364,6 @@
                 "M",
                 "W",
                 "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
-          "number": "ESL 511",
-          "title": "Written and Oral Communication",
-          "sections": [
-            {
-              "time": {
-                "start": "08:00",
-                "end": "09:20"
-              },
-              "location": {
-                "building": "Literatures, Cultures, & Ling",
-                "room": "G8B"
-              },
-              "days": [
-                "T",
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "12:30",
-                "end": "13:50"
-              },
-              "location": {
-                "building": "Literatures, Cultures, & Ling",
-                "room": "G23"
-              },
-              "days": [
-                "T",
-                "R"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -57546,44 +57543,6 @@
           ]
         },
         {
-          "number": "ESL 521",
-          "title": "Written and Oral Business Communication",
-          "sections": [
-            {
-              "time": {
-                "start": "08:00",
-                "end": "09:20"
-              },
-              "location": {
-                "building": "Literatures, Cultures, & Ling",
-                "room": "G8A"
-              },
-              "days": [
-                "T",
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "17:00",
-                "end": "18:20"
-              },
-              "location": {
-                "building": "Literatures, Cultures, & Ling",
-                "room": "G52"
-              },
-              "days": [
-                "M",
-                "W"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
           "number": "ESL 522",
           "title": "Introduction to Business Writing",
           "sections": [
@@ -57610,7 +57569,7 @@
               },
               "location": {
                 "building": "Literatures, Cultures, & Ling",
-                "room": "G13"
+                "room": "G23"
               },
               "days": [
                 "M",
@@ -57626,7 +57585,7 @@
               },
               "location": {
                 "building": "Literatures, Cultures, & Ling",
-                "room": "G8A"
+                "room": "G52"
               },
               "days": [
                 "T",
@@ -57641,6 +57600,22 @@
           "number": "ESL 525",
           "title": "Elements of Business Writing",
           "sections": [
+            {
+              "time": {
+                "start": "11:00",
+                "end": "12:20"
+              },
+              "location": {
+                "building": "Literatures, Cultures, & Ling",
+                "room": "G52"
+              },
+              "days": [
+                "T",
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
             {
               "time": {
                 "start": "12:30",
@@ -57663,6 +57638,22 @@
           "number": "ESL 535",
           "title": "Introduction to Technical Writing",
           "sections": [
+            {
+              "time": {
+                "start": "15:30",
+                "end": "16:50"
+              },
+              "location": {
+                "building": "Literatures, Cultures, & Ling",
+                "room": "G3"
+              },
+              "days": [
+                "T",
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
             {
               "time": {
                 "start": "11:00",
@@ -57692,7 +57683,7 @@
               },
               "location": {
                 "building": "Literatures, Cultures, & Ling",
-                "room": "G52"
+                "room": "G8A"
               },
               "days": [
                 "T",
@@ -57761,7 +57752,7 @@
               },
               "location": {
                 "building": "Literatures, Cultures, & Ling",
-                "room": "G52"
+                "room": "G8A"
               },
               "days": [
                 "T",
@@ -58319,6 +58310,27 @@
           ]
         },
         {
+          "number": "EURO 500",
+          "title": "Dialogue on Europe",
+          "sections": [
+            {
+              "time": {
+                "start": "15:00",
+                "end": "16:50"
+              },
+              "location": {
+                "building": "Literatures, Cultures, & Ling",
+                "room": "1040"
+              },
+              "days": [
+                "M"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "EURO 502",
           "title": "The EU in a Global Context",
           "sections": [
@@ -58399,21 +58411,6 @@
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-03-14"
-            },
-            {
-              "time": {
-                "start": "09:00",
-                "end": "11:30"
-              },
-              "location": {
-                "building": "Siebel Center for Design",
-                "room": "1000"
-              },
-              "days": [
-                "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
             }
           ]
         },
@@ -58519,6 +58516,21 @@
           "sections": [
             {
               "time": {
+                "start": "20:00",
+                "end": "21:30"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "227"
+              },
+              "days": [
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-03-14"
+            },
+            {
+              "time": {
                 "start": "15:30",
                 "end": "18:20"
               },
@@ -58552,27 +58564,6 @@
                 "F"
               ],
               "start_date": "2025-03-17",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
-          "number": "FAA 499",
-          "title": "Special Topics",
-          "sections": [
-            {
-              "time": {
-                "start": "09:00",
-                "end": "11:30"
-              },
-              "location": {
-                "building": "Siebel Center for Design",
-                "room": "1000"
-              },
-              "days": [
-                "F"
-              ],
-              "start_date": "2025-01-21",
               "end_date": "2025-05-07"
             }
           ]
@@ -58993,8 +58984,8 @@
                 "end": "10:50"
               },
               "location": {
-                "building": "Business Instructional Fac",
-                "room": "1049"
+                "building": "Wohlers Hall",
+                "room": "241"
               },
               "days": [
                 "M",
@@ -59041,8 +59032,8 @@
                 "end": "10:50"
               },
               "location": {
-                "building": "Wohlers Hall",
-                "room": "241"
+                "building": "Business Instructional Fac",
+                "room": "1049"
               },
               "days": [
                 "M",
@@ -59785,7 +59776,7 @@
               "days": [
                 "T"
               ],
-              "start_date": "2025-01-21",
+              "start_date": "2025-03-17",
               "end_date": "2025-05-07"
             },
             {
@@ -60880,8 +60871,8 @@
                 "end": "10:50"
               },
               "location": {
-                "building": "Literatures, Cultures, & Ling",
-                "room": "1112"
+                "building": "Gregory Hall",
+                "room": "325"
               },
               "days": [
                 "M",
@@ -60898,8 +60889,8 @@
                 "end": "11:50"
               },
               "location": {
-                "building": "English Building",
-                "room": "149"
+                "building": "Gregory Hall",
+                "room": "221"
               },
               "days": [
                 "M",
@@ -61214,6 +61205,21 @@
               },
               "days": [
                 "M"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "15:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Gregory Hall",
+                "room": "311"
+              },
+              "days": [
+                "W"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -62411,27 +62417,6 @@
           ]
         },
         {
-          "number": "GEOL 415",
-          "title": "Field Geology",
-          "sections": [
-            {
-              "time": {
-                "start": "17:00",
-                "end": "19:50"
-              },
-              "location": {
-                "building": "Natural History Building",
-                "room": "2020B"
-              },
-              "days": [
-                "W"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
           "number": "GEOL 432",
           "title": "Mineralogy and Mineral Optics",
           "sections": [
@@ -62554,27 +62539,6 @@
                 "M",
                 "W",
                 "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
-          "number": "GEOL 515",
-          "title": "Advanced Field Geology",
-          "sections": [
-            {
-              "time": {
-                "start": "17:00",
-                "end": "19:50"
-              },
-              "location": {
-                "building": "Natural History Building",
-                "room": "2020B"
-              },
-              "days": [
-                "W"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -62798,8 +62762,8 @@
                 "end": "11:50"
               },
               "location": {
-                "building": "Gregory Hall",
-                "room": "221"
+                "building": "English Building",
+                "room": "149"
               },
               "days": [
                 "M",
@@ -63320,6 +63284,21 @@
               },
               "days": [
                 "M"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "15:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Gregory Hall",
+                "room": "311"
+              },
+              "days": [
+                "W"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -64189,6 +64168,22 @@
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-03-14"
+            },
+            {
+              "time": {
+                "start": "11:00",
+                "end": "13:20"
+              },
+              "location": {
+                "building": "Armory",
+                "room": "243"
+              },
+              "days": [
+                "T",
+                "R"
+              ],
+              "start_date": "2025-03-17",
+              "end_date": "2025-05-07"
             }
           ]
         },
@@ -67603,8 +67598,8 @@
             },
             {
               "time": {
-                "start": "10:00",
-                "end": "10:50"
+                "start": "13:00",
+                "end": "13:50"
               },
               "location": {
                 "building": "Gregory Hall",
@@ -67823,8 +67818,8 @@
                 "end": "13:20"
               },
               "location": {
-                "building": "David Kinley Hall",
-                "room": "212"
+                "building": "Psychology Building",
+                "room": "207"
               },
               "days": [
                 "M",
@@ -71740,6 +71735,27 @@
           ]
         },
         {
+          "number": "HK 511",
+          "title": "Health Disparities Over the Life Course",
+          "sections": [
+            {
+              "time": {
+                "start": "14:00",
+                "end": "16:50"
+              },
+              "location": {
+                "building": "Huff Hall",
+                "room": "2021C"
+              },
+              "days": [
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "HK 514",
           "title": "Systematic Review and Meta-analysis",
           "sections": [
@@ -71978,7 +71994,7 @@
               },
               "location": {
                 "building": "Armory",
-                "room": "144"
+                "room": "428"
               },
               "days": [
                 "W"
@@ -72040,27 +72056,6 @@
               "days": [
                 "T",
                 "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
-          "number": "HK 554",
-          "title": "Stress Immunology",
-          "sections": [
-            {
-              "time": {
-                "start": "15:00",
-                "end": "17:50"
-              },
-              "location": {
-                "building": "Freer Hall",
-                "room": "130"
-              },
-              "days": [
-                "T"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -72568,6 +72563,36 @@
           "sections": [
             {
               "time": {
+                "start": "11:00",
+                "end": "11:50"
+              },
+              "location": {
+                "building": "Natural History Building",
+                "room": "2020A"
+              },
+              "days": [
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "12:00",
+                "end": "12:50"
+              },
+              "location": {
+                "building": "Natural History Building",
+                "room": "2020A"
+              },
+              "days": [
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
                 "start": "13:00",
                 "end": "13:50"
               },
@@ -72600,6 +72625,21 @@
               "time": {
                 "start": "15:00",
                 "end": "15:50"
+              },
+              "location": {
+                "building": "Natural History Building",
+                "room": "2083"
+              },
+              "days": [
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "15:00",
+                "end": "16:50"
               },
               "location": {
                 "building": "Natural History Building",
@@ -72853,6 +72893,21 @@
             },
             {
               "time": {
+                "start": "12:00",
+                "end": "12:50"
+              },
+              "location": {
+                "building": "Natural History Building",
+                "room": "3098"
+              },
+              "days": [
+                "F"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
                 "start": "09:30",
                 "end": "10:50"
               },
@@ -73004,6 +73059,42 @@
               },
               "days": [
                 "F"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
+          "number": "IB 199",
+          "title": "Undergraduate Open Seminar",
+          "sections": [
+            {
+              "time": {
+                "start": "11:00",
+                "end": "12:50"
+              },
+              "location": {
+                "building": "Natural History Building",
+                "room": "2020B"
+              },
+              "days": [
+                "F"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "11:00",
+                "end": "11:50"
+              },
+              "location": {
+                "building": "Natural History Building",
+                "room": "2020A"
+              },
+              "days": [
+                "M"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -75387,21 +75478,6 @@
             },
             {
               "time": {
-                "start": "11:00",
-                "end": "12:20"
-              },
-              "location": {
-                "building": "Grad Sch of Lib & Info Science",
-                "room": "131"
-              },
-              "days": [
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
                 "start": "09:30",
                 "end": "10:50"
               },
@@ -75916,6 +75992,22 @@
                 "M",
                 "W",
                 "F"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "11:00",
+                "end": "12:20"
+              },
+              "location": {
+                "building": "Grad Sch of Lib & Info Science",
+                "room": "131"
+              },
+              "days": [
+                "T",
+                "R"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -76686,6 +76778,22 @@
           "sections": [
             {
               "time": {
+                "start": "11:00",
+                "end": "12:20"
+              },
+              "location": {
+                "building": "Grad Sch of Lib & Info Science",
+                "room": "46"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
                 "start": "14:00",
                 "end": "15:20"
               },
@@ -77003,21 +77111,6 @@
               },
               "days": [
                 "M"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "14:00",
-                "end": "16:50"
-              },
-              "location": {
-                "building": "Literatures, Cultures, & Ling",
-                "room": "G30"
-              },
-              "days": [
-                "T"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -77377,7 +77470,7 @@
               },
               "location": {
                 "building": "Grad Sch of Lib & Info Science",
-                "room": "46"
+                "room": "12A"
               },
               "days": [
                 "W"
@@ -77907,8 +78000,8 @@
                 "end": "18:50"
               },
               "location": {
-                "building": "Psychology Building",
-                "room": "29"
+                "building": "Engineering Hall",
+                "room": "106B3"
               },
               "days": [
                 "M"
@@ -78114,8 +78207,8 @@
                 "end": "10:50"
               },
               "location": {
-                "building": "Gregory Hall",
-                "room": "325"
+                "building": "Literatures, Cultures, & Ling",
+                "room": "1112"
               },
               "days": [
                 "M",
@@ -78434,6 +78527,21 @@
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "15:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Gregory Hall",
+                "room": "311"
+              },
+              "days": [
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
             }
           ]
         }
@@ -78510,8 +78618,8 @@
                 "end": "14:50"
               },
               "location": {
-                "building": "Literatures, Cultures, & Ling",
-                "room": "1112"
+                "building": "Lincoln Hall",
+                "room": "1068"
               },
               "days": [
                 "M",
@@ -79415,7 +79523,7 @@
               },
               "location": {
                 "building": "Gregory Hall",
-                "room": "123"
+                "room": "336"
               },
               "days": [
                 "M",
@@ -79881,6 +79989,50 @@
           ]
         },
         {
+          "number": "LA 241",
+          "title": "Landform Design & Construction",
+          "sections": [
+            {
+              "time": {
+                "start": "14:00",
+                "end": "16:50"
+              },
+              "location": {
+                "building": "Mumford Hall",
+                "room": "200"
+              },
+              "days": [
+                "T",
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
+          "number": "LA 281",
+          "title": "Design Communications II",
+          "sections": [
+            {
+              "time": {
+                "start": "10:30",
+                "end": "12:20"
+              },
+              "location": {
+                "building": "Mumford Hall",
+                "room": "200"
+              },
+              "days": [
+                "T",
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "LA 336",
           "title": "Design Workshop Studio I",
           "sections": [
@@ -79908,6 +80060,22 @@
               "location": {
                 "building": "Temple Hoyne Buell Hall",
                 "room": "319"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "13:00",
+                "end": "16:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "327"
               },
               "days": [
                 "M",
@@ -79945,6 +80113,22 @@
           "sections": [
             {
               "time": {
+                "start": "09:30",
+                "end": "10:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "325"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
                 "start": "12:30",
                 "end": "13:50"
               },
@@ -79955,6 +80139,29 @@
               "days": [
                 "T",
                 "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
+          "number": "LA 434",
+          "title": "Graduate Site Design Studio",
+          "sections": [
+            {
+              "time": {
+                "start": "14:00",
+                "end": "16:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "327"
+              },
+              "days": [
+                "M",
+                "W",
+                "F"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -79989,6 +80196,22 @@
               "location": {
                 "building": "Temple Hoyne Buell Hall",
                 "room": "319"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "13:00",
+                "end": "16:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "327"
               },
               "days": [
                 "M",
@@ -80079,6 +80302,22 @@
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "13:00",
+                "end": "16:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "327"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
             }
           ]
         },
@@ -80117,6 +80356,22 @@
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "13:00",
+                "end": "16:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "327"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
             }
           ]
         },
@@ -80126,12 +80381,50 @@
           "sections": [
             {
               "time": {
+                "start": "09:30",
+                "end": "10:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "325"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
                 "start": "12:30",
                 "end": "13:50"
               },
               "location": {
                 "building": "Temple Hoyne Buell Hall",
                 "room": "325"
+              },
+              "days": [
+                "T",
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
+          "number": "LA 590",
+          "title": "Directed Research",
+          "sections": [
+            {
+              "time": {
+                "start": "09:30",
+                "end": "10:50"
+              },
+              "location": {
+                "building": "Lincoln Hall",
+                "room": "1000"
               },
               "days": [
                 "T",
@@ -80438,7 +80731,7 @@
             {
               "time": {
                 "start": "19:00",
-                "end": "21:00"
+                "end": "20:50"
               },
               "location": {
                 "building": "Campus Instructional Facility",
@@ -81114,21 +81407,6 @@
           "sections": [
             {
               "time": {
-                "start": "09:00",
-                "end": "09:50"
-              },
-              "location": {
-                "building": "Illinois Street Residence Lng",
-                "room": "94AB"
-              },
-              "days": [
-                "T"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-03-14"
-            },
-            {
-              "time": {
                 "start": "14:00",
                 "end": "14:50"
               },
@@ -81451,7 +81729,7 @@
               },
               "location": {
                 "building": "Inst Labor &  Industrial Rel",
-                "room": "35/43"
+                "room": "51"
               },
               "days": [
                 "T"
@@ -81646,27 +81924,6 @@
                 "R"
               ],
               "start_date": "2025-03-17",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
-          "number": "LER 568",
-          "title": "Firm Performance and HR",
-          "sections": [
-            {
-              "time": {
-                "start": "08:00",
-                "end": "10:50"
-              },
-              "location": {
-                "building": "Inst Labor &  Industrial Rel",
-                "room": "51"
-              },
-              "days": [
-                "W"
-              ],
-              "start_date": "2025-01-21",
               "end_date": "2025-05-07"
             }
           ]
@@ -82797,6 +83054,21 @@
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "15:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Gregory Hall",
+                "room": "311"
+              },
+              "days": [
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
             }
           ]
         },
@@ -83563,6 +83835,27 @@
                 "R"
               ],
               "start_date": "2025-03-17",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
+          "number": "LLS 490",
+          "title": "Research and Writing Seminar",
+          "sections": [
+            {
+              "time": {
+                "start": "17:00",
+                "end": "19:20"
+              },
+              "location": {
+                "building": "1207 W Oregon",
+                "room": "133"
+              },
+              "days": [
+                "T"
+              ],
+              "start_date": "2025-01-21",
               "end_date": "2025-05-07"
             }
           ]
@@ -87575,8 +87868,8 @@
                 "end": "13:50"
               },
               "location": {
-                "building": "Campus Instructional Facility",
-                "room": "3039"
+                "building": "Materials Science & Eng Bld",
+                "room": "100"
               },
               "days": [
                 "M",
@@ -88635,8 +88928,8 @@
                 "end": "13:50"
               },
               "location": {
-                "building": "Materials Science & Eng Bld",
-                "room": "100"
+                "building": "Campus Instructional Facility",
+                "room": "3039"
               },
               "days": [
                 "M",
@@ -88875,8 +89168,8 @@
                 "end": "13:50"
               },
               "location": {
-                "building": "Lincoln Hall",
-                "room": "1060"
+                "building": "Engineering Hall",
+                "room": "106B3"
               },
               "days": [
                 "M",
@@ -88892,8 +89185,8 @@
                 "end": "14:50"
               },
               "location": {
-                "building": "David Kinley Hall",
-                "room": "115"
+                "building": "Sidney Lu Mech Engr Bldg",
+                "room": "2055"
               },
               "days": [
                 "M",
@@ -93398,6 +93691,22 @@
             },
             {
               "time": {
+                "start": "12:00",
+                "end": "13:20"
+              },
+              "location": {
+                "building": "Burrill Hall",
+                "room": "7"
+              },
+              "days": [
+                "T",
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
                 "start": "15:00",
                 "end": "16:20"
               },
@@ -97316,6 +97625,22 @@
                 "end": "16:50"
               },
               "location": {
+                "building": "Digital Computer Laboratory",
+                "room": "L440"
+              },
+              "days": [
+                "T",
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-03-14"
+            },
+            {
+              "time": {
+                "start": "14:00",
+                "end": "16:50"
+              },
+              "location": {
                 "building": "Ceramics Kiln House",
                 "room": "204"
               },
@@ -97715,8 +98040,8 @@
                 "end": "11:50"
               },
               "location": {
-                "building": "Materials Science & Eng Bld",
-                "room": "305"
+                "building": "Sidney Lu Mech Engr Bldg",
+                "room": "2200"
               },
               "days": [
                 "M",
@@ -97851,8 +98176,8 @@
                 "end": "10:50"
               },
               "location": {
-                "building": "Transportation Building",
-                "room": "203"
+                "building": "Everitt Laboratory",
+                "room": "3117"
               },
               "days": [
                 "M",
@@ -99231,59 +99556,6 @@
           ]
         },
         {
-          "number": "MUS 169",
-          "title": "Unit One Sem Instruct in Music",
-          "sections": [
-            {
-              "time": {
-                "start": "17:00",
-                "end": "17:50"
-              },
-              "location": {
-                "building": "Allen Residence Hall",
-                "room": "63"
-              },
-              "days": [
-                "T",
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "16:00",
-                "end": "16:50"
-              },
-              "location": {
-                "building": "Allen Residence Hall",
-                "room": "63"
-              },
-              "days": [
-                "T",
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "13:00",
-                "end": "14:50"
-              },
-              "location": {
-                "building": "Allen Residence Hall",
-                "room": "63"
-              },
-              "days": [
-                "M"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
           "number": "MUS 172",
           "title": "Grp Instr Pno for Mus Major I",
           "sections": [
@@ -100310,8 +100582,8 @@
                 "end": "09:20"
               },
               "location": {
-                "building": "Music Building",
-                "room": "0320"
+                "building": "Krannert Center for Perf Arts",
+                "room": "2317"
               },
               "days": [
                 "T",
@@ -101085,6 +101357,28 @@
       "name": "Music Lessons and Ensembles",
       "courses": [
         {
+          "number": "MUSC 448",
+          "title": "Concerto Urbano Baroque Orchestra",
+          "sections": [
+            {
+              "time": {
+                "start": "15:00",
+                "end": "15:50"
+              },
+              "location": {
+                "building": "Smith Memorial Hall",
+                "room": "105"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "MUSC 449",
           "title": "World Music Performance Ensembles",
           "sections": [
@@ -101099,22 +101393,6 @@
               },
               "days": [
                 "T"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "18:00",
-                "end": "19:50"
-              },
-              "location": {
-                "building": "Music Building",
-                "room": "0359"
-              },
-              "days": [
-                "T",
-                "R"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -101889,16 +102167,16 @@
           "sections": [
             {
               "time": {
-                "start": "15:00",
-                "end": "16:50"
+                "start": "16:00",
+                "end": "17:50"
               },
               "location": {
                 "building": "Music Building",
                 "room": "0061A"
               },
               "days": [
-                "M",
-                "W"
+                "T",
+                "R"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -101959,16 +102237,32 @@
             },
             {
               "time": {
-                "start": "14:00",
-                "end": "14:50"
+                "start": "15:00",
+                "end": "15:50"
               },
               "location": {
-                "building": "Music Building",
-                "room": "0061A"
+                "building": "Smith Memorial Hall",
+                "room": "25"
               },
               "days": [
-                "M",
-                "W"
+                "T",
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "18:00",
+                "end": "18:50"
+              },
+              "location": {
+                "building": "Smith Memorial Hall",
+                "room": "25"
+              },
+              "days": [
+                "T",
+                "R"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -102464,7 +102758,7 @@
               },
               "location": {
                 "building": "Psychology Building",
-                "room": "608"
+                "room": "508"
               },
               "days": [
                 "M"
@@ -102971,28 +103265,6 @@
           ]
         },
         {
-          "number": "NPRE 511",
-          "title": "Nuclear Reactor Heat Transfer",
-          "sections": [
-            {
-              "time": {
-                "start": "11:00",
-                "end": "12:20"
-              },
-              "location": {
-                "building": "Campus Instructional Facility",
-                "room": "3018"
-              },
-              "days": [
-                "T",
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
           "number": "NPRE 521",
           "title": "Interact of Radiation w/Matter",
           "sections": [
@@ -103274,21 +103546,6 @@
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "16:00",
-                "end": "16:50"
-              },
-              "location": {
-                "building": "Turner Hall",
-                "room": "N120"
-              },
-              "days": [
-                "W"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-03-14"
             },
             {
               "time": {
@@ -105101,8 +105358,8 @@
                 "end": "12:20"
               },
               "location": {
-                "building": "Lincoln Hall",
-                "room": "1000"
+                "building": "Everitt Laboratory",
+                "room": "1306"
               },
               "days": [
                 "T",
@@ -105179,12 +105436,27 @@
             },
             {
               "time": {
+                "start": "09:00",
+                "end": "09:50"
+              },
+              "location": {
+                "building": "Davenport Hall",
+                "room": "212"
+              },
+              "days": [
+                "F"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
                 "start": "10:00",
                 "end": "10:50"
               },
               "location": {
-                "building": "Psychology Building",
-                "room": "11"
+                "building": "Davenport Hall",
+                "room": "136"
               },
               "days": [
                 "F"
@@ -105243,8 +105515,8 @@
                 "end": "13:50"
               },
               "location": {
-                "building": "Literatures, Cultures, & Ling",
-                "room": "G36"
+                "building": "David Kinley Hall",
+                "room": "115"
               },
               "days": [
                 "R"
@@ -105490,8 +105762,8 @@
                 "end": "15:20"
               },
               "location": {
-                "building": "Bevier Hall",
-                "room": "393"
+                "building": "Campus Instructional Facility",
+                "room": "2025"
               },
               "days": [
                 "T",
@@ -105736,25 +106008,8 @@
                 "end": "14:50"
               },
               "location": {
-                "building": "Lincoln Hall",
-                "room": "1026"
-              },
-              "days": [
-                "M",
-                "W",
-                "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "14:00",
-                "end": "14:50"
-              },
-              "location": {
-                "building": "Davenport Hall",
-                "room": "336"
+                "building": "Henry Administration Bldg",
+                "room": "156"
               },
               "days": [
                 "M",
@@ -105918,6 +106173,69 @@
               "days": [
                 "T",
                 "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
+          "number": "PHIL 501",
+          "title": "Seminar on the History of Philosophy",
+          "sections": [
+            {
+              "time": {
+                "start": "16:00",
+                "end": "18:50"
+              },
+              "location": {
+                "building": "Gregory Hall",
+                "room": "402"
+              },
+              "days": [
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
+          "number": "PHIL 511",
+          "title": "Seminar Ethical Theory",
+          "sections": [
+            {
+              "time": {
+                "start": "15:00",
+                "end": "17:20"
+              },
+              "location": {
+                "building": "Gregory Hall",
+                "room": "402"
+              },
+              "days": [
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
+          "number": "PHIL 521",
+          "title": "Seminar Contemporary Problems",
+          "sections": [
+            {
+              "time": {
+                "start": "15:00",
+                "end": "17:20"
+              },
+              "location": {
+                "building": "Gregory Hall",
+                "room": "402"
+              },
+              "days": [
+                "M"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -108001,36 +108319,6 @@
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "14:00",
-                "end": "15:50"
-              },
-              "location": {
-                "building": "Campus Instructional Facility",
-                "room": "4031"
-              },
-              "days": [
-                "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "16:00",
-                "end": "17:50"
-              },
-              "location": {
-                "building": "Campus Instructional Facility",
-                "room": "4031"
-              },
-              "days": [
-                "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
             }
           ]
         },
@@ -108493,36 +108781,6 @@
             },
             {
               "time": {
-                "start": "16:00",
-                "end": "17:50"
-              },
-              "location": {
-                "building": "Loomis Laboratory",
-                "room": "143"
-              },
-              "days": [
-                "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "16:00",
-                "end": "17:50"
-              },
-              "location": {
-                "building": "Loomis Laboratory",
-                "room": "147"
-              },
-              "days": [
-                "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
                 "start": "08:00",
                 "end": "09:50"
               },
@@ -108795,21 +109053,6 @@
               "time": {
                 "start": "14:00",
                 "end": "15:50"
-              },
-              "location": {
-                "building": "Campus Instructional Facility",
-                "room": "4035"
-              },
-              "days": [
-                "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "16:00",
-                "end": "17:50"
               },
               "location": {
                 "building": "Campus Instructional Facility",
@@ -110882,38 +111125,8 @@
             },
             {
               "time": {
-                "start": "08:00",
-                "end": "10:50"
-              },
-              "location": {
-                "building": "Engineering Sciences Building",
-                "room": "6107"
-              },
-              "days": [
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
                 "start": "13:00",
                 "end": "15:50"
-              },
-              "location": {
-                "building": "Engineering Sciences Building",
-                "room": "6107"
-              },
-              "days": [
-                "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "08:00",
-                "end": "10:50"
               },
               "location": {
                 "building": "Engineering Sciences Building",
@@ -110965,22 +111178,6 @@
               "days": [
                 "M",
                 "W"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "08:00",
-                "end": "10:50"
-              },
-              "location": {
-                "building": "Engineering Sciences Building",
-                "room": "6106"
-              },
-              "days": [
-                "T",
-                "R"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -111850,6 +112047,34 @@
       ]
     },
     {
+      "code": "PLPA",
+      "name": "Plant Pathology",
+      "courses": [
+        {
+          "number": "PLPA 403",
+          "title": "Advanced Plant Pathology",
+          "sections": [
+            {
+              "time": {
+                "start": "11:00",
+                "end": "12:20"
+              },
+              "location": {
+                "building": "Turner Hall",
+                "room": "M5"
+              },
+              "days": [
+                "T",
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "code": "POL",
       "name": "Polish",
       "courses": [
@@ -111961,8 +112186,8 @@
                 "end": "11:50"
               },
               "location": {
-                "building": "Literatures, Cultures, & Ling",
-                "room": "G3"
+                "building": "Gregory Hall",
+                "room": "329"
               },
               "days": [
                 "M",
@@ -112001,7 +112226,7 @@
               },
               "location": {
                 "building": "Literatures, Cultures, & Ling",
-                "room": "G7"
+                "room": "G36"
               },
               "days": [
                 "T",
@@ -112112,6 +112337,21 @@
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "15:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Gregory Hall",
+                "room": "311"
+              },
+              "days": [
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
             }
           ]
         }
@@ -112162,7 +112402,7 @@
               },
               "location": {
                 "building": "David Kinley Hall",
-                "room": "115"
+                "room": "312"
               },
               "days": [
                 "F"
@@ -112176,8 +112416,8 @@
                 "end": "11:50"
               },
               "location": {
-                "building": "Davenport Hall",
-                "room": "136"
+                "building": "David Kinley Hall",
+                "room": "115"
               },
               "days": [
                 "F"
@@ -112880,7 +113120,7 @@
               },
               "location": {
                 "building": "Armory",
-                "room": "428"
+                "room": "144"
               },
               "days": [
                 "M",
@@ -115770,6 +116010,21 @@
             },
             {
               "time": {
+                "start": "17:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Psychology Building",
+                "room": "815"
+              },
+              "days": [
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
                 "start": "11:00",
                 "end": "12:20"
               },
@@ -116051,7 +116306,7 @@
             {
               "time": {
                 "start": "09:30",
-                "end": "11:00"
+                "end": "10:50"
               },
               "location": {
                 "building": "Psychology Building",
@@ -116380,7 +116635,7 @@
               },
               "location": {
                 "building": "Psychology Building",
-                "room": "608"
+                "room": "508"
               },
               "days": [
                 "M"
@@ -116566,8 +116821,8 @@
                 "end": "12:20"
               },
               "location": {
-                "building": "Lincoln Hall",
-                "room": "1000"
+                "building": "Everitt Laboratory",
+                "room": "1306"
               },
               "days": [
                 "T",
@@ -116644,12 +116899,27 @@
             },
             {
               "time": {
+                "start": "09:00",
+                "end": "09:50"
+              },
+              "location": {
+                "building": "Davenport Hall",
+                "room": "212"
+              },
+              "days": [
+                "F"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
                 "start": "10:00",
                 "end": "10:50"
               },
               "location": {
-                "building": "Psychology Building",
-                "room": "11"
+                "building": "Davenport Hall",
+                "room": "136"
               },
               "days": [
                 "F"
@@ -116708,8 +116978,8 @@
                 "end": "13:50"
               },
               "location": {
-                "building": "Literatures, Cultures, & Ling",
-                "room": "G36"
+                "building": "David Kinley Hall",
+                "room": "115"
               },
               "days": [
                 "R"
@@ -116912,8 +117182,8 @@
                 "end": "15:50"
               },
               "location": {
-                "building": "Davenport Hall",
-                "room": "313"
+                "building": "Armory",
+                "room": "429"
               },
               "days": [
                 "T",
@@ -117023,8 +117293,8 @@
                 "end": "15:20"
               },
               "location": {
-                "building": "Bevier Hall",
-                "room": "393"
+                "building": "Campus Instructional Facility",
+                "room": "2025"
               },
               "days": [
                 "T",
@@ -117155,8 +117425,8 @@
                 "end": "17:30"
               },
               "location": {
-                "building": "English Building",
-                "room": "149"
+                "building": "Literatures, Cultures, & Ling",
+                "room": "1140"
               },
               "days": [
                 "W"
@@ -117398,7 +117668,7 @@
               },
               "location": {
                 "building": "English Building",
-                "room": "36"
+                "room": "149"
               },
               "days": [
                 "M",
@@ -117433,23 +117703,6 @@
               "location": {
                 "building": "English Building",
                 "room": "115"
-              },
-              "days": [
-                "M",
-                "W",
-                "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "09:00",
-                "end": "09:50"
-              },
-              "location": {
-                "building": "English Building",
-                "room": "149"
               },
               "days": [
                 "M",
@@ -118035,22 +118288,6 @@
               },
               "location": {
                 "building": "English Building",
-                "room": "309"
-              },
-              "days": [
-                "M",
-                "W"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "15:30",
-                "end": "16:45"
-              },
-              "location": {
-                "building": "English Building",
                 "room": "156"
               },
               "days": [
@@ -118159,11 +118396,11 @@
             {
               "time": {
                 "start": "09:30",
-                "end": "10:45"
+                "end": "10:50"
               },
               "location": {
-                "building": "Henry Administration Bldg",
-                "room": "148"
+                "building": "English Building",
+                "room": "44"
               },
               "days": [
                 "T",
@@ -118882,23 +119119,6 @@
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "12:00",
-                "end": "12:50"
-              },
-              "location": {
-                "building": "English Building",
-                "room": "61"
-              },
-              "days": [
-                "M",
-                "W",
-                "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
             }
           ]
         },
@@ -118906,22 +119126,6 @@
           "number": "RHET 233",
           "title": "Adv Rhetoric & Composition",
           "sections": [
-            {
-              "time": {
-                "start": "09:30",
-                "end": "10:45"
-              },
-              "location": {
-                "building": "English Building",
-                "room": "44"
-              },
-              "days": [
-                "T",
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
             {
               "time": {
                 "start": "14:00",
@@ -119188,28 +119392,6 @@
               "location": {
                 "building": "Armory",
                 "room": "242"
-              },
-              "days": [
-                "T",
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
-          "number": "RST 270",
-          "title": "Sport and Sustainability",
-          "sections": [
-            {
-              "time": {
-                "start": "12:30",
-                "end": "13:50"
-              },
-              "location": {
-                "building": "Armory",
-                "room": "331"
               },
               "days": [
                 "T",
@@ -119960,43 +120142,6 @@
               },
               "days": [
                 "W"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
-          "number": "RUSS 523",
-          "title": "Tolstoy",
-          "sections": [
-            {
-              "time": {
-                "start": "14:00",
-                "end": "15:20"
-              },
-              "location": {
-                "building": "Literatures, Cultures, & Ling",
-                "room": "1024"
-              },
-              "days": [
-                "T",
-                "R"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            },
-            {
-              "time": {
-                "start": "15:30",
-                "end": "16:20"
-              },
-              "location": {
-                "building": "Literatures, Cultures, & Ling",
-                "room": "1024"
-              },
-              "days": [
-                "T"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -120784,7 +120929,7 @@
               },
               "location": {
                 "building": "Electrical & Computer Eng Bldg",
-                "room": "ARR"
+                "room": "3080"
               },
               "days": [
                 "W"
@@ -120799,7 +120944,7 @@
               },
               "location": {
                 "building": "Electrical & Computer Eng Bldg",
-                "room": "ARR"
+                "room": "3080"
               },
               "days": [
                 "R"
@@ -120814,7 +120959,7 @@
               },
               "location": {
                 "building": "Electrical & Computer Eng Bldg",
-                "room": "ARR"
+                "room": "3080"
               },
               "days": [
                 "R"
@@ -122328,6 +122473,27 @@
           ]
         },
         {
+          "number": "SOC 199",
+          "title": "Undergraduate Open Seminar",
+          "sections": [
+            {
+              "time": {
+                "start": "15:00",
+                "end": "15:50"
+              },
+              "location": {
+                "building": "Lincoln Hall",
+                "room": "1066"
+              },
+              "days": [
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "SOC 200",
           "title": "Introduction to Sociological Theory",
           "sections": [
@@ -122816,8 +122982,8 @@
                 "end": "18:20"
               },
               "location": {
-                "building": "Henry Administration Bldg",
-                "room": "148"
+                "building": "Lincoln Hall",
+                "room": "3057"
               },
               "days": [
                 "W"
@@ -123619,27 +123785,6 @@
               },
               "days": [
                 "F"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
-          "number": "SOCW 575",
-          "title": "Social Work Teaching Seminar",
-          "sections": [
-            {
-              "time": {
-                "start": "09:00",
-                "end": "11:50"
-              },
-              "location": {
-                "building": "1010 W Nevada",
-                "room": "2101"
-              },
-              "days": [
-                "R"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -124597,6 +124742,28 @@
           ]
         },
         {
+          "number": "SPAN 332",
+          "title": "Spanish and Entrepreneurship",
+          "sections": [
+            {
+              "time": {
+                "start": "11:00",
+                "end": "11:50"
+              },
+              "location": {
+                "building": "Davenport Hall",
+                "room": "313"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "SPAN 460",
           "title": "Principles of Language Testing",
           "sections": [
@@ -124737,6 +124904,21 @@
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "15:00",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Gregory Hall",
+                "room": "311"
+              },
+              "days": [
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
             }
           ]
         },
@@ -124840,8 +125022,8 @@
                 "end": "15:50"
               },
               "location": {
-                "building": "Noyes Laboratory",
-                "room": "164"
+                "building": "Education Building",
+                "room": "389"
               },
               "days": [
                 "T"
@@ -124962,12 +125144,12 @@
           "sections": [
             {
               "time": {
-                "start": "13:00",
-                "end": "14:50"
+                "start": "19:00",
+                "end": "20:50"
               },
               "location": {
                 "building": "Education Building",
-                "room": "376"
+                "room": "288A"
               },
               "days": [
                 "W"
@@ -128867,8 +129049,8 @@
                 "end": "12:50"
               },
               "location": {
-                "building": "Materials Science & Eng Bld",
-                "room": "305"
+                "building": "Sidney Lu Mech Engr Bldg",
+                "room": "2200"
               },
               "days": [
                 "T",
@@ -129097,6 +129279,28 @@
               "end_date": "2025-05-07"
             }
           ]
+        },
+        {
+          "number": "TAM 598",
+          "title": "Advanced Special Topics",
+          "sections": [
+            {
+              "time": {
+                "start": "09:00",
+                "end": "10:50"
+              },
+              "location": {
+                "building": "Sidney Lu Mech Engr Bldg",
+                "room": "2045"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
         }
       ]
     },
@@ -129247,27 +129451,6 @@
               },
               "days": [
                 "T"
-              ],
-              "start_date": "2025-01-21",
-              "end_date": "2025-05-07"
-            }
-          ]
-        },
-        {
-          "number": "TE 450",
-          "title": "Startups: Incorporation, Funding, Contracts, & Intellectual Property",
-          "sections": [
-            {
-              "time": {
-                "start": "10:00",
-                "end": "12:30"
-              },
-              "location": {
-                "building": "Sidney Lu Mech Engr Bldg",
-                "room": "2045"
-              },
-              "days": [
-                "F"
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
@@ -129477,6 +129660,21 @@
             },
             {
               "time": {
+                "start": "16:00",
+                "end": "16:50"
+              },
+              "location": {
+                "building": "Krannert Center for Perf Arts",
+                "room": "3604"
+              },
+              "days": [
+                "T"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
                 "start": "11:00",
                 "end": "11:50"
               },
@@ -129663,8 +129861,8 @@
                 "end": "12:20"
               },
               "location": {
-                "building": "Gregory Hall",
-                "room": "329"
+                "building": "Krannert Center for Perf Arts",
+                "room": "3604"
               },
               "days": [
                 "M",
@@ -131498,6 +131696,27 @@
           ]
         },
         {
+          "number": "TRST 500",
+          "title": "Translation and Interpreting: Reflective Practice",
+          "sections": [
+            {
+              "time": {
+                "start": "15:30",
+                "end": "17:50"
+              },
+              "location": {
+                "building": "Literatures, Cultures, & Ling",
+                "room": "G96"
+              },
+              "days": [
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "TRST 502",
           "title": "Applied LiteraryTranslation II",
           "sections": [
@@ -131710,6 +131929,43 @@
       "name": "Urban and Regional Planning",
       "courses": [
         {
+          "number": "UP 116",
+          "title": "Urban Informatics I",
+          "sections": [
+            {
+              "time": {
+                "start": "11:00",
+                "end": "11:50"
+              },
+              "location": {
+                "building": "Wohlers Hall",
+                "room": "70B"
+              },
+              "days": [
+                "F"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "11:00",
+                "end": "11:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "225"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "UP 136",
           "title": "Urban Sustainability",
           "sections": [
@@ -131776,6 +132032,43 @@
           ]
         },
         {
+          "number": "UP 199",
+          "title": "Undergraduate Open Seminar",
+          "sections": [
+            {
+              "time": {
+                "start": "15:00",
+                "end": "15:50"
+              },
+              "location": {
+                "building": "Wohlers Hall",
+                "room": "70B"
+              },
+              "days": [
+                "F"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "16:00",
+                "end": "16:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "225"
+              },
+              "days": [
+                "M",
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "UP 201",
           "title": "Planning in Action",
           "sections": [
@@ -131807,8 +132100,8 @@
                 "end": "10:50"
               },
               "location": {
-                "building": "901 W Oregon",
-                "room": "101"
+                "building": "Wohlers Hall",
+                "room": "70B"
               },
               "days": [
                 "F"
@@ -131845,7 +132138,7 @@
               },
               "location": {
                 "building": "Armory",
-                "room": "370"
+                "room": "384"
               },
               "days": [
                 "M",
@@ -132035,6 +132328,42 @@
           ]
         },
         {
+          "number": "UP 347",
+          "title": "Junior Planning Workshop",
+          "sections": [
+            {
+              "time": {
+                "start": "15:30",
+                "end": "16:50"
+              },
+              "location": {
+                "building": "Wohlers Hall",
+                "room": "70B"
+              },
+              "days": [
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "15:30",
+                "end": "16:50"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "227"
+              },
+              "days": [
+                "T"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            }
+          ]
+        },
+        {
           "number": "UP 401",
           "title": "Professional Development Seminar",
           "sections": [
@@ -132081,6 +132410,21 @@
           "number": "UP 418",
           "title": "GIS for Planners",
           "sections": [
+            {
+              "time": {
+                "start": "15:30",
+                "end": "16:50"
+              },
+              "location": {
+                "building": "901 W Oregon",
+                "room": "101"
+              },
+              "days": [
+                "W"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-05-07"
+            },
             {
               "time": {
                 "start": "15:30",
@@ -132292,6 +132636,21 @@
               ],
               "start_date": "2025-01-21",
               "end_date": "2025-05-07"
+            },
+            {
+              "time": {
+                "start": "20:00",
+                "end": "21:30"
+              },
+              "location": {
+                "building": "Temple Hoyne Buell Hall",
+                "room": "227"
+              },
+              "days": [
+                "R"
+              ],
+              "start_date": "2025-01-21",
+              "end_date": "2025-03-14"
             },
             {
               "time": {
