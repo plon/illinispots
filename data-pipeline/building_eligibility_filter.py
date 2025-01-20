@@ -9,7 +9,8 @@ class BuildingDataFilter:
         self.output_file = self.data_dir / "filtered_buildings.json"
         self.excluded_buildings = {
             "Temple Hoyne Buell Hall",
-            "Krannert Center for Perf Arts"
+            "Krannert Center for Perf Arts",
+            "Smith Memorial Hall"
         }
         self.min_rooms = 7
 
