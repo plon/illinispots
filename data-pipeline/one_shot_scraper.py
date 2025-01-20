@@ -189,7 +189,9 @@ def save_subject_data(subjects: List[Subject], year: int, term: str):
     with open(output_file, "w") as f:
         json.dump(data, f, indent=2)
 
-def scrape_all_data(year: Optional[int] = None, term: Optional[str] = None) -> List[Subject]:
+def scrape_all_data(year: Optional[int] = None, term: Optional[str] = None, verbose: bool = False) -> List[Subject]:
+    start_time = datetime.now()
+
     if year is None:
         year = 2024
     if term is None:
@@ -203,29 +205,55 @@ def scrape_all_data(year: Optional[int] = None, term: Optional[str] = None) -> L
     r = requests.get("https://courses.illinois.edu/schedule/DEFAULT/DEFAULT")
     subjects = scrape_subjects(r.text)
     total_subjects = len(subjects)
+    total_courses = 0
+    total_sections = 0
 
     try:
         for i, subject in enumerate(subjects, 1):
+            subject_start = datetime.now()
             print(f"Processing subject {i}/{total_subjects}: {subject.code}")
 
             r = requests.get(f"https://courses.illinois.edu/schedule/{year}/{term}/{subject.code}")
             courses = scrape_courses(r.text)
 
-            for course in courses:
+            if verbose:
+                print(f"  Found {len(courses)} courses in {subject.code}")
+
+            for j, course in enumerate(courses, 1):
+                course_start = datetime.now()
                 course_number = course.number.split()[1]
                 course_url = f"https://courses.illinois.edu/schedule/{year}/{term}/{subject.code}/{course_number}"
+
+                if verbose:
+                    print(f"    Processing course {j}/{len(courses)}: {course.number}")
+
                 course_response = requests.get(course_url)
                 sections = scrape_sections(course_response.text)
 
                 if len(sections) > 0:
                     course.sections = sections
                     subject.courses.append(course)
+                    total_sections += len(sections)
+
+                    if verbose:
+                        course_duration = datetime.now() - course_start
+                        print(f"      Found {len(sections)} sections ({course_duration.total_seconds():.1f}s)")
+
+            total_courses += len(subject.courses)
+            if verbose:
+                subject_duration = datetime.now() - subject_start
+                print(f"  Completed {subject.code} in {subject_duration.total_seconds():.1f}s")
+                print(f"  Running totals: {total_courses} courses, {total_sections} sections")
+                print()
 
     except KeyboardInterrupt:
         print("\nScraping interrupted, saving partial results...")
 
     subjects = [subject for subject in subjects if len(subject.courses) > 0]
     save_subject_data(subjects, year=year, term=term)
+
+    total_duration = datetime.now() - start_time
+    print(f"\nTotal time: {total_duration.total_seconds():.1f}s")
     return subjects
 
 if __name__ == "__main__":
@@ -234,13 +262,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Scrape UIUC course data')
     parser.add_argument('--year', type=int, default=2025)
     parser.add_argument('--term', type=str, default="spring")
+    parser.add_argument('-v', '--verbose', action='store_true', help='Show verbose output')
 
     args = parser.parse_args()
 
     print("Starting scraper...")
     print("Press Ctrl+C at any time to stop and save partial results")
 
-    subjects = scrape_all_data(year=args.year, term=args.term)
+    subjects = scrape_all_data(year=args.year, term=args.term, verbose=args.verbose)
     print("\nScraping complete!")
     print(f"Scraped {len(subjects)} subjects")
     print(f"Total courses: {sum(len(subject.courses) for subject in subjects)}")
