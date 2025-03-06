@@ -15,6 +15,7 @@ import {
   Facility,
   FacilityRoom
 } from "@/types";
+import { isLibraryOpen } from "@/utils/libraryHours";
 
 export const dynamic = "force-dynamic";
 
@@ -297,8 +298,13 @@ function linkRoomsReservations(
   return roomReservations;
 }
 
-async function getFormattedLibraryData(): Promise<FormattedLibraryData> {
+async function getFormattedLibraryData(openLibraries?: string[]): Promise<FormattedLibraryData> {
   const result: FormattedLibraryData = {};
+
+  // If no open libraries, return empty result
+  if (openLibraries && openLibraries.length === 0) {
+    return result;
+  }
 
   try {
     // Fetch all rooms from the LibCal "All Spaces" page
@@ -321,6 +327,11 @@ async function getFormattedLibraryData(): Promise<FormattedLibraryData> {
 
     // Process libraries we care about
     for (const [libraryName, libraryInfo] of Object.entries(libraries)) {
+      // Skip libraries that aren't open if we have a filtered list
+      if (openLibraries && !openLibraries.includes(libraryName)) {
+        continue;
+      }
+      
       const lid = libraryInfo.id;
       const reservationData = await getReservation(lid);
       const libraryRooms = roomsByLibrary[lid] || [];
@@ -417,7 +428,7 @@ export async function GET(request: Request) {
 
     // Get library data if requested
     if (includeLibraries) {
-      // Define library facilities with coordinates
+      // Define library facilities with coordinates and check if they're open
       const libraryFacilities: Record<string, Facility> = {
         "Grainger Engineering Library": {
           id: "grainger",
@@ -429,7 +440,7 @@ export async function GET(request: Request) {
           },
           hours: { open: "", close: "" },
           rooms: {},
-          isOpen: true, // We'll determine this from library hours
+          isOpen: false, // Will be determined by isLibraryOpen
           roomCounts: { available: 0, total: 0 },
           address: "1301 W Springfield Ave, Urbana, IL 61801"
         },
@@ -443,7 +454,7 @@ export async function GET(request: Request) {
           },
           hours: { open: "", close: "" },
           rooms: {},
-          isOpen: true, // We'll determine this from library hours
+          isOpen: false, // Will be determined by isLibraryOpen
           roomCounts: { available: 0, total: 0 },
           address: "1101 S Goodwin Ave, Urbana, IL 61801"
         },
@@ -457,33 +468,32 @@ export async function GET(request: Request) {
           },
           hours: { open: "", close: "" },
           rooms: {},
-          isOpen: true, // We'll determine this from library hours
+          isOpen: false, // Will be determined by isLibraryOpen
           roomCounts: { available: 0, total: 0 },
           address: "1408 W Gregory Dr, Urbana, IL 61801"
         },
       };
       
-      // Check library hours and update isOpen status
-      // This would use your isLibraryOpen function
-      // For now, hardcoding basic check that libraries are open Monday-Friday 8am-10pm
-      const day = now.day(); // 0 = Sunday, 6 = Saturday
-      const hour = now.hour();
-      const isWeekday = day >= 1 && day <= 5;
-      const isDayHours = hour >= 8 && hour < 22;
-      const isWeekendHours = hour >= 10 && hour < 18;
-      
-      Object.values(libraryFacilities).forEach(facility => {
-        // Simple hours check - this should be replaced with your actual library hours logic
-        facility.isOpen = isWeekday ? isDayHours : isWeekendHours;
+      // Update each library's isOpen status based on its hours
+      Object.entries(libraryFacilities).forEach(([libraryName, facility]) => {
+        facility.isOpen = isLibraryOpen(libraryName);
       });
       
-      // Only fetch detailed library availability if any library is open
-      const anyLibraryOpen = Object.values(libraryFacilities).some(lib => lib.isOpen);
+      // Add all library facilities to the response, even if they're closed
+      Object.entries(libraryFacilities).forEach(([, facility]) => {
+        buildingStatus.facilities[facility.id] = facility;
+      });
       
-      if (anyLibraryOpen) {
-        const libraryData = await getFormattedLibraryData();
+      // Only fetch room data for libraries that are actually open
+      const openLibraryNames = Object.entries(libraryFacilities)
+        .filter(([, facility]) => facility.isOpen)
+        .map(([name]) => name);
+
+      if (openLibraryNames.length > 0) {
+        // Get library data for open libraries only
+        const libraryData = await getFormattedLibraryData(openLibraryNames);
         
-        // Add room data to each library facility
+        // Add room data only for libraries that are open
         Object.entries(libraryData).forEach(([name, data]) => {
           if (libraryFacilities[name] && libraryFacilities[name].isOpen) {
             const libraryFacility = libraryFacilities[name];

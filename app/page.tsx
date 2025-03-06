@@ -5,7 +5,6 @@ import LeftSidebar from "@/components/left";
 import Map from "@/components/map";
 import LoadingScreen from "@/components/LoadingScreen";
 import { BuildingStatus, FacilityType } from "@/types";
-import { isLibraryOpen } from "@/utils/libraryHours";
 
 const IlliniSpotsPage: React.FC = () => {
   const [facilityData, setFacilityData] = useState<BuildingStatus | null>(null);
@@ -16,16 +15,8 @@ const IlliniSpotsPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const librariesOpen = [
-          "Grainger Engineering Library", 
-          "Funk ACES Library", 
-          "Main Library"
-        ].some(library => isLibraryOpen(library));
-        
-        const apiUrl = "/api/facilities" + 
-          (librariesOpen ? "" : "?libraries=false");
-        
-        const res = await fetch(apiUrl);
+        // Let the API handle which libraries to include based on their open hours
+        const res = await fetch("/api/facilities");
         const facilitiesData = await res.json();
         
         setFacilityData(facilitiesData);
