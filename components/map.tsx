@@ -94,10 +94,10 @@ export default function Map({
       markerDataArray.push({
         id: facility.id,
         name: facility.name,
-        coordinates: [
-          facility.coordinates.longitude,
-          facility.coordinates.latitude,
-        ],
+        coordinates: {
+          latitude: facility.coordinates.latitude,
+          longitude: facility.coordinates.longitude,
+        },
         isOpen: facility.isOpen,
         available: facility.roomCounts.available,
         total: facility.roomCounts.total,
@@ -130,7 +130,7 @@ export default function Map({
       markerEl.style.border = `${isMobile ? "1px" : "2px"} solid white`;
 
       const marker = new maplibregl.Marker({ element: markerEl })
-        .setLngLat(data.coordinates)
+        .setLngLat([data.coordinates.longitude, data.coordinates.latitude])
         .addTo(map.current!);
 
       markerEl.addEventListener("mouseenter", () => {
@@ -143,7 +143,7 @@ export default function Map({
           closeOnClick: false,
           offset: [0, -10],
         })
-          .setLngLat(data.coordinates)
+          .setLngLat([data.coordinates.longitude, data.coordinates.latitude])
           .setHTML(
             `
             <div style="padding: 4px 8px;">
@@ -169,7 +169,7 @@ export default function Map({
         }
 
         map.current?.flyTo({
-          center: data.coordinates,
+          center: [data.coordinates.longitude, data.coordinates.latitude],
           zoom: 17,
           duration: 1000,
           essential: true,

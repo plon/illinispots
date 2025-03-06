@@ -65,11 +65,11 @@ const pattern = new RegExp(
   "g",
 );
 
-// ===== Library Data Helper Functions =====
-function decodeUnicodeEscapes(text: string): string {
-  return JSON.parse(`"${text}"`);
-}
+// ===== Library Data Processing Functions =====
 
+/**
+ * Extracts study room information from HTML content
+ */
 function extractStudyRooms(htmlContent: string): StudyRoom[] {
   const matches = Array.from(htmlContent.matchAll(pattern));
   const resources: StudyRoom[] = [];
@@ -87,17 +87,20 @@ function extractStudyRooms(htmlContent: string): StudyRoom[] {
 
     resources.push({
       id: groups.id,
-      title: decodeUnicodeEscapes(groups.title),
+      title: JSON.parse(`"${groups.title}"`),
       url,
       eid: parseInt(groups.eid),
       lid: parseInt(groups.lid),
-      grouping: decodeUnicodeEscapes(groups.grouping),
+      grouping: JSON.parse(`"${groups.grouping}"`),
       thumbnail,
     });
   }
   return resources;
 }
 
+/**
+ * Retrieves reservation data for a specific library
+ */
 async function getReservation(lid: string): Promise<ReservationResponse> {
   const url = "https://uiuc.libcal.com/spaces/availability/grid";
 
@@ -159,6 +162,9 @@ async function getReservation(lid: string): Promise<ReservationResponse> {
   return reservationsToday;
 }
 
+/**
+ * Links room data with reservation data to create a complete picture of room availability
+ */
 function linkRoomsReservations(
   roomsData: StudyRoom[],
   reservationsData: ReservationResponse,
@@ -180,8 +186,8 @@ function linkRoomsReservations(
 
     const roomId = room.eid;
     const roomSlots: TimeSlot[] = [];
-    let nextAvailable: string | null = null;
-    let available_duration: number = 0;
+    let availableAt: string | undefined = undefined;
+    let availableDuration: number = 0;
 
     const roomSpecificSlots = reservationsData.slots
       .filter((slot) => slot.itemId === roomId)
@@ -219,7 +225,7 @@ function linkRoomsReservations(
             }
 
             // Calculate initial duration from current time to slot end
-            available_duration = slotEndMoment.diff(currentMoment, "minutes");
+            availableDuration = slotEndMoment.diff(currentMoment, "minutes");
 
             // Find current slot index
             const currentSlotIndex = roomSpecificSlots.findIndex(
@@ -259,8 +265,8 @@ function linkRoomsReservations(
                   }
                 }
 
-                // Add this slot's duration to available_duration
-                available_duration += nextEndMoment.diff(
+                // Add this slot's duration to availableDuration
+                availableDuration += nextEndMoment.diff(
                   nextStartMoment,
                   "minutes",
                 );
@@ -271,14 +277,14 @@ function linkRoomsReservations(
           }
         }
 
-        // Update nextAvailable if the slot is available in the future
+        // Update availableAt if the slot is available in the future
         if (
           isAvailable &&
           slotStartTime > currentTime &&
-          (nextAvailable === null ||
-            slotStartTime < nextAvailable.toLowerCase())
+          (availableAt === undefined ||
+            slotStartTime < availableAt.toLowerCase())
         ) {
-          nextAvailable = slotStartTime;
+          availableAt = slotStartTime;
         }
       }
     }
@@ -290,14 +296,19 @@ function linkRoomsReservations(
       grouping: room.grouping,
       thumbnail: room.thumbnail,
       slots: roomSlots,
-      nextAvailable,
-      available_duration,
+      availableAt,
+      availableDuration,
     };
   }
 
   return roomReservations;
 }
 
+// ===== Library Hours Functions =====
+
+/**
+ * Gets formatted library data with room availability
+ */
 async function getFormattedLibraryData(openLibraries?: string[]): Promise<FormattedLibraryData> {
   const result: FormattedLibraryData = {};
 
@@ -369,6 +380,10 @@ async function getFormattedLibraryData(openLibraries?: string[]): Promise<Format
 }
 
 // ===== Main API Handler =====
+
+/**
+ * Main API endpoint handler
+ */
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
@@ -512,13 +527,13 @@ export async function GET(request: Request) {
               });
               
               libraryFacility.rooms[roomName] = {
-                status: isAvailable ? "available" : "reserved",
                 available: isAvailable,
+                status: isAvailable ? "available" : "reserved",
                 url: roomData.url,
                 thumbnail: roomData.thumbnail,
                 slots: roomData.slots,
-                nextAvailable: roomData.nextAvailable,
-                availableFor: roomData.available_duration
+                availableAt: roomData.availableAt,
+                availableFor: roomData.availableDuration
               };
             });
             

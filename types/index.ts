@@ -40,22 +40,37 @@ export interface Facility {
   address?: string;
 }
 
-// Unified room type that can represent both academic and library rooms
-export interface FacilityRoom {
-  status: "available" | "occupied" | "reserved";
+export interface BaseFacilityRoom {
   available: boolean;
+  status?: "available" | "occupied" | "reserved"; // Derived from available
+  availableAt?: string;
+  availableFor?: number;
+}
+
+export interface AcademicRoom extends BaseFacilityRoom {
+  currentClass?: ClassInfo;
+  nextClass?: ClassInfo;
+  passingPeriod?: boolean;
+  availableUntil?: string;
+}
+
+export interface LibraryRoom extends BaseFacilityRoom {
+  url: string;
+  thumbnail: string;
+  slots: TimeSlot[];
+}
+
+// Unified room type that can represent both types
+export interface FacilityRoom extends BaseFacilityRoom {
   // Academic building specific fields
   currentClass?: ClassInfo;
   nextClass?: ClassInfo;
   passingPeriod?: boolean;
-  availableAt?: string;
-  availableFor?: number;
   availableUntil?: string;
   // Library specific fields
   url?: string;
   thumbnail?: string;
   slots?: TimeSlot[];
-  nextAvailable?: string | null;
 }
 
 export interface ClassInfo {
@@ -102,8 +117,8 @@ export interface RoomReservation {
   grouping: string;
   thumbnail: string;
   slots: TimeSlot[];
-  nextAvailable: string | null;
-  available_duration: number;
+  availableAt: string | undefined;
+  availableDuration: number;
 }
 
 export interface RoomReservations {
@@ -152,7 +167,10 @@ export interface RegexGroups {
 
 export interface LibraryCoordinates {
   name: string;
-  coordinates: [number, number];
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 export interface MapProps {
@@ -163,7 +181,10 @@ export interface MapProps {
 export interface MarkerData {
   id: string;
   name: string;
-  coordinates: [number, number];
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
   isOpen: boolean;
   available: number;
   total: number;
