@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import axios from "axios";
 import moment from "moment-timezone";
 import {
@@ -7,13 +8,17 @@ import {
   TimeSlot,
   RoomReservations,
   FormattedLibraryData,
-  APIResponse,
   ReservationResponse,
   RegexGroups,
+  BuildingStatus,
+  FacilityType,
+  Facility,
+  FacilityRoom
 } from "@/types";
 
 export const dynamic = "force-dynamic";
 
+// ===== Library Data Constants =====
 const USER_AGENT = {
   "User-Agent":
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36",
@@ -59,6 +64,7 @@ const pattern = new RegExp(
   "g",
 );
 
+// ===== Library Data Helper Functions =====
 function decodeUnicodeEscapes(text: string): string {
   return JSON.parse(`"${text}"`);
 }
@@ -175,7 +181,6 @@ function linkRoomsReservations(
     const roomSlots: TimeSlot[] = [];
     let nextAvailable: string | null = null;
     let available_duration: number = 0;
-    let isCurrentlyBooked = false;
 
     const roomSpecificSlots = reservationsData.slots
       .filter((slot) => slot.itemId === roomId)
@@ -203,7 +208,6 @@ function linkRoomsReservations(
 
         // Check current availability
         if (slotStartTime <= currentTime && slotEndTime > currentTime) {
-          isCurrentlyBooked = !isAvailable;
           if (isAvailable) {
             const currentMoment = moment().tz("America/Chicago");
             let slotEndMoment = endTime;
@@ -252,10 +256,9 @@ function linkRoomsReservations(
                   if (nextEndMoment.isAfter(tomorrowTwoAM)) {
                     nextEndMoment = tomorrowTwoAM;
                   }
-                } else if (!nextStartMoment.isSame(todayCST, "day")) {
-                  break;
                 }
 
+                // Add this slot's duration to available_duration
                 available_duration += nextEndMoment.diff(
                   nextStartMoment,
                   "minutes",
@@ -266,66 +269,15 @@ function linkRoomsReservations(
             }
           }
         }
-      }
-    }
 
-    // Handle next available time if currently not available
-    if (isCurrentlyBooked || (!isCurrentlyBooked && available_duration === 0)) {
-      // Find future available slots
-      const futureSlots = roomSpecificSlots.filter((slot) => {
-        const slotStart = moment.tz(slot.start, "America/Chicago");
-        if (room.lid === 3604) {
-          return (
-            slotStart.isAfter(todayCST) && slotStart.isBefore(tomorrowTwoAM)
-          );
-        }
-        return slotStart.isAfter(todayCST) && slotStart.isSame(todayCST, "day");
-      });
-
-      // Find first available slot
-      for (let i = 0; i < futureSlots.length; i++) {
-        const slot = futureSlots[i];
-        if (slot.className !== "s-lc-eq-checkout") {
-          const startTime = moment.tz(slot.start, "America/Chicago");
-          let endTime = moment.tz(slot.end, "America/Chicago");
-
-          // Cap end time at 2 AM for Funk ACES
-          if (room.lid === 3604 && endTime.isAfter(tomorrowTwoAM)) {
-            endTime = tomorrowTwoAM;
-          }
-
-          nextAvailable = startTime.format("HH:mm:ss");
-          available_duration = endTime.diff(startTime, "minutes");
-
-          // Check consecutive available slots
-          let j = i + 1;
-          let lastEndTime = endTime;
-
-          while (j < futureSlots.length) {
-            const nextSlot = futureSlots[j];
-            const nextStartTime = moment.tz(nextSlot.start, "America/Chicago");
-            let nextEndTime = moment.tz(nextSlot.end, "America/Chicago");
-
-            // Stop if not continuous or reaches past 2 AM for Funk ACES
-            if (
-              nextSlot.className === "s-lc-eq-checkout" ||
-              lastEndTime.format("HH:mm:ss") !==
-                nextStartTime.format("HH:mm:ss") ||
-              (room.lid === 3604 && nextStartTime.isAfter(tomorrowTwoAM))
-            ) {
-              break;
-            }
-
-            // Cap at 2 AM for Funk ACES
-            if (room.lid === 3604 && nextEndTime.isAfter(tomorrowTwoAM)) {
-              nextEndTime = tomorrowTwoAM;
-            }
-
-            available_duration += nextEndTime.diff(nextStartTime, "minutes");
-            lastEndTime = nextEndTime;
-            j++;
-          }
-          break;
+        // Update nextAvailable if the slot is available in the future
+        if (
+          isAvailable &&
+          slotStartTime > currentTime &&
+          (nextAvailable === null ||
+            slotStartTime < nextAvailable.toLowerCase())
+        ) {
+          nextAvailable = slotStartTime;
         }
       }
     }
@@ -346,73 +298,233 @@ function linkRoomsReservations(
 }
 
 async function getFormattedLibraryData(): Promise<FormattedLibraryData> {
-  const response = await axios.get("https://uiuc.libcal.com/allspaces", {
-    headers: USER_AGENT,
-  });
-  const roomsData = extractStudyRooms(response.data);
+  const result: FormattedLibraryData = {};
 
-  const libraryPromises = Object.entries(libraries).map(
-    async ([libraryName, libraryInfo]) => {
-      const reservationsData = await getReservation(libraryInfo.id);
+  try {
+    // Fetch all rooms from the LibCal "All Spaces" page
+    const allSpacesUrl = "https://uiuc.libcal.com/allspaces";
+    const allSpacesResponse = await axios.get(allSpacesUrl, {
+      headers: USER_AGENT,
+    });
+    const htmlContent = allSpacesResponse.data;
+    const studyRooms = extractStudyRooms(htmlContent);
+
+    // Group rooms by library ID
+    const roomsByLibrary: Record<string, StudyRoom[]> = {};
+    studyRooms.forEach((room) => {
+      const lid = room.lid.toString();
+      if (!roomsByLibrary[lid]) {
+        roomsByLibrary[lid] = [];
+      }
+      roomsByLibrary[lid].push(room);
+    });
+
+    // Process libraries we care about
+    for (const [libraryName, libraryInfo] of Object.entries(libraries)) {
+      const lid = libraryInfo.id;
+      const reservationData = await getReservation(lid);
+      const libraryRooms = roomsByLibrary[lid] || [];
       const roomReservations = linkRoomsReservations(
-        roomsData,
-        reservationsData,
+        libraryRooms,
+        reservationData,
       );
 
-      const libraryRooms: RoomReservations = {};
+      // Count available rooms
       let availableCount = 0;
-      const currentTime = moment().tz("America/Chicago");
-      const currentTimeStr = currentTime.format("HH:mm:ss");
-
-      for (const [roomTitle, data] of Object.entries(roomReservations)) {
-        if (data.lid === parseInt(libraryInfo.id)) {
-          libraryRooms[roomTitle] = data;
-
-          // Check if room is currently available
-          const isAvailable = data.slots.some(
-            (slot) =>
-              slot.available &&
-              slot.start <= currentTimeStr &&
-              slot.end > currentTimeStr,
-          );
-
-          if (isAvailable) {
-            availableCount++;
-          }
+      for (const room of Object.values(roomReservations)) {
+        const currentlyAvailable = room.slots.some(
+          (slot) =>
+            slot.available &&
+            slot.start <= moment().tz("America/Chicago").format("HH:mm:ss") &&
+            slot.end > moment().tz("America/Chicago").format("HH:mm:ss"),
+        );
+        if (currentlyAvailable) {
+          availableCount++;
         }
       }
 
-      return [
-        libraryName,
-        {
-          room_count: Object.keys(libraryRooms).length,
-          currently_available: availableCount,
-          rooms: libraryRooms,
-          address: libraryInfo.address,
-        },
-      ] as const;
-    },
-  );
-
-  const results = await Promise.all(libraryPromises);
-  return Object.fromEntries(results);
-}
-
-export async function GET(): Promise<
-  NextResponse<APIResponse | { error: string }>
-> {
-  try {
-    const libraryData = await getFormattedLibraryData();
-    return NextResponse.json({
-      timezone: "America/Chicago",
-      current_time: moment().tz("America/Chicago").format(),
-      data: libraryData,
-    });
+      result[libraryName] = {
+        room_count: Object.keys(roomReservations).length,
+        currently_available: availableCount,
+        rooms: roomReservations,
+        address: libraryInfo.address,
+      };
+    }
   } catch (error) {
     console.error("Error fetching library data:", error);
+  }
+
+  return result;
+}
+
+// ===== Main API Handler =====
+export async function GET(request: Request) {
+  try {
+    const url = new URL(request.url);
+    const includeAcademic = url.searchParams.get('academic') !== 'false';
+    const includeLibraries = url.searchParams.get('libraries') !== 'false';
+    
+    const now = moment().tz("America/Chicago");
+    const timestamp = now.format();
+    
+    // Create a new building status object for our response
+    const buildingStatus: BuildingStatus = {
+      timestamp,
+      facilities: {}
+    };
+
+    // Get building data if requested
+    if (includeAcademic) {
+      const supabase = createClient(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_KEY!,
+      );
+
+      const { data: buildingData, error } = await supabase.rpc("get_spots", {
+        check_time: now.format("HH:mm:ss"),
+        check_date: now.format("YYYY-MM-DD"),
+        minimum_useful_minutes: 30,
+      });
+
+      if (error) {
+        console.error("Error fetching building data:", error);
+      } else if (buildingData && buildingData.buildings) {
+        // Process academic buildings
+        Object.entries(buildingData.buildings).forEach(([id, buildingData]) => {
+          // Type assertion for building data
+          const building = buildingData as {
+            name: string;
+            coordinates: { latitude: number; longitude: number };
+            hours: { open: string; close: string };
+            rooms: Record<string, FacilityRoom>;
+            isOpen: boolean;
+            roomCounts: { available: number; total: number };
+          };
+          
+          buildingStatus.facilities[id] = {
+            id,
+            name: building.name,
+            type: FacilityType.ACADEMIC,
+            coordinates: building.coordinates,
+            hours: building.hours,
+            rooms: building.rooms,
+            isOpen: building.isOpen,
+            roomCounts: building.roomCounts
+          };
+        });
+      }
+    }
+
+    // Get library data if requested
+    if (includeLibraries) {
+      // Define library facilities with coordinates
+      const libraryFacilities: Record<string, Facility> = {
+        "Grainger Engineering Library": {
+          id: "grainger",
+          name: "Grainger Engineering Library",
+          type: FacilityType.LIBRARY,
+          coordinates: {
+            latitude: 40.11247372608236,
+            longitude: -88.2268586691797
+          },
+          hours: { open: "", close: "" },
+          rooms: {},
+          isOpen: true, // We'll determine this from library hours
+          roomCounts: { available: 0, total: 0 },
+          address: "1301 W Springfield Ave, Urbana, IL 61801"
+        },
+        "Funk ACES Library": {
+          id: "aces",
+          name: "Funk ACES Library",
+          type: FacilityType.LIBRARY,
+          coordinates: {
+            latitude: 40.102836655077226,
+            longitude: -88.22513280595481
+          },
+          hours: { open: "", close: "" },
+          rooms: {},
+          isOpen: true, // We'll determine this from library hours
+          roomCounts: { available: 0, total: 0 },
+          address: "1101 S Goodwin Ave, Urbana, IL 61801"
+        },
+        "Main Library": {
+          id: "main",
+          name: "Main Library",
+          type: FacilityType.LIBRARY,
+          coordinates: {
+            latitude: 40.1047194114613,
+            longitude: -88.22883490200387
+          },
+          hours: { open: "", close: "" },
+          rooms: {},
+          isOpen: true, // We'll determine this from library hours
+          roomCounts: { available: 0, total: 0 },
+          address: "1408 W Gregory Dr, Urbana, IL 61801"
+        },
+      };
+      
+      // Check library hours and update isOpen status
+      // This would use your isLibraryOpen function
+      // For now, hardcoding basic check that libraries are open Monday-Friday 8am-10pm
+      const day = now.day(); // 0 = Sunday, 6 = Saturday
+      const hour = now.hour();
+      const isWeekday = day >= 1 && day <= 5;
+      const isDayHours = hour >= 8 && hour < 22;
+      const isWeekendHours = hour >= 10 && hour < 18;
+      
+      Object.values(libraryFacilities).forEach(facility => {
+        // Simple hours check - this should be replaced with your actual library hours logic
+        facility.isOpen = isWeekday ? isDayHours : isWeekendHours;
+      });
+      
+      // Only fetch detailed library availability if any library is open
+      const anyLibraryOpen = Object.values(libraryFacilities).some(lib => lib.isOpen);
+      
+      if (anyLibraryOpen) {
+        const libraryData = await getFormattedLibraryData();
+        
+        // Add room data to each library facility
+        Object.entries(libraryData).forEach(([name, data]) => {
+          if (libraryFacilities[name] && libraryFacilities[name].isOpen) {
+            const libraryFacility = libraryFacilities[name];
+            
+            // Set room counts
+            libraryFacility.roomCounts = {
+              available: data.currently_available,
+              total: data.room_count
+            };
+            
+            // Convert library rooms to FacilityRoom format
+            Object.entries(data.rooms).forEach(([roomName, roomData]) => {
+              const isAvailable = roomData.slots.some(slot => {
+                const nowTime = now.format("HH:mm:ss");
+                return slot.available && slot.start <= nowTime && nowTime < slot.end;
+              });
+              
+              libraryFacility.rooms[roomName] = {
+                status: isAvailable ? "available" : "reserved",
+                available: isAvailable,
+                url: roomData.url,
+                thumbnail: roomData.thumbnail,
+                slots: roomData.slots,
+                nextAvailable: roomData.nextAvailable,
+                availableFor: roomData.available_duration
+              };
+            });
+            
+            // Add to buildingStatus
+            buildingStatus.facilities[libraryFacility.id] = libraryFacility;
+          }
+        });
+      }
+    }
+
+    return NextResponse.json(buildingStatus);
+  } catch (error) {
+    console.error("Error in unified API:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
+      { error: "Failed to fetch data" },
+      { status: 500 }
     );
   }
-}
+} 
