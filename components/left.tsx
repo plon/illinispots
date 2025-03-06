@@ -30,7 +30,7 @@ import {
 } from "@/types";
 import moment from "moment-timezone";
 import { Github, Map, TriangleAlert } from "lucide-react";
-import FacilityRoomDetails from "@/components/LibraryRoomAvailability";
+import FacilityRoomDetails from "@/components/FacilityRoomDetails";
 import { getLibraryHoursMessage } from "@/utils/libraryHours";
 
 // Helper functions
