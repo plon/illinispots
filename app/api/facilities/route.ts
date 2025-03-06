@@ -101,10 +101,10 @@ function extractStudyRooms(htmlContent: string): StudyRoom[] {
 /**
  * Retrieves reservation data for a specific library
  */
-async function getReservation(lid: string): Promise<ReservationResponse> {
+async function getReservation(lid: string, nowCST: moment.Moment): Promise<ReservationResponse> {
   const url = "https://uiuc.libcal.com/spaces/availability/grid";
 
-  const todayCST = moment().tz("America/Chicago");
+  const todayCST = nowCST.clone().startOf('day');
   const tomorrowCST = todayCST.clone().add(1, "day");
 
   const startDate = todayCST.format("YYYY-MM-DD");
@@ -168,13 +168,14 @@ async function getReservation(lid: string): Promise<ReservationResponse> {
 function linkRoomsReservations(
   roomsData: StudyRoom[],
   reservationsData: ReservationResponse,
+  nowCST: moment.Moment
 ): RoomReservations {
   const roomReservations: RoomReservations = {};
   const libraryIds = new Set(
     Object.values(libraries).map((lib) => parseInt(lib.id)),
   );
-  const todayCST = moment().tz("America/Chicago");
-  const currentTime = todayCST.format("HH:mm:ss");
+  const todayCST = nowCST.clone().startOf('day');
+  const currentTime = nowCST.format("HH:mm:ss");
   const tomorrowTwoAM = todayCST
     .clone()
     .add(1, "day")
@@ -216,7 +217,7 @@ function linkRoomsReservations(
         // Check current availability
         if (slotStartTime <= currentTime && slotEndTime > currentTime) {
           if (isAvailable) {
-            const currentMoment = moment().tz("America/Chicago");
+            const currentMoment = nowCST;
             let slotEndMoment = endTime;
 
             // For Funk ACES, cap the end time at 2 AM if slot extends beyond
@@ -391,8 +392,9 @@ function linkRoomsReservations(
 /**
  * Gets formatted library data with room availability
  */
-async function getFormattedLibraryData(openLibraries?: string[]): Promise<FormattedLibraryData> {
+async function getFormattedLibraryData(openLibraries?: string[], nowCST?: moment.Moment): Promise<FormattedLibraryData> {
   const result: FormattedLibraryData = {};
+  nowCST = nowCST || moment().tz("America/Chicago");
 
   // If no open libraries, return empty result
   if (openLibraries && openLibraries.length === 0) {
@@ -426,11 +428,12 @@ async function getFormattedLibraryData(openLibraries?: string[]): Promise<Format
       }
       
       const lid = libraryInfo.id;
-      const reservationData = await getReservation(lid);
+      const reservationData = await getReservation(lid, nowCST);
       const libraryRooms = roomsByLibrary[lid] || [];
       const roomReservations = linkRoomsReservations(
         libraryRooms,
         reservationData,
+        nowCST
       );
 
       // Count available rooms
@@ -439,8 +442,8 @@ async function getFormattedLibraryData(openLibraries?: string[]): Promise<Format
         const currentlyAvailable = room.slots.some(
           (slot) =>
             slot.available &&
-            slot.start <= moment().tz("America/Chicago").format("HH:mm:ss") &&
-            slot.end > moment().tz("America/Chicago").format("HH:mm:ss"),
+            slot.start <= nowCST.format("HH:mm:ss") &&
+            slot.end > nowCST.format("HH:mm:ss"),
         );
         if (currentlyAvailable) {
           availableCount++;
@@ -472,8 +475,8 @@ export async function GET(request: Request) {
     const includeAcademic = url.searchParams.get('academic') !== 'false';
     const includeLibraries = url.searchParams.get('libraries') !== 'false';
     
-    const now = moment().tz("America/Chicago");
-    const timestamp = now.format();
+    const nowCST = moment().tz("America/Chicago");
+    const timestamp = nowCST.format();
     
     // Create a new building status object for our response
     const buildingStatus: BuildingStatus = {
@@ -489,8 +492,8 @@ export async function GET(request: Request) {
       );
 
       const { data: buildingData, error } = await supabase.rpc("get_spots", {
-        check_time: now.format("HH:mm:ss"),
-        check_date: now.format("YYYY-MM-DD"),
+        check_time: nowCST.format("HH:mm:ss"),
+        check_date: nowCST.format("YYYY-MM-DD"),
         minimum_useful_minutes: 30,
       });
 
@@ -588,7 +591,7 @@ export async function GET(request: Request) {
 
       if (openLibraryNames.length > 0) {
         // Get library data for open libraries only
-        const libraryData = await getFormattedLibraryData(openLibraryNames);
+        const libraryData = await getFormattedLibraryData(openLibraryNames, nowCST);
         
         // Add room data only for libraries that are open
         Object.entries(libraryData).forEach(([name, data]) => {
@@ -604,8 +607,8 @@ export async function GET(request: Request) {
             // Convert library rooms to FacilityRoom format
             Object.entries(data.rooms).forEach(([roomName, roomData]) => {
               const isAvailable = roomData.slots.some(slot => {
-                const nowTime = now.format("HH:mm:ss");
-                return slot.available && slot.start <= nowTime && nowTime < slot.end;
+                const currentTime = nowCST.format("HH:mm:ss");
+                return slot.available && slot.start <= currentTime && currentTime < slot.end;
               });
               
               libraryFacility.rooms[roomName] = {
