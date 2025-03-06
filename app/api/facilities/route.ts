@@ -285,6 +285,88 @@ function linkRoomsReservations(
             slotStartTime < availableAt.toLowerCase())
         ) {
           availableAt = slotStartTime;
+          
+          // Calculate duration for future availability
+          const startMoment = moment.tz(`1970-01-01T${slotStartTime}`, "America/Chicago");
+          const endMoment = moment.tz(`1970-01-01T${slotEndTime}`, "America/Chicago");
+          
+          // Handle overnight slots
+          if (endMoment.isBefore(startMoment)) {
+            endMoment.add(1, "day");
+          }
+          
+          // Set initial duration
+          availableDuration = endMoment.diff(startMoment, "minutes");
+          
+          // Find the slot index
+          const futureSlotIndex = roomSpecificSlots.findIndex(
+            (s) => moment.tz(s.start, "America/Chicago").format("HH:mm:ss") === slotStartTime
+          );
+          
+          // Check subsequent slots for continuous availability
+          if (futureSlotIndex !== -1) {
+            let nextIndex = futureSlotIndex + 1;
+            let lastEndMoment = endMoment;
+
+            while (nextIndex < roomSpecificSlots.length) {
+              const nextSlot = roomSpecificSlots[nextIndex];
+              if (nextSlot.className === "s-lc-eq-checkout") break;
+
+              const nextStartMoment = moment.tz(
+                nextSlot.start,
+                "America/Chicago",
+              );
+              let nextEndMoment = moment.tz(nextSlot.end, "America/Chicago");
+              
+              // Normalize to 1970-01-01 for comparison
+              const normalizedNextStart = moment.tz(
+                `1970-01-01T${nextStartMoment.format("HH:mm:ss")}`,
+                "America/Chicago"
+              );
+              const normalizedLastEnd = moment.tz(
+                `1970-01-01T${lastEndMoment.format("HH:mm:ss")}`,
+                "America/Chicago"
+              );
+
+              // Skip if not continuous
+              if (normalizedLastEnd.format("HH:mm:ss") !== normalizedNextStart.format("HH:mm:ss")) {
+                break;
+              }
+
+              // For Funk ACES, only include slots up to 2 AM next day
+              if (room.lid === 3604) {
+                if (nextStartMoment.isAfter(tomorrowTwoAM)) {
+                  break;
+                }
+                if (nextEndMoment.isAfter(tomorrowTwoAM)) {
+                  nextEndMoment = tomorrowTwoAM;
+                }
+              }
+
+              // Add this slot's duration to availableDuration
+              const nextStartNormalized = moment.tz(
+                `1970-01-01T${nextStartMoment.format("HH:mm:ss")}`,
+                "America/Chicago"
+              );
+              const nextEndNormalized = moment.tz(
+                `1970-01-01T${nextEndMoment.format("HH:mm:ss")}`,
+                "America/Chicago"
+              );
+              
+              // Handle overnight slots
+              if (nextEndNormalized.isBefore(nextStartNormalized)) {
+                nextEndNormalized.add(1, "day");
+              }
+              
+              availableDuration += nextEndNormalized.diff(
+                nextStartNormalized,
+                "minutes"
+              );
+              
+              lastEndMoment = nextEndMoment;
+              nextIndex++;
+            }
+          }
         }
       }
     }
