@@ -3,15 +3,23 @@ export interface ClassTime {
   end: string;
 }
 
+export enum FacilityType {
+  ACADEMIC = 'academic',
+  LIBRARY = 'library'
+}
+
 export interface BuildingStatus {
   timestamp: string;
-  buildings: {
-    [key: string]: Building;
+  facilities: {
+    [key: string]: Facility;
   };
 }
 
-export interface Building {
+// Unified Facility type to represent both academic buildings and libraries
+export interface Facility {
+  id: string;
   name: string;
+  type: FacilityType;
   coordinates: {
     latitude: number;
     longitude: number;
@@ -21,24 +29,33 @@ export interface Building {
     close: string;
   };
   rooms: {
-    [key: string]: Room;
+    [key: string]: FacilityRoom;
   };
   isOpen: boolean;
   roomCounts: {
     available: number;
     total: number;
   };
+  // Library-specific fields (optional)
+  address?: string;
 }
 
-export interface Room {
-  status: "available" | "occupied";
+// Unified room type that can represent both academic and library rooms
+export interface FacilityRoom {
+  status: "available" | "occupied" | "reserved";
   available: boolean;
+  // Academic building specific fields
   currentClass?: ClassInfo;
   nextClass?: ClassInfo;
-  passingPeriod: boolean;
-  availableAt?: string; // first meaningful gap
-  availableFor?: number; // duration of the meaningful gap in minutes
+  passingPeriod?: boolean;
+  availableAt?: string;
+  availableFor?: number;
   availableUntil?: string;
+  // Library specific fields
+  url?: string;
+  thumbnail?: string;
+  slots?: TimeSlot[];
+  nextAvailable?: string | null;
 }
 
 export interface ClassInfo {
@@ -139,18 +156,18 @@ export interface LibraryCoordinates {
 }
 
 export interface MapProps {
-  buildingData: BuildingStatus | null;
-  libraryData: APIResponse | null;
-  onMarkerClick: (name: string, isLibrary?: boolean) => void;
+  facilityData: BuildingStatus | null;
+  onMarkerClick: (id: string, facilityType: FacilityType) => void;
 }
 
 export interface MarkerData {
+  id: string;
   name: string;
   coordinates: [number, number];
   isOpen: boolean;
   available: number;
   total: number;
-  isLibrary: boolean;
+  type: FacilityType;
 }
 
 export interface TimeBlockProps {
@@ -169,9 +186,10 @@ export interface RoomScheduleProps {
   }[];
 }
 
-export interface LibraryRoomAvailabilityProps {
+export interface FacilityRoomProps {
   roomName: string;
-  room: RoomReservations[string];
+  room: FacilityRoom;
+  facilityType: FacilityType;
 }
 
 export interface AccordionRefs {

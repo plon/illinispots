@@ -1,29 +1,21 @@
 "use client";
 import React from "react";
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import maplibregl from "maplibre-gl";
-import { MarkerData, LibraryCoordinates, MapProps } from "@/types";
-
-const LIBRARY_COORDINATES: LibraryCoordinates[] = [
-  {
-    name: "Grainger Engineering Library",
-    coordinates: [-88.2268586691797, 40.11247372608236],
-  },
-  {
-    name: "Funk ACES Library",
-    coordinates: [-88.22513280595481, 40.102836655077226],
-  },
-  {
-    name: "Main Library",
-    coordinates: [-88.22883490200387, 40.1047194114613],
-  },
-];
+import { MarkerData, MapProps, FacilityType } from "@/types";
 
 export default function Map({
-  buildingData,
-  libraryData,
+  facilityData,
   onMarkerClick,
 }: MapProps) {
+  // Use useCallback to prevent unnecessary rerenders
+  const handleMarkerClick = useCallback(
+    (id: string, type: FacilityType) => {
+      onMarkerClick(id, type);
+    },
+    [onMarkerClick]
+  );
+  
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<{ [key: string]: maplibregl.Marker }>({});
@@ -87,7 +79,7 @@ export default function Map({
   }, []);
 
   useEffect(() => {
-    if (!map.current || !isMapLoaded) return;
+    if (!map.current || !isMapLoaded || !facilityData) return;
 
     Object.values(markersRef.current).forEach((marker) => marker.remove());
     if (activePopupRef.current) {
@@ -97,37 +89,21 @@ export default function Map({
 
     const markerDataArray: MarkerData[] = [];
 
-    if (libraryData) {
-      LIBRARY_COORDINATES.forEach((library) => {
-        const libraryDataEntry = libraryData.data[library.name];
-        if (libraryDataEntry) {
-          markerDataArray.push({
-            name: library.name,
-            coordinates: library.coordinates,
-            isOpen: libraryDataEntry.isOpen || false,
-            available: libraryDataEntry.currently_available,
-            total: libraryDataEntry.room_count,
-            isLibrary: true,
-          });
-        }
+    // Process all facilities (both academic buildings and libraries)
+    Object.values(facilityData.facilities).forEach((facility) => {
+      markerDataArray.push({
+        id: facility.id,
+        name: facility.name,
+        coordinates: [
+          facility.coordinates.longitude,
+          facility.coordinates.latitude,
+        ],
+        isOpen: facility.isOpen,
+        available: facility.roomCounts.available,
+        total: facility.roomCounts.total,
+        type: facility.type,
       });
-    }
-
-    if (buildingData) {
-      Object.values(buildingData.buildings).forEach((building) => {
-        markerDataArray.push({
-          name: building.name,
-          coordinates: [
-            building.coordinates.longitude,
-            building.coordinates.latitude,
-          ],
-          isOpen: building.isOpen,
-          available: building.roomCounts.available,
-          total: Object.keys(building.rooms).length,
-          isLibrary: false,
-        });
-      });
-    }
+    });
 
     const width = mapContainer.current?.clientWidth || 0;
     const isMobile = width < 768;
@@ -199,11 +175,11 @@ export default function Map({
           essential: true,
         });
 
-        onMarkerClick(data.name, data.isLibrary);
+        handleMarkerClick(data.id, data.type);
         e.stopPropagation();
       });
 
-      markersRef.current[data.name] = marker;
+      markersRef.current[data.id] = marker;
     });
 
     return () => {
@@ -212,7 +188,7 @@ export default function Map({
         activePopupRef.current = null;
       }
     };
-  }, [buildingData, libraryData, onMarkerClick, isMapLoaded]);
+  }, [facilityData, handleMarkerClick, isMapLoaded]);
 
   return <div ref={mapContainer} className="w-full h-full" />;
 }

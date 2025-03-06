@@ -1,8 +1,9 @@
 import { useState } from "react";
 import {
-  LibraryRoomAvailabilityProps,
+  FacilityRoomProps,
   TimeBlockProps,
   RoomScheduleProps,
+  FacilityType
 } from "@/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -110,49 +111,62 @@ const RoomSchedule = ({ slots }: RoomScheduleProps) => {
   );
 };
 
-export default function LibraryRoomAvailability({
+export default function FacilityRoomDetails({
   roomName,
   room,
-}: LibraryRoomAvailabilityProps) {
+  facilityType
+}: FacilityRoomProps) {
   const [isImageLoading, setIsImageLoading] = useState(true);
-
-  return (
-    <div className="px-4 py-2">
-      <div className="flex gap-2 mb-2">
-        <Button asChild variant="outline" size="sm" className="flex-1">
-          <a href={room.url} target="_blank" rel="noopener noreferrer">
-            <BookOpen className="w-4 h-4 mr-2" />
-            Reserve
-          </a>
-        </Button>
-        {room.thumbnail && (
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <ImageIcon className="w-4 h-4" />
-                <span className="sr-only">View room image</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="p-5">
-              <div className="relative w-full aspect-video">
-                {isImageLoading && (
-                  <div className="absolute inset-0 w-full h-full bg-gray-300 animate-pulse rounded-md" />
-                )}
-                <Image
-                  src={room.thumbnail}
-                  alt={`${roomName} thumbnail`}
-                  fill
-                  className="object-cover rounded-md"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  priority
-                  onLoadingComplete={() => setIsImageLoading(false)}
-                />
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
+  
+  // Only show library-specific UI for library rooms
+  if (facilityType === FacilityType.LIBRARY && room.url && room.slots) {
+    return (
+      <div className="px-4 py-2">
+        <div className="flex gap-2 mb-2">
+          <Button asChild variant="outline" size="sm" className="flex-1">
+            <a href={room.url} target="_blank" rel="noopener noreferrer">
+              <BookOpen className="w-4 h-4 mr-2" />
+              Reserve
+            </a>
+          </Button>
+          {room.thumbnail && (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <ImageIcon className="w-4 h-4" />
+                  <span className="sr-only">View room image</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="p-5">
+                <div className="relative w-full aspect-video">
+                  {isImageLoading && (
+                    <div className="absolute inset-0 w-full h-full bg-gray-300 animate-pulse rounded-md" />
+                  )}
+                  <Image
+                    src={room.thumbnail}
+                    alt={`${roomName} thumbnail`}
+                    fill
+                    className="object-cover rounded-md"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    priority
+                    onLoadingComplete={() => setIsImageLoading(false)}
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+        <RoomSchedule slots={room.slots} />
       </div>
-      <RoomSchedule slots={room.slots} />
+    );
+  }
+  
+  // Academic building room - we don't need a detailed view for these currently
+  return (
+    <div className="px-4 py-2 text-sm">
+      <p className="text-muted-foreground">
+        Room details not available for academic buildings.
+      </p>
     </div>
   );
 }
