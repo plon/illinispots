@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, memo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import LeftSidebar from "@/components/left";
 import FacilityMap from "@/components/map";
 import LoadingScreen from "@/components/LoadingScreen";
@@ -97,4 +97,4 @@ const IlliniSpotsPage: React.FC = () => {
   );
 };
 
-export default memo(IlliniSpotsPage);
+export default IlliniSpotsPage;
