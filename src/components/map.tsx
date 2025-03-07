@@ -15,12 +15,9 @@ export default function FacilityMap({ facilityData, onMarkerClick }: MapProps) {
 
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
-  const markersRef = useRef<{
-    [key: string]: {
-      marker: maplibregl.Marker;
-      data: MarkerData;
-    };
-  }>({});
+  const markersRef = useRef<
+    Map<string, { marker: maplibregl.Marker; data: MarkerData }>
+  >(new Map());
   const activePopupRef = useRef<maplibregl.Popup | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
@@ -173,18 +170,51 @@ export default function FacilityMap({ facilityData, onMarkerClick }: MapProps) {
     };
 
     const removeUnusedMarkers = (keysToRemove: Set<string>) => {
-      Array.from(keysToRemove).forEach((keyToRemove) => {
-        markersRef.current[keyToRemove].marker.remove();
-        delete markersRef.current[keyToRemove];
+      keysToRemove.forEach((keyToRemove) => {
+        const markerData = markersRef.current.get(keyToRemove);
+        if (markerData) {
+          markerData.marker.remove();
+          markersRef.current.delete(keyToRemove);
+        }
       });
     };
 
-    const currentMarkerKeys = new Set(Object.keys(markersRef.current));
+    const currentMarkerKeys = new Set(markersRef.current.keys());
     const newMarkerDataMap: { [key: string]: MarkerData } = {};
     const width = mapContainer.current?.clientWidth || 0;
     const isMobile = width < 768;
 
-    // Process all facilities (both academic buildings and libraries)
+    // Helper function to create or update markers
+    const createOrUpdateMarker = (
+      markerKey: string,
+      markerData: MarkerData,
+    ) => {
+      // Remove existing marker if it exists
+      const existingMarker = markersRef.current.get(markerKey);
+      if (existingMarker) {
+        existingMarker.marker.remove();
+      }
+
+      // Create new marker element and marker
+      const markerEl = createMarkerElement(markerData, isMobile);
+      const marker = new maplibregl.Marker({ element: markerEl })
+        .setLngLat([
+          markerData.coordinates.longitude,
+          markerData.coordinates.latitude,
+        ])
+        .addTo(map.current!);
+
+      // Set up interactions
+      setupMarkerInteractions(markerEl, marker, markerData);
+
+      // Update reference
+      markersRef.current.set(markerKey, {
+        marker,
+        data: markerData,
+      });
+    };
+
+    // Process all facilities
     Object.values(facilityData.facilities).forEach((facility) => {
       // Skip facilities with missing required data
       if (!facility.coordinates || !facility.roomCounts) {
@@ -209,52 +239,23 @@ export default function FacilityMap({ facilityData, onMarkerClick }: MapProps) {
       const markerKey = `${facility.type}-${facility.id}`;
       newMarkerDataMap[markerKey] = markerData;
 
-      // If marker already exists, check if it needs to be updated
+      // If marker exists, check if it needs updating
       if (currentMarkerKeys.has(markerKey)) {
         currentMarkerKeys.delete(markerKey); // Remove from keys to delete
 
-        const existingMarkerData = markersRef.current[markerKey];
-        const hasChanged =
-          existingMarkerData.data.isOpen !== markerData.isOpen ||
-          existingMarkerData.data.available !== markerData.available ||
-          existingMarkerData.data.total !== markerData.total;
+        const existingMarkerData = markersRef.current.get(markerKey);
+        if (existingMarkerData) {
+          const hasChanged =
+            existingMarkerData.data.isOpen !== markerData.isOpen ||
+            existingMarkerData.data.available !== markerData.available ||
+            existingMarkerData.data.total !== markerData.total;
 
-        // Only update if data has changed
-        if (hasChanged) {
-          // Remove old marker and create new one with updated state
-          existingMarkerData.marker.remove();
-
-          const markerEl = createMarkerElement(markerData, isMobile);
-          const marker = new maplibregl.Marker({ element: markerEl })
-            .setLngLat([
-              markerData.coordinates.longitude,
-              markerData.coordinates.latitude,
-            ])
-            .addTo(map.current!);
-
-          setupMarkerInteractions(markerEl, marker, markerData);
-
-          // Update the reference
-          markersRef.current[markerKey] = {
-            marker,
-            data: markerData,
-          };
+          if (hasChanged) {
+            createOrUpdateMarker(markerKey, markerData);
+          }
         }
       } else {
-        const markerEl = createMarkerElement(markerData, isMobile);
-        const marker = new maplibregl.Marker({ element: markerEl })
-          .setLngLat([
-            markerData.coordinates.longitude,
-            markerData.coordinates.latitude,
-          ])
-          .addTo(map.current!);
-
-        setupMarkerInteractions(markerEl, marker, markerData);
-
-        markersRef.current[markerKey] = {
-          marker,
-          data: markerData,
-        };
+        createOrUpdateMarker(markerKey, markerData);
       }
     });
 
