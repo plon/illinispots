@@ -9,22 +9,23 @@ import { FacilityStatus, FacilityType } from "@/types";
 const IlliniSpotsPage: React.FC = () => {
   const [facilityData, setFacilityData] = useState<FacilityStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(true);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Let the API handle which libraries to include based on their open hours
         const res = await fetch("/api/facilities");
         if (!res.ok) {
           throw new Error(`Request failed with status ${res.status}`);
         }
         const facilitiesData = await res.json();
-        
         setFacilityData(facilitiesData);
+        setError(null);
       } catch (error) {
         console.error("Error fetching data:", error);
+        setError("Failed to load facility data");
       } finally {
         setLoading(false);
       }
@@ -50,18 +51,23 @@ const IlliniSpotsPage: React.FC = () => {
     }
   }, [showMap]);
 
-  const handleMarkerClick = useCallback((id: string, facilityType: FacilityType) => {
-    const itemId = `${facilityType === FacilityType.LIBRARY ? 'library' : 'building'}-${id}`;
-    setExpandedItems((prev) => {
-      if (!prev.includes(itemId)) {
-        return [...prev, itemId];
-      }
-      return prev;
-    });
-  }, []);
+  const handleMarkerClick = useCallback(
+    (id: string, facilityType: FacilityType) => {
+      const itemId = `${
+        facilityType === FacilityType.LIBRARY ? "library" : "building"
+      }-${id}`;
+      setExpandedItems((prev) => {
+        if (!prev.includes(itemId)) {
+          return [...prev, itemId];
+        }
+        return prev;
+      });
+    },
+    [],
+  );
 
-  if (loading) {
-    return <LoadingScreen />;
+  if (loading || error) {
+    return <LoadingScreen error={error} />;
   }
 
   return (
