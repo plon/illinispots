@@ -32,25 +32,9 @@ import moment from "moment-timezone";
 import { Github, Map as MapIcon, TriangleAlert } from "lucide-react";
 import FacilityRoomDetails from "@/components/FacilityRoomDetails";
 import { getLibraryHoursMessage } from "@/utils/libraryHours";
+import { formatTime, formatDuration } from "@/utils/format";
 
 // Helper functions
-const formatTime = (time: string | undefined): string => {
-  if (!time) return "";
-  const [hours, minutes] = time.split(":");
-  const hour = parseInt(hours, 10);
-  const ampm = hour >= 12 ? "PM" : "AM";
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${minutes} ${ampm}`;
-};
-
-const formatDuration = (minutes: number | undefined): string => {
-  if (!minutes) return "";
-  if (minutes < 60) return `${Math.floor(minutes)} min`;
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = Math.floor(minutes % 60);
-  return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-};
-
 const RoomBadge: React.FC<{
   availableAt?: string;
   availableFor?: number;
@@ -401,7 +385,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
               <AccordionContent>
                 {!facility.isOpen ? (
                   <div className="px-4 py-2 text-sm text-muted-foreground">
-                    Building is currently closed
+                    Building is currently closed<br/>
+                    <span>Opens {formatTime(facility.hours.open)}</span>
                   </div>
                 ) : (
                   <Accordion

@@ -3,6 +3,7 @@ import React from "react";
 import { useRef, useEffect, useState, useCallback } from "react";
 import maplibregl from "maplibre-gl";
 import { MarkerData, MapProps, FacilityType } from "@/types";
+import { formatTime } from "@/utils/format";
 
 export default function FacilityMap({
   facilityData,
@@ -102,6 +103,7 @@ export default function FacilityMap({
         available: facility.roomCounts.available,
         total: facility.roomCounts.total,
         type: facility.type,
+        hours: facility.hours,
       });
     });
 
@@ -148,7 +150,9 @@ export default function FacilityMap({
             `
             <div style="padding: 4px 8px;">
               <strong>${data.name}</strong><br/>
-              ${!data.isOpen ? "CLOSED" : `${data.available}/${data.total} available`}
+              ${!data.isOpen 
+                ? `CLOSED<br/><span style="font-size: 0.9em; color: #666;">Opens ${formatTime(data.hours.open)}</span>` 
+                : `${data.available}/${data.total} available`}
             </div>
             `,
           )

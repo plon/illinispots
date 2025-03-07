@@ -197,6 +197,10 @@ export interface MarkerData {
   available: number;
   total: number;
   type: FacilityType;
+  hours: {
+    open: string;
+    close: string;
+  };
 }
 
 export interface TimeBlockProps {
