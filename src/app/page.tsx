@@ -56,14 +56,13 @@ const IlliniSpotsPage: React.FC = () => {
       const itemId = `${
         facilityType === FacilityType.LIBRARY ? "library" : "building"
       }-${id}`;
-      setExpandedItems((prev) => {
-        if (!prev.includes(itemId)) {
-          return [...prev, itemId];
-        }
-        return prev;
-      });
+
+      // Only update state if the item is not already expanded
+      if (!expandedItems.includes(itemId)) {
+        setExpandedItems((prev) => [...prev, itemId]);
+      }
     },
-    [],
+    [expandedItems],
   );
 
   if (loading || error) {
