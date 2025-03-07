@@ -12,9 +12,10 @@ import {
   RegexGroups,
   FacilityType,
   Facility,
-  FacilityRoom,
   FacilityStatus,
   RoomStatus,
+  AcademicRoom,
+  LibraryRoom,
 } from "@/types";
 import { isLibraryOpen } from "@/utils/libraryHours";
 
@@ -530,21 +531,32 @@ async function fetchAcademicBuildingData(
           name: string;
           coordinates: { latitude: number; longitude: number };
           hours: { open: string; close: string };
-          rooms: Record<string, FacilityRoom>;
+          rooms: Record<string, Omit<AcademicRoom, "type">>; // Changed from FacilityRoom to any
           isOpen: boolean;
           roomCounts: { available: number; total: number };
         };
 
-        facilities[id] = {
+        // Create the academic facility
+        const academicFacility: Facility = {
           id,
           name: building.name,
           type: FacilityType.ACADEMIC,
           coordinates: building.coordinates,
           hours: building.hours,
-          rooms: building.rooms,
           isOpen: building.isOpen,
           roomCounts: building.roomCounts,
+          rooms: {},
         };
+
+        // Process rooms and add type discriminator
+        Object.entries(building.rooms).forEach(([roomNumber, roomData]) => {
+          academicFacility.rooms[roomNumber] = {
+            type: "academic", // Add type discriminator
+            ...roomData, // Spread other properties
+          } as AcademicRoom;
+        });
+
+        facilities[id] = academicFacility;
       });
     }
   } catch (error) {
@@ -658,6 +670,7 @@ async function updateLibraryFacilities(
               roomData.availableDuration >= 30;
 
             libraryFacility.rooms[roomName] = {
+              type: "library", // Add type discriminator
               status: isAvailable
                 ? RoomStatus.AVAILABLE
                 : willBeAvailableSoon
@@ -668,7 +681,7 @@ async function updateLibraryFacilities(
               slots: roomData.slots,
               availableAt: roomData.availableAt,
               availableFor: roomData.availableDuration,
-            };
+            } as LibraryRoom;
           });
         }
       });

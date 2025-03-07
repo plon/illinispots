@@ -53,6 +53,7 @@ export interface BaseFacilityRoom {
 
 // Academic-specific room properties
 export interface AcademicRoom extends BaseFacilityRoom {
+  type: "academic";
   currentClass?: ClassInfo;
   nextClass?: ClassInfo;
   passingPeriod?: boolean;
@@ -61,28 +62,14 @@ export interface AcademicRoom extends BaseFacilityRoom {
 
 // Library-specific room properties
 export interface LibraryRoom extends BaseFacilityRoom {
+  type: "library";
   url: string;
   thumbnail: string;
   slots: TimeSlot[];
 }
 
-/**
- * Unified room type that can represent both academic and library rooms.
- * The presence of certain fields can be used to determine the room type:
- * - Academic rooms: currentClass, nextClass, passingPeriod, availableUntil
- * - Library rooms: url, thumbnail, slots
- */
-export interface FacilityRoom extends BaseFacilityRoom {
-  // Academic building specific fields
-  currentClass?: ClassInfo;
-  nextClass?: ClassInfo;
-  passingPeriod?: boolean;
-  availableUntil?: string;
-  // Library specific fields
-  url?: string;
-  thumbnail?: string;
-  slots?: TimeSlot[];
-}
+// Discriminated union for FacilityRoom
+export type FacilityRoom = AcademicRoom | LibraryRoom;
 
 export interface ClassInfo {
   course: string;

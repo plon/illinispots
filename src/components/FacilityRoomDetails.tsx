@@ -3,7 +3,7 @@ import {
   FacilityRoomProps,
   TimeBlockProps,
   RoomScheduleProps,
-  FacilityType
+  LibraryRoom,
 } from "@/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -31,16 +31,16 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
     // Base width for 60 minutes is w-14 (equal to height)
     // Calculate proportional width for any duration
     if (durationMinutes <= 0) return "w-3"; // Minimum width for invalid durations
-    
+
     // Map of durations (in minutes) to Tailwind width classes
     const durationWidthMap = [
-      [15, "w-3.5"],  // 1/4 of height
-      [30, "w-7"],    // 1/2 of height
-      [60, "w-14"],   // equal to height (h-14)
-      [90, "w-20"],   // 1.5x height
-      [120, "w-24"],  // 2x height
-      [180, "w-28"],  // 3x height
-      [240, "w-32"],  // 4x height
+      [15, "w-3.5"], // 1/4 of height
+      [30, "w-7"], // 1/2 of height
+      [60, "w-14"], // equal to height (h-14)
+      [90, "w-20"], // 1.5x height
+      [120, "w-24"], // 2x height
+      [180, "w-28"], // 3x height
+      [240, "w-32"], // 4x height
     ] as const;
 
     // Find the closest width class for the given duration
@@ -49,7 +49,7 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
         return width;
       }
     }
-    
+
     return "w-32"; // Max width for very long durations
   };
 
@@ -83,8 +83,11 @@ const RoomSchedule = ({ slots }: RoomScheduleProps) => {
     if (slots.length === 0) return { common: 0, all: [] };
 
     // Calculate durations for all slots
-    const durations = slots.map(slot => {
-      const startTime = moment.tz(`1970-01-01T${slot.start}`, "America/Chicago");
+    const durations = slots.map((slot) => {
+      const startTime = moment.tz(
+        `1970-01-01T${slot.start}`,
+        "America/Chicago",
+      );
       const endTime = moment.tz(`1970-01-01T${slot.end}`, "America/Chicago");
 
       let duration = endTime.diff(startTime, "minutes");
@@ -96,14 +99,17 @@ const RoomSchedule = ({ slots }: RoomScheduleProps) => {
     });
 
     // Find the most common duration
-    const durationCounts = durations.reduce((acc, duration) => {
-      acc[duration] = (acc[duration] || 0) + 1;
-      return acc;
-    }, {} as Record<number, number>);
+    const durationCounts = durations.reduce(
+      (acc, duration) => {
+        acc[duration] = (acc[duration] || 0) + 1;
+        return acc;
+      },
+      {} as Record<number, number>,
+    );
 
     let maxCount = 0;
     let commonDuration = 0;
-    
+
     Object.entries(durationCounts).forEach(([duration, count]) => {
       if (count > maxCount) {
         maxCount = count;
@@ -112,11 +118,13 @@ const RoomSchedule = ({ slots }: RoomScheduleProps) => {
     });
 
     // Get unique durations
-    const uniqueDurations = Array.from(new Set(durations)).sort((a, b) => a - b);
+    const uniqueDurations = Array.from(new Set(durations)).sort(
+      (a, b) => a - b,
+    );
 
-    return { 
+    return {
       common: commonDuration,
-      all: uniqueDurations
+      all: uniqueDurations,
     };
   };
 
@@ -144,13 +152,9 @@ const RoomSchedule = ({ slots }: RoomScheduleProps) => {
       </div>
       <p className="text-xs text-muted-foreground mt-1">
         {hasMixedDurations ? (
-          <>
-            Mixed durations: {allDurations.join(', ')} minutes
-          </>
+          <>Mixed durations: {allDurations.join(", ")} minutes</>
         ) : (
-          <>
-            {commonDuration}-minute reservations
-          </>
+          <>{commonDuration}-minute reservations</>
         )}
       </p>
     </div>
@@ -160,22 +164,22 @@ const RoomSchedule = ({ slots }: RoomScheduleProps) => {
 export default function FacilityRoomDetails({
   roomName,
   room,
-  facilityType
 }: FacilityRoomProps) {
   const [isImageLoading, setIsImageLoading] = useState(true);
-  
-  // Only show library-specific UI for library rooms
-  if (facilityType === FacilityType.LIBRARY && room.url && room.slots) {
+
+  // Use the discriminated union to determine room type
+  if (room.type === "library") {
+    const libraryRoom = room as LibraryRoom;
     return (
       <div className="px-4 py-2">
         <div className="flex gap-2 mb-2">
           <Button asChild variant="outline" size="sm" className="flex-1">
-            <a href={room.url} target="_blank" rel="noopener noreferrer">
+            <a href={libraryRoom.url} target="_blank" rel="noopener noreferrer">
               <BookOpen className="w-4 h-4 mr-2" />
               Reserve
             </a>
           </Button>
-          {room.thumbnail && (
+          {libraryRoom.thumbnail && (
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -189,7 +193,7 @@ export default function FacilityRoomDetails({
                     <div className="absolute inset-0 w-full h-full bg-gray-300 animate-pulse rounded-md" />
                   )}
                   <Image
-                    src={room.thumbnail}
+                    src={libraryRoom.thumbnail}
                     alt={`${roomName} thumbnail`}
                     fill
                     className="object-cover rounded-md"
@@ -202,11 +206,11 @@ export default function FacilityRoomDetails({
             </Dialog>
           )}
         </div>
-        <RoomSchedule slots={room.slots} />
+        <RoomSchedule slots={libraryRoom.slots} />
       </div>
     );
   }
-  
+
   // Academic building room - we don't need a detailed view for these currently
   return (
     <div className="px-4 py-2 text-sm">
