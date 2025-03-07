@@ -163,6 +163,113 @@ async function getReservation(lid: string, nowCST: moment.Moment): Promise<Reser
 }
 
 /**
+ * Calculates the duration of continuous availability from a starting slot
+ */
+function calculateContinuousAvailability(
+  startSlot: ReservationResponse['slots'][0],
+  roomSpecificSlots: ReservationResponse['slots'],
+  startIndex: number,
+  tomorrowTwoAM: moment.Moment,
+  isAcesLibrary: boolean
+): number {
+  let duration = 0;
+  let lastEndMoment = moment.tz(startSlot.end, "America/Chicago");
+  let nextIndex = startIndex + 1;
+
+  while (nextIndex < roomSpecificSlots.length) {
+    const nextSlot = roomSpecificSlots[nextIndex];
+    if (nextSlot.className === "s-lc-eq-checkout") break;
+
+    const nextStartMoment = moment.tz(nextSlot.start, "America/Chicago");
+    let nextEndMoment = moment.tz(nextSlot.end, "America/Chicago");
+
+    // Skip if not continuous
+    if (lastEndMoment.format("HH:mm:ss") !== nextStartMoment.format("HH:mm:ss")) {
+      break;
+    }
+
+    // For Funk ACES, only include slots up to 2 AM next day
+    if (isAcesLibrary) {
+      if (nextStartMoment.isAfter(tomorrowTwoAM)) {
+        break;
+      }
+      if (nextEndMoment.isAfter(tomorrowTwoAM)) {
+        nextEndMoment = tomorrowTwoAM;
+      }
+    }
+
+    // Add this slot's duration
+    duration += nextEndMoment.diff(nextStartMoment, "minutes");
+    lastEndMoment = nextEndMoment;
+    nextIndex++;
+  }
+
+  return duration;
+}
+
+/**
+ * Calculates availability information for a room at a specific time
+ */
+function calculateCurrentAvailability(
+  slot: ReservationResponse['slots'][0],
+  roomSpecificSlots: ReservationResponse['slots'],
+  currentSlotIndex: number,
+  nowCST: moment.Moment,
+  tomorrowTwoAM: moment.Moment,
+  isAcesLibrary: boolean
+): { availableDuration: number } {
+  const endTime = moment.tz(slot.end, "America/Chicago");
+  let slotEndMoment = endTime;
+
+  // For Funk ACES, cap the end time at 2 AM if slot extends beyond
+  if (isAcesLibrary && slotEndMoment.isAfter(tomorrowTwoAM)) {
+    slotEndMoment = tomorrowTwoAM;
+  }
+
+  // Calculate initial duration from current time to slot end
+  const availableDuration = slotEndMoment.diff(nowCST, "minutes");
+
+  // Add duration from continuous subsequent slots
+  const continuousDuration = calculateContinuousAvailability(
+    slot,
+    roomSpecificSlots,
+    currentSlotIndex,
+    tomorrowTwoAM,
+    isAcesLibrary
+  );
+
+  return { availableDuration: availableDuration + continuousDuration };
+}
+
+/**
+ * Calculates future availability information for a room
+ */
+function calculateFutureAvailability(
+  slot: ReservationResponse['slots'][0],
+  roomSpecificSlots: ReservationResponse['slots'],
+  slotIndex: number,
+  tomorrowTwoAM: moment.Moment,
+  isAcesLibrary: boolean
+): { availableDuration: number } {
+  const startMoment = moment.tz(slot.start, "America/Chicago");
+  const endMoment = moment.tz(slot.end, "America/Chicago");
+  
+  // Calculate initial duration
+  const availableDuration = endMoment.diff(startMoment, "minutes");
+
+  // Add duration from continuous subsequent slots
+  const continuousDuration = calculateContinuousAvailability(
+    slot,
+    roomSpecificSlots,
+    slotIndex,
+    tomorrowTwoAM,
+    isAcesLibrary
+  );
+
+  return { availableDuration: availableDuration + continuousDuration };
+}
+
+/**
  * Links room data with reservation data to create a complete picture of room availability
  */
 function linkRoomsReservations(
@@ -171,16 +278,10 @@ function linkRoomsReservations(
   nowCST: moment.Moment
 ): RoomReservations {
   const roomReservations: RoomReservations = {};
-  const libraryIds = new Set(
-    Object.values(libraries).map((lib) => parseInt(lib.id)),
-  );
+  const libraryIds = new Set(Object.values(libraries).map((lib) => parseInt(lib.id)));
   const todayCST = nowCST.clone().startOf('day');
   const currentTime = nowCST.format("HH:mm:ss");
-  const tomorrowTwoAM = todayCST
-    .clone()
-    .add(1, "day")
-    .startOf("day")
-    .add(2, "hours");
+  const tomorrowTwoAM = todayCST.clone().add(1, "day").startOf("day").add(2, "hours");
 
   for (const room of roomsData) {
     if (!libraryIds.has(room.lid)) continue;
@@ -189,12 +290,14 @@ function linkRoomsReservations(
     const roomSlots: TimeSlot[] = [];
     let availableAt: string | undefined = undefined;
     let availableDuration: number = 0;
+    const isAcesLibrary = room.lid === 3604;
 
     const roomSpecificSlots = reservationsData.slots
       .filter((slot) => slot.itemId === roomId)
       .sort((a, b) => moment(a.start).valueOf() - moment(b.start).valueOf());
 
-    for (const slot of roomSpecificSlots) {
+    for (let index = 0; index < roomSpecificSlots.length; index++) {
+      const slot = roomSpecificSlots[index];
       const startTime = moment.tz(slot.start, "America/Chicago");
       const endTime = moment.tz(slot.end, "America/Chicago");
       const slotStartTime = startTime.format("HH:mm:ss");
@@ -204,7 +307,7 @@ function linkRoomsReservations(
       // Check if slot should be included based on library and time
       if (
         startTime.isSame(todayCST, "day") ||
-        (room.lid === 3604 &&
+        (isAcesLibrary &&
           startTime.isAfter(todayCST) &&
           startTime.isBefore(tomorrowTwoAM))
       ) {
@@ -215,159 +318,33 @@ function linkRoomsReservations(
         });
 
         // Check current availability
-        if (slotStartTime <= currentTime && slotEndTime > currentTime) {
-          if (isAvailable) {
-            const currentMoment = nowCST;
-            let slotEndMoment = endTime;
-
-            // For Funk ACES, cap the end time at 2 AM if slot extends beyond
-            if (room.lid === 3604 && slotEndMoment.isAfter(tomorrowTwoAM)) {
-              slotEndMoment = tomorrowTwoAM;
-            }
-
-            // Calculate initial duration from current time to slot end
-            availableDuration = slotEndMoment.diff(currentMoment, "minutes");
-
-            // Find current slot index
-            const currentSlotIndex = roomSpecificSlots.findIndex(
-              (s) => s === slot,
-            );
-
-            // Check subsequent slots for continuous availability
-            if (currentSlotIndex !== -1) {
-              let nextIndex = currentSlotIndex + 1;
-              let lastEndMoment = slotEndMoment;
-
-              while (nextIndex < roomSpecificSlots.length) {
-                const nextSlot = roomSpecificSlots[nextIndex];
-                if (nextSlot.className === "s-lc-eq-checkout") break;
-
-                const nextStartMoment = moment.tz(
-                  nextSlot.start,
-                  "America/Chicago",
-                );
-                let nextEndMoment = moment.tz(nextSlot.end, "America/Chicago");
-
-                // Skip if not continuous
-                if (
-                  lastEndMoment.format("HH:mm:ss") !==
-                  nextStartMoment.format("HH:mm:ss")
-                ) {
-                  break;
-                }
-
-                // For Funk ACES, only include slots up to 2 AM next day
-                if (room.lid === 3604) {
-                  if (nextStartMoment.isAfter(tomorrowTwoAM)) {
-                    break;
-                  }
-                  if (nextEndMoment.isAfter(tomorrowTwoAM)) {
-                    nextEndMoment = tomorrowTwoAM;
-                  }
-                }
-
-                // Add this slot's duration to availableDuration
-                availableDuration += nextEndMoment.diff(
-                  nextStartMoment,
-                  "minutes",
-                );
-                lastEndMoment = nextEndMoment;
-                nextIndex++;
-              }
-            }
-          }
+        if (slotStartTime <= currentTime && slotEndTime > currentTime && isAvailable) {
+          const { availableDuration: duration } = calculateCurrentAvailability(
+            slot,
+            roomSpecificSlots,
+            index,
+            nowCST,
+            tomorrowTwoAM,
+            isAcesLibrary
+          );
+          availableDuration = duration;
         }
 
-        // Update availableAt if the slot is available in the future
+        // Update availableAt for future availability
         if (
           isAvailable &&
           slotStartTime > currentTime &&
-          (availableAt === undefined ||
-            slotStartTime < availableAt.toLowerCase())
+          (!availableAt || slotStartTime < availableAt)
         ) {
           availableAt = slotStartTime;
-          
-          // Calculate duration for future availability
-          const startMoment = moment.tz(`1970-01-01T${slotStartTime}`, "America/Chicago");
-          const endMoment = moment.tz(`1970-01-01T${slotEndTime}`, "America/Chicago");
-          
-          // Handle overnight slots
-          if (endMoment.isBefore(startMoment)) {
-            endMoment.add(1, "day");
-          }
-          
-          // Set initial duration
-          availableDuration = endMoment.diff(startMoment, "minutes");
-          
-          // Find the slot index
-          const futureSlotIndex = roomSpecificSlots.findIndex(
-            (s) => moment.tz(s.start, "America/Chicago").format("HH:mm:ss") === slotStartTime
+          const { availableDuration: duration } = calculateFutureAvailability(
+            slot,
+            roomSpecificSlots,
+            index,
+            tomorrowTwoAM,
+            isAcesLibrary
           );
-          
-          // Check subsequent slots for continuous availability
-          if (futureSlotIndex !== -1) {
-            let nextIndex = futureSlotIndex + 1;
-            let lastEndMoment = endMoment;
-
-            while (nextIndex < roomSpecificSlots.length) {
-              const nextSlot = roomSpecificSlots[nextIndex];
-              if (nextSlot.className === "s-lc-eq-checkout") break;
-
-              const nextStartMoment = moment.tz(
-                nextSlot.start,
-                "America/Chicago",
-              );
-              let nextEndMoment = moment.tz(nextSlot.end, "America/Chicago");
-              
-              // Normalize to 1970-01-01 for comparison
-              const normalizedNextStart = moment.tz(
-                `1970-01-01T${nextStartMoment.format("HH:mm:ss")}`,
-                "America/Chicago"
-              );
-              const normalizedLastEnd = moment.tz(
-                `1970-01-01T${lastEndMoment.format("HH:mm:ss")}`,
-                "America/Chicago"
-              );
-
-              // Skip if not continuous
-              if (normalizedLastEnd.format("HH:mm:ss") !== normalizedNextStart.format("HH:mm:ss")) {
-                break;
-              }
-
-              // For Funk ACES, only include slots up to 2 AM next day
-              if (room.lid === 3604) {
-                if (nextStartMoment.isAfter(tomorrowTwoAM)) {
-                  break;
-                }
-                if (nextEndMoment.isAfter(tomorrowTwoAM)) {
-                  nextEndMoment = tomorrowTwoAM;
-                }
-              }
-
-              // Add this slot's duration to availableDuration
-              const nextStartNormalized = moment.tz(
-                `1970-01-01T${nextStartMoment.format("HH:mm:ss")}`,
-                "America/Chicago"
-              );
-              const nextEndNormalized = moment.tz(
-                `1970-01-01T${nextEndMoment.format("HH:mm:ss")}`,
-                "America/Chicago"
-              );
-              
-              // Handle overnight slots
-              if (nextEndNormalized.isBefore(nextStartNormalized)) {
-                nextEndNormalized.add(1, "day");
-              }
-              
-              availableDuration += nextEndNormalized.diff(
-                nextStartNormalized,
-                "minutes"
-              );
-              
-              lastEndMoment = nextEndMoment;
-              nextIndex++;
-            }
-          }
+          availableDuration = duration;
         }
       }
     }
@@ -467,6 +444,170 @@ async function getFormattedLibraryData(openLibraries?: string[], nowCST?: moment
 // ===== Main API Handler =====
 
 /**
+ * Fetches academic building data from Supabase
+ */
+async function fetchAcademicBuildingData(nowCST: moment.Moment): Promise<Record<string, Facility>> {
+  const facilities: Record<string, Facility> = {};
+  
+  try {
+    const supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_KEY!,
+    );
+
+    const { data: buildingData, error } = await supabase.rpc("get_spots", {
+      check_time: nowCST.format("HH:mm:ss"),
+      check_date: nowCST.format("YYYY-MM-DD"),
+      minimum_useful_minutes: 30,
+    });
+
+    if (error) {
+      console.error("Error fetching building data:", error);
+      return facilities;
+    }
+
+    if (buildingData?.buildings) {
+      Object.entries(buildingData.buildings).forEach(([id, buildingData]) => {
+        // Type assertion for building data
+        const building = buildingData as {
+          name: string;
+          coordinates: { latitude: number; longitude: number };
+          hours: { open: string; close: string };
+          rooms: Record<string, FacilityRoom>;
+          isOpen: boolean;
+          roomCounts: { available: number; total: number };
+        };
+        
+        facilities[id] = {
+          id,
+          name: building.name,
+          type: FacilityType.ACADEMIC,
+          coordinates: building.coordinates,
+          hours: building.hours,
+          rooms: building.rooms,
+          isOpen: building.isOpen,
+          roomCounts: building.roomCounts
+        };
+      });
+    }
+  } catch (error) {
+    console.error("Error in fetchAcademicBuildingData:", error);
+  }
+
+  return facilities;
+}
+
+/**
+ * Initializes library facilities with basic information
+ */
+function initializeLibraryFacilities(): Record<string, Facility> {
+  return {
+    "Grainger Engineering Library": {
+      id: "grainger",
+      name: "Grainger Engineering Library",
+      type: FacilityType.LIBRARY,
+      coordinates: {
+        latitude: 40.11247372608236,
+        longitude: -88.2268586691797
+      },
+      hours: { open: "", close: "" },
+      rooms: {},
+      isOpen: false,
+      roomCounts: { available: 0, total: 0 },
+      address: "1301 W Springfield Ave, Urbana, IL 61801"
+    },
+    "Funk ACES Library": {
+      id: "aces",
+      name: "Funk ACES Library",
+      type: FacilityType.LIBRARY,
+      coordinates: {
+        latitude: 40.102836655077226,
+        longitude: -88.22513280595481
+      },
+      hours: { open: "", close: "" },
+      rooms: {},
+      isOpen: false,
+      roomCounts: { available: 0, total: 0 },
+      address: "1101 S Goodwin Ave, Urbana, IL 61801"
+    },
+    "Main Library": {
+      id: "main",
+      name: "Main Library",
+      type: FacilityType.LIBRARY,
+      coordinates: {
+        latitude: 40.1047194114613,
+        longitude: -88.22883490200387
+      },
+      hours: { open: "", close: "" },
+      rooms: {},
+      isOpen: false,
+      roomCounts: { available: 0, total: 0 },
+      address: "1408 W Gregory Dr, Urbana, IL 61801"
+    },
+  };
+}
+
+/**
+ * Updates library facilities with room availability data
+ */
+async function updateLibraryFacilities(
+  libraryFacilities: Record<string, Facility>,
+  nowCST: moment.Moment
+): Promise<Record<string, Facility>> {
+  try {
+    // Update each library's isOpen status
+    Object.entries(libraryFacilities).forEach(([libraryName, facility]) => {
+      facility.isOpen = isLibraryOpen(libraryName);
+    });
+
+    // Get names of open libraries
+    const openLibraryNames = Object.entries(libraryFacilities)
+      .filter(([, facility]) => facility.isOpen)
+      .map(([name]) => name);
+
+    if (openLibraryNames.length > 0) {
+      // Get library data for open libraries only
+      const libraryData = await getFormattedLibraryData(openLibraryNames, nowCST);
+      
+      // Add room data only for libraries that are open
+      Object.entries(libraryData).forEach(([name, data]) => {
+        if (libraryFacilities[name]?.isOpen) {
+          const libraryFacility = libraryFacilities[name];
+          
+          // Set room counts
+          libraryFacility.roomCounts = {
+            available: data.currently_available,
+            total: data.room_count
+          };
+          
+          // Convert library rooms to FacilityRoom format
+          Object.entries(data.rooms).forEach(([roomName, roomData]) => {
+            const isAvailable = roomData.slots.some(slot => {
+              const currentTime = nowCST.format("HH:mm:ss");
+              return slot.available && slot.start <= currentTime && currentTime < slot.end;
+            });
+            
+            libraryFacility.rooms[roomName] = {
+              available: isAvailable,
+              status: isAvailable ? "available" : "reserved",
+              url: roomData.url,
+              thumbnail: roomData.thumbnail,
+              slots: roomData.slots,
+              availableAt: roomData.availableAt,
+              availableFor: roomData.availableDuration
+            };
+          });
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Error in updateLibraryFacilities:", error);
+  }
+
+  return libraryFacilities;
+}
+
+/**
  * Main API endpoint handler
  */
 export async function GET(request: Request) {
@@ -484,149 +625,17 @@ export async function GET(request: Request) {
       facilities: {}
     };
 
-    // Get building data if requested
+    // Fetch academic building data if requested
     if (includeAcademic) {
-      const supabase = createClient(
-        process.env.SUPABASE_URL!,
-        process.env.SUPABASE_KEY!,
-      );
-
-      const { data: buildingData, error } = await supabase.rpc("get_spots", {
-        check_time: nowCST.format("HH:mm:ss"),
-        check_date: nowCST.format("YYYY-MM-DD"),
-        minimum_useful_minutes: 30,
-      });
-
-      if (error) {
-        console.error("Error fetching building data:", error);
-      } else if (buildingData?.buildings) {
-        // Process academic buildings
-        Object.entries(buildingData.buildings).forEach(([id, buildingData]) => {
-          // Type assertion for building data
-          const building = buildingData as {
-            name: string;
-            coordinates: { latitude: number; longitude: number };
-            hours: { open: string; close: string };
-            rooms: Record<string, FacilityRoom>;
-            isOpen: boolean;
-            roomCounts: { available: number; total: number };
-          };
-          
-          facilityStatus.facilities[id] = {
-            id,
-            name: building.name,
-            type: FacilityType.ACADEMIC,
-            coordinates: building.coordinates,
-            hours: building.hours,
-            rooms: building.rooms,
-            isOpen: building.isOpen,
-            roomCounts: building.roomCounts
-          };
-        });
-      }
+      const academicFacilities = await fetchAcademicBuildingData(nowCST);
+      Object.assign(facilityStatus.facilities, academicFacilities);
     }
 
-    // Get library data if requested
+    // Fetch library data if requested
     if (includeLibraries) {
-      // Define library facilities with coordinates and check if they're open
-      const libraryFacilities: Record<string, Facility> = {
-        "Grainger Engineering Library": {
-          id: "grainger",
-          name: "Grainger Engineering Library",
-          type: FacilityType.LIBRARY,
-          coordinates: {
-            latitude: 40.11247372608236,
-            longitude: -88.2268586691797
-          },
-          hours: { open: "", close: "" },
-          rooms: {},
-          isOpen: false, // Will be determined by isLibraryOpen
-          roomCounts: { available: 0, total: 0 },
-          address: "1301 W Springfield Ave, Urbana, IL 61801"
-        },
-        "Funk ACES Library": {
-          id: "aces",
-          name: "Funk ACES Library",
-          type: FacilityType.LIBRARY,
-          coordinates: {
-            latitude: 40.102836655077226,
-            longitude: -88.22513280595481
-          },
-          hours: { open: "", close: "" },
-          rooms: {},
-          isOpen: false, // Will be determined by isLibraryOpen
-          roomCounts: { available: 0, total: 0 },
-          address: "1101 S Goodwin Ave, Urbana, IL 61801"
-        },
-        "Main Library": {
-          id: "main",
-          name: "Main Library",
-          type: FacilityType.LIBRARY,
-          coordinates: {
-            latitude: 40.1047194114613,
-            longitude: -88.22883490200387
-          },
-          hours: { open: "", close: "" },
-          rooms: {},
-          isOpen: false, // Will be determined by isLibraryOpen
-          roomCounts: { available: 0, total: 0 },
-          address: "1408 W Gregory Dr, Urbana, IL 61801"
-        },
-      };
-      
-      // Update each library's isOpen status based on its hours
-      Object.entries(libraryFacilities).forEach(([libraryName, facility]) => {
-        facility.isOpen = isLibraryOpen(libraryName);
-      });
-      
-      // Add all library facilities to the response, even if they're closed
-      Object.entries(libraryFacilities).forEach(([, facility]) => {
-        facilityStatus.facilities[facility.id] = facility;
-      });
-      
-      // Only fetch room data for libraries that are actually open
-      const openLibraryNames = Object.entries(libraryFacilities)
-        .filter(([, facility]) => facility.isOpen)
-        .map(([name]) => name);
-
-      if (openLibraryNames.length > 0) {
-        // Get library data for open libraries only
-        const libraryData = await getFormattedLibraryData(openLibraryNames, nowCST);
-        
-        // Add room data only for libraries that are open
-        Object.entries(libraryData).forEach(([name, data]) => {
-          if (libraryFacilities[name]?.isOpen) {
-            const libraryFacility = libraryFacilities[name];
-            
-            // Set room counts
-            libraryFacility.roomCounts = {
-              available: data.currently_available,
-              total: data.room_count
-            };
-            
-            // Convert library rooms to FacilityRoom format
-            Object.entries(data.rooms).forEach(([roomName, roomData]) => {
-              const isAvailable = roomData.slots.some(slot => {
-                const currentTime = nowCST.format("HH:mm:ss");
-                return slot.available && slot.start <= currentTime && currentTime < slot.end;
-              });
-              
-              libraryFacility.rooms[roomName] = {
-                available: isAvailable,
-                status: isAvailable ? "available" : "reserved",
-                url: roomData.url,
-                thumbnail: roomData.thumbnail,
-                slots: roomData.slots,
-                availableAt: roomData.availableAt,
-                availableFor: roomData.availableDuration
-              };
-            });
-            
-            // Add to facilityStatus
-            facilityStatus.facilities[libraryFacility.id] = libraryFacility;
-          }
-        });
-      }
+      const libraryFacilities = initializeLibraryFacilities();
+      const updatedLibraryFacilities = await updateLibraryFacilities(libraryFacilities, nowCST);
+      Object.assign(facilityStatus.facilities, updatedLibraryFacilities);
     }
 
     return NextResponse.json(facilityStatus);
