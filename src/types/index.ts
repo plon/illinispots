@@ -4,15 +4,13 @@ export interface ClassTime {
 }
 
 export enum FacilityType {
-  ACADEMIC = 'academic',
-  LIBRARY = 'library'
+  ACADEMIC = "academic",
+  LIBRARY = "library",
 }
 
 export interface FacilityStatus {
   timestamp: string;
-  facilities: {
-    [key: string]: Facility;
-  };
+  facilities: Record<string, Facility>;
 }
 
 // Unified Facility type to represent both academic buildings and libraries
@@ -28,9 +26,7 @@ export interface Facility {
     open: string;
     close: string;
   };
-  rooms: {
-    [key: string]: FacilityRoom;
-  };
+  rooms: Record<string, FacilityRoom>;
   isOpen: boolean;
   roomCounts: {
     available: number;
@@ -224,7 +220,6 @@ export interface FacilityRoomProps {
   room: FacilityRoom;
   facilityType: FacilityType;
 }
-
 export interface AccordionRefs {
   [key: string]: HTMLDivElement | null;
 }
