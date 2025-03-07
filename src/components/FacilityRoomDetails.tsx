@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   FacilityRoomProps,
   TimeBlockProps,
@@ -78,8 +78,7 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
 };
 
 const RoomSchedule = ({ slots }: RoomScheduleProps) => {
-  // Get the most common slot duration to display in the UI
-  const getSlotDurations = () => {
+  const slotDurations = useMemo(() => {
     if (slots.length === 0) return { common: 0, all: [] };
 
     // Calculate durations for all slots
@@ -117,7 +116,7 @@ const RoomSchedule = ({ slots }: RoomScheduleProps) => {
       }
     });
 
-    // Get unique durations
+    // Get unique durations sorted
     const uniqueDurations = Array.from(new Set(durations)).sort(
       (a, b) => a - b,
     );
@@ -126,10 +125,9 @@ const RoomSchedule = ({ slots }: RoomScheduleProps) => {
       common: commonDuration,
       all: uniqueDurations,
     };
-  };
+  }, [slots]);
 
-  const { common: commonDuration, all: allDurations } = getSlotDurations();
-  const hasMixedDurations = allDurations.length > 1;
+  const hasMixedDurations = slotDurations.all.length > 1;
 
   return (
     <div className="mt-2">
@@ -140,6 +138,8 @@ const RoomSchedule = ({ slots }: RoomScheduleProps) => {
           ))}
         </div>
       </ScrollArea>
+
+      {/* Legend */}
       <div className="flex items-center gap-4 mt-2">
         <div className="flex items-center gap-1">
           <div className="w-3 h-3 bg-green-200" />
@@ -150,11 +150,13 @@ const RoomSchedule = ({ slots }: RoomScheduleProps) => {
           <span className="text-xs text-muted-foreground">Reserved</span>
         </div>
       </div>
+
+      {/* Duration information */}
       <p className="text-xs text-muted-foreground mt-1">
         {hasMixedDurations ? (
-          <>Mixed durations: {allDurations.join(", ")} minutes</>
+          <>Mixed durations: {slotDurations.all.join(", ")} minutes</>
         ) : (
-          <>{commonDuration}-minute reservations</>
+          <>{slotDurations.common}-minute reservations</>
         )}
       </p>
     </div>
