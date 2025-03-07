@@ -28,6 +28,34 @@ interface FacilityAccordionProps {
   idPrefix: string;
 }
 
+const getRoomAvailabilityMessage = (room: LibraryRoom): React.ReactNode => {
+  if (room.status === RoomStatus.AVAILABLE) {
+    return (
+      room.availableFor && (
+        <span className="text-xs text-muted-foreground">
+          Available for {formatDuration(room.availableFor)}
+        </span>
+      )
+    );
+  } else if (room.status === RoomStatus.OPENING_SOON && room.availableAt) {
+    return (
+      <span className="text-xs text-muted-foreground">
+        {`Available at ${formatTime(room.availableAt)}`}
+        {room.availableFor ? ` for ${formatDuration(room.availableFor)}` : ""}
+      </span>
+    );
+  } else if (room.availableAt) {
+    return (
+      <span className="text-xs text-muted-foreground">
+        {`Available at ${formatTime(room.availableAt)}`}
+        {room.availableFor ? ` for ${formatDuration(room.availableFor)}` : ""}
+      </span>
+    );
+  } else {
+    return <span className="text-xs text-muted-foreground">Fully booked</span>;
+  }
+};
+
 export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
   facility,
   facilityType,
@@ -146,32 +174,7 @@ const LibraryRoomsAccordion: React.FC<LibraryRoomsAccordionProps> = ({
               <div className="flex items-center justify-between flex-1 mr-2">
                 <div className="flex flex-col items-start text-left">
                   <span className="font-medium">{roomName}</span>
-                  {room.status === RoomStatus.AVAILABLE ? (
-                    room.availableFor && (
-                      <span className="text-xs text-muted-foreground">
-                        Available for {formatDuration(room.availableFor)}
-                      </span>
-                    )
-                  ) : room.status === RoomStatus.OPENING_SOON &&
-                    room.availableAt ? (
-                    <span className="text-xs text-muted-foreground">
-                      {`Available at ${formatTime(room.availableAt)}`}
-                      {room.availableFor
-                        ? ` for ${formatDuration(room.availableFor)}`
-                        : ""}
-                    </span>
-                  ) : room.availableAt ? (
-                    <span className="text-xs text-muted-foreground">
-                      {`Available at ${formatTime(room.availableAt)}`}
-                      {room.availableFor
-                        ? ` for ${formatDuration(room.availableFor)}`
-                        : ""}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">
-                      Fully booked
-                    </span>
-                  )}
+                  {getRoomAvailabilityMessage(libraryRoom)}
                 </div>
                 <RoomBadge
                   status={room.status}
