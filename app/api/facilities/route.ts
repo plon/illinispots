@@ -415,11 +415,11 @@ async function getFormattedLibraryData(
       roomsByLibrary[lid].push(room);
     });
 
-    // Process libraries we care about
-    for (const [libraryName, libraryInfo] of Object.entries(libraries)) {
+    // Process libraries we care about in parallel
+    const libraryPromises = Object.entries(libraries).map(async ([libraryName, libraryInfo]) => {
       // Skip libraries that aren't open if we have a filtered list
       if (openLibraries && !openLibraries.includes(libraryName)) {
-        continue;
+        return null;
       }
 
       const lid = libraryInfo.id;
@@ -445,13 +445,26 @@ async function getFormattedLibraryData(
         }
       }
 
-      result[libraryName] = {
-        room_count: Object.keys(roomReservations).length,
-        currently_available: availableCount,
-        rooms: roomReservations,
-        address: libraryInfo.address,
+      return {
+        libraryName,
+        data: {
+          room_count: Object.keys(roomReservations).length,
+          currently_available: availableCount,
+          rooms: roomReservations,
+          address: libraryInfo.address,
+        },
       };
-    }
+    });
+
+    // Wait for all library data to be processed
+    const libraryResults = await Promise.all(libraryPromises);
+
+    // Combine results
+    libraryResults.forEach((libraryResult) => {
+      if (libraryResult) {
+        result[libraryResult.libraryName] = libraryResult.data;
+      }
+    });
   } catch (error) {
     console.error("Error fetching library data:", error);
   }
@@ -658,21 +671,27 @@ export async function GET(request: Request) {
       facilities: {},
     };
 
-    // Fetch academic building data if requested
+    // Create an array to hold all promises
+    const fetchPromises: Promise<Record<string, Facility>>[] = [];
+    
+    // Add academic building fetch promise if requested
     if (includeAcademic) {
-      const academicFacilities = await fetchAcademicBuildingData(nowCST);
-      Object.assign(facilityStatus.facilities, academicFacilities);
+      fetchPromises.push(fetchAcademicBuildingData(nowCST));
     }
 
-    // Fetch library data if requested
+    // Add library fetch promise if requested
     if (includeLibraries) {
       const libraryFacilities = initializeLibraryFacilities();
-      const updatedLibraryFacilities = await updateLibraryFacilities(
-        libraryFacilities,
-        nowCST,
-      );
-      Object.assign(facilityStatus.facilities, updatedLibraryFacilities);
+      fetchPromises.push(updateLibraryFacilities(libraryFacilities, nowCST));
     }
+
+    // Wait for all data to be fetched in parallel
+    const results = await Promise.all(fetchPromises);
+
+    // Combine all results into the facilities object
+    results.forEach((facilities) => {
+      Object.assign(facilityStatus.facilities, facilities);
+    });
 
     return NextResponse.json(facilityStatus);
   } catch (error) {
