@@ -14,6 +14,7 @@ import {
   Facility,
   FacilityRoom,
   FacilityStatus,
+  RoomStatus,
 } from "@/types";
 import { isLibraryOpen } from "@/utils/libraryHours";
 
@@ -275,6 +276,21 @@ function calculateFutureAvailability(
 }
 
 /**
+ * Determines if a room will be available soon (within 20 minutes)
+ */
+function isOpeningSoon(availableAt: string): boolean {
+  const [availableHours, availableMinutes] = availableAt.split(":");
+  const now = moment().tz("America/Chicago");
+  const availableTime = moment()
+    .tz("America/Chicago")
+    .hours(parseInt(availableHours, 10))
+    .minutes(parseInt(availableMinutes, 10))
+    .seconds(0);
+  const diffInMinutes = availableTime.diff(now, "minutes");
+  return diffInMinutes <= 20 && diffInMinutes > 0;
+}
+
+/**
  * Links room data with reservation data to create a complete picture of room availability
  */
 function linkRoomsReservations(
@@ -416,45 +432,47 @@ async function getFormattedLibraryData(
     });
 
     // Process libraries we care about in parallel
-    const libraryPromises = Object.entries(libraries).map(async ([libraryName, libraryInfo]) => {
-      // Skip libraries that aren't open if we have a filtered list
-      if (openLibraries && !openLibraries.includes(libraryName)) {
-        return null;
-      }
-
-      const lid = libraryInfo.id;
-      const reservationData = await getReservation(lid, nowCST);
-      const libraryRooms = roomsByLibrary[lid] || [];
-      const roomReservations = linkRoomsReservations(
-        libraryRooms,
-        reservationData,
-        nowCST,
-      );
-
-      // Count available rooms
-      let availableCount = 0;
-      for (const room of Object.values(roomReservations)) {
-        const currentlyAvailable = room.slots.some(
-          (slot) =>
-            slot.available &&
-            slot.start <= nowCST.format("HH:mm:ss") &&
-            slot.end > nowCST.format("HH:mm:ss"),
-        );
-        if (currentlyAvailable) {
-          availableCount++;
+    const libraryPromises = Object.entries(libraries).map(
+      async ([libraryName, libraryInfo]) => {
+        // Skip libraries that aren't open if we have a filtered list
+        if (openLibraries && !openLibraries.includes(libraryName)) {
+          return null;
         }
-      }
 
-      return {
-        libraryName,
-        data: {
-          room_count: Object.keys(roomReservations).length,
-          currently_available: availableCount,
-          rooms: roomReservations,
-          address: libraryInfo.address,
-        },
-      };
-    });
+        const lid = libraryInfo.id;
+        const reservationData = await getReservation(lid, nowCST);
+        const libraryRooms = roomsByLibrary[lid] || [];
+        const roomReservations = linkRoomsReservations(
+          libraryRooms,
+          reservationData,
+          nowCST,
+        );
+
+        // Count available rooms
+        let availableCount = 0;
+        for (const room of Object.values(roomReservations)) {
+          const currentlyAvailable = room.slots.some(
+            (slot) =>
+              slot.available &&
+              slot.start <= nowCST.format("HH:mm:ss") &&
+              slot.end > nowCST.format("HH:mm:ss"),
+          );
+          if (currentlyAvailable) {
+            availableCount++;
+          }
+        }
+
+        return {
+          libraryName,
+          data: {
+            room_count: Object.keys(roomReservations).length,
+            currently_available: availableCount,
+            rooms: roomReservations,
+            address: libraryInfo.address,
+          },
+        };
+      },
+    );
 
     // Wait for all library data to be processed
     const libraryResults = await Promise.all(libraryPromises);
@@ -633,9 +651,18 @@ async function updateLibraryFacilities(
               );
             });
 
+            const willBeAvailableSoon =
+              !isAvailable &&
+              roomData.availableAt &&
+              isOpeningSoon(roomData.availableAt) &&
+              roomData.availableDuration >= 30;
+
             libraryFacility.rooms[roomName] = {
-              available: isAvailable,
-              status: isAvailable ? "available" : "reserved",
+              status: isAvailable
+                ? RoomStatus.AVAILABLE
+                : willBeAvailableSoon
+                  ? RoomStatus.OPENING_SOON
+                  : RoomStatus.RESERVED,
               url: roomData.url,
               thumbnail: roomData.thumbnail,
               slots: roomData.slots,
@@ -673,7 +700,7 @@ export async function GET(request: Request) {
 
     // Create an array to hold all promises
     const fetchPromises: Promise<Record<string, Facility>>[] = [];
-    
+
     // Add academic building fetch promise if requested
     if (includeAcademic) {
       fetchPromises.push(fetchAcademicBuildingData(nowCST));

@@ -8,6 +8,14 @@ export enum FacilityType {
   LIBRARY = "library",
 }
 
+export enum RoomStatus {
+  AVAILABLE = "available",
+  PASSING_PERIOD = "passing_period",
+  RESERVED = "reserved",
+  OCCUPIED = "occupied",
+  OPENING_SOON = "opening_soon",
+}
+
 export interface FacilityStatus {
   timestamp: string;
   facilities: Record<string, Facility>;
@@ -38,8 +46,7 @@ export interface Facility {
 
 // Base facility room with common properties
 export interface BaseFacilityRoom {
-  available: boolean;
-  status?: "available" | "occupied" | "reserved"; // Derived from available
+  status: RoomStatus;
   availableAt?: string;
   availableFor?: number;
 }
@@ -225,7 +232,8 @@ export interface AccordionRefs {
 }
 
 export interface RoomBadgeProps {
+  status: RoomStatus;
   availableAt?: string;
   availableFor?: number;
-  available: boolean;
+  facilityType: FacilityType;
 }
