@@ -53,6 +53,7 @@ export interface BaseFacilityRoom {
 
 // Academic-specific room properties
 export interface AcademicRoom extends BaseFacilityRoom {
+  // Not redundant with FacilityType.ACADEMIC since specific rooms do not have to be the facility type
   type: "academic";
   currentClass?: ClassInfo;
   nextClass?: ClassInfo;
@@ -211,7 +212,9 @@ export interface RoomScheduleProps {
 
 export interface FacilityRoomProps {
   roomName: string;
+  // room.type for room-level decisions
   room: FacilityRoom;
+  // facilityType for facility-level decisions
   facilityType: FacilityType;
 }
 export interface AccordionRefs {
