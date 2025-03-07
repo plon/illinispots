@@ -6,7 +6,6 @@ import { MarkerData, MapProps, FacilityType } from "@/types";
 import { formatTime } from "@/utils/format";
 
 export default function FacilityMap({ facilityData, onMarkerClick }: MapProps) {
-  // Use useCallback to prevent unnecessary rerenders
   const handleMarkerClick = useCallback(
     (id: string, type: FacilityType) => {
       onMarkerClick(id, type);
@@ -79,15 +78,14 @@ export default function FacilityMap({ facilityData, onMarkerClick }: MapProps) {
   useEffect(() => {
     if (!map.current || !isMapLoaded || !facilityData) return;
 
-    Object.values(markersRef.current).forEach((marker) => marker.remove());
     if (activePopupRef.current) {
       activePopupRef.current.remove();
+      activePopupRef.current = null;
     }
-    markersRef.current = {};
 
-    const markerDataArray: MarkerData[] = [];
+    const markerDataMap = new Map<string, MarkerData>();
 
-    // Process all facilities (both academic buildings and libraries)
+    // Process all facilities into a map with a unique key
     Object.values(facilityData.facilities).forEach((facility) => {
       // Skip facilities with missing required data
       if (!facility.coordinates || !facility.roomCounts) {
@@ -95,7 +93,8 @@ export default function FacilityMap({ facilityData, onMarkerClick }: MapProps) {
         return;
       }
 
-      markerDataArray.push({
+      const markerKey = `${facility.type}-${facility.id}`;
+      markerDataMap.set(markerKey, {
         id: facility.id,
         name: facility.name,
         coordinates: {
@@ -113,82 +112,127 @@ export default function FacilityMap({ facilityData, onMarkerClick }: MapProps) {
     const width = mapContainer.current?.clientWidth || 0;
     const isMobile = width < 768;
 
-    markerDataArray.forEach((data) => {
-      const markerEl = document.createElement("div");
-      const markerSize = isMobile ? "11px" : "16px";
-      markerEl.style.width = markerSize;
-      markerEl.style.height = markerSize;
-      markerEl.style.borderRadius = "50%";
-      markerEl.style.cursor = "pointer";
-
-      if (!data.isOpen) {
-        markerEl.style.background = "#6b7280";
-        markerEl.style.boxShadow = `0 0 ${isMobile ? "6px" : "10px"} #6b7280`;
-      } else {
-        const hasAvailable = data.available > 0;
-        markerEl.style.background = hasAvailable ? "#22c55e" : "#ef4444";
-        markerEl.style.boxShadow = `0 0 ${isMobile ? "6px" : "10px"} ${
-          hasAvailable ? "#22c55e" : "#ef4444"
-        }`;
+    // Remove markers that don't exist in the new data
+    Object.keys(markersRef.current).forEach((key) => {
+      if (!markerDataMap.has(key)) {
+        markersRef.current[key].remove();
+        delete markersRef.current[key];
       }
+    });
 
-      markerEl.style.border = `${isMobile ? "1px" : "2px"} solid white`;
+    // Update existing markers or create new ones
+    markerDataMap.forEach((data, key) => {
+      const markerSize = isMobile ? "11px" : "16px";
 
-      const marker = new maplibregl.Marker({ element: markerEl })
-        .setLngLat([data.coordinates.longitude, data.coordinates.latitude])
-        .addTo(map.current!);
+      // Update existing marker
+      if (markersRef.current[key]) {
+        const markerEl = markersRef.current[key].getElement();
 
-      markerEl.addEventListener("mouseenter", () => {
-        if (activePopupRef.current) {
-          activePopupRef.current.remove();
+        // Update marker style based on new data
+        if (!data.isOpen) {
+          markerEl.style.background = "#6b7280";
+          markerEl.style.boxShadow = `0 0 ${isMobile ? "6px" : "10px"} #6b7280`;
+        } else {
+          const hasAvailable = data.available > 0;
+          markerEl.style.background = hasAvailable ? "#22c55e" : "#ef4444";
+          markerEl.style.boxShadow = `0 0 ${isMobile ? "6px" : "10px"} ${
+            hasAvailable ? "#22c55e" : "#ef4444"
+          }`;
         }
 
-        activePopupRef.current = new maplibregl.Popup({
-          closeButton: false,
-          closeOnClick: false,
-          offset: [0, -10],
-        })
-          .setLngLat([data.coordinates.longitude, data.coordinates.latitude])
-          .setHTML(
-            `
-            <div style="padding: 4px 8px;">
-              <strong>${data.name}</strong><br/>
-              ${
-                data.isOpen
-                  ? `${data.available}/${data.total} available`
-                  : `CLOSED<br/><span style="font-size: 0.9em; color: #666;">Opens ${formatTime(data.hours.open)}</span>`
-              }
-            </div>
-            `,
-          )
+        // Update marker position if needed
+        const currentLngLat = markersRef.current[key].getLngLat();
+        const newLng = data.coordinates.longitude;
+        const newLat = data.coordinates.latitude;
+        if (currentLngLat.lng !== newLng || currentLngLat.lat !== newLat) {
+          markersRef.current[key].setLngLat({ lng: newLng, lat: newLat });
+        }
+      }
+      // Create new marker
+      else {
+        const markerEl = document.createElement("div");
+        markerEl.style.width = markerSize;
+        markerEl.style.height = markerSize;
+        markerEl.style.borderRadius = "50%";
+        markerEl.style.cursor = "pointer";
+        markerEl.style.border = `${isMobile ? "1px" : "2px"} solid white`;
+
+        if (!data.isOpen) {
+          markerEl.style.background = "#6b7280";
+          markerEl.style.boxShadow = `0 0 ${isMobile ? "6px" : "10px"} #6b7280`;
+        } else {
+          const hasAvailable = data.available > 0;
+          markerEl.style.background = hasAvailable ? "#22c55e" : "#ef4444";
+          markerEl.style.boxShadow = `0 0 ${isMobile ? "6px" : "10px"} ${
+            hasAvailable ? "#22c55e" : "#ef4444"
+          }`;
+        }
+
+        const marker = new maplibregl.Marker({ element: markerEl })
+          .setLngLat({
+            lng: data.coordinates.longitude,
+            lat: data.coordinates.latitude,
+          })
           .addTo(map.current!);
-      });
 
-      markerEl.addEventListener("mouseleave", () => {
-        if (activePopupRef.current) {
-          activePopupRef.current.remove();
-          activePopupRef.current = null;
-        }
-      });
+        markerEl.addEventListener("mouseenter", () => {
+          if (activePopupRef.current) {
+            activePopupRef.current.remove();
+          }
 
-      markerEl.addEventListener("click", (e) => {
-        if (activePopupRef.current) {
-          activePopupRef.current.remove();
-          activePopupRef.current = null;
-        }
-
-        map.current?.flyTo({
-          center: [data.coordinates.longitude, data.coordinates.latitude],
-          zoom: 17,
-          duration: 1000,
-          essential: true,
+          activePopupRef.current = new maplibregl.Popup({
+            closeButton: false,
+            closeOnClick: false,
+            offset: [0, -10],
+          })
+            .setLngLat({
+              lng: data.coordinates.longitude,
+              lat: data.coordinates.latitude,
+            })
+            .setHTML(
+              `
+              <div style="padding: 4px 8px;">
+                <strong>${data.name}</strong><br/>
+                ${
+                  data.isOpen
+                    ? `${data.available}/${data.total} available`
+                    : `CLOSED<br/><span style="font-size: 0.9em; color: #666;">Opens ${formatTime(data.hours.open)}</span>`
+                }
+              </div>
+              `,
+            )
+            .addTo(map.current!);
         });
 
-        handleMarkerClick(data.id, data.type);
-        e.stopPropagation();
-      });
+        markerEl.addEventListener("mouseleave", () => {
+          if (activePopupRef.current) {
+            activePopupRef.current.remove();
+            activePopupRef.current = null;
+          }
+        });
 
-      markersRef.current[`${data.type}-${data.id}`] = marker;
+        markerEl.addEventListener("click", (e) => {
+          if (activePopupRef.current) {
+            activePopupRef.current.remove();
+            activePopupRef.current = null;
+          }
+
+          map.current?.flyTo({
+            center: {
+              lng: data.coordinates.longitude,
+              lat: data.coordinates.latitude,
+            },
+            zoom: 17,
+            duration: 1000,
+            essential: true,
+          });
+
+          handleMarkerClick(data.id, data.type);
+          e.stopPropagation();
+        });
+
+        markersRef.current[key] = marker;
+      }
     });
 
     return () => {
