@@ -32,33 +32,23 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
     // Calculate proportional width for any duration
     if (durationMinutes <= 0) return "w-3"; // Minimum width for invalid durations
     
-    if (durationMinutes === 15) return "w-3.5"; // 1/4 of height
-    if (durationMinutes === 30) return "w-7";   // 1/2 of height
-    if (durationMinutes === 60) return "w-14";  // equal to height (h-14)
-    
-    // For other durations, calculate proportional width
-    // Tailwind doesn't support dynamic classes, so we need to map to the closest available width
-    const widthRatio = durationMinutes / 60;
-    const baseWidth = 14; // w-14 for 60 minutes
-    const calculatedWidth = baseWidth * widthRatio;
-    
-    // Map to closest Tailwind width class
-    if (calculatedWidth <= 3) return "w-3";
-    if (calculatedWidth <= 3.5) return "w-3.5";
-    if (calculatedWidth <= 4) return "w-4";
-    if (calculatedWidth <= 5) return "w-5";
-    if (calculatedWidth <= 6) return "w-6";
-    if (calculatedWidth <= 7) return "w-7";
-    if (calculatedWidth <= 8) return "w-8";
-    if (calculatedWidth <= 9) return "w-9";
-    if (calculatedWidth <= 10) return "w-10";
-    if (calculatedWidth <= 11) return "w-11";
-    if (calculatedWidth <= 12) return "w-12";
-    if (calculatedWidth <= 14) return "w-14";
-    if (calculatedWidth <= 16) return "w-16";
-    if (calculatedWidth <= 20) return "w-20";
-    if (calculatedWidth <= 24) return "w-24";
-    if (calculatedWidth <= 28) return "w-28";
+    // Map of durations (in minutes) to Tailwind width classes
+    const durationWidthMap = [
+      [15, "w-3.5"],  // 1/4 of height
+      [30, "w-7"],    // 1/2 of height
+      [60, "w-14"],   // equal to height (h-14)
+      [90, "w-20"],   // 1.5x height
+      [120, "w-24"],  // 2x height
+      [180, "w-28"],  // 3x height
+      [240, "w-32"],  // 4x height
+    ] as const;
+
+    // Find the closest width class for the given duration
+    for (const [duration, width] of durationWidthMap) {
+      if (durationMinutes <= duration) {
+        return width;
+      }
+    }
     
     return "w-32"; // Max width for very long durations
   };
@@ -75,7 +65,7 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
         </HybridTooltipTrigger>
         <HybridTooltipContent className="w-fit p-1.5">
           <p className="font-medium text-[13px] leading-tight">
-            {startTime.format("hh:mm A")} - {endTime.format("hh:mm A")}
+            {startTime.format("h:mm A")} - {endTime.format("h:mm A")}
           </p>
           <p className="text-[12px] leading-tight mt-0.5">
             {slot.available ? "Available" : "Reserved"}
