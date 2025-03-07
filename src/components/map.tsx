@@ -5,18 +5,15 @@ import maplibregl from "maplibre-gl";
 import { MarkerData, MapProps, FacilityType } from "@/types";
 import { formatTime } from "@/utils/format";
 
-export default function FacilityMap({
-  facilityData,
-  onMarkerClick,
-}: MapProps) {
+export default function FacilityMap({ facilityData, onMarkerClick }: MapProps) {
   // Use useCallback to prevent unnecessary rerenders
   const handleMarkerClick = useCallback(
     (id: string, type: FacilityType) => {
       onMarkerClick(id, type);
     },
-    [onMarkerClick]
+    [onMarkerClick],
   );
-  
+
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<{ [key: string]: maplibregl.Marker }>({});
@@ -92,6 +89,12 @@ export default function FacilityMap({
 
     // Process all facilities (both academic buildings and libraries)
     Object.values(facilityData.facilities).forEach((facility) => {
+      // Skip facilities with missing required data
+      if (!facility.coordinates || !facility.roomCounts) {
+        console.warn(`Facility ${facility.id} is missing required properties`);
+        return;
+      }
+
       markerDataArray.push({
         id: facility.id,
         name: facility.name,
@@ -150,9 +153,11 @@ export default function FacilityMap({
             `
             <div style="padding: 4px 8px;">
               <strong>${data.name}</strong><br/>
-              ${!data.isOpen 
-                ? `CLOSED<br/><span style="font-size: 0.9em; color: #666;">Opens ${formatTime(data.hours.open)}</span>` 
-                : `${data.available}/${data.total} available`}
+              ${
+                data.isOpen
+                  ? `${data.available}/${data.total} available`
+                  : `CLOSED<br/><span style="font-size: 0.9em; color: #666;">Opens ${formatTime(data.hours.open)}</span>`
+              }
             </div>
             `,
           )
@@ -183,7 +188,7 @@ export default function FacilityMap({
         e.stopPropagation();
       });
 
-      markersRef.current[data.id] = marker;
+      markersRef.current[`${data.type}-${data.id}`] = marker;
     });
 
     return () => {
