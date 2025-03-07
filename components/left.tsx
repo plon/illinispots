@@ -9,13 +9,7 @@ import React, {
   useCallback,
   memo,
 } from "react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
+import { Accordion } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,62 +22,8 @@ import {
   FacilityType, 
   AccordionRefs
 } from "@/types";
-import moment from "moment-timezone";
 import { Github, Map as MapIcon, TriangleAlert } from "lucide-react";
-import FacilityRoomDetails from "@/components/FacilityRoomDetails";
-import { getLibraryHoursMessage } from "@/utils/libraryHours";
-import { formatTime, formatDuration } from "@/utils/format";
-
-// Helper functions
-const RoomBadge: React.FC<{
-  availableAt?: string;
-  availableFor?: number;
-  available: boolean;
-  passingPeriod?: boolean;
-  facilityType: FacilityType;
-}> = memo(
-  ({ availableAt, availableFor, available, passingPeriod, facilityType }) => {
-    const isOpening = useMemo(() => {
-      if (!availableAt || !availableFor) return false;
-      const [availableHours, availableMinutes] = availableAt.split(":");
-      const now = moment().tz("America/Chicago");
-      const availableTime = moment()
-        .tz("America/Chicago")
-        .hours(parseInt(availableHours, 10))
-        .minutes(parseInt(availableMinutes, 10))
-        .seconds(0);
-      const diffInMinutes = availableTime.diff(now, "minutes");
-      return diffInMinutes <= 20 && diffInMinutes > 0 && availableFor >= 30;
-    }, [availableAt, availableFor]);
-
-    return (
-      <Badge
-        variant="outline"
-        className={`${
-          available
-            ? passingPeriod
-              ? "bg-gray-50 text-gray-700 border-gray-300"
-              : "bg-green-50 text-green-700 border-green-300"
-            : isOpening
-              ? "bg-yellow-50 text-yellow-700 border-yellow-300"
-              : "bg-red-50 text-red-700 border-red-300"
-        }`}
-      >
-        {available
-          ? passingPeriod
-            ? "Passing Period"
-            : "Available"
-          : isOpening
-            ? "Opening Soon"
-            : facilityType === FacilityType.LIBRARY
-              ? "Reserved"
-              : "Occupied"}
-      </Badge>
-    );
-  },
-);
-
-RoomBadge.displayName = "RoomBadge";
+import FacilityAccordion from "@/components/FacilityAccordion";
 
 interface LeftSidebarProps {
   facilityData: FacilityStatus | null;
@@ -116,13 +56,12 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   }, []);
 
   const toggleItem = useCallback(
-    (itemId: string) => {
-      setExpandedItems((prev) => {
-        if (prev.includes(itemId)) {
-          return prev.filter((item) => item !== itemId);
-        } else {
-          return [...prev, itemId];
-        }
+    (value: string) => {
+      setExpandedItems((prevItems) => {
+        const newItems = prevItems.includes(value)
+          ? prevItems.filter((item) => item !== value)
+          : [...prevItems, value];
+        return newItems;
       });
     },
     [setExpandedItems],
@@ -130,12 +69,13 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
   const prevExpandedItemsRef = useRef<string[]>([]);
 
+  // Add scroll into view effect when items expand
   useEffect(() => {
-    const addedItems = expandedItems.filter(
+    const newItems = expandedItems.filter(
       (item) => !prevExpandedItemsRef.current.includes(item),
     );
-    if (addedItems.length > 0) {
-      scrollToAccordion(addedItems[0]);
+    if (newItems.length === 1) {
+      scrollToAccordion(newItems[0]);
     }
     prevExpandedItemsRef.current = expandedItems;
   }, [expandedItems, scrollToAccordion]);
@@ -224,336 +164,30 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         {/* Libraries Accordion */}
         <Accordion type="multiple" value={expandedItems} className="w-full">
           {libraryFacilities.map((facility) => (
-            <AccordionItem
-              value={`library-${facility.id}`}
+            <FacilityAccordion
               key={`library-${facility.id}`}
-              ref={(el) => {
-                accordionRefs.current[`library-${facility.id}`] = el;
-              }}
-            >
-              <AccordionTrigger
-                onClick={() => toggleItem(`library-${facility.id}`)}
-                className="px-4 py-2 hover:no-underline hover:bg-muted group"
-              >
-                <div className="flex items-center justify-between flex-1 mr-2">
-                  <span>{facility.name}</span>
-                  <div className="ml-2">
-                    {!facility.isOpen ? (
-                      <Badge
-                        variant="outline"
-                        className="bg-gray-50 text-gray-700 border-gray-300"
-                      >
-                        CLOSED
-                      </Badge>
-                    ) : (
-                      <Badge
-                        variant="outline"
-                        className={`${
-                          facility.roomCounts.available > 0
-                            ? "bg-green-50 text-green-700 border-green-300"
-                            : "bg-red-50 text-red-700 border-red-300"
-                        }`}
-                      >
-                        {facility.roomCounts.available}/{facility.roomCounts.total}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                {!facility.isOpen ? (
-                  <div className="px-4 py-2 text-sm text-muted-foreground">
-                    {getLibraryHoursMessage(facility.name)}
-                  </div>
-                ) : (
-                  <Accordion
-                    type="multiple"
-                    value={expandedItems}
-                    className="w-full"
-                  >
-                    {Object.entries(facility.rooms).map(
-                      ([roomName, room]) => (
-                        <AccordionItem
-                          value={`library-${facility.id}-room-${roomName}`}
-                          key={`library-${facility.id}-room-${roomName}`}
-                          ref={(el) => {
-                            accordionRefs.current[
-                              `library-${facility.id}-room-${roomName}`
-                            ] = el;
-                          }}
-                        >
-                          <AccordionTrigger
-                            onClick={() =>
-                              toggleItem(
-                                `library-${facility.id}-room-${roomName}`,
-                              )
-                            }
-                            className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm"
-                          >
-                            <div className="flex items-center justify-between flex-1 mr-2">
-                              <div className="flex flex-col items-start text-left">
-                                <span className="font-medium">
-                                  {roomName}
-                                </span>
-                                {room.available ? (
-                                  room.availableFor && (
-                                    <span className="text-xs text-muted-foreground">
-                                      Available for{" "}
-                                      {formatDuration(
-                                        room.availableFor,
-                                      )}
-                                    </span>
-                                  )
-                                ) : room.availableAt ? (
-                                  <span className="text-xs text-muted-foreground">
-                                    {`Available at ${formatTime(room.availableAt)}`}
-                                    {room.availableFor
-                                      ? ` for ${formatDuration(room.availableFor)}`
-                                      : ""}
-                                  </span>
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">
-                                    Fully booked
-                                  </span>
-                                )}
-                              </div>
-                              <RoomBadge
-                                available={room.available}
-                                availableAt={room.availableAt}
-                                availableFor={room.availableFor}
-                                facilityType={FacilityType.LIBRARY}
-                              />
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            <FacilityRoomDetails
-                              roomName={roomName}
-                              room={room}
-                              facilityType={FacilityType.LIBRARY}
-                            />
-                          </AccordionContent>
-                        </AccordionItem>
-                      ),
-                    )}
-                  </Accordion>
-                )}
-              </AccordionContent>
-            </AccordionItem>
+              facility={facility}
+              facilityType={FacilityType.LIBRARY}
+              expandedItems={expandedItems}
+              toggleItem={toggleItem}
+              accordionRefs={accordionRefs}
+              idPrefix="library"
+            />
           ))}
         </Accordion>
 
         {/* Academic Buildings Accordion */}
         <Accordion type="multiple" value={expandedItems} className="w-full">
           {academicFacilities.map((facility) => (
-            <AccordionItem
-              value={`building-${facility.id}`}
+            <FacilityAccordion
               key={`building-${facility.id}`}
-              ref={(el) => {
-                accordionRefs.current[`building-${facility.id}`] = el;
-              }}
-            >
-              <AccordionTrigger
-                onClick={() => toggleItem(`building-${facility.id}`)}
-                className="px-4 py-2 hover:no-underline hover:bg-muted group"
-              >
-                <div className="flex items-center justify-between flex-1 mr-2">
-                  <span>{facility.name}</span>
-                  {!facility.isOpen ? (
-                    <Badge
-                      variant="outline"
-                      className="bg-gray-50 text-gray-700 border-gray-300"
-                    >
-                      CLOSED
-                    </Badge>
-                  ) : (
-                    <Badge
-                      variant="outline"
-                      className={`
-                        ${
-                          facility.roomCounts.available > 0
-                            ? "bg-green-50 text-green-700 border-green-300"
-                            : "bg-red-50 text-red-700 border-red-300"
-                        }
-                      `}
-                    >
-                      {facility.roomCounts.available}
-                      /{facility.roomCounts.total}
-                    </Badge>
-                  )}
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                {!facility.isOpen ? (
-                  <div className="px-4 py-2 text-sm text-muted-foreground">
-                    Building is currently closed<br/>
-                    <span>Opens {formatTime(facility.hours.open)}</span>
-                  </div>
-                ) : (
-                  <Accordion
-                    type="multiple"
-                    value={expandedItems}
-                    className="w-full"
-                  >
-                    {/* Available Rooms Section */}
-                    <AccordionItem
-                      value={`building-${facility.id}-available`}
-                      ref={(el) => {
-                        accordionRefs.current[
-                          `building-${facility.id}-available`
-                        ] = el;
-                      }}
-                    >
-                      <AccordionTrigger
-                        onClick={() =>
-                          toggleItem(`building-${facility.id}-available`)
-                        }
-                        className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm"
-                      >
-                        Available Rooms (
-                        {
-                          Object.values(facility.rooms).filter(
-                            (room) => room.available,
-                          ).length
-                        }
-                        )
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="px-4 py-2 space-y-2">
-                          {Object.entries(facility.rooms)
-                            .filter(([, room]) => room.available)
-                            .map(([roomNumber, room]) => (
-                              <div key={roomNumber} className="text-sm">
-                                <div className="flex justify-between items-center">
-                                  <span className="font-medium">
-                                    {roomNumber}
-                                  </span>
-                                  <RoomBadge
-                                    available={true}
-                                    availableFor={room.availableFor}
-                                    passingPeriod={room.passingPeriod}
-                                    facilityType={FacilityType.ACADEMIC}
-                                  />
-                                </div>
-                                {room.passingPeriod && room.nextClass ? (
-                                  <p className="text-xs text-muted-foreground">
-                                    <span className="font-medium text-foreground/70">
-                                      Next:
-                                    </span>{" "}
-                                    {room.nextClass.course} -{" "}
-                                    {room.nextClass.title} at{" "}
-                                    {formatTime(room.nextClass.time.start)}
-                                  </p>
-                                ) : (
-                                  <>
-                                    {room.availableFor && (
-                                      <p className="text-xs text-muted-foreground">
-                                        <span className="font-medium text-foreground/70">
-                                          Available for:
-                                        </span>{" "}
-                                        {formatDuration(room.availableFor)}
-                                      </p>
-                                    )}
-                                    {room.availableUntil && (
-                                      <p className="text-xs text-muted-foreground">
-                                        <span className="font-medium text-foreground/70">
-                                          Until:
-                                        </span>{" "}
-                                        {formatTime(room.availableUntil)}
-                                      </p>
-                                    )}
-                                    {room.nextClass && (
-                                      <p className="text-xs text-muted-foreground">
-                                        <span className="font-medium text-foreground/70">
-                                          Next:
-                                        </span>{" "}
-                                        {room.nextClass.course} -{" "}
-                                        {room.nextClass.title}
-                                      </p>
-                                    )}
-                                  </>
-                                )}
-                              </div>
-                            ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    {/* Occupied Rooms Section */}
-                    <AccordionItem
-                      value={`building-${facility.id}-occupied`}
-                      ref={(el) => {
-                        accordionRefs.current[
-                          `building-${facility.id}-occupied`
-                        ] = el;
-                      }}
-                    >
-                      <AccordionTrigger
-                        onClick={() =>
-                          toggleItem(`building-${facility.id}-occupied`)
-                        }
-                        className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm"
-                      >
-                        Occupied Rooms (
-                        {
-                          Object.values(facility.rooms).filter(
-                            (room) => !room.available,
-                          ).length
-                        }
-                        )
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="px-4 py-2 space-y-2">
-                          {Object.entries(facility.rooms)
-                            .filter(([, room]) => !room.available)
-                            .map(([roomNumber, room]) => (
-                              <div key={roomNumber} className="text-sm">
-                                <div className="flex justify-between items-center">
-                                  <span className="font-medium">
-                                    {roomNumber}
-                                  </span>
-                                  <RoomBadge
-                                    available={false}
-                                    availableAt={room.availableAt}
-                                    availableFor={room.availableFor}
-                                    facilityType={FacilityType.ACADEMIC}
-                                  />
-                                </div>
-                                {room.currentClass && (
-                                  <p className="text-xs text-muted-foreground">
-                                    <span className="font-medium text-foreground/70">
-                                      Current:
-                                    </span>{" "}
-                                    {room.currentClass.course} -{" "}
-                                    {room.currentClass.title}
-                                  </p>
-                                )}
-                                {room.availableAt && (
-                                  <div className="text-xs text-muted-foreground">
-                                    <p>
-                                      <span className="font-medium text-foreground/70">
-                                        Available at:
-                                      </span>{" "}
-                                      {formatTime(room.availableAt)}
-                                      {room.availableFor && (
-                                        <span className="ml-1">
-                                          for{" "}
-                                          {formatDuration(
-                                            room.availableFor,
-                                          )}
-                                        </span>
-                                      )}
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                )}
-              </AccordionContent>
-            </AccordionItem>
+              facility={facility}
+              facilityType={FacilityType.ACADEMIC}
+              expandedItems={expandedItems}
+              toggleItem={toggleItem}
+              accordionRefs={accordionRefs}
+              idPrefix="building"
+            />
           ))}
         </Accordion>
       </ScrollArea>
