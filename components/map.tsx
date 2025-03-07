@@ -4,7 +4,7 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import maplibregl from "maplibre-gl";
 import { MarkerData, MapProps, FacilityType } from "@/types";
 
-export default function Map({
+export default function FacilityMap({
   facilityData,
   onMarkerClick,
 }: MapProps) {

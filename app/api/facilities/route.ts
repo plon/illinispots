@@ -10,10 +10,10 @@ import {
   FormattedLibraryData,
   ReservationResponse,
   RegexGroups,
-  BuildingStatus,
   FacilityType,
   Facility,
-  FacilityRoom
+  FacilityRoom,
+  FacilityStatus,
 } from "@/types";
 import { isLibraryOpen } from "@/utils/libraryHours";
 
@@ -478,8 +478,8 @@ export async function GET(request: Request) {
     const nowCST = moment().tz("America/Chicago");
     const timestamp = nowCST.format();
     
-    // Create a new building status object for our response
-    const buildingStatus: BuildingStatus = {
+    // Initialize the unified response object
+    const facilityStatus: FacilityStatus = {
       timestamp,
       facilities: {}
     };
@@ -499,7 +499,7 @@ export async function GET(request: Request) {
 
       if (error) {
         console.error("Error fetching building data:", error);
-      } else if (buildingData && buildingData.buildings) {
+      } else if (buildingData?.buildings) {
         // Process academic buildings
         Object.entries(buildingData.buildings).forEach(([id, buildingData]) => {
           // Type assertion for building data
@@ -512,7 +512,7 @@ export async function GET(request: Request) {
             roomCounts: { available: number; total: number };
           };
           
-          buildingStatus.facilities[id] = {
+          facilityStatus.facilities[id] = {
             id,
             name: building.name,
             type: FacilityType.ACADEMIC,
@@ -581,7 +581,7 @@ export async function GET(request: Request) {
       
       // Add all library facilities to the response, even if they're closed
       Object.entries(libraryFacilities).forEach(([, facility]) => {
-        buildingStatus.facilities[facility.id] = facility;
+        facilityStatus.facilities[facility.id] = facility;
       });
       
       // Only fetch room data for libraries that are actually open
@@ -595,7 +595,7 @@ export async function GET(request: Request) {
         
         // Add room data only for libraries that are open
         Object.entries(libraryData).forEach(([name, data]) => {
-          if (libraryFacilities[name] && libraryFacilities[name].isOpen) {
+          if (libraryFacilities[name]?.isOpen) {
             const libraryFacility = libraryFacilities[name];
             
             // Set room counts
@@ -622,14 +622,14 @@ export async function GET(request: Request) {
               };
             });
             
-            // Add to buildingStatus
-            buildingStatus.facilities[libraryFacility.id] = libraryFacility;
+            // Add to facilityStatus
+            facilityStatus.facilities[libraryFacility.id] = libraryFacility;
           }
         });
       }
     }
 
-    return NextResponse.json(buildingStatus);
+    return NextResponse.json(facilityStatus);
   } catch (error) {
     console.error("Error in unified API:", error);
     return NextResponse.json(

@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect, useCallback, memo } from "react";
 import LeftSidebar from "@/components/left";
-import Map from "@/components/map";
+import FacilityMap from "@/components/map";
 import LoadingScreen from "@/components/LoadingScreen";
-import { BuildingStatus, FacilityType } from "@/types";
+import { FacilityStatus, FacilityType } from "@/types";
 
 const IlliniSpotsPage: React.FC = () => {
-  const [facilityData, setFacilityData] = useState<BuildingStatus | null>(null);
+  const [facilityData, setFacilityData] = useState<FacilityStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [showMap, setShowMap] = useState(true);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
@@ -17,6 +17,9 @@ const IlliniSpotsPage: React.FC = () => {
       try {
         // Let the API handle which libraries to include based on their open hours
         const res = await fetch("/api/facilities");
+        if (!res.ok) {
+          throw new Error(`Request failed with status ${res.status}`);
+        }
         const facilitiesData = await res.json();
         
         setFacilityData(facilitiesData);
@@ -65,7 +68,7 @@ const IlliniSpotsPage: React.FC = () => {
     <div className={`h-screen flex ${showMap ? "md:flex-row" : ""} flex-col`}>
       {showMap && (
         <div className="h-[40vh] md:h-screen md:w-[63%] w-full order-1 md:order-2">
-          <Map
+          <FacilityMap
             facilityData={facilityData}
             onMarkerClick={handleMarkerClick}
           />

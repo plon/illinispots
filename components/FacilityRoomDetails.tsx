@@ -28,16 +28,39 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
   }
 
   const getWidth = () => {
-    switch (durationMinutes) {
-      case 15:
-        return "w-3.5"; // 1/4 of height
-      case 30:
-        return "w-7"; // 1/2 of height
-      case 60:
-        return "w-14"; // equal to height (h-14)
-      default:
-        return "w-14";
-    }
+    // Base width for 60 minutes is w-14 (equal to height)
+    // Calculate proportional width for any duration
+    if (durationMinutes <= 0) return "w-3"; // Minimum width for invalid durations
+    
+    if (durationMinutes === 15) return "w-3.5"; // 1/4 of height
+    if (durationMinutes === 30) return "w-7";   // 1/2 of height
+    if (durationMinutes === 60) return "w-14";  // equal to height (h-14)
+    
+    // For other durations, calculate proportional width
+    // Tailwind doesn't support dynamic classes, so we need to map to the closest available width
+    const widthRatio = durationMinutes / 60;
+    const baseWidth = 14; // w-14 for 60 minutes
+    const calculatedWidth = baseWidth * widthRatio;
+    
+    // Map to closest Tailwind width class
+    if (calculatedWidth <= 3) return "w-3";
+    if (calculatedWidth <= 3.5) return "w-3.5";
+    if (calculatedWidth <= 4) return "w-4";
+    if (calculatedWidth <= 5) return "w-5";
+    if (calculatedWidth <= 6) return "w-6";
+    if (calculatedWidth <= 7) return "w-7";
+    if (calculatedWidth <= 8) return "w-8";
+    if (calculatedWidth <= 9) return "w-9";
+    if (calculatedWidth <= 10) return "w-10";
+    if (calculatedWidth <= 11) return "w-11";
+    if (calculatedWidth <= 12) return "w-12";
+    if (calculatedWidth <= 14) return "w-14";
+    if (calculatedWidth <= 16) return "w-16";
+    if (calculatedWidth <= 20) return "w-20";
+    if (calculatedWidth <= 24) return "w-24";
+    if (calculatedWidth <= 28) return "w-28";
+    
+    return "w-32"; // Max width for very long durations
   };
 
   return (
@@ -65,25 +88,50 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
 };
 
 const RoomSchedule = ({ slots }: RoomScheduleProps) => {
-  const getSlotDuration = () => {
-    if (slots.length === 0) return 0;
+  // Get the most common slot duration to display in the UI
+  const getSlotDurations = () => {
+    if (slots.length === 0) return { common: 0, all: [] };
 
-    const firstSlot = slots[0];
-    const startTime = moment.tz(
-      `1970-01-01T${firstSlot.start}`,
-      "America/Chicago",
-    );
-    const endTime = moment.tz(`1970-01-01T${firstSlot.end}`, "America/Chicago");
+    // Calculate durations for all slots
+    const durations = slots.map(slot => {
+      const startTime = moment.tz(`1970-01-01T${slot.start}`, "America/Chicago");
+      const endTime = moment.tz(`1970-01-01T${slot.end}`, "America/Chicago");
 
-    let duration = endTime.diff(startTime, "minutes");
-    if (duration < 0) {
-      duration = endTime.add(1, "day").diff(startTime, "minutes");
-    }
+      let duration = endTime.diff(startTime, "minutes");
+      if (duration < 0) {
+        duration = endTime.add(1, "day").diff(startTime, "minutes");
+      }
 
-    return duration;
+      return duration;
+    });
+
+    // Find the most common duration
+    const durationCounts = durations.reduce((acc, duration) => {
+      acc[duration] = (acc[duration] || 0) + 1;
+      return acc;
+    }, {} as Record<number, number>);
+
+    let maxCount = 0;
+    let commonDuration = 0;
+    
+    Object.entries(durationCounts).forEach(([duration, count]) => {
+      if (count > maxCount) {
+        maxCount = count;
+        commonDuration = parseInt(duration);
+      }
+    });
+
+    // Get unique durations
+    const uniqueDurations = Array.from(new Set(durations)).sort((a, b) => a - b);
+
+    return { 
+      common: commonDuration,
+      all: uniqueDurations
+    };
   };
 
-  const slotDuration = getSlotDuration();
+  const { common: commonDuration, all: allDurations } = getSlotDurations();
+  const hasMixedDurations = allDurations.length > 1;
 
   return (
     <div className="mt-2">
@@ -105,7 +153,15 @@ const RoomSchedule = ({ slots }: RoomScheduleProps) => {
         </div>
       </div>
       <p className="text-xs text-muted-foreground mt-1">
-        {slotDuration}-minute reservations
+        {hasMixedDurations ? (
+          <>
+            Mixed durations: {allDurations.join(', ')} minutes
+          </>
+        ) : (
+          <>
+            {commonDuration}-minute reservations
+          </>
+        )}
       </p>
     </div>
   );

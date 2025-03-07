@@ -8,7 +8,7 @@ export enum FacilityType {
   LIBRARY = 'library'
 }
 
-export interface BuildingStatus {
+export interface FacilityStatus {
   timestamp: string;
   facilities: {
     [key: string]: Facility;
@@ -40,6 +40,7 @@ export interface Facility {
   address?: string;
 }
 
+// Base facility room with common properties
 export interface BaseFacilityRoom {
   available: boolean;
   status?: "available" | "occupied" | "reserved"; // Derived from available
@@ -47,6 +48,7 @@ export interface BaseFacilityRoom {
   availableFor?: number;
 }
 
+// Academic-specific room properties
 export interface AcademicRoom extends BaseFacilityRoom {
   currentClass?: ClassInfo;
   nextClass?: ClassInfo;
@@ -54,13 +56,19 @@ export interface AcademicRoom extends BaseFacilityRoom {
   availableUntil?: string;
 }
 
+// Library-specific room properties
 export interface LibraryRoom extends BaseFacilityRoom {
   url: string;
   thumbnail: string;
   slots: TimeSlot[];
 }
 
-// Unified room type that can represent both types
+/**
+ * Unified room type that can represent both academic and library rooms.
+ * The presence of certain fields can be used to determine the room type:
+ * - Academic rooms: currentClass, nextClass, passingPeriod, availableUntil
+ * - Library rooms: url, thumbnail, slots
+ */
 export interface FacilityRoom extends BaseFacilityRoom {
   // Academic building specific fields
   currentClass?: ClassInfo;
@@ -174,7 +182,7 @@ export interface LibraryCoordinates {
 }
 
 export interface MapProps {
-  facilityData: BuildingStatus | null;
+  facilityData: FacilityStatus | null;
   onMarkerClick: (id: string, facilityType: FacilityType) => void;
 }
 

@@ -24,12 +24,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { 
-  BuildingStatus, 
+  FacilityStatus, 
   FacilityType, 
   AccordionRefs
 } from "@/types";
 import moment from "moment-timezone";
-import { Github, Map, TriangleAlert } from "lucide-react";
+import { Github, Map as MapIcon, TriangleAlert } from "lucide-react";
 import FacilityRoomDetails from "@/components/FacilityRoomDetails";
 import { getLibraryHoursMessage } from "@/utils/libraryHours";
 
@@ -102,7 +102,7 @@ const RoomBadge: React.FC<{
 RoomBadge.displayName = "RoomBadge";
 
 interface LeftSidebarProps {
-  facilityData: BuildingStatus | null;
+  facilityData: FacilityStatus | null;
   showMap: boolean;
   setShowMap: Dispatch<SetStateAction<boolean>>;
   expandedItems: string[];
@@ -231,7 +231,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             }`}
             onClick={() => setShowMap(!showMap)}
           >
-            <Map size={12} />
+            <MapIcon size={12} />
             <span className="sr-only">Toggle map visibility</span>
           </Button>
         </div>
