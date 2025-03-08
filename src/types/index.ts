@@ -3,15 +3,29 @@ export interface ClassTime {
   end: string;
 }
 
-export interface BuildingStatus {
-  timestamp: string;
-  buildings: {
-    [key: string]: Building;
-  };
+export enum FacilityType {
+  ACADEMIC = "academic",
+  LIBRARY = "library",
 }
 
-export interface Building {
+export enum RoomStatus {
+  AVAILABLE = "available",
+  PASSING_PERIOD = "passing_period",
+  RESERVED = "reserved",
+  OCCUPIED = "occupied",
+  OPENING_SOON = "opening_soon",
+}
+
+export interface FacilityStatus {
+  timestamp: string;
+  facilities: Record<string, Facility>;
+}
+
+// Unified Facility type to represent both academic buildings and libraries
+export interface Facility {
+  id: string;
   name: string;
+  type: FacilityType;
   coordinates: {
     latitude: number;
     longitude: number;
@@ -20,26 +34,43 @@ export interface Building {
     open: string;
     close: string;
   };
-  rooms: {
-    [key: string]: Room;
-  };
+  rooms: Record<string, FacilityRoom>;
   isOpen: boolean;
   roomCounts: {
     available: number;
     total: number;
   };
+  // Library-specific fields (optional)
+  address?: string;
 }
 
-export interface Room {
-  status: "available" | "occupied";
-  available: boolean;
+// Base facility room with common properties
+export interface BaseFacilityRoom {
+  status: RoomStatus;
+  availableAt?: string;
+  availableFor?: number;
+}
+
+// Academic-specific room properties
+export interface AcademicRoom extends BaseFacilityRoom {
+  // Not redundant with FacilityType.ACADEMIC since specific rooms do not have to be the facility type
+  type: "academic";
   currentClass?: ClassInfo;
   nextClass?: ClassInfo;
-  passingPeriod: boolean;
-  availableAt?: string; // first meaningful gap
-  availableFor?: number; // duration of the meaningful gap in minutes
+  passingPeriod?: boolean;
   availableUntil?: string;
 }
+
+// Library-specific room properties
+export interface LibraryRoom extends BaseFacilityRoom {
+  type: "library";
+  url: string;
+  thumbnail: string;
+  slots: TimeSlot[];
+}
+
+// Discriminated union for FacilityRoom
+export type FacilityRoom = AcademicRoom | LibraryRoom;
 
 export interface ClassInfo {
   course: string;
@@ -85,8 +116,8 @@ export interface RoomReservation {
   grouping: string;
   thumbnail: string;
   slots: TimeSlot[];
-  nextAvailable: string | null;
-  available_duration: number;
+  availableAt: string | undefined;
+  availableDuration: number;
 }
 
 export interface RoomReservations {
@@ -135,22 +166,32 @@ export interface RegexGroups {
 
 export interface LibraryCoordinates {
   name: string;
-  coordinates: [number, number];
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 export interface MapProps {
-  buildingData: BuildingStatus | null;
-  libraryData: APIResponse | null;
-  onMarkerClick: (name: string, isLibrary?: boolean) => void;
+  facilityData: FacilityStatus | null;
+  onMarkerClick: (id: string, facilityType: FacilityType) => void;
 }
 
 export interface MarkerData {
+  id: string;
   name: string;
-  coordinates: [number, number];
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
   isOpen: boolean;
   available: number;
   total: number;
-  isLibrary: boolean;
+  type: FacilityType;
+  hours: {
+    open: string;
+    close: string;
+  };
 }
 
 export interface TimeBlockProps {
@@ -169,17 +210,20 @@ export interface RoomScheduleProps {
   }[];
 }
 
-export interface LibraryRoomAvailabilityProps {
+export interface FacilityRoomProps {
   roomName: string;
-  room: RoomReservations[string];
+  // room.type for room-level decisions
+  room: FacilityRoom;
+  // facilityType for facility-level decisions
+  facilityType: FacilityType;
 }
-
 export interface AccordionRefs {
   [key: string]: HTMLDivElement | null;
 }
 
 export interface RoomBadgeProps {
+  status: RoomStatus;
   availableAt?: string;
   availableFor?: number;
-  available: boolean;
+  facilityType: FacilityType;
 }
