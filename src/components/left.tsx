@@ -1,5 +1,3 @@
-"use client";
-
 import React, {
   useRef,
   Dispatch,
@@ -17,11 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { 
-  FacilityStatus, 
-  FacilityType, 
-  AccordionRefs
-} from "@/types";
+import { FacilityStatus, FacilityType, AccordionRefs } from "@/types";
 import { Github, Map as MapIcon, TriangleAlert } from "lucide-react";
 import FacilityAccordion from "@/components/FacilityAccordion";
 
@@ -81,19 +75,25 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   }, [expandedItems, scrollToAccordion]);
 
   // Separate facilities by type
-  const libraryFacilities = useMemo(() => 
-    facilityData ? Object.values(facilityData.facilities)
-      .filter(facility => facility.type === FacilityType.LIBRARY)
-      .sort((a, b) => a.name.localeCompare(b.name))
-    : [], 
-  [facilityData]);
+  const libraryFacilities = useMemo(
+    () =>
+      facilityData
+        ? Object.values(facilityData.facilities)
+            .filter((facility) => facility.type === FacilityType.LIBRARY)
+            .sort((a, b) => a.name.localeCompare(b.name))
+        : [],
+    [facilityData],
+  );
 
-  const academicFacilities = useMemo(() => 
-    facilityData ? Object.values(facilityData.facilities)
-      .filter(facility => facility.type === FacilityType.ACADEMIC)
-      .sort((a, b) => a.name.localeCompare(b.name))
-    : [],
-  [facilityData]);
+  const academicFacilities = useMemo(
+    () =>
+      facilityData
+        ? Object.values(facilityData.facilities)
+            .filter((facility) => facility.type === FacilityType.ACADEMIC)
+            .sort((a, b) => a.name.localeCompare(b.name))
+        : [],
+    [facilityData],
+  );
 
   return (
     <div className="h-full bg-background border-t md:border-t-0 md:border-l flex flex-col">
@@ -161,35 +161,49 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         </div>
       </div>
       <ScrollArea className="flex-1" ref={scrollAreaRef}>
-        {/* Libraries Accordion */}
-        <Accordion type="multiple" value={expandedItems} className="w-full">
-          {libraryFacilities.map((facility) => (
-            <FacilityAccordion
-              key={`library-${facility.id}`}
-              facility={facility}
-              facilityType={FacilityType.LIBRARY}
-              expandedItems={expandedItems}
-              toggleItem={toggleItem}
-              accordionRefs={accordionRefs}
-              idPrefix="library"
-            />
-          ))}
-        </Accordion>
+        {/* Libraries Section */}
+        {libraryFacilities.length > 0 && (
+          <div className="mt-2">
+            <h2 className="text-sm font-normal text-muted-foreground pl-6">
+              Library
+            </h2>
+            <Accordion type="multiple" value={expandedItems} className="w-full">
+              {libraryFacilities.map((facility) => (
+                <FacilityAccordion
+                  key={`library-${facility.id}`}
+                  facility={facility}
+                  facilityType={FacilityType.LIBRARY}
+                  expandedItems={expandedItems}
+                  toggleItem={toggleItem}
+                  accordionRefs={accordionRefs}
+                  idPrefix="library"
+                />
+              ))}
+            </Accordion>
+          </div>
+        )}
 
-        {/* Academic Buildings Accordion */}
-        <Accordion type="multiple" value={expandedItems} className="w-full">
-          {academicFacilities.map((facility) => (
-            <FacilityAccordion
-              key={`building-${facility.id}`}
-              facility={facility}
-              facilityType={FacilityType.ACADEMIC}
-              expandedItems={expandedItems}
-              toggleItem={toggleItem}
-              accordionRefs={accordionRefs}
-              idPrefix="building"
-            />
-          ))}
-        </Accordion>
+        {/* Academic Buildings Section */}
+        {academicFacilities.length > 0 && (
+          <div className="mt-5">
+            <h2 className="text-sm font-normal text-muted-foreground pl-6">
+              Academic
+            </h2>
+            <Accordion type="multiple" value={expandedItems} className="w-full">
+              {academicFacilities.map((facility) => (
+                <FacilityAccordion
+                  key={`building-${facility.id}`}
+                  facility={facility}
+                  facilityType={FacilityType.ACADEMIC}
+                  expandedItems={expandedItems}
+                  toggleItem={toggleItem}
+                  accordionRefs={accordionRefs}
+                  idPrefix="building"
+                />
+              ))}
+            </Accordion>
+          </div>
+        )}
       </ScrollArea>
     </div>
   );
