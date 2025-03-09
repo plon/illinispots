@@ -116,9 +116,11 @@ export default function FacilityMap({ facilityData, onMarkerClick }: MapProps) {
           ${
             data.isOpen
               ? `${data.available}/${data.total} available`
-              : `CLOSED<br/><span style="font-size: 0.9em; color: #666;">Opens ${formatTime(
-                  data.hours.open,
-                )}</span>`
+              : `CLOSED<br/><span style="font-size: 0.9em; color: #666;">${
+                  data.hours.open
+                    ? `Opens ${formatTime(data.hours.open)}`
+                    : "Not open today"
+                }</span>`
           }
         </div>
       `;

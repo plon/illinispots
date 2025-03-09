@@ -112,7 +112,11 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
               <>
                 Building is currently closed
                 <br />
-                <span>Opens {formatTime(facility.hours.open)}</span>
+                {facility.hours && facility.hours.open ? (
+                  <span>Opens {formatTime(facility.hours.open)}</span>
+                ) : (
+                  <span>Not open today</span>
+                )}
               </>
             )}
           </div>
