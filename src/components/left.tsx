@@ -43,7 +43,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
       setTimeout(() => {
         element.scrollIntoView({
           behavior: "smooth",
-          block: "start",
+          block: "nearest",
         });
       }, 100);
     }
