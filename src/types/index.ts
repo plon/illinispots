@@ -175,6 +175,7 @@ export interface LibraryCoordinates {
 export interface MapProps {
   facilityData: FacilityStatus | null;
   onMarkerClick: (id: string, facilityType: FacilityType) => void;
+  onMapLoaded?: () => void;
 }
 
 export interface MarkerData {

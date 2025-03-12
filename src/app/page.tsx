@@ -8,7 +8,8 @@ import { FacilityStatus, FacilityType } from "@/types";
 
 const IlliniSpotsPage: React.FC = () => {
   const [facilityData, setFacilityData] = useState<FacilityStatus | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [mapLoaded, setMapLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(true);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
@@ -26,13 +27,19 @@ const IlliniSpotsPage: React.FC = () => {
       } catch (error) {
         console.error("Error fetching data:", error);
         setError("Failed to load facility data");
-      } finally {
-        setLoading(false);
+        setDataLoading(false); // In case of error, we should stop loading
       }
     };
 
     fetchData();
   }, []);
+
+  // Only hide loading screen when both data is fetched AND map is loaded
+  useEffect(() => {
+    if (facilityData && (mapLoaded || !showMap)) {
+      setDataLoading(false);
+    }
+  }, [facilityData, mapLoaded, showMap]);
 
   // Retrieve map visibility from localStorage
   useEffect(() => {
@@ -67,35 +74,45 @@ const IlliniSpotsPage: React.FC = () => {
     [],
   );
 
-  if (loading || error) {
-    return <LoadingScreen error={error} />;
-  }
+  const handleMapLoaded = useCallback(() => {
+    setMapLoaded(true);
+  }, []);
 
   return (
-    <div className={`h-screen flex ${showMap ? "md:flex-row" : ""} flex-col`}>
-      {showMap && (
-        <div className="h-[40vh] md:h-screen md:w-[63%] w-full order-1 md:order-2">
-          <FacilityMap
+    <>
+      {dataLoading && <LoadingScreen error={error} />}
+
+      {/* Main content - always rendered but initially hidden to allow hidden map initialization */}
+      <div
+        className={`h-screen flex ${showMap ? "md:flex-row" : ""} flex-col`}
+        style={{ visibility: dataLoading ? "hidden" : "visible" }}
+      >
+        {/* Map container needs to be in DOM to load properly even if visually hidden */}
+        {showMap && (
+          <div className="h-[40vh] md:h-screen md:w-[63%] w-full order-1 md:order-2">
+            <FacilityMap
+              facilityData={facilityData}
+              onMarkerClick={handleMarkerClick}
+              onMapLoaded={handleMapLoaded}
+            />
+          </div>
+        )}
+
+        <div
+          className={`${
+            showMap ? "md:w-[37%] h-[60vh] md:h-screen" : "h-screen"
+          } w-full flex-1 overflow-hidden order-2 md:order-1`}
+        >
+          <LeftSidebar
             facilityData={facilityData}
-            onMarkerClick={handleMarkerClick}
+            expandedItems={expandedItems}
+            setExpandedItems={setExpandedItems}
+            showMap={showMap}
+            setShowMap={setShowMap}
           />
         </div>
-      )}
-
-      <div
-        className={`${
-          showMap ? "md:w-[37%] h-[60vh] md:h-screen" : "h-screen"
-        } w-full flex-1 overflow-hidden order-2 md:order-1`}
-      >
-        <LeftSidebar
-          facilityData={facilityData}
-          expandedItems={expandedItems}
-          setExpandedItems={setExpandedItems}
-          showMap={showMap}
-          setShowMap={setShowMap}
-        />
       </div>
-    </div>
+    </>
   );
 };
 
