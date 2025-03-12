@@ -5,7 +5,11 @@ import maplibregl from "maplibre-gl";
 import { MarkerData, MapProps, FacilityType } from "@/types";
 import { formatTime } from "@/utils/format";
 
-export default function FacilityMap({ facilityData, onMarkerClick }: MapProps) {
+export default function FacilityMap({
+  facilityData,
+  onMarkerClick,
+  onMapLoaded,
+}: MapProps) {
   const handleMarkerClick = useCallback(
     (id: string, type: FacilityType) => {
       onMarkerClick(id, type);
@@ -50,6 +54,9 @@ export default function FacilityMap({ facilityData, onMarkerClick }: MapProps) {
 
     map.current.on("load", () => {
       setIsMapLoaded(true);
+      if (onMapLoaded) {
+        onMapLoaded();
+      }
       handleResize();
       map.current!.setSky({
         "sky-color": "#192c4a",
@@ -76,7 +83,7 @@ export default function FacilityMap({ facilityData, onMarkerClick }: MapProps) {
         map.current = null;
       }
     };
-  }, []);
+  }, [onMapLoaded]);
 
   useEffect(() => {
     if (!map.current || !isMapLoaded || !facilityData) return;
