@@ -74,7 +74,7 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
         accordionRefs.current[facilityId] = el;
       }}
     >
-      <div className="sticky top-0 bg-background">
+      <div className="sticky top-0 bg-background z-30">
         <AccordionTrigger
           onClick={() => toggleItem(facilityId)}
           className="px-4 py-2 hover:no-underline hover:bg-muted group"
@@ -173,7 +173,7 @@ const LibraryRoomsAccordion: React.FC<LibraryRoomsAccordionProps> = ({
               accordionRefs.current[roomId] = el;
             }}
           >
-            <div className="sticky top-0 bg-background">
+            <div className="sticky top-0 bg-background z-20">
               <AccordionTrigger
                 onClick={() => toggleItem(roomId)}
                 className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm"
