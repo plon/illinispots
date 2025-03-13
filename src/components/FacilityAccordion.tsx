@@ -74,35 +74,37 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
         accordionRefs.current[facilityId] = el;
       }}
     >
-      <AccordionTrigger
-        onClick={() => toggleItem(facilityId)}
-        className="px-4 py-2 hover:no-underline hover:bg-muted group"
-      >
-        <div className="flex items-center justify-between flex-1 mr-2">
-          <span>{facility.name}</span>
-          <div className="ml-2">
-            {!facility.isOpen ? (
-              <Badge
-                variant="outline"
-                className="bg-gray-50 text-gray-700 border-gray-300"
-              >
-                CLOSED
-              </Badge>
-            ) : (
-              <Badge
-                variant="outline"
-                className={`${
-                  facility.roomCounts.available > 0
-                    ? "bg-green-50 text-green-700 border-green-300"
-                    : "bg-red-50 text-red-700 border-red-300"
-                }`}
-              >
-                {facility.roomCounts.available}/{facility.roomCounts.total}
-              </Badge>
-            )}
+      <div className="sticky top-0 bg-background">
+        <AccordionTrigger
+          onClick={() => toggleItem(facilityId)}
+          className="px-4 py-2 hover:no-underline hover:bg-muted group"
+        >
+          <div className="flex items-center justify-between flex-1 mr-2">
+            <span>{facility.name}</span>
+            <div className="ml-2">
+              {!facility.isOpen ? (
+                <Badge
+                  variant="outline"
+                  className="bg-gray-50 text-gray-700 border-gray-300"
+                >
+                  CLOSED
+                </Badge>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className={`${
+                    facility.roomCounts.available > 0
+                      ? "bg-green-50 text-green-700 border-green-300"
+                      : "bg-red-50 text-red-700 border-red-300"
+                  }`}
+                >
+                  {facility.roomCounts.available}/{facility.roomCounts.total}
+                </Badge>
+              )}
+            </div>
           </div>
-        </div>
-      </AccordionTrigger>
+        </AccordionTrigger>
+      </div>
       <AccordionContent>
         {!facility.isOpen ? (
           <div className="px-4 py-2 text-sm text-muted-foreground">
@@ -171,23 +173,25 @@ const LibraryRoomsAccordion: React.FC<LibraryRoomsAccordionProps> = ({
               accordionRefs.current[roomId] = el;
             }}
           >
-            <AccordionTrigger
-              onClick={() => toggleItem(roomId)}
-              className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm"
-            >
-              <div className="flex items-center justify-between flex-1 mr-2">
-                <div className="flex flex-col items-start text-left">
-                  <span className="font-medium">{roomName}</span>
-                  {getRoomAvailabilityMessage(libraryRoom)}
+            <div className="sticky top-0 bg-background">
+              <AccordionTrigger
+                onClick={() => toggleItem(roomId)}
+                className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm"
+              >
+                <div className="flex items-center justify-between flex-1 mr-2">
+                  <div className="flex flex-col items-start text-left">
+                    <span className="font-medium">{roomName}</span>
+                    {getRoomAvailabilityMessage(libraryRoom)}
+                  </div>
+                  <RoomBadge
+                    status={room.status}
+                    availableAt={room.availableAt}
+                    availableFor={room.availableFor}
+                    facilityType={FacilityType.LIBRARY}
+                  />
                 </div>
-                <RoomBadge
-                  status={room.status}
-                  availableAt={room.availableAt}
-                  availableFor={room.availableFor}
-                  facilityType={FacilityType.LIBRARY}
-                />
-              </div>
-            </AccordionTrigger>
+              </AccordionTrigger>
+            </div>
             <AccordionContent>
               <FacilityRoomDetails
                 roomName={roomName}
