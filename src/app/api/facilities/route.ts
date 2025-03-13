@@ -174,7 +174,7 @@ function calculateContinuousAvailability(
   startSlot: ReservationResponse["slots"][0],
   roomSpecificSlots: ReservationResponse["slots"],
   startIndex: number,
-  tomorrowTwoAM: moment.Moment,
+  acesClosingTime: moment.Moment,
   isAcesLibrary: boolean,
 ): number {
   let duration = 0;
@@ -195,13 +195,11 @@ function calculateContinuousAvailability(
       break;
     }
 
-    // For Funk ACES, only include slots up to 2 AM next day
+    // For Funk ACES, only include slots up to the closing time.
     if (isAcesLibrary) {
-      if (nextStartMoment.isAfter(tomorrowTwoAM)) {
-        break;
-      }
-      if (nextEndMoment.isAfter(tomorrowTwoAM)) {
-        nextEndMoment = tomorrowTwoAM;
+      if (nextStartMoment.isAfter(acesClosingTime)) break;
+      if (nextEndMoment.isAfter(acesClosingTime)) {
+        nextEndMoment = acesClosingTime;
       }
     }
 
@@ -222,26 +220,26 @@ function calculateCurrentAvailability(
   roomSpecificSlots: ReservationResponse["slots"],
   currentSlotIndex: number,
   nowCST: moment.Moment,
-  tomorrowTwoAM: moment.Moment,
+  acesClosingTime: moment.Moment,
   isAcesLibrary: boolean,
 ): { availableDuration: number } {
   const endTime = moment.tz(slot.end, "America/Chicago");
   let slotEndMoment = endTime;
 
-  // For Funk ACES, cap the end time at 2 AM if slot extends beyond
-  if (isAcesLibrary && slotEndMoment.isAfter(tomorrowTwoAM)) {
-    slotEndMoment = tomorrowTwoAM;
+  // For Funk ACES, cap the slot's end time at the closing time.
+  if (isAcesLibrary && slotEndMoment.isAfter(acesClosingTime)) {
+    slotEndMoment = acesClosingTime;
   }
 
-  // Calculate initial duration from current time to slot end
+  // Calculate the initial duration from current time to the adjusted end time.
   const availableDuration = slotEndMoment.diff(nowCST, "minutes");
 
-  // Add duration from continuous subsequent slots
+  // Add duration from continuous subsequent slots.
   const continuousDuration = calculateContinuousAvailability(
     slot,
     roomSpecificSlots,
     currentSlotIndex,
-    tomorrowTwoAM,
+    acesClosingTime,
     isAcesLibrary,
   );
 
@@ -255,21 +253,26 @@ function calculateFutureAvailability(
   slot: ReservationResponse["slots"][0],
   roomSpecificSlots: ReservationResponse["slots"],
   slotIndex: number,
-  tomorrowTwoAM: moment.Moment,
+  acesClosingTime: moment.Moment,
   isAcesLibrary: boolean,
 ): { availableDuration: number } {
   const startMoment = moment.tz(slot.start, "America/Chicago");
-  const endMoment = moment.tz(slot.end, "America/Chicago");
+  let endMoment = moment.tz(slot.end, "America/Chicago");
 
-  // Calculate initial duration
+  // For Funk ACES, cap the slot's end time at the closing time.
+  if (isAcesLibrary && endMoment.isAfter(acesClosingTime)) {
+    endMoment = acesClosingTime;
+  }
+
+  // Calculate the initial duration.
   const availableDuration = endMoment.diff(startMoment, "minutes");
 
-  // Add duration from continuous subsequent slots
+  // Add duration from continuous subsequent slots.
   const continuousDuration = calculateContinuousAvailability(
     slot,
     roomSpecificSlots,
     slotIndex,
-    tomorrowTwoAM,
+    acesClosingTime,
     isAcesLibrary,
   );
 
@@ -280,7 +283,9 @@ function calculateFutureAvailability(
  * Determines if a room will be available soon (within 20 minutes)
  */
 function isOpeningSoon(availableAt: string): boolean {
+  console.log("availableAt", availableAt);
   const [availableHours, availableMinutes] = availableAt.split(":");
+  console.log("availableMinutes", availableMinutes);
   const now = moment().tz("America/Chicago");
   const availableTime = moment()
     .tz("America/Chicago")
@@ -301,15 +306,17 @@ function linkRoomsReservations(
 ): RoomReservations {
   const roomReservations: RoomReservations = {};
   const libraryIds = new Set(
+    // Assuming libraries is defined elsewhere
     Object.values(libraries).map((lib) => parseInt(lib.id)),
   );
   const todayCST = nowCST.clone().startOf("day");
   const currentTime = nowCST.format("HH:mm:ss");
-  const tomorrowTwoAM = todayCST
-    .clone()
-    .add(1, "day")
-    .startOf("day")
-    .add(2, "hours");
+
+  // Compute the correct closing time for FUNK ACES Library.
+  // If the current time is before 2 AM, use today at 2 AM; otherwise, use tomorrow.
+  const acesClosingTime = nowCST.isBefore(todayCST.clone().add(2, "hours"))
+    ? todayCST.clone().add(2, "hours")
+    : todayCST.clone().add(1, "day").startOf("day").add(2, "hours");
 
   for (const room of roomsData) {
     if (!libraryIds.has(room.lid)) continue;
@@ -332,12 +339,13 @@ function linkRoomsReservations(
       const slotEndTime = endTime.format("HH:mm:ss");
       const isAvailable = slot.className !== "s-lc-eq-checkout";
 
-      // Check if slot should be included based on library and time
+      // Include slots on the current day or,
+      // for FUNK ACES, slots before the computed acesClosingTime.
       if (
         startTime.isSame(todayCST, "day") ||
         (isAcesLibrary &&
           startTime.isAfter(todayCST) &&
-          startTime.isBefore(tomorrowTwoAM))
+          startTime.isBefore(acesClosingTime))
       ) {
         roomSlots.push({
           start: slotStartTime,
@@ -345,7 +353,7 @@ function linkRoomsReservations(
           available: isAvailable,
         });
 
-        // Check current availability
+        // Check current availability (i.e. slots that are in progress)
         if (
           slotStartTime <= currentTime &&
           slotEndTime > currentTime &&
@@ -356,13 +364,13 @@ function linkRoomsReservations(
             roomSpecificSlots,
             index,
             nowCST,
-            tomorrowTwoAM,
+            acesClosingTime,
             isAcesLibrary,
           );
           availableDuration = duration;
         }
 
-        // Update availableAt for future availability
+        // For future slots, update availableAt and availableDuration if earlier.
         if (
           isAvailable &&
           slotStartTime > currentTime &&
@@ -373,7 +381,7 @@ function linkRoomsReservations(
             slot,
             roomSpecificSlots,
             index,
-            tomorrowTwoAM,
+            acesClosingTime,
             isAcesLibrary,
           );
           availableDuration = duration;
