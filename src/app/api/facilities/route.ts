@@ -168,124 +168,62 @@ async function getReservation(
 }
 
 /**
- * Calculates the duration of continuous availability from a starting slot
+ * Calculates the total duration of continuous availability
  */
-function calculateContinuousAvailability(
-  startSlot: ReservationResponse["slots"][0],
-  roomSpecificSlots: ReservationResponse["slots"],
+function calculateAvailabilityDuration(
+  slots: ReservationResponse["slots"],
   startIndex: number,
+  fromTime: moment.Moment,
   acesClosingTime: moment.Moment,
-  isAcesLibrary: boolean,
 ): number {
-  let duration = 0;
-  let lastEndMoment = moment.tz(startSlot.end, "America/Chicago");
-  let nextIndex = startIndex + 1;
+  // Initial slot
+  const currentSlot = slots[startIndex];
+  const isAcesLibrary = currentSlot.itemId === 3604;
+  let endTime = moment.tz(currentSlot.end, "America/Chicago");
 
-  while (nextIndex < roomSpecificSlots.length) {
-    const nextSlot = roomSpecificSlots[nextIndex];
+  // Apply library closing time if needed
+  if (isAcesLibrary && endTime.isAfter(acesClosingTime)) {
+    endTime = acesClosingTime.clone();
+  }
+
+  // Initial duration (either from current time or slot start)
+  let duration = endTime.diff(fromTime, "minutes");
+
+  // Check for contiguous future slots
+  let lastEnd = endTime.clone();
+  let i = startIndex + 1;
+
+  while (i < slots.length) {
+    const nextSlot = slots[i];
     if (nextSlot.className === "s-lc-eq-checkout") break;
 
-    const nextStartMoment = moment.tz(nextSlot.start, "America/Chicago");
-    let nextEndMoment = moment.tz(nextSlot.end, "America/Chicago");
+    const nextStart = moment.tz(nextSlot.start, "America/Chicago");
+    let nextEnd = moment.tz(nextSlot.end, "America/Chicago");
 
-    // Skip if not continuous
-    if (
-      lastEndMoment.format("HH:mm:ss") !== nextStartMoment.format("HH:mm:ss")
-    ) {
-      break;
-    }
+    // Check if truly contiguous
+    if (!lastEnd.isSame(nextStart)) break;
 
-    // For Funk ACES, only include slots up to the closing time.
+    // Apply closing time cap if needed
     if (isAcesLibrary) {
-      if (nextStartMoment.isAfter(acesClosingTime)) break;
-      if (nextEndMoment.isAfter(acesClosingTime)) {
-        nextEndMoment = acesClosingTime;
+      if (nextStart.isAfter(acesClosingTime)) break;
+      if (nextEnd.isAfter(acesClosingTime)) {
+        nextEnd = acesClosingTime.clone();
       }
     }
 
-    // Add this slot's duration
-    duration += nextEndMoment.diff(nextStartMoment, "minutes");
-    lastEndMoment = nextEndMoment;
-    nextIndex++;
+    duration += nextEnd.diff(nextStart, "minutes");
+    lastEnd = nextEnd;
+    i++;
   }
 
   return duration;
 }
 
 /**
- * Calculates availability information for a room at a specific time
- */
-function calculateCurrentAvailability(
-  slot: ReservationResponse["slots"][0],
-  roomSpecificSlots: ReservationResponse["slots"],
-  currentSlotIndex: number,
-  nowCST: moment.Moment,
-  acesClosingTime: moment.Moment,
-  isAcesLibrary: boolean,
-): { availableDuration: number } {
-  const endTime = moment.tz(slot.end, "America/Chicago");
-  let slotEndMoment = endTime;
-
-  // For Funk ACES, cap the slot's end time at the closing time.
-  if (isAcesLibrary && slotEndMoment.isAfter(acesClosingTime)) {
-    slotEndMoment = acesClosingTime;
-  }
-
-  // Calculate the initial duration from current time to the adjusted end time.
-  const availableDuration = slotEndMoment.diff(nowCST, "minutes");
-
-  // Add duration from continuous subsequent slots.
-  const continuousDuration = calculateContinuousAvailability(
-    slot,
-    roomSpecificSlots,
-    currentSlotIndex,
-    acesClosingTime,
-    isAcesLibrary,
-  );
-
-  return { availableDuration: availableDuration + continuousDuration };
-}
-
-/**
- * Calculates future availability information for a room
- */
-function calculateFutureAvailability(
-  slot: ReservationResponse["slots"][0],
-  roomSpecificSlots: ReservationResponse["slots"],
-  slotIndex: number,
-  acesClosingTime: moment.Moment,
-  isAcesLibrary: boolean,
-): { availableDuration: number } {
-  const startMoment = moment.tz(slot.start, "America/Chicago");
-  let endMoment = moment.tz(slot.end, "America/Chicago");
-
-  // For Funk ACES, cap the slot's end time at the closing time.
-  if (isAcesLibrary && endMoment.isAfter(acesClosingTime)) {
-    endMoment = acesClosingTime;
-  }
-
-  // Calculate the initial duration.
-  const availableDuration = endMoment.diff(startMoment, "minutes");
-
-  // Add duration from continuous subsequent slots.
-  const continuousDuration = calculateContinuousAvailability(
-    slot,
-    roomSpecificSlots,
-    slotIndex,
-    acesClosingTime,
-    isAcesLibrary,
-  );
-
-  return { availableDuration: availableDuration + continuousDuration };
-}
-
-/**
  * Determines if a room will be available soon (within 20 minutes)
  */
 function isOpeningSoon(availableAt: string): boolean {
-  console.log("availableAt", availableAt);
   const [availableHours, availableMinutes] = availableAt.split(":");
-  console.log("availableMinutes", availableMinutes);
   const now = moment().tz("America/Chicago");
   const availableTime = moment()
     .tz("America/Chicago")
@@ -306,14 +244,12 @@ function linkRoomsReservations(
 ): RoomReservations {
   const roomReservations: RoomReservations = {};
   const libraryIds = new Set(
-    // Assuming libraries is defined elsewhere
     Object.values(libraries).map((lib) => parseInt(lib.id)),
   );
   const todayCST = nowCST.clone().startOf("day");
   const currentTime = nowCST.format("HH:mm:ss");
 
   // Compute the correct closing time for FUNK ACES Library.
-  // If the current time is before 2 AM, use today at 2 AM; otherwise, use tomorrow.
   const acesClosingTime = nowCST.isBefore(todayCST.clone().add(2, "hours"))
     ? todayCST.clone().add(2, "hours")
     : todayCST.clone().add(1, "day").startOf("day").add(2, "hours");
@@ -325,7 +261,7 @@ function linkRoomsReservations(
     const roomSlots: TimeSlot[] = [];
     let availableAt: string | undefined = undefined;
     let availableDuration: number = 0;
-    const isAcesLibrary = room.lid === 3604;
+    let isCurrentlyAvailable = false;
 
     const roomSpecificSlots = reservationsData.slots
       .filter((slot) => slot.itemId === roomId)
@@ -343,7 +279,7 @@ function linkRoomsReservations(
       // for FUNK ACES, slots before the computed acesClosingTime.
       if (
         startTime.isSame(todayCST, "day") ||
-        (isAcesLibrary &&
+        (room.lid === 3604 &&
           startTime.isAfter(todayCST) &&
           startTime.isBefore(acesClosingTime))
       ) {
@@ -359,32 +295,31 @@ function linkRoomsReservations(
           slotEndTime > currentTime &&
           isAvailable
         ) {
-          const { availableDuration: duration } = calculateCurrentAvailability(
-            slot,
+          isCurrentlyAvailable = true;
+
+          availableDuration = calculateAvailabilityDuration(
             roomSpecificSlots,
             index,
             nowCST,
             acesClosingTime,
-            isAcesLibrary,
           );
-          availableDuration = duration;
         }
 
-        // For future slots, update availableAt and availableDuration if earlier.
+        // Only process future availability if the room is not currently available
         if (
+          !isCurrentlyAvailable &&
           isAvailable &&
           slotStartTime > currentTime &&
           (!availableAt || slotStartTime < availableAt)
         ) {
           availableAt = slotStartTime;
-          const { availableDuration: duration } = calculateFutureAvailability(
-            slot,
+
+          availableDuration = calculateAvailabilityDuration(
             roomSpecificSlots,
             index,
+            startTime,
             acesClosingTime,
-            isAcesLibrary,
           );
-          availableDuration = duration;
         }
       }
     }
@@ -416,13 +351,11 @@ async function getFormattedLibraryData(
   const result: FormattedLibraryData = {};
   nowCST = nowCST || moment().tz("America/Chicago");
 
-  // If no open libraries, return empty result
   if (openLibraries && openLibraries.length === 0) {
     return result;
   }
 
   try {
-    // Fetch all rooms from the LibCal "All Spaces" page
     const allSpacesUrl = "https://uiuc.libcal.com/allspaces";
     const allSpacesResponse = await axios.get(allSpacesUrl, {
       headers: USER_AGENT,
@@ -483,7 +416,6 @@ async function getFormattedLibraryData(
       },
     );
 
-    // Wait for all library data to be processed
     const libraryResults = await Promise.all(libraryPromises);
 
     // Combine results
@@ -556,11 +488,10 @@ async function fetchAcademicBuildingData(
           rooms: {},
         };
 
-        // Process rooms and add type discriminator
         Object.entries(building.rooms).forEach(([roomNumber, roomData]) => {
           academicFacility.rooms[roomNumber] = {
-            type: "academic", // Add type discriminator
-            ...roomData, // Spread other properties
+            type: "academic",
+            ...roomData,
           } as AcademicRoom;
         });
 
@@ -637,7 +568,6 @@ async function updateLibraryFacilities(
       facility.isOpen = isLibraryOpen(libraryName);
     });
 
-    // Get names of open libraries
     const openLibraryNames = Object.entries(libraryFacilities)
       .filter(([, facility]) => facility.isOpen)
       .map(([name]) => name);
@@ -654,7 +584,6 @@ async function updateLibraryFacilities(
         if (libraryFacilities[name]?.isOpen) {
           const libraryFacility = libraryFacilities[name];
 
-          // Set room counts
           libraryFacility.roomCounts = {
             available: data.currently_available,
             total: data.room_count,
@@ -678,7 +607,7 @@ async function updateLibraryFacilities(
               roomData.availableDuration >= 30;
 
             libraryFacility.rooms[roomName] = {
-              type: "library", // Add type discriminator
+              type: "library",
               status: isAvailable
                 ? RoomStatus.AVAILABLE
                 : willBeAvailableSoon
@@ -713,30 +642,24 @@ export async function GET(request: Request) {
     const nowCST = moment().tz("America/Chicago");
     const timestamp = nowCST.format();
 
-    // Initialize the unified response object
     const facilityStatus: FacilityStatus = {
       timestamp,
       facilities: {},
     };
 
-    // Create an array to hold all promises
     const fetchPromises: Promise<Record<string, Facility>>[] = [];
 
-    // Add academic building fetch promise if requested
     if (includeAcademic) {
       fetchPromises.push(fetchAcademicBuildingData(nowCST));
     }
 
-    // Add library fetch promise if requested
     if (includeLibraries) {
       const libraryFacilities = initializeLibraryFacilities();
       fetchPromises.push(updateLibraryFacilities(libraryFacilities, nowCST));
     }
 
-    // Wait for all data to be fetched in parallel
     const results = await Promise.all(fetchPromises);
 
-    // Combine all results into the facilities object
     results.forEach((facilities) => {
       Object.assign(facilityStatus.facilities, facilities);
     });
