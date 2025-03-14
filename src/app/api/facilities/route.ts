@@ -222,17 +222,19 @@ function calculateAvailabilityDuration(
 /**
  * Determines if a room will be available soon (within 20 minutes)
  */
-function isOpeningSoon(availableAt: string): boolean {
-  const [availableHours, availableMinutes] = availableAt.split(":");
+const isOpeningSoon = (availableAt: string): boolean => {
   const now = moment().tz("America/Chicago");
-  const availableTime = moment()
-    .tz("America/Chicago")
-    .hours(parseInt(availableHours, 10))
-    .minutes(parseInt(availableMinutes, 10))
-    .seconds(0);
+
+  const availableTime = moment(availableAt, "HH:mm:ss").tz("America/Chicago");
+
+  // If the available time is before now, assume it refers to the next day.
+  if (availableTime.isBefore(now)) {
+    availableTime.add(1, "day");
+  }
+
   const diffInMinutes = availableTime.diff(now, "minutes");
   return diffInMinutes <= 20 && diffInMinutes > 0;
-}
+};
 
 /**
  * Links room data with reservation data to create a complete picture of room availability
@@ -247,7 +249,6 @@ function linkRoomsReservations(
     Object.values(libraries).map((lib) => parseInt(lib.id)),
   );
   const todayCST = nowCST.clone().startOf("day");
-  const currentTime = nowCST.format("HH:mm:ss");
 
   // Compute the correct closing time for FUNK ACES Library.
   const acesClosingTime = nowCST.isBefore(todayCST.clone().add(2, "hours"))
@@ -267,16 +268,15 @@ function linkRoomsReservations(
       .filter((slot) => slot.itemId === roomId)
       .sort((a, b) => moment(a.start).valueOf() - moment(b.start).valueOf());
 
+    let availableAtDiff: number | null = null;
+
     for (let index = 0; index < roomSpecificSlots.length; index++) {
       const slot = roomSpecificSlots[index];
       const startTime = moment.tz(slot.start, "America/Chicago");
       const endTime = moment.tz(slot.end, "America/Chicago");
-      const slotStartTime = startTime.format("HH:mm:ss");
-      const slotEndTime = endTime.format("HH:mm:ss");
       const isAvailable = slot.className !== "s-lc-eq-checkout";
 
-      // Include slots on the current day or,
-      // for FUNK ACES, slots before the computed acesClosingTime.
+      // Condition to include the slot (for today or for ACES’s next-day hours)
       if (
         startTime.isSame(todayCST, "day") ||
         (room.lid === 3604 &&
@@ -284,19 +284,18 @@ function linkRoomsReservations(
           startTime.isBefore(acesClosingTime))
       ) {
         roomSlots.push({
-          start: slotStartTime,
-          end: slotEndTime,
+          start: startTime.format("HH:mm:ss"),
+          end: endTime.format("HH:mm:ss"),
           available: isAvailable,
         });
 
-        // Check current availability (i.e. slots that are in progress)
+        // Check if the slot is currently in progress.
         if (
-          slotStartTime <= currentTime &&
-          slotEndTime > currentTime &&
+          startTime.isSameOrBefore(nowCST) &&
+          endTime.isAfter(nowCST) &&
           isAvailable
         ) {
           isCurrentlyAvailable = true;
-
           availableDuration = calculateAvailabilityDuration(
             roomSpecificSlots,
             index,
@@ -305,15 +304,15 @@ function linkRoomsReservations(
           );
         }
 
-        // Only process future availability if the room is not currently available
+        const diffInMinutes = startTime.diff(nowCST, "minutes");
         if (
           !isCurrentlyAvailable &&
           isAvailable &&
-          slotStartTime > currentTime &&
-          (!availableAt || slotStartTime < availableAt)
+          diffInMinutes > 0 &&
+          (availableAtDiff === null || diffInMinutes < availableAtDiff)
         ) {
-          availableAt = slotStartTime;
-
+          availableAt = startTime.format("HH:mm:ss");
+          availableAtDiff = diffInMinutes;
           availableDuration = calculateAvailabilityDuration(
             roomSpecificSlots,
             index,
