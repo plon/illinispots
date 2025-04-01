@@ -10,9 +10,14 @@ class BuildingDataFilter:
         self.excluded_buildings = {
             "Temple Hoyne Buell Hall",
             "Krannert Center for Perf Arts",
-            "Smith Memorial Hall"
+            "Smith Memorial Hall",
+            "1010 W Nevada",
+            "Vet Med Basic Sciences Bldg",
+            "Veterinary Teaching Hospital",
+            "Grad Sch of Lib & Info Science",
         }
-        self.min_rooms = 6
+        # inclusive
+        self.min_rooms = 5
 
     def load_data(self) -> Dict[str, Any]:
         with open(self.input_file, 'r') as f:
@@ -29,7 +34,8 @@ class BuildingDataFilter:
         }
 
         for building, building_data in data['buildings'].items():
-            if (len(building_data['rooms']) > self.min_rooms and
+            print(f"Building: {building}, Number of rooms: {len(building_data['rooms'])}")
+            if (len(building_data['rooms']) >= self.min_rooms and
                 building not in self.excluded_buildings):
                 filtered_data['buildings'][building] = building_data
                 print(f"Added {building} to filtered data")
