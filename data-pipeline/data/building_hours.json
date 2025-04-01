@@ -208,5 +208,23 @@
     "F": "5AM-6PM",
     "SAT": "10AM-6PM",
     "SUN": "6AM-10PM"
+  },
+  "Digital Computer Laboratory": {
+    "M-TH": "6:45AM-10PM",
+    "F": "6:45AM-10PM",
+    "SAT": "11AM-10PM",
+    "SUN": "11AM-10PM"
+  },
+  "Freer Hall": {
+    "M-TH": "6AM-10PM",
+    "F": "6AM-10PM",
+    "SAT": "8AM-4PM",
+    "SUN": "8AM-4PM"
+  },
+  "Engineering Sciences Building": {
+    "M-TH": "7AM-5PM",
+    "F": "7AM-5PM",
+    "SAT": "LOCKED",
+    "SUN": "LOCKED"
   }
 }

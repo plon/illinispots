@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-04-01T00:41:20.318422",
+  "last_updated": "2025-04-01T15:01:50.090586",
   "buildings": {
     "Noyes Laboratory": {
       "rooms": {
@@ -68722,6 +68722,703 @@
         }
       }
     },
+    "Digital Computer Laboratory": {
+      "rooms": {
+        "2320": [
+          {
+            "course": "AE 199",
+            "title": "Undergraduate Open Seminar",
+            "time": {
+              "start": "17:00",
+              "end": "17:50"
+            },
+            "days": [
+              "M"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "ENG 177",
+            "title": "Engineering First-Year Experience Seminars",
+            "time": {
+              "start": "10:00",
+              "end": "10:50"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "ENG 377",
+            "title": "Pedagogy and Mentoring for Engineering Learning Assistants",
+            "time": {
+              "start": "14:00",
+              "end": "14:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-04-14"
+          },
+          {
+            "course": "TE 100",
+            "title": "Introduction to Innovation, Leadership and Engineering Entrepreneurship",
+            "time": {
+              "start": "10:00",
+              "end": "10:50"
+            },
+            "days": [
+              "T"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "TE 333",
+            "title": "Creativity, Innovation, Vision",
+            "time": {
+              "start": "12:30",
+              "end": "13:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "TE 510",
+            "title": "Advanced Creativity",
+            "time": {
+              "start": "11:00",
+              "end": "12:20"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ],
+        "1320": [
+          {
+            "course": "AE 461",
+            "title": "Structures & Control Lab",
+            "time": {
+              "start": "10:00",
+              "end": "10:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "ASTR 122",
+            "title": "Stars and Galaxies",
+            "time": {
+              "start": "10:00",
+              "end": "10:50"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CS 277",
+            "title": "Algorithms and Data Structures for Data Science",
+            "time": {
+              "start": "14:00",
+              "end": "15:15"
+            },
+            "days": [
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CS 277",
+            "title": "Algorithms and Data Structures for Data Science",
+            "time": {
+              "start": "14:00",
+              "end": "15:15"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CS 425",
+            "title": "Distributed Systems",
+            "time": {
+              "start": "12:30",
+              "end": "13:45"
+            },
+            "days": [
+              "W",
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CS 438",
+            "title": "Communication Networks",
+            "time": {
+              "start": "14:00",
+              "end": "15:15"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "ECE 428",
+            "title": "Distributed Systems",
+            "time": {
+              "start": "12:30",
+              "end": "13:45"
+            },
+            "days": [
+              "W",
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "ECE 438",
+            "title": "Communication Networks",
+            "time": {
+              "start": "14:00",
+              "end": "15:15"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "NPRE 402",
+            "title": "Nuclear Power Engineering",
+            "time": {
+              "start": "11:00",
+              "end": "11:50"
+            },
+            "days": [
+              "M",
+              "W",
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "TE 360",
+            "title": "Lectures in Engineering Entrepreneurship",
+            "time": {
+              "start": "17:00",
+              "end": "18:20"
+            },
+            "days": [
+              "T"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "TE 460",
+            "title": "Lectures in Engineering Entrepreneurship",
+            "time": {
+              "start": "17:00",
+              "end": "18:20"
+            },
+            "days": [
+              "T"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ],
+        "1310": [
+          {
+            "course": "CS 473",
+            "title": "Algorithms",
+            "time": {
+              "start": "12:30",
+              "end": "13:45"
+            },
+            "days": [
+              "W",
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CS 477",
+            "title": "Formal Software Development Methods",
+            "time": {
+              "start": "12:30",
+              "end": "13:45"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CS 482",
+            "title": "Simulation",
+            "time": {
+              "start": "16:00",
+              "end": "16:50"
+            },
+            "days": [
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CS 482",
+            "title": "Simulation",
+            "time": {
+              "start": "16:00",
+              "end": "16:50"
+            },
+            "days": [
+              "M"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CS 482",
+            "title": "Simulation",
+            "time": {
+              "start": "15:00",
+              "end": "15:50"
+            },
+            "days": [
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CS 482",
+            "title": "Simulation",
+            "time": {
+              "start": "15:00",
+              "end": "15:50"
+            },
+            "days": [
+              "M"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CS 510",
+            "title": "Advanced Information Retrieval",
+            "time": {
+              "start": "09:30",
+              "end": "10:45"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CS 598",
+            "title": "Special Topics",
+            "time": {
+              "start": "14:00",
+              "end": "15:15"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CSE 414",
+            "title": "Algorithms",
+            "time": {
+              "start": "12:30",
+              "end": "13:45"
+            },
+            "days": [
+              "W",
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "ECE 478",
+            "title": "Formal Software Development Methods",
+            "time": {
+              "start": "12:30",
+              "end": "13:45"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "ECE 483",
+            "title": "Analog IC Design",
+            "time": {
+              "start": "10:00",
+              "end": "11:20"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "IE 413",
+            "title": "Simulation",
+            "time": {
+              "start": "16:00",
+              "end": "16:50"
+            },
+            "days": [
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "IE 413",
+            "title": "Simulation",
+            "time": {
+              "start": "16:00",
+              "end": "16:50"
+            },
+            "days": [
+              "M"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "IE 413",
+            "title": "Simulation",
+            "time": {
+              "start": "15:00",
+              "end": "15:50"
+            },
+            "days": [
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "IE 413",
+            "title": "Simulation",
+            "time": {
+              "start": "15:00",
+              "end": "15:50"
+            },
+            "days": [
+              "M"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "IE 421",
+            "title": "High Frequency Trading Technology",
+            "time": {
+              "start": "17:30",
+              "end": "20:20"
+            },
+            "days": [
+              "T"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "IE 590",
+            "title": "Seminar",
+            "time": {
+              "start": "10:00",
+              "end": "10:50"
+            },
+            "days": [
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "MATH 473",
+            "title": "Algorithms",
+            "time": {
+              "start": "12:30",
+              "end": "13:45"
+            },
+            "days": [
+              "W",
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "NPRE 475",
+            "title": "Wind Power Systems",
+            "time": {
+              "start": "14:00",
+              "end": "14:50"
+            },
+            "days": [
+              "M",
+              "W",
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "SE 290",
+            "title": "ISE Undergraduate Seminar",
+            "time": {
+              "start": "11:00",
+              "end": "11:50"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "SE 590",
+            "title": "Seminar",
+            "time": {
+              "start": "10:00",
+              "end": "10:50"
+            },
+            "days": [
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ],
+        "L416": [
+          {
+            "course": "IE 300",
+            "title": "Analysis of Data",
+            "time": {
+              "start": "17:00",
+              "end": "17:50"
+            },
+            "days": [
+              "M"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "IE 300",
+            "title": "Analysis of Data",
+            "time": {
+              "start": "17:00",
+              "end": "17:50"
+            },
+            "days": [
+              "T"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "IE 300",
+            "title": "Analysis of Data",
+            "time": {
+              "start": "17:00",
+              "end": "17:50"
+            },
+            "days": [
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "IE 300",
+            "title": "Analysis of Data",
+            "time": {
+              "start": "17:00",
+              "end": "17:50"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "IE 300",
+            "title": "Analysis of Data",
+            "time": {
+              "start": "15:00",
+              "end": "15:50"
+            },
+            "days": [
+              "T"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ],
+        "L440": [
+          {
+            "course": "IE 300",
+            "title": "Analysis of Data",
+            "time": {
+              "start": "11:00",
+              "end": "11:50"
+            },
+            "days": [
+              "M"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "IE 300",
+            "title": "Analysis of Data",
+            "time": {
+              "start": "09:00",
+              "end": "09:50"
+            },
+            "days": [
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "IE 300",
+            "title": "Analysis of Data",
+            "time": {
+              "start": "10:00",
+              "end": "10:50"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "MSE 404",
+            "title": "Laboratory Studies in Materials Science and Engineering",
+            "time": {
+              "start": "14:00",
+              "end": "16:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-03-14"
+          },
+          {
+            "course": "MSE 404",
+            "title": "Laboratory Studies in Materials Science and Engineering",
+            "time": {
+              "start": "14:00",
+              "end": "16:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-03-17",
+            "end_date": "2025-05-07"
+          }
+        ]
+      },
+      "total_sections": 48,
+      "coordinates": {
+        "longitude": -88.22649892164169,
+        "latitude": 40.113142361585346
+      },
+      "hours": {
+        "monday": {
+          "open": "06:45",
+          "close": "22:00"
+        },
+        "tuesday": {
+          "open": "06:45",
+          "close": "22:00"
+        },
+        "wednesday": {
+          "open": "06:45",
+          "close": "22:00"
+        },
+        "thursday": {
+          "open": "06:45",
+          "close": "22:00"
+        },
+        "friday": {
+          "open": "06:45",
+          "close": "22:00"
+        },
+        "saturday": {
+          "open": "11:00",
+          "close": "22:00"
+        },
+        "sunday": {
+          "open": "11:00",
+          "close": "22:00"
+        }
+      }
+    },
     "Sidney Lu Mech Engr Bldg": {
       "rooms": {
         "3101": [
@@ -83258,6 +83955,733 @@
         }
       }
     },
+    "Newmark Civil Engineering Bldg": {
+      "rooms": {
+        "2312": [
+          {
+            "course": "ATMS 420",
+            "title": "Atmospheric Chemistry",
+            "time": {
+              "start": "09:00",
+              "end": "09:50"
+            },
+            "days": [
+              "M",
+              "W",
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 410",
+            "title": "Railway Signaling & Control",
+            "time": {
+              "start": "13:30",
+              "end": "14:50"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 447",
+            "title": "Atmospheric Chemistry",
+            "time": {
+              "start": "09:00",
+              "end": "09:50"
+            },
+            "days": [
+              "M",
+              "W",
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 598",
+            "title": "Special Topics",
+            "time": {
+              "start": "11:00",
+              "end": "12:20"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ],
+        "1310": [
+          {
+            "course": "CEE 201",
+            "title": "Systems Engrg & Economics",
+            "time": {
+              "start": "09:30",
+              "end": "10:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 202",
+            "title": "Engineering Risk & Uncertainty",
+            "time": {
+              "start": "12:30",
+              "end": "13:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 300",
+            "title": "Behavior of Materials",
+            "time": {
+              "start": "13:00",
+              "end": "13:50"
+            },
+            "days": [
+              "M",
+              "W",
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 320",
+            "title": "Construction Engineering",
+            "time": {
+              "start": "15:30",
+              "end": "16:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 360",
+            "title": "Structural Engineering",
+            "time": {
+              "start": "10:00",
+              "end": "10:50"
+            },
+            "days": [
+              "M",
+              "W",
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 420",
+            "title": "Construction Productivity",
+            "time": {
+              "start": "11:00",
+              "end": "12:20"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 421",
+            "title": "Construction Planning",
+            "time": {
+              "start": "08:00",
+              "end": "09:20"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 468",
+            "title": "Prestressed Concrete",
+            "time": {
+              "start": "14:00",
+              "end": "15:20"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 595",
+            "title": "Seminar",
+            "time": {
+              "start": "16:00",
+              "end": "17:20"
+            },
+            "days": [
+              "M"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 595",
+            "title": "Seminar",
+            "time": {
+              "start": "12:00",
+              "end": "12:50"
+            },
+            "days": [
+              "M"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "TAM 324",
+            "title": "Behavior of Materials",
+            "time": {
+              "start": "13:00",
+              "end": "13:50"
+            },
+            "days": [
+              "M",
+              "W",
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ],
+        "1311": [
+          {
+            "course": "CEE 411",
+            "title": "RR Project Design & Constr",
+            "time": {
+              "start": "12:30",
+              "end": "13:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 490",
+            "title": "Computer Methods",
+            "time": {
+              "start": "14:00",
+              "end": "15:20"
+            },
+            "days": [
+              "W",
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 502",
+            "title": "Advanced Cement Chemistry",
+            "time": {
+              "start": "15:30",
+              "end": "16:50"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 509",
+            "title": "Transportation Soils",
+            "time": {
+              "start": "09:30",
+              "end": "10:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 538",
+            "title": "Water Quality Control Proc II",
+            "time": {
+              "start": "10:00",
+              "end": "11:50"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 573",
+            "title": "Structural Dynamics II",
+            "time": {
+              "start": "15:30",
+              "end": "16:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 589",
+            "title": "Computational Geomechanics",
+            "time": {
+              "start": "08:00",
+              "end": "09:20"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 592",
+            "title": "Sustainable Urban Systems",
+            "time": {
+              "start": "11:00",
+              "end": "12:20"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 595",
+            "title": "Seminar",
+            "time": {
+              "start": "12:00",
+              "end": "12:50"
+            },
+            "days": [
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "NRES 592",
+            "title": "Sustainable Urban Systems",
+            "time": {
+              "start": "11:00",
+              "end": "12:20"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "UP 576",
+            "title": "Sustainable Urban Systems",
+            "time": {
+              "start": "11:00",
+              "end": "12:20"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ],
+        "2311": [
+          {
+            "course": "CEE 415",
+            "title": "Geometric Design of Roads",
+            "time": {
+              "start": "15:00",
+              "end": "16:50"
+            },
+            "days": [
+              "M",
+              "W",
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 453",
+            "title": "Urban Hydrology and Hydraulics",
+            "time": {
+              "start": "15:00",
+              "end": "16:50"
+            },
+            "days": [
+              "M",
+              "W",
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 460",
+            "title": "Steel Structures I",
+            "time": {
+              "start": "08:00",
+              "end": "09:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 461",
+            "title": "Reinforced Concrete I",
+            "time": {
+              "start": "10:00",
+              "end": "11:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 462",
+            "title": "Steel Structures II",
+            "time": {
+              "start": "14:00",
+              "end": "15:20"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 491",
+            "title": "Decision and Risk Analysis",
+            "time": {
+              "start": "12:30",
+              "end": "13:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 570",
+            "title": "Finite Element Methods",
+            "time": {
+              "start": "11:00",
+              "end": "12:20"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 572",
+            "title": "Earthquake Engineering",
+            "time": {
+              "start": "12:30",
+              "end": "13:50"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 595",
+            "title": "Seminar",
+            "time": {
+              "start": "10:00",
+              "end": "10:50"
+            },
+            "days": [
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CSE 551",
+            "title": "Finite Element Methods",
+            "time": {
+              "start": "11:00",
+              "end": "12:20"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ],
+        "3310": [
+          {
+            "course": "CEE 418",
+            "title": "Public Transportation Systems",
+            "time": {
+              "start": "11:00",
+              "end": "12:20"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 437",
+            "title": "Water Quality Engineering",
+            "time": {
+              "start": "15:30",
+              "end": "16:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 440",
+            "title": "Fate Cleanup Environ Pollutant",
+            "time": {
+              "start": "08:00",
+              "end": "09:20"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 465",
+            "title": "Design of Structural Systems",
+            "time": {
+              "start": "10:00",
+              "end": "11:50"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 467",
+            "title": "Masonry Structures",
+            "time": {
+              "start": "08:00",
+              "end": "09:20"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 470",
+            "title": "Structural Analysis",
+            "time": {
+              "start": "14:00",
+              "end": "15:50"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 595",
+            "title": "Seminar",
+            "time": {
+              "start": "11:00",
+              "end": "11:50"
+            },
+            "days": [
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ],
+        "2310": [
+          {
+            "course": "CEE 483",
+            "title": "Soil Mechanics and Behavior",
+            "time": {
+              "start": "13:00",
+              "end": "13:50"
+            },
+            "days": [
+              "M",
+              "W",
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 484",
+            "title": "Applied Soil Mechanics",
+            "time": {
+              "start": "14:00",
+              "end": "14:50"
+            },
+            "days": [
+              "M",
+              "W",
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 498",
+            "title": "Special Topics",
+            "time": {
+              "start": "09:30",
+              "end": "10:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 498",
+            "title": "Special Topics",
+            "time": {
+              "start": "11:00",
+              "end": "12:50"
+            },
+            "days": [
+              "M",
+              "F"
+            ],
+            "start_date": "2025-03-17",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "CEE 506",
+            "title": "Pavement Design II",
+            "time": {
+              "start": "08:00",
+              "end": "09:20"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ]
+      },
+      "total_sections": 48,
+      "coordinates": {
+        "longitude": -88.2265859773538,
+        "latitude": 40.11398169893394
+      },
+      "hours": {
+        "monday": {
+          "open": "07:00",
+          "close": "18:00"
+        },
+        "tuesday": {
+          "open": "07:00",
+          "close": "18:00"
+        },
+        "wednesday": {
+          "open": "07:00",
+          "close": "18:00"
+        },
+        "thursday": {
+          "open": "07:00",
+          "close": "18:00"
+        },
+        "friday": {
+          "open": "07:00",
+          "close": "18:00"
+        },
+        "saturday": {
+          "open": null,
+          "close": null
+        },
+        "sunday": {
+          "open": null,
+          "close": null
+        }
+      }
+    },
     "Chemistry Annex": {
       "rooms": {
         "1024": [
@@ -87663,6 +89087,1088 @@
         "sunday": {
           "open": "06:30",
           "close": "23:59"
+        }
+      }
+    },
+    "Freer Hall": {
+      "rooms": {
+        "224": [
+          {
+            "course": "HK 140",
+            "title": "Social Sci of Human Movement",
+            "time": {
+              "start": "08:00",
+              "end": "08:50"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 140",
+            "title": "Social Sci of Human Movement",
+            "time": {
+              "start": "10:00",
+              "end": "10:50"
+            },
+            "days": [
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 140",
+            "title": "Social Sci of Human Movement",
+            "time": {
+              "start": "12:00",
+              "end": "12:50"
+            },
+            "days": [
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 140",
+            "title": "Social Sci of Human Movement",
+            "time": {
+              "start": "13:00",
+              "end": "13:50"
+            },
+            "days": [
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 262",
+            "title": "Motor Develop, Growth & Form",
+            "time": {
+              "start": "11:00",
+              "end": "11:50"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 470",
+            "title": "Orientation to Internship",
+            "time": {
+              "start": "10:00",
+              "end": "10:50"
+            },
+            "days": [
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-03-14"
+          },
+          {
+            "course": "HK 471",
+            "title": "Health Internship",
+            "time": {
+              "start": "09:00",
+              "end": "09:50"
+            },
+            "days": [
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 482",
+            "title": "Counseling Techniques for Health Professionals",
+            "time": {
+              "start": "14:00",
+              "end": "15:20"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 540",
+            "title": "Physical Activity & Cognition",
+            "time": {
+              "start": "15:00",
+              "end": "17:50"
+            },
+            "days": [
+              "M"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ],
+        "130": [
+          {
+            "course": "HK 140",
+            "title": "Social Sci of Human Movement",
+            "time": {
+              "start": "14:00",
+              "end": "14:50"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 202",
+            "title": "Health Careers & Professionalism",
+            "time": {
+              "start": "13:00",
+              "end": "13:50"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-03-17",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 454",
+            "title": "Physiological Basis of Strength & Conditioning",
+            "time": {
+              "start": "09:30",
+              "end": "10:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 462",
+            "title": "Secondary Methods in Physical Education",
+            "time": {
+              "start": "08:30",
+              "end": "11:20"
+            },
+            "days": [
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 464",
+            "title": "Technology & Assessment in Physical Education and Sport",
+            "time": {
+              "start": "17:00",
+              "end": "19:50"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 484",
+            "title": "Psychosocial Aspects in Health and Rehabilitation",
+            "time": {
+              "start": "14:00",
+              "end": "15:20"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ],
+        "255": [
+          {
+            "course": "HK 150",
+            "title": "Bioscience of Human Movement",
+            "time": {
+              "start": "08:00",
+              "end": "09:20"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 150",
+            "title": "Bioscience of Human Movement",
+            "time": {
+              "start": "11:00",
+              "end": "12:20"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 150",
+            "title": "Bioscience of Human Movement",
+            "time": {
+              "start": "14:00",
+              "end": "15:20"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 150",
+            "title": "Bioscience of Human Movement",
+            "time": {
+              "start": "11:00",
+              "end": "12:20"
+            },
+            "days": [
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 150",
+            "title": "Bioscience of Human Movement",
+            "time": {
+              "start": "14:00",
+              "end": "15:20"
+            },
+            "days": [
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 342",
+            "title": "Health Behaviors and Cognition",
+            "time": {
+              "start": "09:30",
+              "end": "10:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 352",
+            "title": "Bioenergetics of Movement",
+            "time": {
+              "start": "08:00",
+              "end": "09:20"
+            },
+            "days": [
+              "T"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 352",
+            "title": "Bioenergetics of Movement",
+            "time": {
+              "start": "11:00",
+              "end": "12:20"
+            },
+            "days": [
+              "T"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 352",
+            "title": "Bioenergetics of Movement",
+            "time": {
+              "start": "14:00",
+              "end": "15:20"
+            },
+            "days": [
+              "T"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 352",
+            "title": "Bioenergetics of Movement",
+            "time": {
+              "start": "08:00",
+              "end": "09:20"
+            },
+            "days": [
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 455",
+            "title": "Exercise Endocrinology",
+            "time": {
+              "start": "15:30",
+              "end": "16:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 594",
+            "title": "Special Topics",
+            "time": {
+              "start": "12:00",
+              "end": "14:50"
+            },
+            "days": [
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ],
+        "450": [
+          {
+            "course": "HK 250",
+            "title": "Motor Development and Control",
+            "time": {
+              "start": "09:30",
+              "end": "10:50"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 250",
+            "title": "Motor Development and Control",
+            "time": {
+              "start": "11:00",
+              "end": "12:20"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 250",
+            "title": "Motor Development and Control",
+            "time": {
+              "start": "12:30",
+              "end": "13:50"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 250",
+            "title": "Motor Development and Control",
+            "time": {
+              "start": "14:00",
+              "end": "15:20"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 263",
+            "title": "Children's Movement",
+            "time": {
+              "start": "15:30",
+              "end": "16:50"
+            },
+            "days": [
+              "T"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 353",
+            "title": "Biomechanics of Human Movement",
+            "time": {
+              "start": "09:30",
+              "end": "10:50"
+            },
+            "days": [
+              "T"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 353",
+            "title": "Biomechanics of Human Movement",
+            "time": {
+              "start": "11:00",
+              "end": "12:20"
+            },
+            "days": [
+              "T"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 353",
+            "title": "Biomechanics of Human Movement",
+            "time": {
+              "start": "12:30",
+              "end": "13:50"
+            },
+            "days": [
+              "T"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 353",
+            "title": "Biomechanics of Human Movement",
+            "time": {
+              "start": "14:00",
+              "end": "15:20"
+            },
+            "days": [
+              "T"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 354",
+            "title": "Musculoskeletal Anatomy",
+            "time": {
+              "start": "08:00",
+              "end": "09:20"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 354",
+            "title": "Musculoskeletal Anatomy",
+            "time": {
+              "start": "08:00",
+              "end": "09:20"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 355",
+            "title": "Injuries in Sport",
+            "time": {
+              "start": "13:00",
+              "end": "14:20"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 360",
+            "title": "Applied Experience in Health and Kinesiology",
+            "time": {
+              "start": "12:00",
+              "end": "12:50"
+            },
+            "days": [
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 362",
+            "title": "Coaching Strategies",
+            "time": {
+              "start": "18:00",
+              "end": "20:20"
+            },
+            "days": [
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 458",
+            "title": "Rehabilitation Biomechanics",
+            "time": {
+              "start": "15:30",
+              "end": "17:50"
+            },
+            "days": [
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 470",
+            "title": "Orientation to Internship",
+            "time": {
+              "start": "16:00",
+              "end": "16:50"
+            },
+            "days": [
+              "M"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-03-14"
+          },
+          {
+            "course": "HK 471",
+            "title": "Health Internship",
+            "time": {
+              "start": "15:00",
+              "end": "15:50"
+            },
+            "days": [
+              "M"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ],
+        "121A": [
+          {
+            "course": "HK 261",
+            "title": "Teaching Activities II",
+            "time": {
+              "start": "08:30",
+              "end": "09:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 262",
+            "title": "Motor Develop, Growth & Form",
+            "time": {
+              "start": "11:00",
+              "end": "11:50"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 262",
+            "title": "Motor Develop, Growth & Form",
+            "time": {
+              "start": "11:00",
+              "end": "11:50"
+            },
+            "days": [
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 370",
+            "title": "Interdisciplinary Health Delivery and Early Field Work",
+            "time": {
+              "start": "13:00",
+              "end": "14:20"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 370",
+            "title": "Interdisciplinary Health Delivery and Early Field Work",
+            "time": {
+              "start": "09:30",
+              "end": "10:50"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 441",
+            "title": "Physical Activity and Chronic Diseases",
+            "time": {
+              "start": "12:30",
+              "end": "15:20"
+            },
+            "days": [
+              "T"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 494",
+            "title": "Special Topics",
+            "time": {
+              "start": "15:00",
+              "end": "16:50"
+            },
+            "days": [
+              "M"
+            ],
+            "start_date": "2025-03-17",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 514",
+            "title": "Systematic Review and Meta-analysis",
+            "time": {
+              "start": "13:00",
+              "end": "15:20"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ],
+        "356": [
+          {
+            "course": "HK 340",
+            "title": "Social & Psychological Aspects of Physical Activity",
+            "time": {
+              "start": "11:00",
+              "end": "12:20"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 340",
+            "title": "Social & Psychological Aspects of Physical Activity",
+            "time": {
+              "start": "12:30",
+              "end": "13:50"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 340",
+            "title": "Social & Psychological Aspects of Physical Activity",
+            "time": {
+              "start": "15:30",
+              "end": "16:50"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 340",
+            "title": "Social & Psychological Aspects of Physical Activity",
+            "time": {
+              "start": "08:00",
+              "end": "09:20"
+            },
+            "days": [
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 340",
+            "title": "Social & Psychological Aspects of Physical Activity",
+            "time": {
+              "start": "09:30",
+              "end": "10:50"
+            },
+            "days": [
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 340",
+            "title": "Social & Psychological Aspects of Physical Activity",
+            "time": {
+              "start": "11:00",
+              "end": "12:20"
+            },
+            "days": [
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 340",
+            "title": "Social & Psychological Aspects of Physical Activity",
+            "time": {
+              "start": "12:30",
+              "end": "13:50"
+            },
+            "days": [
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 402",
+            "title": "Tech-Driven Health Intervention",
+            "time": {
+              "start": "13:00",
+              "end": "15:20"
+            },
+            "days": [
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 452",
+            "title": "Clin & Applied Ex Physiology",
+            "time": {
+              "start": "10:00",
+              "end": "11:20"
+            },
+            "days": [
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 452",
+            "title": "Clin & Applied Ex Physiology",
+            "time": {
+              "start": "10:00",
+              "end": "11:20"
+            },
+            "days": [
+              "M"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 457",
+            "title": "Motor Learning & Control",
+            "time": {
+              "start": "11:30",
+              "end": "12:50"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 481",
+            "title": "Work and Disability",
+            "time": {
+              "start": "16:00",
+              "end": "17:50"
+            },
+            "days": [
+              "T"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 494",
+            "title": "Special Topics",
+            "time": {
+              "start": "15:30",
+              "end": "16:50"
+            },
+            "days": [
+              "M",
+              "W"
+            ],
+            "start_date": "2025-03-17",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "HK 551",
+            "title": "Advanced Exercise Metabolism",
+            "time": {
+              "start": "09:00",
+              "end": "10:20"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ]
+      },
+      "total_sections": 66,
+      "coordinates": {
+        "longitude": -88.2228836807803,
+        "latitude": 40.1048766912638
+      },
+      "hours": {
+        "monday": {
+          "open": "06:00",
+          "close": "22:00"
+        },
+        "tuesday": {
+          "open": "06:00",
+          "close": "22:00"
+        },
+        "wednesday": {
+          "open": "06:00",
+          "close": "22:00"
+        },
+        "thursday": {
+          "open": "06:00",
+          "close": "22:00"
+        },
+        "friday": {
+          "open": "06:00",
+          "close": "22:00"
+        },
+        "saturday": {
+          "open": "08:00",
+          "close": "16:00"
+        },
+        "sunday": {
+          "open": "08:00",
+          "close": "16:00"
+        }
+      }
+    },
+    "Engineering Sciences Building": {
+      "rooms": {
+        "6103": [
+          {
+            "course": "PHYS 401",
+            "title": "Classical Physics Lab",
+            "time": {
+              "start": "13:00",
+              "end": "16:50"
+            },
+            "days": [
+              "W"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "PHYS 401",
+            "title": "Classical Physics Lab",
+            "time": {
+              "start": "08:00",
+              "end": "11:50"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ],
+        "6107": [
+          {
+            "course": "PHYS 402",
+            "title": "Light",
+            "time": {
+              "start": "13:00",
+              "end": "15:50"
+            },
+            "days": [
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "PHYS 402",
+            "title": "Light",
+            "time": {
+              "start": "13:00",
+              "end": "15:50"
+            },
+            "days": [
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ],
+        "5105": [
+          {
+            "course": "PHYS 403",
+            "title": "Modern Experimental Physics",
+            "time": {
+              "start": "13:00",
+              "end": "16:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ],
+        "6106": [
+          {
+            "course": "PHYS 404",
+            "title": "Electronic Circuits",
+            "time": {
+              "start": "13:00",
+              "end": "15:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          },
+          {
+            "course": "PHYS 404",
+            "title": "Electronic Circuits",
+            "time": {
+              "start": "09:00",
+              "end": "11:50"
+            },
+            "days": [
+              "W",
+              "F"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ],
+        "4122": [
+          {
+            "course": "PHYS 407",
+            "title": "Experimental Biological Physics",
+            "time": {
+              "start": "13:00",
+              "end": "16:50"
+            },
+            "days": [
+              "T",
+              "R"
+            ],
+            "start_date": "2025-01-21",
+            "end_date": "2025-05-07"
+          }
+        ]
+      },
+      "total_sections": 8,
+      "coordinates": {
+        "longitude": -88.22309192725582,
+        "latitude": 40.11246398915742
+      },
+      "hours": {
+        "monday": {
+          "open": "07:00",
+          "close": "17:00"
+        },
+        "tuesday": {
+          "open": "07:00",
+          "close": "17:00"
+        },
+        "wednesday": {
+          "open": "07:00",
+          "close": "17:00"
+        },
+        "thursday": {
+          "open": "07:00",
+          "close": "17:00"
+        },
+        "friday": {
+          "open": "07:00",
+          "close": "17:00"
+        },
+        "saturday": {
+          "open": null,
+          "close": null
+        },
+        "sunday": {
+          "open": null,
+          "close": null
         }
       }
     }

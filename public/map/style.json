@@ -453,44 +453,109 @@
                         }
                     },
                     {
-                          "type": "Feature",
-                          "properties": {
-                            "name": "Grainger Engineering Library"
-                          },
-                          "geometry": {
-                            "coordinates": [
-                              -88.2268586691797,
-                              40.11247372608236
-                            ],
-                            "type": "Point"
-                          }
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Animal Sciences Laboratory"
                         },
-                        {
-                          "type": "Feature",
-                          "properties": {
-                            "name": "Funk ACES Library"
-                          },
-                          "geometry": {
+                        "geometry": {
                             "coordinates": [
-                              -88.22513280595481,
-                              40.102836655077226
+                                -88.22512971375228,
+                                40.10384631638479
                             ],
                             "type": "Point"
-                          }
-                        },
-                        {
-                          "type": "Feature",
-                          "properties": {
-                            "name" : "Main Library"
-                          },
-                          "geometry": {
-                            "coordinates": [
-                              -88.22883490200387,
-                              40.1047194114613
-                            ],
-                            "type": "Point"
-                          }
                         }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Huff Hall"
+                        },
+                        "geometry": {
+                            "coordinates": [
+                                -88.23275832909809,
+                                40.10357012628978
+                            ],
+                            "type": "Point"
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Digital Computer Laboratory"
+                        },
+                        "geometry": {
+                            "coordinates": [
+                                -88.22649892164169,
+                                40.113142361585346
+                            ],
+                            "type": "Point"
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Freer Hall"
+                        },
+                        "geometry": {
+                            "coordinates": [
+                                -88.2228836807803,
+                                40.1048766912638
+                            ],
+                            "type": "Point"
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Engineering Sciences Building"
+                        },
+                        "geometry": {
+                            "coordinates": [
+                                -88.22309192725582,
+                                40.11246398915742
+                            ],
+                            "type": "Point"
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Grainger Engineering Library"
+                        },
+                        "geometry": {
+                            "coordinates": [
+                                -88.2268586691797,
+                                40.11247372608236
+                            ],
+                            "type": "Point"
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Funk ACES Library"
+                        },
+                        "geometry": {
+                            "coordinates": [
+                                -88.22513280595481,
+                                40.102836655077226
+                            ],
+                            "type": "Point"
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Main Library"
+                        },
+                        "geometry": {
+                            "coordinates": [
+                                -88.22883490200387,
+                                40.1047194114613
+                            ],
+                            "type": "Point"
+                        }
+                    }
                 ]
             }
         }

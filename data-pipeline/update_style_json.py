@@ -47,6 +47,14 @@ def update_style_json_source():
         style_data['sources']['uiuc_buildings']['data'] = source_data
         print("Updated 'uiuc_buildings' source data in style JSON object.")
 
+        if 'features' in source_data:
+            print("Buildings being added:")
+            for feature in source_data['features']:
+                if 'properties' in feature and 'name' in feature['properties']:
+                    print(f"  - {feature['properties']['name']}")
+                else:
+                    print("  - (Unnamed building)")
+
         with open(style_json_path, 'w', encoding='utf-8') as f_style:
             json.dump(style_data, f_style, indent=4)
         print(f"Successfully updated and saved {style_json_path.name}")
