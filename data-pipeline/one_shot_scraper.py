@@ -94,72 +94,93 @@ def parse_time(time_str: str) -> TimeSlot:
 
     return TimeSlot(start=start_24, end=end_24)
 
-def scrape_sections(html_content) -> List[Section]:
+def scrape_sections(html_content: str) -> List[Section]:
+    """
+    Scrapes section details from the course page HTML content.
+    """
     section_data_match = re.search(r'var sectionDataObj = (\[.*?\]);', html_content, re.DOTALL)
     if not section_data_match:
+        print("Warning: 'sectionDataObj' not found in HTML content.")
         return []
-    section_data = json.loads(section_data_match.group(1))
 
-    unique_sections = set()
+    try:
+        section_data = json.loads(section_data_match.group(1))
+    except json.JSONDecodeError as e:
+        print(f"Error decoding section JSON data: {e}")
+        return []
+
+    unique_sections_keys = set()
     sections = []
 
+    meeting_regex = re.compile(r'<div class="app-meeting">(.*?)</div>')
+    strip_tags_regex = re.compile(r'<[^>]+>')
+
+    invalid_full_loc_day_indicators = {'n.a.', 'arranged', 'location pending', ''}
+
     for data in section_data:
-        times = re.findall(r'<div class="app-meeting">(.*?)</div>', data['time'])
-        locations = re.findall(r'<div class="app-meeting">(.*?)</div>', data['location'])
-        days = re.findall(r'<div class="app-meeting">(.*?)</div>', data['day'])
+        # Extract meeting details, preferring div content, fallback to raw text
+        times = meeting_regex.findall(data.get('time', ''))
+        locations = meeting_regex.findall(data.get('location', ''))
+        days = meeting_regex.findall(data.get('day', ''))
 
-        # If no matches found with div tags, try getting the raw strings
-        if not times:
-            time_str = re.sub(r'<[^>]+>', '', data['time']).strip()
-            if time_str:
-                times = [time_str]
+        if not times and data.get('time'):
+            time_str = strip_tags_regex.sub('', data['time']).strip()
+            if time_str: times = [time_str]
+        if not locations and data.get('location'):
+            location_str = strip_tags_regex.sub('', data['location']).strip()
+            if location_str: locations = [location_str]
+        if not days and data.get('day'):
+            day_str = strip_tags_regex.sub('', data['day']).strip()
+            if day_str: days = [day_str]
 
-        if not locations:
-            location_str = re.sub(r'<[^>]+>', '', data['location']).strip()
-            if location_str:
-                locations = [location_str]
+        # Ensure consistent number of meeting parts found
+        if not (times and locations and days and len(times) == len(locations) == len(days)):
+            continue # Skip if data is inconsistent for meetings
 
-        if not days:
-            day_str = re.sub(r'<[^>]+>', '', data['day']).strip()
-            if day_str:
-                days = [day_str]
-
-        if not times or not locations or not days:
+        try:
+            date_range_str = data.get('sectionDateRange', '')
+            date_parts = date_range_str.split('-')
+            if len(date_parts) != 2:
+                 raise ValueError("Date range format error")
+            start_date_str = date_parts[0].replace('Meets ', '').strip()
+            end_date_str = date_parts[1].strip()
+            start_date = datetime.strptime(start_date_str, '%m/%d/%y').strftime('%Y-%m-%d')
+            end_date = datetime.strptime(end_date_str, '%m/%d/%y').strftime('%Y-%m-%d')
+        except (ValueError, AttributeError, IndexError) as e:
+            print(f"Error parsing date range '{date_range_str}': {e}. Skipping section data.")
             continue
 
-        invalid_meeting = False
         for time_str, location_str, day_str in zip(times, locations, days):
-            if (time_str.upper() == 'ARRANGED' or
-                location_str.lower() in ['n.a.', 'arranged', 'arr', 'location pending'] or
-                day_str.lower() in ['n.a.', 'arranged', '', 'arr']):
-                invalid_meeting = True
-                break
+            time_norm = time_str.strip().upper()
+            loc_norm = location_str.strip().lower()
+            day_norm = day_str.strip().lower()
 
-        if invalid_meeting:
-            continue
+            if (time_norm == 'ARRANGED' or
+                loc_norm in invalid_full_loc_day_indicators or
+                day_norm in invalid_full_loc_day_indicators):
+                continue
 
-        date_range = data['sectionDateRange'].split('-')
-        start_date = datetime.strptime(date_range[0].replace('Meets ', '').strip(), '%m/%d/%y').strftime('%Y-%m-%d')
-        end_date = datetime.strptime(date_range[1].strip(), '%m/%d/%y').strftime('%Y-%m-%d')
-
-        for time_str, location_str, day_str in zip(times, locations, days):
             try:
                 time_obj = parse_time(time_str)
                 location_obj = parse_location(location_str)
                 days_list = parse_days(day_str)
 
+                if not days_list:
+                    continue
+                if location_obj.room.lower() == 'arr':
+                     continue
+
+                # Unique key to prevent duplicate section entries
                 section_key = (
-                    time_obj.start,
-                    time_obj.end,
-                    location_obj.building,
-                    location_obj.room,
-                    tuple(sorted(days_list)),
-                    start_date,
-                    end_date
+                    time_obj.start, time_obj.end,
+                    location_obj.building, location_obj.room,
+                    tuple(sorted(days_list)), # Sort days for consistent key
+                    start_date, end_date
                 )
 
-                if section_key not in unique_sections:
-                    unique_sections.add(section_key)
+                # Add the section if its key hasn't been seen before
+                if section_key not in unique_sections_keys:
+                    unique_sections_keys.add(section_key)
                     sections.append(Section(
                         time=time_obj,
                         location=location_obj,
@@ -169,8 +190,9 @@ def scrape_sections(html_content) -> List[Section]:
                     ))
 
             except Exception as e:
-                print(f"Error parsing section: {str(e)}")
+                print(f"Error processing meeting ({time_str}, {location_str}, {day_str}): {str(e)}. Skipping meeting.")
                 continue
+
     return sections
 
 def save_subject_data(subjects: List[Subject], year: int, term: str):
