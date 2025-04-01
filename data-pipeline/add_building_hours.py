@@ -81,8 +81,17 @@ class BuildingHoursProcessor:
 
         self.save_data(buildings_data)
 
-        print(f"\nProcessing complete!")
+        print("\nProcessing complete!")
         print(f"Updated hours for {buildings_updated} buildings")
+
+        missing_hours = [
+            name for name in buildings_data['buildings']
+            if name not in hours_data
+        ]
+        if missing_hours:
+            print("\nBuildings missing hours:")
+            for name in missing_hours:
+                print(f"- {name}")
 
 def main():
     processor = BuildingHoursProcessor()

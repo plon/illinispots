@@ -12,7 +12,7 @@ class BuildingDataFilter:
             "Krannert Center for Perf Arts",
             "Smith Memorial Hall"
         }
-        self.min_rooms = 7
+        self.min_rooms = 6
 
     def load_data(self) -> Dict[str, Any]:
         with open(self.input_file, 'r') as f:
