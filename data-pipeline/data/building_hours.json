@@ -196,5 +196,17 @@
     "F": "7:00AM-10PM",
     "SAT": "11AM-10PM",
     "SUN": "11AM-10PM"
+  },
+  "Animal Sciences Laboratory": {
+    "M-TH": "7AM-9PM",
+    "F": "7AM-6PM",
+    "SAT": "7AM-12PM",
+    "SUN": "LOCKED"
+  },
+  "Huff Hall": {
+    "M-TH": "5AM-10PM",
+    "F": "5AM-6PM",
+    "SAT": "10AM-6PM",
+    "SUN": "6AM-10PM"
   }
 }

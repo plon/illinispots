@@ -431,6 +431,32 @@
         ],
         "type": "Point"
       }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Animal Sciences Laboratory"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.22512971375228,
+          40.10384631638479
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Huff Hall"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.23275832909809,
+          40.10357012628978
+        ],
+        "type": "Point"
+      }
     }
   ]
 }
