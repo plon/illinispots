@@ -213,15 +213,19 @@ def verify_database_contents(buildings: List[Dict], rooms: List[Dict], schedules
 
 def clear_table(table_name: str) -> None:
     """Clear all records from a table safely."""
+    # Map tables to their primary key columns
+    primary_keys = {
+        'daily_events': 'id',
+        'buildings': 'name',
+        'rooms': 'building_name',
+        'class_schedule': 'building_name',
+        'academic_terms': 'academic_year'
+    }
+
     try:
-        if table_name == 'buildings':
-            supabase.table(table_name).delete().not_.is_('name', 'null').execute()
-        elif table_name == 'rooms':
-            supabase.table(table_name).delete().not_.is_('building_name', 'null').execute()
-        elif table_name == 'academic_terms':
-            supabase.table(table_name).delete().not_.is_('academic_year', 'null').execute()
-        elif table_name == 'class_schedule':
-            supabase.table(table_name).delete().not_.is_('building_name', 'null').execute()
+        # Delete all records where primary key is not null
+        key = primary_keys[table_name]
+        supabase.table(table_name).delete().not_.is_(key, 'null').execute()
 
         count = supabase.table(table_name).select('*', count='exact').execute().count
         if count != 0:
@@ -254,7 +258,7 @@ def main():
 
         print("\nClearing existing data...")
         # Clear tables and verify
-        tables = ['class_schedule', 'rooms', 'buildings', 'academic_terms']
+        tables = ['daily_events', 'class_schedule', 'rooms', 'buildings', 'academic_terms']
         for table in tables:
             clear_table(table)
         print("Existing data cleared successfully")
