@@ -228,3 +228,17 @@ export interface RoomBadgeProps {
   availableFor?: number;
   facilityType: FacilityType;
 }
+
+export interface AcademicBlockDetails {
+  type: "class" | "event";
+  course?: string; // For classes
+  identifier?: string; // For events (e.g., occupant)
+  title: string;
+}
+
+export interface RoomScheduleBlock {
+  start: string; // HH:mm:ss
+  end: string; // HH:mm:ss
+  status: "available" | "class" | "event";
+  details: AcademicBlockDetails | null; // Null for 'available' status
+}

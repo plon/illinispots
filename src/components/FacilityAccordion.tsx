@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -13,11 +13,13 @@ import {
   RoomStatus,
   AcademicRoom,
   LibraryRoom,
+  FacilityRoom,
 } from "@/types";
 import { formatTime, formatDuration } from "@/utils/format";
 import { RoomBadge } from "@/components/RoomBadge";
 import FacilityRoomDetails from "@/components/FacilityRoomDetails";
 import { getLibraryHoursMessage } from "@/utils/libraryHours";
+import AcademicRoomDetailLoader from "@/components/AcademicRoomDetailLoader";
 
 interface FacilityAccordionProps {
   facility: Facility;
@@ -45,6 +47,7 @@ const getRoomAvailabilityMessage = (room: LibraryRoom): React.ReactNode => {
       </span>
     );
   } else if (room.availableAt) {
+    // Handle case where it's reserved but will be available later
     return (
       <span className="text-xs text-muted-foreground">
         {`Available at ${formatTime(room.availableAt)}`}
@@ -52,6 +55,7 @@ const getRoomAvailabilityMessage = (room: LibraryRoom): React.ReactNode => {
       </span>
     );
   } else {
+    // Handle case where it's fully booked with no future availability info
     return <span className="text-xs text-muted-foreground">Fully booked</span>;
   }
 };
@@ -161,47 +165,50 @@ const LibraryRoomsAccordion: React.FC<LibraryRoomsAccordionProps> = ({
 }) => {
   return (
     <Accordion type="multiple" value={expandedItems} className="w-full">
-      {Object.entries(facility.rooms).map(([roomName, room]) => {
-        // We know these are library rooms since facility.type is LIBRARY
-        const libraryRoom = room as LibraryRoom;
-        const roomId = `${idPrefix}-${facility.id}-room-${roomName}`;
-        return (
-          <AccordionItem
-            value={roomId}
-            key={roomId}
-            ref={(el) => {
-              accordionRefs.current[roomId] = el;
-            }}
-          >
-            <div className="sticky top-0 bg-background z-5">
-              <AccordionTrigger
-                onClick={() => toggleItem(roomId)}
-                className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm"
-              >
-                <div className="flex items-center justify-between flex-1 mr-2">
-                  <div className="flex flex-col items-start text-left">
-                    <span className="font-medium">{roomName}</span>
-                    {getRoomAvailabilityMessage(libraryRoom)}
+      {Object.entries(facility.rooms)
+        .sort(([nameA], [nameB]) => nameA.localeCompare(nameB)) // Sort library rooms by name
+        .map(([roomName, room]) => {
+          // We know these are library rooms since facility.type is LIBRARY
+          const libraryRoom = room as LibraryRoom;
+          const roomId = `${idPrefix}-${facility.id}-room-${roomName}`;
+          return (
+            <AccordionItem
+              value={roomId}
+              key={roomId}
+              ref={(el) => {
+                accordionRefs.current[roomId] = el; // Assign ref for potential scrolling
+              }}
+            >
+              {/* Sticky header for room name/status */}
+              <div className="sticky top-0 bg-background z-5">
+                <AccordionTrigger
+                  onClick={() => toggleItem(roomId)}
+                  className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm"
+                >
+                  <div className="flex items-center justify-between flex-1 mr-2">
+                    <div className="flex flex-col items-start text-left">
+                      <span className="font-medium">{roomName}</span>
+                      {getRoomAvailabilityMessage(libraryRoom)}
+                    </div>
+                    <RoomBadge
+                      status={room.status}
+                      availableAt={room.availableAt}
+                      availableFor={room.availableFor}
+                      facilityType={FacilityType.LIBRARY}
+                    />
                   </div>
-                  <RoomBadge
-                    status={room.status}
-                    availableAt={room.availableAt}
-                    availableFor={room.availableFor}
-                    facilityType={FacilityType.LIBRARY}
-                  />
-                </div>
-              </AccordionTrigger>
-            </div>
-            <AccordionContent>
-              <FacilityRoomDetails
-                roomName={roomName}
-                room={libraryRoom}
-                facilityType={FacilityType.LIBRARY}
-              />
-            </AccordionContent>
-          </AccordionItem>
-        );
-      })}
+                </AccordionTrigger>
+              </div>
+              <AccordionContent>
+                <FacilityRoomDetails
+                  roomName={roomName}
+                  room={libraryRoom}
+                  facilityType={FacilityType.LIBRARY}
+                />
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
     </Accordion>
   );
 };
@@ -214,26 +221,170 @@ interface AcademicRoomsAccordionProps {
   idPrefix: string;
 }
 
+// --- Helper components for brief room status in trigger ---
+const RoomAvailabilityDetails: React.FC<{ room: AcademicRoom }> = ({
+  room,
+}) => (
+  <div className="text-xs text-muted-foreground space-y-0.5 mt-0.5">
+    {room.status === RoomStatus.PASSING_PERIOD && room.nextClass ? (
+      <p>
+        <span className="font-medium text-foreground/70">Status:</span> Passing
+        Period
+      </p>
+    ) : (
+      <>
+        {room.availableFor && (
+          <p>
+            <span className="font-medium text-foreground/70">
+              Available for:
+            </span>{" "}
+            {formatDuration(room.availableFor)}
+          </p>
+        )}
+        {room.availableUntil && (
+          <p>
+            <span className="font-medium text-foreground/70">Until:</span>{" "}
+            {formatTime(room.availableUntil)}
+          </p>
+        )}
+      </>
+    )}
+    {room.nextClass && (
+      <p>
+        <span className="font-medium text-foreground/70">Next:</span>{" "}
+        {room.nextClass.course} - {room.nextClass.title}
+      </p>
+    )}
+  </div>
+);
+
+const RoomOccupancyDetails: React.FC<{ room: AcademicRoom }> = ({ room }) => (
+  <div className="text-xs space-y-0.5 mt-0.5">
+    {room.currentClass && (
+      <p>
+        <span className="font-medium text-foreground/70">Current:</span>{" "}
+        <span className="font-normal text-gray-500">
+          {room.currentClass.course} - {room.currentClass.title}
+        </span>
+      </p>
+    )}
+    {room.availableAt && (
+      <p>
+        <span className="font-medium text-foreground/70">Available at:</span>{" "}
+        <span className="font-normal text-gray-500">
+          {formatTime(room.availableAt)}
+          {room.availableFor && ` for ${formatDuration(room.availableFor)}`}
+        </span>
+      </p>
+    )}
+  </div>
+);
+
 const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
   facility,
   expandedItems,
   toggleItem,
-  accordionRefs,
+  accordionRefs, // Refs might need adjustment for deep nesting if scrolling to specific room is needed
   idPrefix,
 }) => {
   // Filter available and occupied rooms
-  const availableRooms = Object.entries(facility.rooms).filter(
-    ([, room]) =>
-      room.status === RoomStatus.AVAILABLE ||
-      room.status === RoomStatus.PASSING_PERIOD,
+  const availableRooms = useMemo(
+    () =>
+      Object.entries(facility.rooms)
+        .filter(
+          ([, room]) =>
+            room.status === RoomStatus.AVAILABLE ||
+            room.status === RoomStatus.PASSING_PERIOD,
+        )
+        .sort(([numA], [numB]) =>
+          numA.localeCompare(numB, undefined, {
+            numeric: true,
+            sensitivity: "base",
+          }),
+        ),
+    [facility.rooms],
   );
 
-  const occupiedRooms = Object.entries(facility.rooms).filter(
-    ([, room]) =>
-      room.status === RoomStatus.OCCUPIED ||
-      room.status === RoomStatus.OPENING_SOON,
+  const occupiedRooms = useMemo(
+    () =>
+      Object.entries(facility.rooms)
+        .filter(
+          ([, room]) =>
+            room.status === RoomStatus.OCCUPIED ||
+            room.status === RoomStatus.OPENING_SOON,
+        )
+        .sort(([numA], [numB]) =>
+          numA.localeCompare(numB, undefined, {
+            numeric: true,
+            sensitivity: "base",
+          }),
+        ),
+    [facility.rooms],
   );
 
+  // Function to render the list of rooms within a status group
+  const renderRoomList = (
+    rooms: [string, FacilityRoom][],
+    statusType: "available" | "occupied",
+  ) => {
+    return (
+      <div className="pl-4 pr-1 py-1 space-y-1">
+        {" "}
+        {/* Indent room list */}
+        {rooms.map(([roomNumber, room]) => {
+          const academicRoom = room as AcademicRoom;
+          const roomAccordionId = `${idPrefix}-${facility.id}-${statusType}-room-${roomNumber}`;
+          const isRoomExpanded = expandedItems.includes(roomAccordionId);
+
+          return (
+            // Nest Accordion for each room
+            <Accordion
+              key={roomAccordionId}
+              type="multiple"
+              value={expandedItems}
+              className="w-full border-b last:border-b-0"
+            >
+              <AccordionItem value={roomAccordionId} className="border-b-0">
+                <AccordionTrigger
+                  onClick={() => toggleItem(roomAccordionId)}
+                  className="py-2 px-2 text-sm hover:no-underline hover:bg-muted/20 rounded-md group [&[data-state=open]>svg]:text-primary"
+                >
+                  {/* Room details for the trigger */}
+                  <div className="flex justify-between items-start w-full mr-2 text-left">
+                    <div className="flex flex-col">
+                      <span className="font-medium">{roomNumber}</span>
+                      {/* Display brief status details */}
+                      {statusType === "available" ? (
+                        <RoomAvailabilityDetails room={academicRoom} />
+                      ) : (
+                        <RoomOccupancyDetails room={academicRoom} />
+                      )}
+                    </div>
+                    {/* Optional: Keep a simple badge if desired */}
+                    {/* <RoomBadge status={room.status} facilityType={FacilityType.ACADEMIC} /> */}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-0 pb-1 pl-1 pr-0">
+                  {/* Conditionally render loader only when this specific room is expanded */}
+                  {isRoomExpanded ? (
+                    <AcademicRoomDetailLoader
+                      buildingId={facility.name} // Use facility name as ID for API call
+                      roomNumber={roomNumber}
+                    />
+                  ) : (
+                    // Placeholder so content area doesn't collapse instantly
+                    <div className="h-10"></div>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // Main return uses the Available/Occupied groups
   return (
     <Accordion type="multiple" value={expandedItems} className="w-full">
       {/* Available Rooms Section */}
@@ -249,69 +400,14 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
         >
           Available Rooms ({availableRooms.length})
         </AccordionTrigger>
-        <AccordionContent>
-          <div className="px-4 py-2 space-y-2">
-            {availableRooms.map(([roomNumber, room], index) => {
-              // We know these are academic rooms since facility.type is ACADEMIC
-              const academicRoom = room as AcademicRoom;
-              return (
-                <div key={roomNumber}>
-                  <div className="text-sm">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium">{roomNumber}</span>
-                      <RoomBadge
-                        status={room.status}
-                        availableFor={room.availableFor}
-                        facilityType={FacilityType.ACADEMIC}
-                      />
-                    </div>
-                    {room.status === RoomStatus.PASSING_PERIOD &&
-                    academicRoom.nextClass ? (
-                      <p className="text-xs text-muted-foreground">
-                        <span className="font-medium text-foreground/70">
-                          Next:
-                        </span>{" "}
-                        {academicRoom.nextClass.course} -{" "}
-                        {academicRoom.nextClass.title} at{" "}
-                        {formatTime(academicRoom.nextClass.time.start)}
-                      </p>
-                    ) : (
-                      <>
-                        {room.availableFor && (
-                          <p className="text-xs text-muted-foreground">
-                            <span className="font-medium text-foreground/70">
-                              Available for:
-                            </span>{" "}
-                            {formatDuration(room.availableFor)}
-                          </p>
-                        )}
-                        {academicRoom.availableUntil && (
-                          <p className="text-xs text-muted-foreground">
-                            <span className="font-medium text-foreground/70">
-                              Until:
-                            </span>{" "}
-                            {formatTime(academicRoom.availableUntil)}
-                          </p>
-                        )}
-                        {academicRoom.nextClass && (
-                          <p className="text-xs text-muted-foreground">
-                            <span className="font-medium text-foreground/70">
-                              Next:
-                            </span>{" "}
-                            {academicRoom.nextClass.course} -{" "}
-                            {academicRoom.nextClass.title}
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </div>
-                  {index < availableRooms.length - 1 && (
-                    <hr className="mt-3 border-t border-border/50" />
-                  )}
-                </div>
-              );
-            })}
-          </div>
+        <AccordionContent className="p-0">
+          {availableRooms.length > 0 ? (
+            renderRoomList(availableRooms, "available")
+          ) : (
+            <p className="px-4 py-3 text-sm text-muted-foreground">
+              No rooms currently available.
+            </p>
+          )}
         </AccordionContent>
       </AccordionItem>
 
@@ -328,55 +424,14 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
         >
           Occupied Rooms ({occupiedRooms.length})
         </AccordionTrigger>
-        <AccordionContent>
-          <div className="px-4 py-2 space-y-2">
-            {occupiedRooms.map(([roomNumber, room], index) => {
-              // We know these are academic rooms since facility.type is ACADEMIC
-              const academicRoom = room as AcademicRoom;
-              return (
-                <div key={roomNumber}>
-                  <div className="text-sm">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium">{roomNumber}</span>
-                      <RoomBadge
-                        status={room.status}
-                        availableAt={room.availableAt}
-                        availableFor={room.availableFor}
-                        facilityType={FacilityType.ACADEMIC}
-                      />
-                    </div>
-                    {academicRoom.currentClass && (
-                      <p className="text-xs text-muted-foreground">
-                        <span className="font-medium text-foreground/70">
-                          Current:
-                        </span>{" "}
-                        {academicRoom.currentClass.course} -{" "}
-                        {academicRoom.currentClass.title}
-                      </p>
-                    )}
-                    {room.availableAt && (
-                      <div className="text-xs text-muted-foreground">
-                        <p>
-                          <span className="font-medium text-foreground/70">
-                            Available at:
-                          </span>{" "}
-                          {formatTime(room.availableAt)}
-                          {room.availableFor && (
-                            <span className="ml-1">
-                              for {formatDuration(room.availableFor)}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  {index < occupiedRooms.length - 1 && (
-                    <hr className="mt-3 border-t border-border/50" />
-                  )}
-                </div>
-              );
-            })}
-          </div>
+        <AccordionContent className="p-0">
+          {occupiedRooms.length > 0 ? (
+            renderRoomList(occupiedRooms, "occupied")
+          ) : (
+            <p className="px-4 py-3 text-sm text-muted-foreground">
+              No rooms currently occupied.
+            </p>
+          )}
         </AccordionContent>
       </AccordionItem>
     </Accordion>
