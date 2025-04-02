@@ -204,7 +204,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         {libraryFacilities.length > 0 ? (
           <div className="mt-2">
             <h2 className="text-sm font-normal text-muted-foreground pl-6">
-              Library ({libraryFacilities.length})
+              Library
             </h2>
             <Accordion type="multiple" value={expandedItems} className="w-full">
               {libraryFacilities.map((facility) => (
@@ -227,7 +227,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         {academicFacilities.length > 0 ? (
           <div className="mt-5">
             <h2 className="text-sm font-normal text-muted-foreground pl-6">
-              Academic ({academicFacilities.length})
+              Academic
             </h2>
             <Accordion type="multiple" value={expandedItems} className="w-full">
               {academicFacilities.map((facility) => (
