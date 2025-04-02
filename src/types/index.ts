@@ -242,3 +242,16 @@ export interface RoomScheduleBlock {
   status: "available" | "class" | "event";
   details: AcademicBlockDetails | null; // Null for 'available' status
 }
+
+export interface BlockSection {
+  start: string; // HH:mm:ss
+  end: string; // HH:mm:ss
+  status: "available" | "class" | "event";
+  details: AcademicBlockDetails | null; // Null for 'available' status
+}
+
+export interface HourlyScheduleBlock {
+  start: string; // HH:mm:ss
+  end: string; // HH:mm:ss
+  sections: BlockSection[]; // Sections within this hourly block
+}
