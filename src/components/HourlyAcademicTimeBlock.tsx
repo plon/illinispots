@@ -156,11 +156,14 @@ const BlockSectionComponent = ({ section, parentBlock }: BlockSectionProps) => {
     parentDuration > 0 ? (sectionDuration / parentDuration) * 100 : 0;
 
   const isAvailable = section.status === "available";
-  const bgColor = isAvailable ? "bg-green-200" : "bg-red-200";
 
   return (
     <div
-      className={`h-full ${bgColor} hover:opacity-80 transition-opacity`}
+    className={`h-full ${
+        isAvailable
+          ? "bg-green-200 hover:bg-green-300"
+          : "bg-red-200 hover:bg-red-300"
+      } transition-colors duration-150`}
       style={{ width: `${Math.max(widthPercentage, 1)}%` }} // Ensure minimum width of 1%
     />
   );
