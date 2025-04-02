@@ -45,7 +45,6 @@ const AcademicRoomDetailLoader: React.FC<AcademicRoomDetailLoaderProps> = ({
     queryFn: () => fetchRoomSchedule(buildingId, roomNumber, date),
   });
 
-  // Initial loading state (before first fetch completes)
   if (isLoading) {
     return (
       <div className="px-2 py-2">

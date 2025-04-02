@@ -1,10 +1,9 @@
 CREATE OR REPLACE FUNCTION get_room_schedule(
     building_id_param TEXT,
     room_number_param TEXT,
-    check_date DATE,
-    start_time_param TIME
+    check_date DATE
 )
-RETURNS JSONB -- Returns an array of schedule blocks
+RETURNS JSONB -- Returns an array of schedule blocks for the entire day
 AS $$
 DECLARE
     result JSONB;
@@ -14,7 +13,6 @@ DECLARE
     current_pointer_time TIME;
     check_day TEXT;
     event_record RECORD;
-    first_block_index INTEGER := -1;
     block_json JSONB;
 BEGIN
     -- Determine day character (M, T, W, R, F, S, U)
@@ -128,22 +126,8 @@ BEGIN
         schedule_blocks := array_append(schedule_blocks, block_json);
     END IF;
 
-    -- Find the index of the first block relevant to start_time_param
-    FOR i IN 1..array_length(schedule_blocks, 1) LOOP
-        IF (schedule_blocks[i]->>'start')::TIME <= start_time_param AND
-           (schedule_blocks[i]->>'end')::TIME > start_time_param
-        THEN
-            first_block_index := i;
-            EXIT;
-        END IF;
-    END LOOP;
-
-    -- If no relevant block found (start_time_param is after last block end), return empty
-    IF first_block_index = -1 THEN
-        RETURN '[]'::JSONB;
-    END IF;
-
-    RETURN to_jsonb(schedule_blocks[first_block_index:array_length(schedule_blocks, 1)]);
+    -- Return the full day's schedule blocks
+    RETURN to_jsonb(schedule_blocks);
 
 END;
 $$ LANGUAGE plpgsql;
