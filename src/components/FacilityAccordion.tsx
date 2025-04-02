@@ -364,7 +364,7 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
                     {/* <RoomBadge status={room.status} facilityType={FacilityType.ACADEMIC} /> */}
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="pt-0 pb-1 pl-1 pr-0">
+                <AccordionContent className="pt-0 pb-1 pl-1 pr-4">
                   {/* Conditionally render loader only when this specific room is expanded */}
                   {isRoomExpanded ? (
                     <AcademicRoomDetailLoader
