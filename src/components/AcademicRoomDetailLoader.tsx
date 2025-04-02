@@ -1,82 +1,87 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import moment from "moment-timezone";
+import { useQuery } from "@tanstack/react-query";
 import AcademicRoomSchedule from "@/components/AcademicRoomSchedule";
 import { RoomScheduleBlock } from "@/types";
 
 interface AcademicRoomDetailLoaderProps {
-  buildingId: string; // Building name used as ID in API
+  buildingId: string;
   roomNumber: string;
 }
+
+const fetchRoomSchedule = async (
+  buildingId: string,
+  roomNumber: string,
+  date: string,
+): Promise<RoomScheduleBlock[]> => {
+  const apiUrl = `/api/room-schedule?buildingId=${encodeURIComponent(buildingId)}&roomNumber=${encodeURIComponent(roomNumber)}&date=${date}`;
+
+  const response = await fetch(apiUrl);
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.error || `Failed to fetch schedule: ${response.statusText}`,
+    );
+  }
+  const data: RoomScheduleBlock[] = await response.json();
+  return data;
+};
 
 const AcademicRoomDetailLoader: React.FC<AcademicRoomDetailLoaderProps> = ({
   buildingId,
   roomNumber,
 }) => {
-  const [scheduleData, setScheduleData] = useState<RoomScheduleBlock[] | null>(
-    null,
-  );
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const now = moment().tz("America/Chicago");
+  const date = now.format("YYYY-MM-DD");
 
-  useEffect(() => {
-    const fetchSchedule = async () => {
-      setIsLoading(true);
-      setError(null);
-      setScheduleData(null);
+  const {
+    data: scheduleData,
+    isLoading,
+    isError,
+    error,
+  } = useQuery<RoomScheduleBlock[], Error>({
+    queryKey: ["roomSchedule", buildingId, roomNumber, date],
+    queryFn: () => fetchRoomSchedule(buildingId, roomNumber, date),
+  });
 
-      const now = moment().tz("America/Chicago");
-      const date = now.format("YYYY-MM-DD");
-      const startTime = now.format("HH:mm:ss");
-
-      try {
-        const response = await fetch(
-          `/api/room-schedule?buildingId=${encodeURIComponent(buildingId)}&roomNumber=${encodeURIComponent(roomNumber)}&date=${date}&startTime=${startTime}`,
-        );
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({})); // Try to parse error
-          throw new Error(
-            errorData.error ||
-              `Failed to fetch schedule: ${response.statusText}`,
-          );
-        }
-        const data: RoomScheduleBlock[] = await response.json();
-        setScheduleData(data);
-      } catch (err: unknown) {
-        let message = "Could not load schedule.";
-        if (err instanceof Error) {
-          message = err.message;
-        } else if (typeof err === "string") {
-          message = err;
-        }
-        setError(message);
-        console.error(
-          `Error fetching schedule for ${buildingId} - ${roomNumber}:`,
-          err,
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSchedule();
-    // Intentionally omitting dependencies to fetch only once when the component mounts (i.e., when accordion expands)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array ensures this runs only once on mount
-
+  // Initial loading state (before first fetch completes)
   if (isLoading) {
     return (
-      <div className="p-4 text-center text-sm text-muted-foreground">
-        Loading schedule...
+      <div className="px-2 py-2">
+        {/* Skeleton for time blocks */}
+        <div className="flex flex-nowrap gap-1 pb-2">
+          <div className="h-14 w-14 bg-gray-200 rounded animate-pulse" />
+          <div className="h-14 w-20 bg-gray-200 rounded animate-pulse" />
+          <div className="h-14 w-24 bg-gray-200 rounded animate-pulse" />
+          <div className="h-14 w-14 bg-gray-200 rounded animate-pulse" />
+          <div className="h-14 w-28 bg-gray-200 rounded animate-pulse" />
+        </div>
+
+        {/* Skeleton for legend */}
+        <div className="flex items-center gap-4 mt-2">
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-gray-200 rounded animate-pulse" />
+            <div className="w-16 h-3 bg-gray-200 rounded animate-pulse" />
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-gray-200 rounded animate-pulse" />
+            <div className="w-20 h-3 bg-gray-200 rounded animate-pulse" />
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
-      <div className="p-4 text-center text-sm text-red-600">Error: {error}</div>
+      <div className="p-4 text-center text-sm text-red-600">
+        Error: {error?.message || "Could not load schedule."}
+      </div>
     );
   }
 
+  // Success state, but no data or empty schedule
   if (!scheduleData || scheduleData.length === 0) {
     return (
       <div className="p-4 text-center text-sm text-muted-foreground">
