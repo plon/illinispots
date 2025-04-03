@@ -27,7 +27,6 @@ logging.basicConfig(
     ]
 )
 
-
 load_dotenv(find_dotenv('.env.local'))
 
 supabase = create_client(
@@ -120,57 +119,120 @@ def decompress_response(request) -> str:
         raise
 
 def load_events_to_db(event_data):
+    result = supabase.table('rooms').select('building_name,room_number').execute()
+    valid_rooms = {(room['building_name'], room['room_number']) for room in result.data}
+
+    events_to_insert = []
+    invalid_events = []
+    today_str = datetime.now(timezone.utc).date().isoformat()
+
     try:
-        result = supabase.table('rooms').select('building_name,room_number').execute()
-        valid_rooms = {(room['building_name'], room['room_number']) for room in result.data}
+        delete_result = supabase.table('daily_events').delete().neq('event_name', 'dummy_value_to_avoid_error_on_empty_delete').execute()
+        logging.info(f"Cleared existing events (Result: {delete_result})")
+    except Exception as e:
+        logging.error(f"Error clearing existing events: {str(e)}")
+        logging.error(traceback.format_exc())
 
-        events_to_insert = []
-        today_str = datetime.now(timezone.utc).date().isoformat()
+    skipped_rooms = set()
 
-        # Clear table
-        delete_result = supabase.table('daily_events').delete().neq('event_name', None).execute()
-        logging.info("Cleared all existing events")
+    for building_name, building_data in event_data.get('buildings', {}).items():
+        for room_number, events in building_data.get('rooms', {}).items():
+            if (building_name, room_number) in valid_rooms:
+                for event in events:
+                    start_str = event.get('time', {}).get('start') # Expected format: HH:MM
+                    end_str = event.get('time', {}).get('end')     # Expected format: HH:MM
 
-        skipped_rooms = set()  # To keep track of skipped rooms for logging
-
-        for building_name, building_data in event_data['buildings'].items():
-            for room_number, events in building_data['rooms'].items():
-                # Check if room exists in valid_rooms set
-                if (building_name, room_number) in valid_rooms:
-                    for event in events:
-                        events_to_insert.append({
+                    if not start_str or not end_str:
+                        logging.warning(f"Skipping event due to missing start/end time in {building_name} room {room_number}: {event.get('event_name')}")
+                        invalid_events.append({
                             'building_name': building_name,
                             'room_number': room_number,
-                            'event_name': event['event_name'],
-                            'occupant': event['occupant'],
-                            'start_time': event['time']['start'],
-                            'end_time': event['time']['end'],
-                            'event_date': today_str
+                            'event_name': event.get('event_name', 'N/A'),
+                            'occupant': event.get('occupant', 'N/A'),
+                            'start_time': start_str or 'Missing',
+                            'end_time': end_str or 'Missing',
+                            'event_date': today_str,
+                            'reason': 'Missing time data'
                         })
-                else:
-                    skipped_rooms.add((building_name, room_number))
+                        continue
 
-        if skipped_rooms:
-            logging.warning(f"Skipped events for {len(skipped_rooms)} rooms not present in rooms table:")
-            for building, room in sorted(skipped_rooms):
-                logging.warning(f"- {building}: Room {room}")
+                    try:
+                        start_time_obj = datetime.strptime(start_str, '%H:%M').time()
+                        end_time_obj = datetime.strptime(end_str, '%H:%M').time()
 
-        if events_to_insert:
-            batch_size = 100
-            for i in range(0, len(events_to_insert), batch_size):
-                batch = events_to_insert[i:i + batch_size]
-                result = supabase.table('daily_events').insert(batch).execute()
-                logging.info(f"Inserted batch of {len(batch)} events")
+                        event_payload = {
+                            'building_name': building_name,
+                            'room_number': room_number,
+                            'event_name': event.get('event_name'),
+                            'occupant': event.get('occupant'),
+                            'start_time': start_str, # Store as HH:MM
+                            'end_time': end_str,     # Store as HH:MM
+                            'event_date': today_str
+                        }
 
-            logging.info(f"Successfully inserted total of {len(events_to_insert)} events")
-            return True
-        else:
-            logging.info("No events to insert")
-            return False
+                        if start_time_obj < end_time_obj:
+                            events_to_insert.append(event_payload)
+                        else:
+                            logging.warning(f"Skipping event with start time not before end time in {building_name} room {room_number}: {event.get('event_name')} ({start_str} - {end_str})")
+                            event_payload['reason'] = 'Start time not before end time'
+                            invalid_events.append(event_payload)
 
-    except Exception as e:
-        logging.error(f"Error loading events to database: {str(e)}")
-        logging.error(traceback.format_exc())
+                    except ValueError as e:
+                        logging.error(f"Invalid time format for event in {building_name} room {room_number}: {str(e)}")
+                        logging.error(f"Problematic time strings: start='{start_str}', end='{end_str}'")
+                        invalid_events.append({
+                            'building_name': building_name,
+                            'room_number': room_number,
+                            'event_name': event.get('event_name', 'N/A'),
+                            'occupant': event.get('occupant', 'N/A'),
+                            'start_time': start_str,
+                            'end_time': end_str,
+                            'event_date': today_str,
+                            'reason': f'Time parsing error: {e}'
+                        })
+            else:
+                if (building_name, room_number) not in skipped_rooms:
+                     logging.warning(f"Skipping room not in database: {building_name} - {room_number}")
+                     skipped_rooms.add((building_name, room_number))
+
+    if invalid_events:
+        logging.warning(f"Skipped {len(invalid_events)} invalid or problematic events:")
+        for event in invalid_events:
+             logging.warning(
+                f"- {event['building_name']}, Room {event['room_number']}: "
+                f"{event.get('event_name', 'N/A')} ({event.get('start_time', 'N/A')} - {event.get('end_time', 'N/A')}) "
+                f"Reason: {event.get('reason', 'Unknown')}"
+            )
+
+    successful_inserts = 0
+    failed_inserts = []
+
+    if events_to_insert:
+        logging.info(f"Attempting to insert {len(events_to_insert)} valid events...")
+        try:
+            insert_result = supabase.table('daily_events').insert(events_to_insert).execute()
+            successful_inserts = len(events_to_insert)
+            logging.info(f"Successfully inserted {successful_inserts} events.")
+
+        except Exception as e:
+            logging.error(f"Batch insert failed: {str(e)}")
+            logging.error(traceback.format_exc())
+            failed_inserts = [(event, str(e)) for event in events_to_insert]
+
+        if failed_inserts:
+             logging.warning(f"Failed to insert {len(failed_inserts)} events:")
+             for event, error in failed_inserts:
+                 logging.warning(
+                     f"- {event['building_name']}, Room {event['room_number']}: "
+                     f"{event['event_name']} ({event['start_time']} - {event['end_time']})"
+                     f"\n  Error: {error}"
+                 )
+             successful_inserts = len(events_to_insert) - len(failed_inserts)
+
+        logging.info(f"Database upload summary: {successful_inserts} successful, {len(failed_inserts)} failed.")
+        return successful_inserts > 0
+    else:
+        logging.info("No valid events found to insert.")
         return False
 
 if __name__ == "__main__":
