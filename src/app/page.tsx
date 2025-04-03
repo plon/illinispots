@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { getUpdatedAccordionItems } from "@/utils/accordion";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import moment from "moment-timezone";
 import LeftSidebar from "@/components/left";
@@ -76,22 +77,14 @@ const IlliniSpotsPage: React.FC = () => {
         facilityType === FacilityType.LIBRARY ? "library" : "building"
       }-${id}`;
 
+      // Use the shared utility function to update the expanded items
       setExpandedItems((prevItems) => {
-        const isNewItemBuildingOrLibrary =
-          itemId.startsWith("library-") || itemId.startsWith("building-");
-        let itemsToKeep = prevItems;
-
-        if (isNewItemBuildingOrLibrary) {
-          itemsToKeep = prevItems.filter(
-            (item) =>
-              !item.startsWith("library-") && !item.startsWith("building-"),
-          );
+        // If already open, don't change anything (unlike toggleItem which would close it)
+        if (prevItems.includes(itemId)) {
+          return prevItems;
         }
 
-        if (!prevItems.includes(itemId)) {
-          return [...itemsToKeep, itemId];
-        }
-        return itemsToKeep;
+        return getUpdatedAccordionItems(itemId, prevItems);
       });
     },
     [],

@@ -8,6 +8,7 @@ import React, {
   memo,
   useState,
 } from "react";
+import { getUpdatedAccordionItems } from "@/utils/accordion";
 import { Accordion } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -63,12 +64,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
   const toggleItem = useCallback(
     (value: string) => {
-      setExpandedItems((prevItems) => {
-        const newItems = prevItems.includes(value)
-          ? prevItems.filter((item) => item !== value)
-          : [...prevItems, value];
-        return newItems;
-      });
+      setExpandedItems((prevItems) => getUpdatedAccordionItems(value, prevItems));
     },
     [setExpandedItems],
   );
@@ -174,7 +170,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
               size="icon"
               className={`h-6 w-6 md:h-8 md:w-8 rounded-full border-2 border-foreground/20 font-bold ${
                 showMap
-                  ? "bg-sky-100/50 hover:bg-sky-100/70 border-sky-300/60"
+                  ? "bg-sky-100/50 hover:bg-sky-100/70 dark:bg-sky-800/30 dark:hover:bg-sky-800/50 border-sky-300/60 dark:border-sky-600/60"
                   : "border-foreground/20 hover:bg-muted"
               }`}
               onClick={() => setShowMap(!showMap)}
