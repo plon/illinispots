@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { TouchProvider } from "@/components/ui/HybridTooltip";
+import { Providers } from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -74,7 +75,9 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        <TouchProvider>{children}</TouchProvider>
+        <Providers>
+          <TouchProvider>{children}</TouchProvider>
+        </Providers>
       </body>
     </html>
   );
