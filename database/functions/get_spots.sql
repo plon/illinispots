@@ -9,6 +9,8 @@ DECLARE
     minimum_useful_interval INTERVAL;
     check_day TEXT;
 BEGIN
+    SET LOCAL statement_timeout = '6s';
+
     check_day := CASE EXTRACT(DOW FROM check_date)
         WHEN 1 THEN 'M'
         WHEN 2 THEN 'T'

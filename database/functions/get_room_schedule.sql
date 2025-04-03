@@ -15,6 +15,8 @@ DECLARE
     event_record RECORD;
     block_json JSONB;
 BEGIN
+    SET LOCAL statement_timeout = '6s';
+
     -- Determine day character (M, T, W, R, F, S, U)
     check_day := CASE EXTRACT(DOW FROM check_date)
         WHEN 1 THEN 'M' WHEN 2 THEN 'T' WHEN 3 THEN 'W' WHEN 4 THEN 'R'
