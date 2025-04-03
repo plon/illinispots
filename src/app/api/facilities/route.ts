@@ -16,12 +16,12 @@ import {
   RoomStatus,
   AcademicRoom,
   LibraryRoom,
-  RoomReservation,
 } from "@/types";
-import { isLibraryOpen, LIBRARY_HOURS } from "@/utils/libraryHours";
+import { isLibraryOpen } from "@/utils/libraryHours";
 
 export const dynamic = "force-dynamic";
 
+// ===== Library Data Constants =====
 const USER_AGENT = {
   "User-Agent":
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36",
@@ -101,21 +101,19 @@ function extractStudyRooms(htmlContent: string): StudyRoom[] {
 }
 
 /**
- * Retrieves reservation data for a specific library for the relevant date(s)
+ * Retrieves reservation data for a specific library
  */
 async function getReservation(
   lid: string,
-  targetMoment: moment.Moment, // Use targetMoment
+  nowCST: moment.Moment,
 ): Promise<ReservationResponse> {
   const url = "https://uiuc.libcal.com/spaces/availability/grid";
-  const timezone = "America/Chicago";
 
-  // Use the date part of targetMoment
-  const targetDateCST = targetMoment.clone().tz(timezone).startOf("day");
-  const nextDateCST = targetDateCST.clone().add(1, "day");
+  const todayCST = nowCST.clone().startOf("day");
+  const tomorrowCST = todayCST.clone().add(1, "day");
 
-  const startDate = targetDateCST.format("YYYY-MM-DD");
-  const endDate = nextDateCST.format("YYYY-MM-DD");
+  const startDate = todayCST.format("YYYY-MM-DD");
+  const endDate = tomorrowCST.format("YYYY-MM-DD");
 
   const payload = {
     lid: lid,
@@ -124,8 +122,8 @@ async function getReservation(
     seat: "false",
     seatId: "0",
     zone: "0",
-    start: startDate, // Fetch for the target date
-    end: endDate, // Fetch until the start of the next date
+    start: startDate,
+    end: endDate,
     pageIndex: "0",
     pageSize: "10000",
   };
@@ -146,12 +144,11 @@ async function getReservation(
   });
   const reservationsToday = responseToday.data as ReservationResponse;
 
-  // Funk ACES needs data for the *next* day as well because reservations run past midnight
   if (lid === "3604") {
-    const dayAfterNextCST = nextDateCST.clone().add(1, "day");
+    const dayAfterTomorrowCST = tomorrowCST.clone().add(1, "day");
 
-    payload.start = endDate; // Start from the next date
-    payload.end = dayAfterNextCST.format("YYYY-MM-DD"); // End at the start of the day after
+    payload.start = endDate;
+    payload.end = dayAfterTomorrowCST.format("YYYY-MM-DD");
 
     const responseTomorrow = await axios.post(
       url,
@@ -171,29 +168,25 @@ async function getReservation(
 }
 
 /**
- * Calculates the total duration of continuous availability starting from a specific slot/time
+ * Calculates the total duration of continuous availability
  */
 function calculateAvailabilityDuration(
   slots: ReservationResponse["slots"],
   startIndex: number,
-  fromTime: moment.Moment, // Time to calculate duration *from*
-  libraryClosingTime: moment.Moment | null, // Pass closing time, null if not applicable
+  fromTime: moment.Moment,
+  acesClosingTime: moment.Moment,
 ): number {
+  // Initial slot
   const currentSlot = slots[startIndex];
-  const timezone = "America/Chicago";
-  let endTime = moment.tz(currentSlot.end, timezone);
+  const isAcesLibrary = currentSlot.itemId === 3604;
+  let endTime = moment.tz(currentSlot.end, "America/Chicago");
 
-  // Apply library closing time if provided and relevant
-  if (libraryClosingTime && endTime.isAfter(libraryClosingTime)) {
-    endTime = libraryClosingTime.clone();
+  // Apply library closing time if needed
+  if (isAcesLibrary && endTime.isAfter(acesClosingTime)) {
+    endTime = acesClosingTime.clone();
   }
 
-  // Ensure the slot actually ends after the 'fromTime'
-  if (endTime.isSameOrBefore(fromTime)) {
-    return 0;
-  }
-
-  // Initial duration (from 'fromTime' to the end of the current slot)
+  // Initial duration (either from current time or slot start)
   let duration = endTime.diff(fromTime, "minutes");
 
   // Check for contiguous future slots
@@ -202,248 +195,144 @@ function calculateAvailabilityDuration(
 
   while (i < slots.length) {
     const nextSlot = slots[i];
-    // Stop if the next slot is a reservation
     if (nextSlot.className === "s-lc-eq-checkout") break;
 
-    const nextStart = moment.tz(nextSlot.start, timezone);
-    let nextEnd = moment.tz(nextSlot.end, timezone);
+    const nextStart = moment.tz(nextSlot.start, "America/Chicago");
+    let nextEnd = moment.tz(nextSlot.end, "America/Chicago");
 
-    // Check if truly contiguous (start time matches the previous end time)
+    // Check if truly contiguous
     if (!lastEnd.isSame(nextStart)) break;
 
     // Apply closing time cap if needed
-    if (libraryClosingTime) {
-      // If the next slot starts *after* closing, it's irrelevant
-      if (nextStart.isSameOrAfter(libraryClosingTime)) break;
-      // If the next slot ends after closing, cap it at the closing time
-      if (nextEnd.isAfter(libraryClosingTime)) {
-        nextEnd = libraryClosingTime.clone();
+    if (isAcesLibrary) {
+      if (nextStart.isAfter(acesClosingTime)) break;
+      if (nextEnd.isAfter(acesClosingTime)) {
+        nextEnd = acesClosingTime.clone();
       }
     }
 
-    // Add the duration of this contiguous slot
     duration += nextEnd.diff(nextStart, "minutes");
-    lastEnd = nextEnd; // Update the end time for the next iteration
+    lastEnd = nextEnd;
     i++;
   }
 
-  return Math.max(0, duration); // Ensure duration is not negative
+  return duration;
 }
 
 /**
- * Determines if a room will be available soon (within 20 minutes) based on the target time
+ * Determines if a room will be available soon (within 20 minutes)
  */
-const isOpeningSoon = (
-  availableAt: string, // HH:mm:ss format
-  targetMoment: moment.Moment, // Use targetMoment
-): boolean => {
-  const timezone = "America/Chicago";
-  // Construct the potential opening time on the targetMoment's date
-  const availableTime = moment.tz(
-    `${targetMoment.format("YYYY-MM-DD")} ${availableAt}`,
-    "YYYY-MM-DD HH:mm:ss",
-    timezone,
-  );
+const isOpeningSoon = (availableAt: string): boolean => {
+  const now = moment().tz("America/Chicago");
 
-  // If the calculated availableTime is *before* the targetMoment (on the same day),
-  // it means the opening time must be on the *next* day.
-  if (availableTime.isBefore(targetMoment)) {
+  const availableTime = moment(availableAt, "HH:mm:ss").tz("America/Chicago");
+
+  // If the available time is before now, assume it refers to the next day.
+  if (availableTime.isBefore(now)) {
     availableTime.add(1, "day");
   }
 
-  const diffInMinutes = availableTime.diff(targetMoment, "minutes");
-  // Check if it's opening within the next 20 minutes (inclusive of 0)
-  return diffInMinutes <= 20 && diffInMinutes >= 0;
+  const diffInMinutes = availableTime.diff(now, "minutes");
+  return diffInMinutes <= 20 && diffInMinutes > 0;
 };
 
 /**
- * Gets the closing time moment object for a library on a specific date.
- * Returns null if hours are not defined or invalid.
- */
-function getLibraryClosingTime(
-  libraryName: string,
-  targetDate: moment.Moment,
-): moment.Moment | null {
-  const timezone = "America/Chicago";
-  const dayOfWeek = targetDate.format("dddd");
-  const hours = LIBRARY_HOURS[libraryName]?.[dayOfWeek];
-
-  if (!hours || !hours.close) {
-    return null;
-  }
-
-  const closingMoment = moment.tz(
-    `${targetDate.format("YYYY-MM-DD")} ${hours.close}`,
-    "YYYY-MM-DD HH:mm", // Assume HH:mm format from LIBRARY_HOURS
-    timezone,
-  );
-
-  // If the closing time is on the next day (e.g., 02:00), add a day
-  if (hours.nextDay) {
-    closingMoment.add(1, "day");
-  }
-
-  return closingMoment.isValid() ? closingMoment : null;
-}
-
-/**
- * Links room data with reservation data to create a complete picture of room availability at a specific time
+ * Links room data with reservation data to create a complete picture of room availability
  */
 function linkRoomsReservations(
   roomsData: StudyRoom[],
   reservationsData: ReservationResponse,
-  targetMoment: moment.Moment, // Use targetMoment
+  nowCST: moment.Moment,
 ): RoomReservations {
   const roomReservations: RoomReservations = {};
   const libraryIds = new Set(
     Object.values(libraries).map((lib) => parseInt(lib.id)),
   );
-  const timezone = "America/Chicago";
-  const targetDateCST = targetMoment.clone().tz(timezone).startOf("day");
+  const todayCST = nowCST.clone().startOf("day");
+
+  // Compute the correct closing time for FUNK ACES Library.
+  const acesClosingTime = nowCST.isBefore(todayCST.clone().add(2, "hours"))
+    ? todayCST.clone().add(2, "hours")
+    : todayCST.clone().add(1, "day").startOf("day").add(2, "hours");
 
   for (const room of roomsData) {
     if (!libraryIds.has(room.lid)) continue;
-
-    const libraryName = Object.values(libraries).find(
-      (l) => l.id === room.lid.toString(),
-    )?.name;
-    if (!libraryName) continue; // Should not happen
 
     const roomId = room.eid;
     const roomSlots: TimeSlot[] = [];
     let availableAt: string | undefined = undefined;
     let availableDuration: number = 0;
     let isCurrentlyAvailable = false;
-    let roomStatus: RoomStatus = RoomStatus.RESERVED; // Default status
 
-    // Determine the relevant closing time for this library on the target date
-    const libraryClosingTime = getLibraryClosingTime(
-      libraryName,
-      targetDateCST,
-    );
-
-    // Filter slots relevant to the room and sort them
     const roomSpecificSlots = reservationsData.slots
       .filter((slot) => slot.itemId === roomId)
       .sort((a, b) => moment(a.start).valueOf() - moment(b.start).valueOf());
 
-    let nextAvailableSlotIndex = -1;
-    let nextAvailableStartTime: moment.Moment | null = null;
+    let availableAtDiff: number | null = null;
 
     for (let index = 0; index < roomSpecificSlots.length; index++) {
       const slot = roomSpecificSlots[index];
-      const startTime = moment.tz(slot.start, timezone);
-      const endTime = moment.tz(slot.end, timezone);
-      const isAvailableSlot = slot.className !== "s-lc-eq-checkout";
+      const startTime = moment.tz(slot.start, "America/Chicago");
+      const endTime = moment.tz(slot.end, "America/Chicago");
+      const isAvailable = slot.className !== "s-lc-eq-checkout";
 
-      // Add slot to the list for display if it starts on or after the target date
-      // (We need the full day's schedule for context)
-      if (startTime.isSameOrAfter(targetDateCST)) {
-        // Ensure end time doesn't exceed library closing time for display consistency
-        let displayEndTime = endTime;
-        if (libraryClosingTime && displayEndTime.isAfter(libraryClosingTime)) {
-          displayEndTime = libraryClosingTime;
-        }
-        // Only add if start is before potential closing time
-        if (!libraryClosingTime || startTime.isBefore(libraryClosingTime)) {
-          roomSlots.push({
-            start: startTime.format("HH:mm:ss"),
-            end: displayEndTime.format("HH:mm:ss"),
-            available: isAvailableSlot,
-          });
-        }
-      }
-
-      // --- Determine Status AT targetMoment ---
-
-      // 1. Check if the slot is *currently* available at targetMoment
+      // Condition to include the slot (for today or for ACES’s next-day hours)
       if (
-        isAvailableSlot &&
-        startTime.isSameOrBefore(targetMoment) &&
-        endTime.isAfter(targetMoment)
+        startTime.isSame(todayCST, "day") ||
+        (room.lid === 3604 &&
+          startTime.isAfter(todayCST) &&
+          startTime.isBefore(acesClosingTime))
       ) {
-        // Check if it's actually within library hours if closing time is known
-        if (!libraryClosingTime || targetMoment.isBefore(libraryClosingTime)) {
+        roomSlots.push({
+          start: startTime.format("HH:mm:ss"),
+          end: endTime.format("HH:mm:ss"),
+          available: isAvailable,
+        });
+
+        // Check if the slot is currently in progress.
+        if (
+          startTime.isSameOrBefore(nowCST) &&
+          endTime.isAfter(nowCST) &&
+          isAvailable
+        ) {
           isCurrentlyAvailable = true;
-          roomStatus = RoomStatus.AVAILABLE;
-          // Calculate duration from targetMoment until end of contiguous block or closing time
           availableDuration = calculateAvailabilityDuration(
             roomSpecificSlots,
             index,
-            targetMoment, // Start calculating from targetMoment
-            libraryClosingTime,
+            nowCST,
+            acesClosingTime,
           );
-          // Once found, no need to look for 'availableAt'
-          nextAvailableSlotIndex = -1;
-          break; // Found current status, move to next room
+        }
+
+        const diffInMinutes = startTime.diff(nowCST, "minutes");
+        if (
+          !isCurrentlyAvailable &&
+          isAvailable &&
+          diffInMinutes > 0 &&
+          (availableAtDiff === null || diffInMinutes < availableAtDiff)
+        ) {
+          availableAt = startTime.format("HH:mm:ss");
+          availableAtDiff = diffInMinutes;
+          availableDuration = calculateAvailabilityDuration(
+            roomSpecificSlots,
+            index,
+            startTime,
+            acesClosingTime,
+          );
         }
       }
-
-      // 2. If not currently available, find the *next* available slot starting *after* targetMoment
-      if (
-        !isCurrentlyAvailable &&
-        isAvailableSlot &&
-        startTime.isAfter(targetMoment)
-      ) {
-        // Ensure the potential next slot starts before the library closes
-        if (!libraryClosingTime || startTime.isBefore(libraryClosingTime)) {
-          // If this is the first future available slot we've found
-          if (nextAvailableSlotIndex === -1) {
-            nextAvailableSlotIndex = index;
-            nextAvailableStartTime = startTime;
-          }
-          // We only need the *first* one after targetMoment that's within hours
-          // Continue loop to ensure all slots are added to roomSlots array
-        }
-      }
-    } // End loop through slots for the room
-
-    // If not currently available, but we found a future available slot
-    if (
-      !isCurrentlyAvailable &&
-      nextAvailableSlotIndex !== -1 &&
-      nextAvailableStartTime
-    ) {
-      availableAt = nextAvailableStartTime.format("HH:mm:ss");
-      // Calculate duration from the start of that future slot
-      availableDuration = calculateAvailabilityDuration(
-        roomSpecificSlots,
-        nextAvailableSlotIndex,
-        nextAvailableStartTime, // Start calculating from the slot's start time
-        libraryClosingTime,
-      );
-
-      // Determine if it's "Opening Soon"
-      if (
-        availableAt &&
-        isOpeningSoon(availableAt, targetMoment) &&
-        availableDuration >= 30
-      ) {
-        roomStatus = RoomStatus.OPENING_SOON;
-      } else {
-        // It's available later, but not "soon", keep status as RESERVED/OCCUPIED for now
-        roomStatus = RoomStatus.RESERVED;
-      }
-    } else if (!isCurrentlyAvailable) {
-      // Not available now and no future availability found within operating hours
-      roomStatus = RoomStatus.RESERVED;
     }
 
-    // Ensure duration is non-negative
-    availableDuration = Math.max(0, availableDuration);
-
-    // Assign to the result map
     roomReservations[room.title] = {
       id: roomId,
       url: room.url,
       lid: room.lid,
       grouping: room.grouping,
       thumbnail: room.thumbnail,
-      slots: roomSlots, // Include all relevant slots for display
+      slots: roomSlots,
       availableAt,
       availableDuration,
-      status: roomStatus, // Set the calculated status
-    } as RoomReservation; // Cast to RoomReservation type
+    };
   }
 
   return roomReservations;
@@ -452,20 +341,20 @@ function linkRoomsReservations(
 // ===== Library Hours Functions =====
 
 /**
- * Gets formatted library data with room availability for a specific time
+ * Gets formatted library data with room availability
  */
 async function getFormattedLibraryData(
-  openLibraries: string[], // Libraries determined to be open at targetMoment
-  targetMoment: moment.Moment, // Use targetMoment
+  openLibraries?: string[],
+  nowCST?: moment.Moment,
 ): Promise<FormattedLibraryData> {
   const result: FormattedLibraryData = {};
+  nowCST = nowCST || moment().tz("America/Chicago");
 
-  if (openLibraries.length === 0) {
-    return result; // No open libraries to process
+  if (openLibraries && openLibraries.length === 0) {
+    return result;
   }
 
   try {
-    // Fetching all spaces HTML is independent of time, still needed for room metadata
     const allSpacesUrl = "https://uiuc.libcal.com/allspaces";
     const allSpacesResponse = await axios.get(allSpacesUrl, {
       headers: USER_AGENT,
@@ -483,40 +372,48 @@ async function getFormattedLibraryData(
       roomsByLibrary[lid].push(room);
     });
 
-    // Process only the libraries that are open at targetMoment
-    const libraryPromises = openLibraries.map(async (libraryName) => {
-      const libraryInfo = libraries[libraryName];
-      if (!libraryInfo) return null; // Should not happen if openLibraries is correct
-
-      const lid = libraryInfo.id;
-      // Get reservation data relevant to the targetMoment
-      const reservationData = await getReservation(lid, targetMoment);
-      const libraryRooms = roomsByLibrary[lid] || [];
-      // Link reservations using targetMoment
-      const roomReservations = linkRoomsReservations(
-        libraryRooms,
-        reservationData,
-        targetMoment,
-      );
-
-      // Count available rooms AT targetMoment based on the status set by linkRoomsReservations
-      let availableCount = 0;
-      for (const room of Object.values(roomReservations)) {
-        if (room.status === RoomStatus.AVAILABLE) {
-          availableCount++;
+    // Process libraries we care about in parallel
+    const libraryPromises = Object.entries(libraries).map(
+      async ([libraryName, libraryInfo]) => {
+        // Skip libraries that aren't open if we have a filtered list
+        if (openLibraries && !openLibraries.includes(libraryName)) {
+          return null;
         }
-      }
 
-      return {
-        libraryName,
-        data: {
-          room_count: Object.keys(roomReservations).length,
-          currently_available: availableCount, // Reflects availability AT targetMoment
-          rooms: roomReservations,
-          address: libraryInfo.address,
-        },
-      };
-    });
+        const lid = libraryInfo.id;
+        const reservationData = await getReservation(lid, nowCST);
+        const libraryRooms = roomsByLibrary[lid] || [];
+        const roomReservations = linkRoomsReservations(
+          libraryRooms,
+          reservationData,
+          nowCST,
+        );
+
+        // Count available rooms
+        let availableCount = 0;
+        for (const room of Object.values(roomReservations)) {
+          const currentlyAvailable = room.slots.some(
+            (slot) =>
+              slot.available &&
+              slot.start <= nowCST.format("HH:mm:ss") &&
+              slot.end > nowCST.format("HH:mm:ss"),
+          );
+          if (currentlyAvailable) {
+            availableCount++;
+          }
+        }
+
+        return {
+          libraryName,
+          data: {
+            room_count: Object.keys(roomReservations).length,
+            currently_available: availableCount,
+            rooms: roomReservations,
+            address: libraryInfo.address,
+          },
+        };
+      },
+    );
 
     const libraryResults = await Promise.all(libraryPromises);
 
@@ -528,7 +425,6 @@ async function getFormattedLibraryData(
     });
   } catch (error) {
     console.error("Error fetching library data:", error);
-    // Consider how to handle partial errors if needed
   }
 
   return result;
@@ -537,10 +433,10 @@ async function getFormattedLibraryData(
 // ===== Main API Handler =====
 
 /**
- * Fetches academic building data from Supabase for a specific time
+ * Fetches academic building data from Supabase
  */
 async function fetchAcademicBuildingData(
-  targetMoment: moment.Moment,
+  nowCST: moment.Moment,
 ): Promise<Record<string, Facility>> {
   const facilities: Record<string, Facility> = {};
 
@@ -557,82 +453,44 @@ async function fetchAcademicBuildingData(
     );
 
     const { data: buildingData, error } = await supabase.rpc("get_spots", {
-      check_time: targetMoment.format("HH:mm:ss"),
-      check_date: targetMoment.format("YYYY-MM-DD"),
-      minimum_useful_minutes: 30, 
+      check_time: nowCST.format("HH:mm:ss"),
+      check_date: nowCST.format("YYYY-MM-DD"),
+      minimum_useful_minutes: 30,
     });
 
     if (error) {
-      console.error("Error fetching building data from Supabase:", error);
-      return facilities; // Return empty on error
+      console.error("Error fetching building data:", error);
+      return facilities;
     }
 
-    // Process Supabase response
     if (buildingData?.buildings) {
-      Object.entries(buildingData.buildings).forEach(([id, buildingInfo]) => {
-        const building = buildingInfo as {
+      Object.entries(buildingData.buildings).forEach(([id, buildingData]) => {
+        // Type assertion for building data
+        const building = buildingData as {
           name: string;
           coordinates: { latitude: number; longitude: number };
           hours: { open: string; close: string };
-          rooms: Record<
-            string,
-            Omit<AcademicRoom, "type" | "status"> & {
-              status: "available" | "occupied"; 
-              available: boolean;
-              passingPeriod?: boolean;
-              availableAt?: string;
-              availableFor?: number;
-              availableUntil?: string;
-              currentClass?: any;
-              nextClass?: any;
-            }
-          >;
+          rooms: Record<string, Omit<AcademicRoom, "type">>; // Changed from FacilityRoom to any
           isOpen: boolean;
-          roomCounts: { available: number; total: number }; // Counts based on check_time
+          roomCounts: { available: number; total: number };
         };
 
+        // Create the academic facility
         const academicFacility: Facility = {
           id,
           name: building.name,
           type: FacilityType.ACADEMIC,
           coordinates: building.coordinates,
-          hours: building.hours, // These hours are for the *day*
-          isOpen: building.isOpen, // This reflects if open AT targetMoment
-          roomCounts: building.roomCounts, // Counts are based on targetMoment
+          hours: building.hours,
+          isOpen: building.isOpen,
+          roomCounts: building.roomCounts,
           rooms: {},
         };
 
         Object.entries(building.rooms).forEach(([roomNumber, roomData]) => {
-          let status: RoomStatus;
-          if (roomData.status === "available") {
-            if (roomData.passingPeriod) {
-              status = RoomStatus.PASSING_PERIOD;
-            } else {
-              status = RoomStatus.AVAILABLE;
-            }
-          } else {
-            if (
-              roomData.availableAt &&
-              isOpeningSoon(roomData.availableAt, targetMoment) &&
-              roomData.availableFor &&
-              roomData.availableFor >= 30
-            ) {
-              status = RoomStatus.OPENING_SOON;
-            } else {
-              status = RoomStatus.OCCUPIED;
-            }
-          }
-
           academicFacility.rooms[roomNumber] = {
             type: "academic",
-            status: status,
-            currentClass: roomData.currentClass,
-            nextClass: roomData.nextClass,
-            availableAt: roomData.availableAt,
-            availableFor: roomData.availableFor
-              ? Math.max(0, roomData.availableFor)
-              : undefined, // Ensure non-negative
-            availableUntil: roomData.availableUntil,
+            ...roomData,
           } as AcademicRoom;
         });
 
@@ -647,7 +505,7 @@ async function fetchAcademicBuildingData(
 }
 
 /**
- * Initializes library facilities with basic information (independent of time)
+ * Initializes library facilities with basic information
  */
 function initializeLibraryFacilities(): Record<string, Facility> {
   return {
@@ -659,9 +517,9 @@ function initializeLibraryFacilities(): Record<string, Facility> {
         latitude: 40.11247372608236,
         longitude: -88.2268586691797,
       },
-      hours: { open: "", close: "" }, // Will be updated if needed
+      hours: { open: "", close: "" },
       rooms: {},
-      isOpen: false, // Will be updated based on target time
+      isOpen: false,
       roomCounts: { available: 0, total: 0 },
       address: "1301 W Springfield Ave, Urbana, IL 61801",
     },
@@ -697,54 +555,66 @@ function initializeLibraryFacilities(): Record<string, Facility> {
 }
 
 /**
- * Updates library facilities with room availability data for a specific time
+ * Updates library facilities with room availability data
  */
 async function updateLibraryFacilities(
   libraryFacilities: Record<string, Facility>,
-  targetMoment: moment.Moment, // Use targetMoment
+  nowCST: moment.Moment,
 ): Promise<Record<string, Facility>> {
   try {
-    // Update each library's isOpen status based on the targetMoment
+    // Update each library's isOpen status
     Object.entries(libraryFacilities).forEach(([libraryName, facility]) => {
-      facility.isOpen = isLibraryOpen(libraryName, targetMoment);
-
-      // Update facility.hours based on the day of targetMoment
-      const dayOfWeek = targetMoment.format("dddd");
-      const dailyHours = LIBRARY_HOURS[libraryName]?.[dayOfWeek];
-      facility.hours.open = dailyHours?.open ?? "";
-      facility.hours.close = dailyHours?.close ?? "";
+      facility.isOpen = isLibraryOpen(libraryName);
     });
 
-    // Filter libraries that are open AT targetMoment
     const openLibraryNames = Object.entries(libraryFacilities)
       .filter(([, facility]) => facility.isOpen)
       .map(([name]) => name);
 
     if (openLibraryNames.length > 0) {
-      // Get library data for open libraries using targetMoment
+      // Get library data for open libraries only
       const libraryData = await getFormattedLibraryData(
         openLibraryNames,
-        targetMoment,
+        nowCST,
       );
 
-      // Add room data only for libraries that are open AT targetMoment
+      // Add room data only for libraries that are open
       Object.entries(libraryData).forEach(([name, data]) => {
-        const libraryFacility = libraryFacilities[name];
-        if (libraryFacility?.isOpen) {
-          // Update counts based on availability AT targetMoment
+        if (libraryFacilities[name]?.isOpen) {
+          const libraryFacility = libraryFacilities[name];
+
           libraryFacility.roomCounts = {
             available: data.currently_available,
             total: data.room_count,
           };
 
-          // Convert library rooms to FacilityRoom format using data from linkRoomsReservations
+          // Convert library rooms to FacilityRoom format
           Object.entries(data.rooms).forEach(([roomName, roomData]) => {
+            const isAvailable = roomData.slots.some((slot) => {
+              const currentTime = nowCST.format("HH:mm:ss");
+              return (
+                slot.available &&
+                slot.start <= currentTime &&
+                currentTime < slot.end
+              );
+            });
+
+            const willBeAvailableSoon =
+              !isAvailable &&
+              roomData.availableAt &&
+              isOpeningSoon(roomData.availableAt) &&
+              roomData.availableDuration >= 30;
+
             libraryFacility.rooms[roomName] = {
               type: "library",
-              status: roomData.status, // Use status calculated in linkRoomsReservations
+              status: isAvailable
+                ? RoomStatus.AVAILABLE
+                : willBeAvailableSoon
+                  ? RoomStatus.OPENING_SOON
+                  : RoomStatus.RESERVED,
               url: roomData.url,
               thumbnail: roomData.thumbnail,
-              slots: roomData.slots, // Keep all slots for display
+              slots: roomData.slots,
               availableAt: roomData.availableAt,
               availableFor: roomData.availableDuration,
             } as LibraryRoom;
@@ -765,40 +635,11 @@ async function updateLibraryFacilities(
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const dateParam = url.searchParams.get("date");
-    const timeParam = url.searchParams.get("time"); // Expect HH:mm:ss
     const includeAcademic = url.searchParams.get("academic") !== "false";
     const includeLibraries = url.searchParams.get("libraries") !== "false";
 
-    let targetMoment: moment.Moment;
-    const timezone = "America/Chicago";
-
-    // Validate and parse date/time parameters
-    if (
-      dateParam &&
-      timeParam &&
-      moment(
-        `${dateParam} ${timeParam}`,
-        "YYYY-MM-DD HH:mm:ss", // Strict parsing
-        true, // Use strict parsing
-      ).isValid()
-    ) {
-      targetMoment = moment.tz(
-        `${dateParam} ${timeParam}`,
-        "YYYY-MM-DD HH:mm:ss",
-        timezone,
-      );
-    } else {
-      // Default to current time if params are missing or invalid
-      targetMoment = moment().tz(timezone);
-      if (dateParam || timeParam) {
-        console.warn(
-          `Invalid date/time parameters received (date: ${dateParam}, time: ${timeParam}). Defaulting to current time.`,
-        );
-      }
-    }
-
-    const timestamp = targetMoment.toISOString();
+    const nowCST = moment().tz("America/Chicago");
+    const timestamp = nowCST.format();
 
     const facilityStatus: FacilityStatus = {
       timestamp,
@@ -808,14 +649,12 @@ export async function GET(request: Request) {
     const fetchPromises: Promise<Record<string, Facility>>[] = [];
 
     if (includeAcademic) {
-      fetchPromises.push(fetchAcademicBuildingData(targetMoment));
+      fetchPromises.push(fetchAcademicBuildingData(nowCST));
     }
 
     if (includeLibraries) {
       const libraryFacilities = initializeLibraryFacilities();
-      fetchPromises.push(
-        updateLibraryFacilities(libraryFacilities, targetMoment),
-      );
+      fetchPromises.push(updateLibraryFacilities(libraryFacilities, nowCST));
     }
 
     const results = await Promise.all(fetchPromises);
@@ -827,8 +666,9 @@ export async function GET(request: Request) {
     return NextResponse.json(facilityStatus);
   } catch (error) {
     console.error("Error in unified API:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Failed to fetch data";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch data" },
+      { status: 500 },
+    );
   }
 }
