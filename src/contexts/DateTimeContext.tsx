@@ -12,14 +12,16 @@ interface DateTimeContextType {
   resetToCurrentDateTime: () => void;
 }
 
-const DateTimeContext = createContext<DateTimeContextType | undefined>(undefined);
+const DateTimeContext = createContext<DateTimeContextType | undefined>(
+  undefined,
+);
 
 export function DateTimeProvider({ children }: { children: ReactNode }) {
   const [selectedDateTime, setSelectedDateTime] = useState<Date>(new Date());
 
   // Format the date as YYYY-MM-DD for API calls
   const formattedDate = moment(selectedDateTime).format("YYYY-MM-DD");
-  
+
   // Format the time as HH:mm:ss for API calls
   const formattedTime = moment(selectedDateTime).format("HH:mm:ss");
 
@@ -55,7 +57,9 @@ export function DateTimeProvider({ children }: { children: ReactNode }) {
 export function useDateTimeContext() {
   const context = useContext(DateTimeContext);
   if (context === undefined) {
-    throw new Error("useDateTimeContext must be used within a DateTimeProvider");
+    throw new Error(
+      "useDateTimeContext must be used within a DateTimeProvider",
+    );
   }
   return context;
 }
