@@ -59,8 +59,10 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
         <HybridTooltipTrigger asChild>
           <div
             className={`h-14 border border-border ${getWidth()} ${
-              slot.available ? "bg-green-200" : "bg-red-200"
-            } hover:opacity-80 transition-opacity`}
+              slot.available
+                ? "bg-green-200 hover:bg-green-300"
+                : "bg-red-200 hover:bg-red-300"
+            } transition-colors duration-150`}
           />
         </HybridTooltipTrigger>
         <HybridTooltipContent className="w-fit p-1.5">
