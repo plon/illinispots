@@ -118,6 +118,7 @@ export interface RoomReservation {
   slots: TimeSlot[];
   availableAt: string | undefined;
   availableDuration: number;
+  status: RoomStatus;
 }
 
 export interface RoomReservations {

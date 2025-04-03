@@ -1,4 +1,3 @@
-// src/components/left.tsx
 import React, {
   useRef,
   Dispatch,
@@ -19,8 +18,15 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Facility, FacilityStatus, FacilityType, AccordionRefs } from "@/types";
-import { Github, Map as MapIcon, TriangleAlert, Search } from "lucide-react";
+import {
+  Github,
+  Map as MapIcon,
+  TriangleAlert,
+  Search,
+  LoaderPinwheel,
+} from "lucide-react";
 import FacilityAccordion from "@/components/FacilityAccordion";
+import DateTimeButton from "@/components/DateTimeButton";
 
 interface LeftSidebarProps {
   facilityData: FacilityStatus | null;
@@ -28,6 +34,7 @@ interface LeftSidebarProps {
   setShowMap: Dispatch<SetStateAction<boolean>>;
   expandedItems: string[];
   setExpandedItems: Dispatch<SetStateAction<string[]>>;
+  isFetching: boolean;
 }
 
 const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -36,10 +43,11 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   setShowMap,
   expandedItems,
   setExpandedItems,
+  isFetching,
 }) => {
   const accordionRefs = useRef<AccordionRefs>({});
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
-  const [searchTerm, setSearchTerm] = useState(""); // State for the search term
+  const [searchTerm, setSearchTerm] = useState("");
 
   const scrollToAccordion = useCallback((accordionId: string) => {
     const element = accordionRefs.current[accordionId];
@@ -49,7 +57,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
           behavior: "smooth",
           block: "nearest",
         });
-      }, 100); // Delay slightly to allow accordion animation if at bottom of page
+      }, 100);
     }
   }, []);
 
@@ -67,7 +75,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
   const prevExpandedItemsRef = useRef<string[]>([]);
 
-  // Add scroll into view effect when items expand
   useEffect(() => {
     const newItems = expandedItems.filter(
       (item) => !prevExpandedItemsRef.current.includes(item),
@@ -78,11 +85,10 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     prevExpandedItemsRef.current = expandedItems;
   }, [expandedItems, scrollToAccordion]);
 
-  // Filter facilities based on search term (case-insensitive)
   const filterFacilities = useCallback(
     (facilities: Facility[]) => {
       if (!searchTerm) {
-        return facilities; // No filter applied
+        return facilities;
       }
       const lowerCaseSearchTerm = searchTerm.toLowerCase();
       return facilities.filter((facility) =>
@@ -111,19 +117,14 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   }, [facilityData, filterFacilities]);
 
   return (
-    <div className="h-full bg-background border-t md:border-t-0 md:border-l flex flex-col">
-      {/* Header Section */}
+    <div className="h-full bg-background border-t md:border-t-0 md:border-l flex flex-col relative">
       <div className="py-1 pl-3 pr-3 md:p-4 border-b flex flex-col">
         <div className="flex justify-between items-center w-full">
-          {/* Top part of header */}
           <div>
             <h1 className="text-xl md:text-2xl font-bold">
               <span style={{ color: "#FF5F05" }}>illini</span>
               <span style={{ color: "#13294B" }}>Spots</span>
             </h1>
-            {/* <p className="text-xs md:text-sm text-muted-foreground">
-              Find available study spaces
-            </p> */}
           </div>
           <div className="flex gap-2 items-center pt-1">
             <a
@@ -167,6 +168,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 </div>
               </PopoverContent>
             </Popover>
+            <DateTimeButton isFetching={isFetching} />
             <Button
               variant="outline"
               size="icon"
@@ -180,16 +182,13 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             </Button>
           </div>
         </div>
-        {/* Search Bar */}
         <div className="mt-2 md:mt-3 w-full relative">
-          {" "}
           <Search
             className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
             aria-hidden="true"
           />
           <Input
             type="search"
-            // placeholder="Search facilities..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-8 h-6 md:h-8 rounded-full"
@@ -198,9 +197,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         </div>
       </div>
 
-      {/* Scrollable Accordion Area */}
       <ScrollArea className="flex-1" ref={scrollAreaRef}>
-        {/* Libraries Section */}
+        {" "}
         {libraryFacilities.length > 0 ? (
           <div className="mt-2">
             <h2 className="text-sm font-normal text-muted-foreground pl-6">
@@ -221,8 +219,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             </Accordion>
           </div>
         ) : searchTerm && academicFacilities.length === 0 ? null : null}
-        {/* Don't show header if search term exists and no libraries found (unless academic also has 0) */}
-
         {/* Academic Buildings Section */}
         {academicFacilities.length > 0 ? (
           <div className="mt-5">
@@ -244,8 +240,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             </Accordion>
           </div>
         ) : searchTerm && libraryFacilities.length === 0 ? null : null}
-        {/* Don't show header if search term exists and no academic found (unless library also has 0) */}
-
         {/* No Results Message */}
         {searchTerm &&
           libraryFacilities.length === 0 &&
@@ -254,7 +248,16 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
               No facilities found matching &quot;{searchTerm}&quot;
             </p>
           )}
+        <div className="h-4"></div>
       </ScrollArea>
+
+      {/* Dimming Overlay*/}
+      {isFetching && (
+        // Covers the entire parent div (which is the whole sidebar)
+        <div className="absolute inset-0 bg-background/70 flex items-center justify-center z-10 pointer-events-none">
+          <LoaderPinwheel className="h-6 w-6 animate-spin text-primary" />
+        </div>
+      )}
     </div>
   );
 };

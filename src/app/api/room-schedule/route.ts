@@ -10,22 +10,41 @@ export async function GET(request: Request) {
   const buildingId = searchParams.get("buildingId");
   const roomNumber = searchParams.get("roomNumber");
   let date = searchParams.get("date");
+  const time = searchParams.get("time");
 
+  // Default to current date/time if not provided
   const nowCST = moment().tz("America/Chicago");
-  const nowTimeStr = nowCST.format("HH:mm:ss"); // For comparison
 
-  // Calculate floored time (round down to nearest 10 minutes)
-  const currentMinutes = nowCST.minutes();
-  const flooredMinutes = Math.floor(currentMinutes / 10) * 10;
-  const flooredNowCST = nowCST.clone().minutes(flooredMinutes).seconds(0).milliseconds(0);
-  const flooredNowTimeStr = flooredNowCST.format("HH:mm:ss"); // For setting start time
-
-  // Default to current date if not provided
+  // Use provided date or default to current date
   if (!date) {
     date = nowCST.format("YYYY-MM-DD");
   }
 
-  // --- Parameter Validation ---
+  // Use provided time or default to current time
+  let targetCST;
+  if (time) {
+    targetCST = moment.tz(`${date}T${time}`, "America/Chicago");
+
+    if (!targetCST.isValid()) {
+      console.warn("Invalid time parameter, using current time instead");
+      targetCST = nowCST.clone();
+    }
+  } else {
+    targetCST = nowCST.clone();
+  }
+
+  const targetTimeStr = targetCST.format("HH:mm:ss"); // For comparison
+
+  // Calculate floored time (round down to nearest 10 minutes)
+  const targetMinutes = targetCST.minutes();
+  const flooredMinutes = Math.floor(targetMinutes / 10) * 10;
+  const flooredTargetCST = targetCST
+    .clone()
+    .minutes(flooredMinutes)
+    .seconds(0)
+    .milliseconds(0);
+  const flooredTargetTimeStr = flooredTargetCST.format("HH:mm:ss"); // For setting start time
+
   if (!buildingId || !roomNumber) {
     return NextResponse.json(
       { error: "Missing required parameters: buildingId and roomNumber" },
@@ -38,7 +57,6 @@ export async function GET(request: Request) {
       { status: 400 },
     );
   }
-  // --- End Validation ---
 
   try {
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
@@ -53,7 +71,6 @@ export async function GET(request: Request) {
       process.env.SUPABASE_KEY!,
     );
 
-    // Call Supabase function for the full day schedule
     const { data, error } = await supabase.rpc("get_room_schedule", {
       building_id_param: buildingId,
       room_number_param: roomNumber,
@@ -68,7 +85,9 @@ export async function GET(request: Request) {
       );
     }
 
-    const fullDaySchedule: RoomScheduleBlock[] = Array.isArray(data) ? data : [];
+    const fullDaySchedule: RoomScheduleBlock[] = Array.isArray(data)
+      ? data
+      : [];
 
     if (fullDaySchedule.length === 0) {
       return NextResponse.json([]);
@@ -80,21 +99,21 @@ export async function GET(request: Request) {
     for (let i = 0; i < fullDaySchedule.length; i++) {
       const block = fullDaySchedule[i];
 
-      // Condition 1: Current time is within this block
-      if (block.start <= nowTimeStr && block.end > nowTimeStr) {
-         // Check if flooring the time makes sense (doesn't push start >= end)
-         if (flooredNowTimeStr < block.end) {
-             firstRelevantIndex = i;
-             needsTruncation = true; // Mark that the start time needs modification
-             break;
-         } else {
-             // Flooring pushes start >= end, treat this block as finished, check next
-             continue;
-         }
+      // Condition 1: Target time is within this block
+      if (block.start <= targetTimeStr && block.end > targetTimeStr) {
+        // Check if flooring the time makes sense (doesn't push start >= end)
+        if (flooredTargetTimeStr < block.end) {
+          firstRelevantIndex = i;
+          needsTruncation = true; // Mark that the start time needs modification
+          break;
+        } else {
+          // Flooring pushes start >= end, treat this block as finished, check next
+          continue;
+        }
       }
 
-      // Condition 2: This block starts at or after the current time
-      if (block.start >= nowTimeStr) {
+      // Condition 2: This block starts at or after the target time
+      if (block.start >= targetTimeStr) {
         firstRelevantIndex = i;
         needsTruncation = false; // No truncation needed, start with original time
         break;
@@ -112,14 +131,13 @@ export async function GET(request: Request) {
         // Create a *new* object for the first block with the modified start time
         relevantSchedule[0] = {
           ...relevantSchedule[0], // Copy original block properties
-          start: flooredNowTimeStr, // Set start to the floored time
+          start: flooredTargetTimeStr, // Set start to the floored time
         };
       }
     }
     // If firstRelevantIndex is -1, relevantSchedule remains empty
 
     return NextResponse.json(relevantSchedule);
-
   } catch (error: unknown) {
     console.error(
       `Error in /api/room-schedule for ${buildingId} - ${roomNumber}:`,

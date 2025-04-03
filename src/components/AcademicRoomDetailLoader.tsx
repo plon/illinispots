@@ -1,8 +1,8 @@
 import React from "react";
-import moment from "moment-timezone";
 import { useQuery } from "@tanstack/react-query";
 import AcademicRoomSchedule from "@/components/AcademicRoomSchedule";
 import { RoomScheduleBlock } from "@/types";
+import { useDateTimeContext } from "@/contexts/DateTimeContext";
 
 interface AcademicRoomDetailLoaderProps {
   buildingId: string;
@@ -13,8 +13,14 @@ const fetchRoomSchedule = async (
   buildingId: string,
   roomNumber: string,
   date: string,
+  time?: string,
 ): Promise<RoomScheduleBlock[]> => {
-  const apiUrl = `/api/room-schedule?buildingId=${encodeURIComponent(buildingId)}&roomNumber=${encodeURIComponent(roomNumber)}&date=${date}`;
+  let apiUrl = `/api/room-schedule?buildingId=${encodeURIComponent(buildingId)}&roomNumber=${encodeURIComponent(roomNumber)}&date=${date}`;
+
+  // Add time parameter if provided
+  if (time) {
+    apiUrl += `&time=${encodeURIComponent(time)}`;
+  }
 
   const response = await fetch(apiUrl);
 
@@ -32,8 +38,8 @@ const AcademicRoomDetailLoader: React.FC<AcademicRoomDetailLoaderProps> = ({
   buildingId,
   roomNumber,
 }) => {
-  const now = moment().tz("America/Chicago");
-  const date = now.format("YYYY-MM-DD");
+  // Get the selected date/time from context
+  const { formattedDate, formattedTime } = useDateTimeContext();
 
   const {
     data: scheduleData,
@@ -41,8 +47,8 @@ const AcademicRoomDetailLoader: React.FC<AcademicRoomDetailLoaderProps> = ({
     isError,
     error,
   } = useQuery<RoomScheduleBlock[], Error>({
-    queryKey: ["roomSchedule", buildingId, roomNumber, date],
-    queryFn: () => fetchRoomSchedule(buildingId, roomNumber, date),
+    queryKey: ["roomSchedule", buildingId, roomNumber, formattedDate, formattedTime],
+    queryFn: () => fetchRoomSchedule(buildingId, roomNumber, formattedDate, formattedTime),
   });
 
   if (isLoading) {

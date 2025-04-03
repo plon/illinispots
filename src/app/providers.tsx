@@ -2,6 +2,7 @@
 
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { DateTimeProvider } from "@/contexts/DateTimeContext";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(
@@ -21,6 +22,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <DateTimeProvider>
+        {children}
+      </DateTimeProvider>
+    </QueryClientProvider>
   );
 }
