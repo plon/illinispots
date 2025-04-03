@@ -2,7 +2,7 @@
 
 illiniSpots is a web application that helps UIUC students find available study spaces and classrooms across campus in real-time. The app shows building availability on an interactive map and provides detailed room status information.
 
-## Features (how would i udpate this?)
+## Features
 
 - **Interactive Map & List View:** Visualize building availability across campus or browse a searchable list.
 - **Real-Time & Future Availability:** Check room status for the current moment or use the **Date/Time Selector** to view availability for _any_ point in the past or future.
