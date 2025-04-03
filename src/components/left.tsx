@@ -114,7 +114,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
   return (
     <div className="h-full bg-background border-t md:border-t-0 md:border-l flex flex-col relative">
-      <div className="py-1 pl-3 pr-3 md:p-4 border-b flex flex-col">
+      <div className="sidebar-header py-1 pl-3 pr-3 md:p-4 border-b flex flex-col">
         <div className="flex justify-between items-center w-full">
           <div>
             <h1 className="text-xl md:text-2xl font-bold">
@@ -126,7 +126,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             <a
               href="https://github.com/plon/illinispots"
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noopener"
               className="h-6 w-6 md:h-8 md:w-8 rounded-full flex items-center justify-center border-2 border-foreground/20 hover:bg-muted"
               aria-label="View source on GitHub"
             >
