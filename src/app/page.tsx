@@ -6,7 +6,7 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import moment from "moment-timezone";
 import LeftSidebar from "@/components/left";
 import FacilityMap from "@/components/map";
-import LoadingScreen from "@/components/LoadingScreen";
+import LoadingScreen from "@/components/LoadingScreen" // Ensure path is correct
 import { FacilityStatus, FacilityType } from "@/types";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
 
@@ -37,10 +37,13 @@ const IlliniSpotsPage: React.FC = () => {
   const [showMap, setShowMap] = useState(true);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
+  const [showLoadingScreen, setShowLoadingScreen] = useState(true);
+  const [mountLoadingScreen, setMountLoadingScreen] = useState(true);
+
   const {
     data: facilityData,
     isLoading,
-    isFetching, // <-- Get isFetching state
+    isFetching,
     error: queryError,
     isSuccess,
   } = useQuery<FacilityStatus, Error>({
@@ -79,7 +82,6 @@ const IlliniSpotsPage: React.FC = () => {
 
       // Use the shared utility function to update the expanded items
       setExpandedItems((prevItems) => {
-        // If already open, don't change anything (unlike toggleItem which would close it)
         if (prevItems.includes(itemId)) {
           return prevItems;
         }
@@ -97,21 +99,39 @@ const IlliniSpotsPage: React.FC = () => {
   const isDataReady = !isLoading && isSuccess && !!facilityData && !error;
   const isMapReady = !showMap || mapLoaded;
   const isUIReady = isDataReady && isMapReady;
-  const displayLoadingScreen = !isUIReady && isLoading; // Show initial loading screen only when isLoading
   const loadingScreenError = error && !isLoading ? error : null;
 
-  // Determine if the sidebar should show a fetching state (dimming)
-  // Show fetching overlay if it's fetching but NOT the initial load
-  const showFetchingOverlay = isFetching && !isLoading;
+  // Effect to trigger the loading screen fade-out when the UI is ready
+  useEffect(() => {
+    if (isUIReady) {
+      setShowLoadingScreen(false);
+    }
+  }, [isUIReady]);
+
+  // Callback function passed to LoadingScreen, called when its fade-out transition ends
+  const handleLoadingScreenExited = useCallback(() => {
+    setMountLoadingScreen(false);
+  }, []);
+
+  const showFetchingOverlay = isFetching && !isLoading; 
+
+  const mainContentClasses = `h-screen flex ${
+    showMap ? "md:flex-row" : ""
+  } flex-col transition-opacity duration-300 ease-in-out ${
+    mountLoadingScreen ? "opacity-0" : "opacity-100"
+  }`;
 
   return (
     <>
-      {displayLoadingScreen && <LoadingScreen error={loadingScreenError} />}
+      {mountLoadingScreen && (
+        <LoadingScreen
+          error={loadingScreenError}
+          show={showLoadingScreen}
+          onExited={handleLoadingScreenExited}
+        />
+      )}
 
-      <div
-        className={`h-screen flex ${showMap ? "md:flex-row" : ""} flex-col`}
-        style={{ visibility: isUIReady || isFetching ? "visible" : "hidden" }} // Keep visible during fetching too
-      >
+      <div className={mainContentClasses}>
         {showMap && (
           <div className="h-[40vh] md:h-screen md:w-[63%] w-full order-1 md:order-2">
             <FacilityMap
@@ -125,7 +145,7 @@ const IlliniSpotsPage: React.FC = () => {
         <div
           className={`${
             showMap ? "md:w-[37%] h-[60vh] md:h-screen" : "h-screen"
-          } w-full flex-1 overflow-hidden order-2 md:order-1 relative`} // Added relative positioning
+          } w-full flex-1 overflow-hidden order-2 md:order-1 relative`}
         >
           <LeftSidebar
             facilityData={isDataReady ? facilityData : null}
@@ -133,7 +153,7 @@ const IlliniSpotsPage: React.FC = () => {
             setExpandedItems={setExpandedItems}
             showMap={showMap}
             setShowMap={setShowMap}
-            isFetching={showFetchingOverlay} // Pass fetching state for dimming
+            isFetching={showFetchingOverlay}
           />
         </div>
       </div>
