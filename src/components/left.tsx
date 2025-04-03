@@ -157,7 +157,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     </li>
                     <li>
                       Displayed availability only reflects official class
-                      schedules
+                      schedules and events
                     </li>
                     <li>
                       Rooms may be occupied by unofficial meetings or study
@@ -173,7 +173,9 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
               variant="outline"
               size="icon"
               className={`h-6 w-6 md:h-8 md:w-8 rounded-full border-2 border-foreground/20 font-bold ${
-                showMap ? "bg-muted" : ""
+                showMap
+                  ? "bg-sky-100/50 hover:bg-sky-100/70 border-sky-300/60"
+                  : "border-foreground/20 hover:bg-muted"
               }`}
               onClick={() => setShowMap(!showMap)}
               aria-label={showMap ? "Hide map" : "Show map"}
