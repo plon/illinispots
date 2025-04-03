@@ -2,39 +2,38 @@
 
 illiniSpots is a web application that helps UIUC students find available study spaces and classrooms across campus in real-time. The app shows building availability on an interactive map and provides detailed room status information.
 
-## Features
+## Features (how would i udpate this?)
 
-- Interactive campus map showing buildings with available rooms
-- Real-time room availability status
-- Detailed information for each building including:
-  - Number of available/occupied rooms
-  - Current classes in session
-  - Upcoming class schedules
-  - Room availability times and length
-- Integration of updated daily events for a comprehensive and up-to-date view of room usage
-- Library-specific features:
-  - Real-time study room availability
-  - Reservation slot visualization
-  - Direct reservation links
-  - Room images and details
-- Responsive design for both desktop and mobile
+- **Interactive Map & List View:** Visualize building availability across campus or browse a searchable list.
+- **Real-Time & Future Availability:** Check room status for the current moment or use the **Date/Time Selector** to view availability for _any_ point in the past or future.
+- **Comprehensive Room Coverage:** Includes Academic Classrooms and reservable Library Study Rooms (Grainger, Funk ACES, Main Library).
+- **Accurate Availability:**
+  - Considers official **Class Schedules**.
+  - Integrates **Live University Event Data** for a more accurate picture of actual room usage.
+- **Detailed Room Information:**
+  - **Academic Rooms:** See current/next class or event, availability duration, and view the **Full Daily Schedule** (classes + events) for the selected date.
+  - **Library Rooms:** View reservation timelines, direct reservation links, and room photos (where available).
+- **Progressive Web App (PWA):** Installable on your phone's home screen for easy access.
+- **Search/Filter:** Find a specific building or library by typing its name into the search bar.
+- **Responsive Design:** Works seamlessly on desktop and mobile devices.
 
 ## Tech Stack
 
 ### Frontend
 
 - Next.js
-- React (memo, hooks)
+- React
 - TypeScript
 - Tailwind CSS
 - shadcn/ui
+- TanStack Query
 - MapLibre GL JS (with special thanks to [openfreemap](https://openfreemap.org/) and its creator [Zsolt Ero](https://x.com/hyperknot) for providing free map tiles)
 
 ### Backend
 
 - Supabase (PostgreSQL database)
 - Next.js API Routes
-- PostgreSQL Functions (for `get_spots`)
+- PostgreSQL Functions (for `get_spots`, `get_room_schedule`)
 
 ## Data Source
 
@@ -43,6 +42,9 @@ All data used for calculating room availability is sourced from the University o
 - **Class Data**: Sourced from the [Course Explorer](https://courses.illinois.edu/). This includes information about when classes meet, which is used to determine room occupancy. For more details on the data collection process, please refer to the [data-pipeline README](data-pipeline/README.MD).
 - **Building Hours**: Sourced from the [Facility Scheduling and Resources](https://operations.illinois.edu/facility-scheduling-and-resources/daily-event-summaries/).
 - **Library Data**: Sourced from UIUC Library's [Room Reservation System](https://uiuc.libcal.com/allspaces).
+
+To provide availability information that is more accurate than static class schedules alone, illiniSpots incorporates data for other university-booked events. This data is fetched and updated periodically.
+
 - **Daily Events**: Sourced from the [Tableau Daily Event Summary](https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents).
 
 ## Core Algorithm
@@ -91,54 +93,14 @@ Example: Current 3:15, Next class 4:00
 Duration = (4:00 - 3:15) = 45 minutes available
 ```
 
-### Return structure
+### [get_room_schedule.sql](database/functions/get_room_schedule.sql)
 
-```
-{
-    "timestamp": "2024-10-29T14:30:00Z",
-    "buildings": {
-        "David Kinley Hall": {
-            "name": "David Kinley Hall",
-            "coordinates": {
-                "latitude": 40.10361941,
-                "longitude": -88.22835896
-            },
-            "hours": {
-                "open": "07:00:00",
-                "close": "23:59:00"
-            },
-            "isOpen": true,
-            "roomCounts": {
-                "available": 15,
-                "total": 28
-            },
-            "rooms": {
-                "106": {
-                    "status": "occupied" | "available",
-                    "available": false,
-                    "currentClass": {
-                        "course": "PS 318",
-                        "title": "Interests Grps & Soc Movements",
-                        "time": {
-                            "start": "11:00:00",
-                            "end": "12:20:00"
-                        }
-                    },
-                    "nextClass": {
-                        // same structure as currentClass
-                    },
-                    "passingPeriod": false,
-                    "availableAt": "15:30",
-                    "availableFor": 60,      // minutes
-                    "availableUntil": "16:30"
-                }
-                // ... more rooms
-            }
-        }
-        // ... more buildings
-    }
-}
-```
+This function retrieves the raw chronological schedule for a _single specified academic room_ on a given date, including both classes and booked events.
+
+- **Purpose**: To provide the front-end with all known scheduled occupancies for a specific room and day.
+- **Data Sources**: Queries `class_schedule` and the periodically updated `daily_events` tables.
+- **Output**: Returns an ordered array of schedule blocks, each containing start/end times, status (`class` or `event`), and details (course/event info).
+- **Usage**: This raw data is fetched by the `/api/room-schedule` endpoint, which then processes it for display in the detailed room view (e.g., calculating availability gaps).
 
 ## Library Availability System
 
