@@ -350,7 +350,7 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
                   className="py-2 px-2 text-sm hover:no-underline hover:bg-muted/20 rounded-md group [&[data-state=open]>svg]:text-primary"
                 >
                   {/* Room details for the trigger */}
-                  <div className="flex justify-between items-start w-full mr-2 text-left">
+                  <div className="flex justify-between items-center w-full mr-2 text-left">
                     <div className="flex flex-col">
                       <span className="font-medium">{roomNumber}</span>
                       {/* Display brief status details */}
@@ -360,8 +360,10 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
                         <RoomOccupancyDetails room={academicRoom} />
                       )}
                     </div>
-                    {/* Optional: Keep a simple badge if desired */}
-                    {/* <RoomBadge status={room.status} facilityType={FacilityType.ACADEMIC} /> */}
+                    <RoomBadge
+                      status={academicRoom.status}
+                      facilityType={FacilityType.ACADEMIC}
+                    />
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pt-0 pb-1 pl-1 pr-4">
