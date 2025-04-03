@@ -292,7 +292,7 @@ function getLibraryClosingTime(
 function linkRoomsReservations(
   roomsData: StudyRoom[],
   reservationsData: ReservationResponse,
-  targetMoment: moment.Moment, // Use targetMoment
+  targetMoment: moment.Moment,
 ): RoomReservations {
   const roomReservations: RoomReservations = {};
   const libraryIds = new Set(
@@ -300,6 +300,7 @@ function linkRoomsReservations(
   );
   const timezone = "America/Chicago";
   const targetDateCST = targetMoment.clone().tz(timezone).startOf("day");
+  const targetMomentString = targetMoment.format("YYYY-MM-DD HH:mm:ss");
 
   for (const room of roomsData) {
     if (!libraryIds.has(room.lid)) continue;
@@ -310,7 +311,6 @@ function linkRoomsReservations(
     if (!libraryName) continue; // Should not happen
 
     const roomId = room.eid;
-    const roomSlots: TimeSlot[] = [];
     let availableAt: string | undefined = undefined;
     let availableDuration: number = 0;
     let isCurrentlyAvailable = false;
@@ -329,121 +329,151 @@ function linkRoomsReservations(
 
     let nextAvailableSlotIndex = -1;
     let nextAvailableStartTime: moment.Moment | null = null;
+    let currentStatusDetermined = false;
 
+    // Loop through slots to determine the status and next availability
     for (let index = 0; index < roomSpecificSlots.length; index++) {
       const slot = roomSpecificSlots[index];
       const startTime = moment.tz(slot.start, timezone);
       const endTime = moment.tz(slot.end, timezone);
       const isAvailableSlot = slot.className !== "s-lc-eq-checkout";
 
-      // Add slot to the list for display if it starts on or after the target date
-      // (We need the full day's schedule for context)
-      if (startTime.isSameOrAfter(targetDateCST)) {
-        // Ensure end time doesn't exceed library closing time for display consistency
-        let displayEndTime = endTime;
-        if (libraryClosingTime && displayEndTime.isAfter(libraryClosingTime)) {
-          displayEndTime = libraryClosingTime;
-        }
-        // Only add if start is before potential closing time
-        if (!libraryClosingTime || startTime.isBefore(libraryClosingTime)) {
-          roomSlots.push({
-            start: startTime.format("HH:mm:ss"),
-            end: displayEndTime.format("HH:mm:ss"),
-            available: isAvailableSlot,
-          });
-        }
-      }
-
-      // --- Determine Status AT targetMoment ---
-
-      // 1. Check if the slot is *currently* available at targetMoment
-      if (
-        isAvailableSlot &&
-        startTime.isSameOrBefore(targetMoment) &&
-        endTime.isAfter(targetMoment)
-      ) {
-        // Check if it's actually within library hours if closing time is known
-        if (!libraryClosingTime || targetMoment.isBefore(libraryClosingTime)) {
-          isCurrentlyAvailable = true;
-          roomStatus = RoomStatus.AVAILABLE;
-          // Calculate duration from targetMoment until end of contiguous block or closing time
-          availableDuration = calculateAvailabilityDuration(
-            roomSpecificSlots,
-            index,
-            targetMoment, // Start calculating from targetMoment
-            libraryClosingTime,
-          );
-          // Once found, no need to look for 'availableAt'
-          nextAvailableSlotIndex = -1;
-          break; // Found current status, move to next room
-        }
-      }
-
-      // 2. If not currently available, find the *next* available slot starting *after* targetMoment
-      if (
-        !isCurrentlyAvailable &&
-        isAvailableSlot &&
-        startTime.isAfter(targetMoment)
-      ) {
-        // Ensure the potential next slot starts before the library closes
-        if (!libraryClosingTime || startTime.isBefore(libraryClosingTime)) {
-          // If this is the first future available slot we've found
-          if (nextAvailableSlotIndex === -1) {
-            nextAvailableSlotIndex = index;
-            nextAvailableStartTime = startTime;
+      // Only determine status once
+      if (!currentStatusDetermined) {
+        // Check if the slot is currently available at targetMoment
+        if (
+          isAvailableSlot &&
+          startTime.isSameOrBefore(targetMoment) &&
+          endTime.isAfter(targetMoment)
+        ) {
+          // Check if it's actually within library hours if closing time is known
+          if (
+            !libraryClosingTime ||
+            targetMoment.isBefore(libraryClosingTime)
+          ) {
+            isCurrentlyAvailable = true;
+            roomStatus = RoomStatus.AVAILABLE;
+            // Calculate duration from targetMoment until end of contiguous block or closing time
+            availableDuration = calculateAvailabilityDuration(
+              roomSpecificSlots,
+              index,
+              targetMoment, // Start calculating from targetMoment
+              libraryClosingTime,
+            );
+            currentStatusDetermined = true; // Status found
+            nextAvailableSlotIndex = -1; // Reset this as we are currently available
           }
-          // We only need the *first* one after targetMoment that's within hours
-          // Continue loop to ensure all slots are added to roomSlots array
+        }
+
+        // If not currently available, find the next available slot starting after targetMoment
+        if (
+          !isCurrentlyAvailable && // Only look if not already found available
+          isAvailableSlot &&
+          startTime.isAfter(targetMoment)
+        ) {
+          // Ensure the potential next slot starts before the library closes
+          if (!libraryClosingTime || startTime.isBefore(libraryClosingTime)) {
+            // If this is the first future available slot we've found
+            if (nextAvailableSlotIndex === -1) {
+              nextAvailableSlotIndex = index;
+              nextAvailableStartTime = startTime;
+            }
+          }
         }
       }
-    } // End loop through slots for the room
 
-    // If not currently available, but we found a future available slot
-    if (
-      !isCurrentlyAvailable &&
-      nextAvailableSlotIndex !== -1 &&
-      nextAvailableStartTime
-    ) {
-      availableAt = nextAvailableStartTime.format("HH:mm:ss");
-      // Calculate duration from the start of that future slot
-      availableDuration = calculateAvailabilityDuration(
-        roomSpecificSlots,
-        nextAvailableSlotIndex,
-        nextAvailableStartTime, // Start calculating from the slot's start time
-        libraryClosingTime,
-      );
-
-      // Determine if it's "Opening Soon"
-      if (
-        availableAt &&
-        isOpeningSoon(availableAt, targetMoment) &&
-        availableDuration >= 30
-      ) {
-        roomStatus = RoomStatus.OPENING_SOON;
-      } else {
-        // It's available later, but not "soon", keep status as RESERVED/OCCUPIED for now
-        roomStatus = RoomStatus.RESERVED;
+      // If targetMoment is past the end of this slot, and we haven't found the status yet,
+      // it means the targetMoment falls between slots (or after the last one).
+      if (!currentStatusDetermined && targetMoment.isSameOrAfter(endTime)) {
+        // Continue searching for the next available slot
       }
-    } else if (!isCurrentlyAvailable) {
-      // Not available now and no future availability found within operating hours
-      roomStatus = RoomStatus.RESERVED;
     }
 
-    // Ensure duration is non-negative
+    if (!isCurrentlyAvailable) {
+      // If not currently available, check if we found a future available slot
+      if (nextAvailableSlotIndex !== -1 && nextAvailableStartTime) {
+        availableAt = nextAvailableStartTime.format("HH:mm:ss");
+        // Calculate duration from the start of that future slot
+        availableDuration = calculateAvailabilityDuration(
+          roomSpecificSlots,
+          nextAvailableSlotIndex,
+          nextAvailableStartTime,
+          libraryClosingTime,
+        );
+
+        if (
+          availableAt &&
+          isOpeningSoon(availableAt, targetMoment) &&
+          availableDuration >= 30
+        ) {
+          roomStatus = RoomStatus.OPENING_SOON;
+        } else {
+          // It's available later, but not "soon", keep status as RESERVED/OCCUPIED for now
+          roomStatus = RoomStatus.RESERVED;
+        }
+      } else {
+        // Not available now and no future availability found within operating hours
+        roomStatus = RoomStatus.RESERVED; // Or OCCUPIED, depending on context, RESERVED fits library
+        availableDuration = 0; // Ensure duration is 0 if no future availability
+        availableAt = undefined;
+      }
+    }
+
     availableDuration = Math.max(0, availableDuration);
 
-    // Assign to the result map
+    let firstRelevantSlotIndex = -1;
+    for (let i = 0; i < roomSpecificSlots.length; i++) {
+      // Find the first slot that ends after the targetMoment.
+      // This includes the currently active slot or the next future slot.
+      if (roomSpecificSlots[i].end > targetMomentString) {
+        firstRelevantSlotIndex = i;
+        break;
+      }
+    }
+
+    const relevantSlotsData =
+      firstRelevantSlotIndex !== -1
+        ? roomSpecificSlots.slice(firstRelevantSlotIndex)
+        : [];
+
+    const roomSlots: TimeSlot[] = relevantSlotsData
+      .map((slot) => {
+        const startTime = moment.tz(slot.start, timezone);
+        let endTime = moment.tz(slot.end, timezone);
+        const isAvailableSlot = slot.className !== "s-lc-eq-checkout";
+
+        // Apply library closing time cap
+        if (libraryClosingTime && endTime.isAfter(libraryClosingTime)) {
+          endTime = libraryClosingTime;
+        }
+
+        // Only include the slot if its start time is before the (potentially capped) end time
+        // and before the library closing time (if applicable)
+        if (
+          startTime.isBefore(endTime) &&
+          (!libraryClosingTime || startTime.isBefore(libraryClosingTime))
+        ) {
+          return {
+            start: startTime.format("HH:mm:ss"),
+            end: endTime.format("HH:mm:ss"),
+            available: isAvailableSlot,
+          };
+        }
+        return null; // Exclude slots that start at or after closing or have invalid times
+      })
+      .filter((slot): slot is TimeSlot => slot !== null);
+
     roomReservations[room.title] = {
       id: roomId,
       url: room.url,
       lid: room.lid,
       grouping: room.grouping,
       thumbnail: room.thumbnail,
-      slots: roomSlots, // Include all relevant slots for display
+      slots: roomSlots,
       availableAt,
       availableDuration,
-      status: roomStatus, // Set the calculated status
-    } as RoomReservation; // Cast to RoomReservation type
+      status: roomStatus,
+    } as RoomReservation;
   }
 
   return roomReservations;
@@ -559,7 +589,7 @@ async function fetchAcademicBuildingData(
     const { data: buildingData, error } = await supabase.rpc("get_spots", {
       check_time: targetMoment.format("HH:mm:ss"),
       check_date: targetMoment.format("YYYY-MM-DD"),
-      minimum_useful_minutes: 30, 
+      minimum_useful_minutes: 30,
     });
 
     if (error) {
@@ -577,7 +607,7 @@ async function fetchAcademicBuildingData(
           rooms: Record<
             string,
             Omit<AcademicRoom, "type" | "status"> & {
-              status: "available" | "occupied"; 
+              status: "available" | "occupied";
               available: boolean;
               passingPeriod?: boolean;
               availableAt?: string;
