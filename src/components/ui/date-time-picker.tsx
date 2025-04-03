@@ -14,7 +14,7 @@ interface DateTimePickerProps {
   showResetButton?: boolean;
   compact?: boolean;
   isFetching?: boolean;
-  closePopover?: () => void;
+  closeContainer?: () => void;
 }
 
 function DateTimePicker({
@@ -23,7 +23,7 @@ function DateTimePicker({
   showResetButton = true,
   compact = false,
   isFetching = false,
-  closePopover,
+  closeContainer,
 }: DateTimePickerProps) {
   const id = useId();
   const [localSelectedDate, setLocalSelectedDate] = useState<Date | undefined>(
@@ -60,15 +60,23 @@ function DateTimePicker({
   };
 
   const handleConfirm = () => {
-    if (localSelectedDate) {
-      const combinedDateTime = getCombinedDateTime(
-        localSelectedDate,
-        localTimeValue,
-      );
-      if (combinedDateTime && onDateTimeChange) {
-        onDateTimeChange(combinedDateTime);
-        if (closePopover) closePopover();
-      }
+    // Determine the date/time to confirm (either the locally changed one or the initial one)
+    const dateTimeToConfirm = localSelectedDate
+      ? getCombinedDateTime(localSelectedDate, localTimeValue)
+      : undefined;
+
+    // Ensure we have a valid date to work with
+    if (dateTimeToConfirm && onDateTimeChange) {
+      onDateTimeChange(dateTimeToConfirm); // Pass the date/time back
+      if (closeContainer) closeContainer(); // Close the container
+    } else if (!dateTimeToConfirm && onDateTimeChange) {
+      // Fallback: If something went wrong getting the combined time,
+      // confirm with the initial time to ensure closure
+      onDateTimeChange(initialDateTime);
+      if (closeContainer) closeContainer();
+    } else if (closeContainer) {
+      // If no onDateTimeChange provided, just close
+      closeContainer();
     }
   };
 
@@ -79,24 +87,17 @@ function DateTimePicker({
     setLocalTimeValue(moment(now).format("HH:mm"));
     if (onDateTimeChange) {
       onDateTimeChange(now);
-      if (closePopover) closePopover();
+      if (closeContainer) closeContainer();
     }
   };
 
   const currentLocalFullDateTime = localSelectedDate
     ? getCombinedDateTime(localSelectedDate, localTimeValue)
     : undefined;
-  const initialComparableDateTime = new Date(initialDateTime.getTime());
-  initialComparableDateTime.setSeconds(0, 0);
-  const hasChanges =
-    !currentLocalFullDateTime ||
-    currentLocalFullDateTime.getTime() !== initialComparableDateTime.getTime();
 
-  // --- Format the preview text (Updated Format String) ---
   const previewText = currentLocalFullDateTime
-    ? moment(currentLocalFullDateTime).format("M/D/YY h:mm A") // <-- Updated format
+    ? moment(currentLocalFullDateTime).format("M/D/YY h:mm A")
     : "Invalid date/time";
-  // ---
 
   return (
     <div className={compact ? "w-[280px]" : ""}>
@@ -161,7 +162,7 @@ function DateTimePicker({
             size="sm"
             onClick={handleConfirm}
             className="h-7 px-3"
-            disabled={isFetching || !hasChanges}
+            disabled={isFetching}
           >
             Confirm
           </Button>
