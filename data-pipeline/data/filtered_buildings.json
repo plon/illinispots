@@ -4041,10 +4041,6 @@
         ]
       },
       "total_sections": 295,
-      "coordinates": {
-        "longitude": -88.22609502081586,
-        "latitude": 40.10844985188464
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -4074,6 +4070,10 @@
           "open": "13:00",
           "close": "23:00"
         }
+      },
+      "coordinates": {
+        "longitude": -88.22609502081586,
+        "latitude": 40.10844985188464
       }
     },
     "Literatures, Cultures, & Ling": {
@@ -10193,10 +10193,6 @@
         ]
       },
       "total_sections": 436,
-      "coordinates": {
-        "longitude": -88.2261774023806,
-        "latitude": 40.1062796749417
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -10226,6 +10222,10 @@
           "open": "12:00",
           "close": "22:00"
         }
+      },
+      "coordinates": {
+        "longitude": -88.2261774023806,
+        "latitude": 40.1062796749417
       }
     },
     "Lincoln Hall": {
@@ -13934,10 +13934,6 @@
         ]
       },
       "total_sections": 263,
-      "coordinates": {
-        "longitude": -88.22816881447793,
-        "latitude": 40.10663949376405
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -13967,6 +13963,10 @@
           "open": "12:00",
           "close": "23:00"
         }
+      },
+      "coordinates": {
+        "longitude": -88.22816881447793,
+        "latitude": 40.10663949376405
       }
     },
     "Davenport Hall": {
@@ -16937,10 +16937,6 @@
         ]
       },
       "total_sections": 213,
-      "coordinates": {
-        "longitude": -88.22619165071363,
-        "latitude": 40.10721998832133
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -16970,6 +16966,10 @@
           "open": null,
           "close": null
         }
+      },
+      "coordinates": {
+        "longitude": -88.22619165071363,
+        "latitude": 40.10721998832133
       }
     },
     "Natural History Building": {
@@ -19364,10 +19364,6 @@
         ]
       },
       "total_sections": 172,
-      "coordinates": {
-        "longitude": -88.22602412010296,
-        "latitude": 40.10950674217128
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -19397,6 +19393,10 @@
           "open": "12:00",
           "close": "22:00"
         }
+      },
+      "coordinates": {
+        "longitude": -88.22602412010296,
+        "latitude": 40.10950674217128
       }
     },
     "Armory": {
@@ -23575,10 +23575,6 @@
         ]
       },
       "total_sections": 301,
-      "coordinates": {
-        "longitude": -88.23197530788798,
-        "latitude": 40.104770081147365
-      },
       "hours": {
         "monday": {
           "open": "05:00",
@@ -23608,6 +23604,10 @@
           "open": "07:00",
           "close": "21:00"
         }
+      },
+      "coordinates": {
+        "longitude": -88.23197530788798,
+        "latitude": 40.104770081147365
       }
     },
     "Psychology Building": {
@@ -26000,10 +26000,6 @@
         ]
       },
       "total_sections": 171,
-      "coordinates": {
-        "longitude": -88.22995127301564,
-        "latitude": 40.10747990727842
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -26033,6 +26029,10 @@
           "open": null,
           "close": null
         }
+      },
+      "coordinates": {
+        "longitude": -88.22995127301564,
+        "latitude": 40.10747990727842
       }
     },
     "English Building": {
@@ -29824,10 +29824,6 @@
         ]
       },
       "total_sections": 265,
-      "coordinates": {
-        "longitude": -88.22816881342536,
-        "latitude": 40.10758905293639
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -29857,6 +29853,10 @@
           "open": "12:00",
           "close": "23:59"
         }
+      },
+      "coordinates": {
+        "longitude": -88.22816881342536,
+        "latitude": 40.10758905293639
       }
     },
     "David Kinley Hall": {
@@ -34566,10 +34566,6 @@
         ]
       },
       "total_sections": 344,
-      "coordinates": {
-        "longitude": -88.22835896455715,
-        "latitude": 40.103619414916636
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -34599,6 +34595,10 @@
           "open": "09:30",
           "close": "23:59"
         }
+      },
+      "coordinates": {
+        "longitude": -88.22835896455715,
+        "latitude": 40.103619414916636
       }
     },
     "Gregory Hall": {
@@ -39388,10 +39388,6 @@
         ]
       },
       "total_sections": 347,
-      "coordinates": {
-        "longitude": -88.22809719732614,
-        "latitude": 40.10568121305013
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -39421,6 +39417,10 @@
           "open": "07:00",
           "close": "23:59"
         }
+      },
+      "coordinates": {
+        "longitude": -88.22809719732614,
+        "latitude": 40.10568121305013
       }
     },
     "Campus Instructional Facility": {
@@ -44215,10 +44215,6 @@
         ]
       },
       "total_sections": 351,
-      "coordinates": {
-        "longitude": -88.22829043072797,
-        "latitude": 40.11247391774697
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -44248,6 +44244,10 @@
           "open": "12:00",
           "close": "23:00"
         }
+      },
+      "coordinates": {
+        "longitude": -88.22829043072797,
+        "latitude": 40.11247391774697
       }
     },
     "Henry Administration Bldg": {
@@ -46334,10 +46334,6 @@
         ]
       },
       "total_sections": 146,
-      "coordinates": {
-        "longitude": -88.22825099142705,
-        "latitude": 40.108368163803135
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -46367,6 +46363,10 @@
           "open": null,
           "close": null
         }
+      },
+      "coordinates": {
+        "longitude": -88.22825099142705,
+        "latitude": 40.108368163803135
       }
     },
     "Bevier Hall": {
@@ -48091,10 +48091,6 @@
         ]
       },
       "total_sections": 123,
-      "coordinates": {
-        "longitude": -88.22427210505388,
-        "latitude": 40.10481905594051
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -48124,6 +48120,10 @@
           "open": null,
           "close": null
         }
+      },
+      "coordinates": {
+        "longitude": -88.22427210505388,
+        "latitude": 40.10481905594051
       }
     },
     "Education Building": {
@@ -50598,10 +50598,6 @@
         ]
       },
       "total_sections": 185,
-      "coordinates": {
-        "longitude": -88.22963848024656,
-        "latitude": 40.10208788895545
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -50631,6 +50627,10 @@
           "open": null,
           "close": null
         }
+      },
+      "coordinates": {
+        "longitude": -88.22963848024656,
+        "latitude": 40.10208788895545
       }
     },
     "Mumford Hall": {
@@ -51614,10 +51614,6 @@
         ]
       },
       "total_sections": 69,
-      "coordinates": {
-        "longitude": -88.22603917391396,
-        "latitude": 40.10363530771548
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -51647,6 +51643,10 @@
           "open": "12:00",
           "close": "22:00"
         }
+      },
+      "coordinates": {
+        "longitude": -88.22603917391396,
+        "latitude": 40.10363530771548
       }
     },
     "Wohlers Hall": {
@@ -53891,10 +53891,6 @@
         ]
       },
       "total_sections": 162,
-      "coordinates": {
-        "longitude": -88.22986247815153,
-        "latitude": 40.103616754740074
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -53924,6 +53920,10 @@
           "open": "12:00",
           "close": "23:00"
         }
+      },
+      "coordinates": {
+        "longitude": -88.22986247815153,
+        "latitude": 40.103616754740074
       }
     },
     "Turner Hall": {
@@ -54888,10 +54888,6 @@
         ]
       },
       "total_sections": 69,
-      "coordinates": {
-        "longitude": -88.22420967253437,
-        "latitude": 40.10294421570373
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -54921,6 +54917,10 @@
           "open": null,
           "close": null
         }
+      },
+      "coordinates": {
+        "longitude": -88.22420967253437,
+        "latitude": 40.10294421570373
       }
     },
     "Agricultural Engr Sciences Bld": {
@@ -55590,10 +55590,6 @@
         ]
       },
       "total_sections": 48,
-      "coordinates": {
-        "longitude": -88.22634716351016,
-        "latitude": 40.10162249908899
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -55623,6 +55619,10 @@
           "open": "13:00",
           "close": "22:00"
         }
+      },
+      "coordinates": {
+        "longitude": -88.22634716351016,
+        "latitude": 40.10162249908899
       }
     },
     "Business Instructional Fac": {
@@ -59746,10 +59746,6 @@
         ]
       },
       "total_sections": 296,
-      "coordinates": {
-        "longitude": -88.23089287860155,
-        "latitude": 40.10380417961363
-      },
       "hours": {
         "monday": {
           "open": "06:00",
@@ -59779,6 +59775,10 @@
           "open": "10:00",
           "close": "23:59"
         }
+      },
+      "coordinates": {
+        "longitude": -88.23089287860155,
+        "latitude": 40.10380417961363
       }
     },
     "Everitt Laboratory": {
@@ -61136,10 +61136,6 @@
         ]
       },
       "total_sections": 97,
-      "coordinates": {
-        "longitude": -88.22826365912114,
-        "latitude": 40.110911863857666
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -61169,6 +61165,10 @@
           "open": null,
           "close": null
         }
+      },
+      "coordinates": {
+        "longitude": -88.22826365912114,
+        "latitude": 40.110911863857666
       }
     },
     "Animal Sciences Laboratory": {
@@ -62151,10 +62151,6 @@
         ]
       },
       "total_sections": 71,
-      "coordinates": {
-        "longitude": -88.22512971375228,
-        "latitude": 40.10384631638479
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -62184,6 +62180,10 @@
           "open": null,
           "close": null
         }
+      },
+      "coordinates": {
+        "longitude": -88.22512971375228,
+        "latitude": 40.10384631638479
       }
     },
     "Huff Hall": {
@@ -63427,10 +63427,6 @@
         ]
       },
       "total_sections": 90,
-      "coordinates": {
-        "longitude": -88.23275832909809,
-        "latitude": 40.10357012628978
-      },
       "hours": {
         "monday": {
           "open": "05:00",
@@ -63460,6 +63456,10 @@
           "open": "06:00",
           "close": "22:00"
         }
+      },
+      "coordinates": {
+        "longitude": -88.23275832909809,
+        "latitude": 40.10357012628978
       }
     },
     "Transportation Building": {
@@ -64787,10 +64787,6 @@
         ]
       },
       "total_sections": 94,
-      "coordinates": {
-        "longitude": -88.22520881656054,
-        "latitude": 40.111706378625456
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -64820,6 +64816,10 @@
           "open": null,
           "close": null
         }
+      },
+      "coordinates": {
+        "longitude": -88.22520881656054,
+        "latitude": 40.111706378625456
       }
     },
     "Architecture Building": {
@@ -65593,10 +65593,6 @@
         ]
       },
       "total_sections": 55,
-      "coordinates": {
-        "longitude": -88.22908555167923,
-        "latitude": 40.103305927572364
-      },
       "hours": {
         "monday": {
           "open": "06:30",
@@ -65626,6 +65622,10 @@
           "open": "06:30",
           "close": "22:00"
         }
+      },
+      "coordinates": {
+        "longitude": -88.22908555167923,
+        "latitude": 40.103305927572364
       }
     },
     "Burrill Hall": {
@@ -67670,10 +67670,6 @@
         ]
       },
       "total_sections": 150,
-      "coordinates": {
-        "longitude": -88.22492434959888,
-        "latitude": 40.10918942760395
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -67703,6 +67699,10 @@
           "open": null,
           "close": null
         }
+      },
+      "coordinates": {
+        "longitude": -88.22492434959888,
+        "latitude": 40.10918942760395
       }
     },
     "Engineering Hall": {
@@ -68687,10 +68687,6 @@
         ]
       },
       "total_sections": 69,
-      "coordinates": {
-        "longitude": -88.22697738439302,
-        "latitude": 40.110860577936535
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -68720,6 +68716,10 @@
           "open": null,
           "close": null
         }
+      },
+      "coordinates": {
+        "longitude": -88.22697738439302,
+        "latitude": 40.110860577936535
       }
     },
     "Digital Computer Laboratory": {
@@ -69384,10 +69384,6 @@
         ]
       },
       "total_sections": 48,
-      "coordinates": {
-        "longitude": -88.22649892164169,
-        "latitude": 40.113142361585346
-      },
       "hours": {
         "monday": {
           "open": "06:45",
@@ -69417,6 +69413,10 @@
           "open": "11:00",
           "close": "22:00"
         }
+      },
+      "coordinates": {
+        "longitude": -88.22649892164169,
+        "latitude": 40.113142361585346
       }
     },
     "Sidney Lu Mech Engr Bldg": {
@@ -72277,10 +72277,6 @@
         ]
       },
       "total_sections": 210,
-      "coordinates": {
-        "longitude": -88.22472942010009,
-        "latitude": 40.11083302586286
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -72310,6 +72306,10 @@
           "open": null,
           "close": null
         }
+      },
+      "coordinates": {
+        "longitude": -88.22472942010009,
+        "latitude": 40.11083302586286
       }
     },
     "Loomis Laboratory": {
@@ -75774,10 +75774,6 @@
         ]
       },
       "total_sections": 259,
-      "coordinates": {
-        "longitude": -88.22321734496734,
-        "latitude": 40.11099600622066
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -75807,6 +75803,10 @@
           "open": null,
           "close": null
         }
+      },
+      "coordinates": {
+        "longitude": -88.22321734496734,
+        "latitude": 40.11099600622066
       }
     },
     "Siebel Center for Comp Sci": {
@@ -77747,10 +77747,6 @@
         ]
       },
       "total_sections": 142,
-      "coordinates": {
-        "longitude": -88.2247336803035,
-        "latitude": 40.11383687791036
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -77780,6 +77776,10 @@
           "open": "07:00",
           "close": "21:30"
         }
+      },
+      "coordinates": {
+        "longitude": -88.2247336803035,
+        "latitude": 40.11383687791036
       }
     },
     "Electrical & Computer Eng Bldg": {
@@ -82108,10 +82108,6 @@
         ]
       },
       "total_sections": 315,
-      "coordinates": {
-        "longitude": -88.22804895675479,
-        "latitude": 40.114955854028864
-      },
       "hours": {
         "monday": {
           "open": "07:30",
@@ -82141,6 +82137,10 @@
           "open": null,
           "close": null
         }
+      },
+      "coordinates": {
+        "longitude": -88.22804895675479,
+        "latitude": 40.114955854028864
       }
     },
     "Art and Design Building": {
@@ -83430,10 +83430,6 @@
         ]
       },
       "total_sections": 90,
-      "coordinates": {
-        "longitude": -88.23251080032063,
-        "latitude": 40.10184963892951
-      },
       "hours": {
         "monday": {
           "open": "06:00",
@@ -83463,6 +83459,10 @@
           "open": "12:00",
           "close": "22:00"
         }
+      },
+      "coordinates": {
+        "longitude": -88.23251080032063,
+        "latitude": 40.10184963892951
       }
     },
     "Flagg Hall": {
@@ -83920,10 +83920,6 @@
         ]
       },
       "total_sections": 32,
-      "coordinates": {
-        "longitude": -88.23394645318491,
-        "latitude": 40.10280701161048
-      },
       "hours": {
         "monday": {
           "open": "06:00",
@@ -83953,6 +83949,10 @@
           "open": "12:00",
           "close": "18:00"
         }
+      },
+      "coordinates": {
+        "longitude": -88.23394645318491,
+        "latitude": 40.10280701161048
       }
     },
     "Newmark Civil Engineering Bldg": {
@@ -84647,1965 +84647,39 @@
         ]
       },
       "total_sections": 48,
+      "hours": {
+        "monday": {
+          "open": "07:00",
+          "close": "18:00"
+        },
+        "tuesday": {
+          "open": "07:00",
+          "close": "18:00"
+        },
+        "wednesday": {
+          "open": "07:00",
+          "close": "18:00"
+        },
+        "thursday": {
+          "open": "07:00",
+          "close": "18:00"
+        },
+        "friday": {
+          "open": "07:00",
+          "close": "18:00"
+        },
+        "saturday": {
+          "open": null,
+          "close": null
+        },
+        "sunday": {
+          "open": null,
+          "close": null
+        }
+      },
       "coordinates": {
         "longitude": -88.2265859773538,
         "latitude": 40.11398169893394
-      },
-      "hours": {
-        "monday": {
-          "open": "07:00",
-          "close": "18:00"
-        },
-        "tuesday": {
-          "open": "07:00",
-          "close": "18:00"
-        },
-        "wednesday": {
-          "open": "07:00",
-          "close": "18:00"
-        },
-        "thursday": {
-          "open": "07:00",
-          "close": "18:00"
-        },
-        "friday": {
-          "open": "07:00",
-          "close": "18:00"
-        },
-        "saturday": {
-          "open": null,
-          "close": null
-        },
-        "sunday": {
-          "open": null,
-          "close": null
-        }
-      }
-    },
-    "Chemistry Annex": {
-      "rooms": {
-        "1024": [
-          {
-            "course": "CHBE 321",
-            "title": "Thermodynamics",
-            "time": {
-              "start": "11:00",
-              "end": "12:20"
-            },
-            "days": [
-              "T",
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHBE 422",
-            "title": "Mass Transfer Operations",
-            "time": {
-              "start": "11:00",
-              "end": "11:50"
-            },
-            "days": [
-              "M",
-              "W",
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 515",
-            "title": "Inorganic Chemistry Seminar",
-            "time": {
-              "start": "15:30",
-              "end": "16:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 585",
-            "title": "Materials Chemistry Seminar",
-            "time": {
-              "start": "15:30",
-              "end": "16:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "GS 198",
-            "title": "DGS Honors Seminar",
-            "time": {
-              "start": "14:00",
-              "end": "14:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "GWS 263",
-            "title": "History of Medicine in the United States",
-            "time": {
-              "start": "14:00",
-              "end": "14:50"
-            },
-            "days": [
-              "T",
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "HIST 263",
-            "title": "History of Medicine in the United States",
-            "time": {
-              "start": "14:00",
-              "end": "14:50"
-            },
-            "days": [
-              "T",
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "MATH 314",
-            "title": "Introduction to Higher Mathematics",
-            "time": {
-              "start": "12:00",
-              "end": "12:50"
-            },
-            "days": [
-              "M",
-              "W",
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "MSE 402",
-            "title": "Kinetic Processes in Materials",
-            "time": {
-              "start": "09:30",
-              "end": "10:50"
-            },
-            "days": [
-              "T",
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "MSE 402",
-            "title": "Kinetic Processes in Materials",
-            "time": {
-              "start": "17:00",
-              "end": "18:30"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "PHIL 103",
-            "title": "Logic and Reasoning QR II",
-            "time": {
-              "start": "13:00",
-              "end": "13:50"
-            },
-            "days": [
-              "T",
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          }
-        ],
-        "2012": [
-          {
-            "course": "CHEM 102",
-            "title": "General Chemistry I",
-            "time": {
-              "start": "15:00",
-              "end": "15:50"
-            },
-            "days": [
-              "W",
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 102",
-            "title": "General Chemistry I",
-            "time": {
-              "start": "16:00",
-              "end": "16:50"
-            },
-            "days": [
-              "W",
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 102",
-            "title": "General Chemistry I",
-            "time": {
-              "start": "09:00",
-              "end": "09:50"
-            },
-            "days": [
-              "W",
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 102",
-            "title": "General Chemistry I",
-            "time": {
-              "start": "10:00",
-              "end": "10:50"
-            },
-            "days": [
-              "W",
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 102",
-            "title": "General Chemistry I",
-            "time": {
-              "start": "11:00",
-              "end": "11:50"
-            },
-            "days": [
-              "W",
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 102",
-            "title": "General Chemistry I",
-            "time": {
-              "start": "12:00",
-              "end": "12:50"
-            },
-            "days": [
-              "W",
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 102",
-            "title": "General Chemistry I",
-            "time": {
-              "start": "13:00",
-              "end": "13:50"
-            },
-            "days": [
-              "W",
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 102",
-            "title": "General Chemistry I",
-            "time": {
-              "start": "14:00",
-              "end": "14:50"
-            },
-            "days": [
-              "W",
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 232",
-            "title": "Elementary Organic Chemistry I",
-            "time": {
-              "start": "09:00",
-              "end": "09:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 232",
-            "title": "Elementary Organic Chemistry I",
-            "time": {
-              "start": "10:00",
-              "end": "10:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 232",
-            "title": "Elementary Organic Chemistry I",
-            "time": {
-              "start": "11:00",
-              "end": "11:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 232",
-            "title": "Elementary Organic Chemistry I",
-            "time": {
-              "start": "12:00",
-              "end": "12:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 232",
-            "title": "Elementary Organic Chemistry I",
-            "time": {
-              "start": "13:00",
-              "end": "13:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 232",
-            "title": "Elementary Organic Chemistry I",
-            "time": {
-              "start": "14:00",
-              "end": "14:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 232",
-            "title": "Elementary Organic Chemistry I",
-            "time": {
-              "start": "15:00",
-              "end": "15:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 232",
-            "title": "Elementary Organic Chemistry I",
-            "time": {
-              "start": "08:00",
-              "end": "08:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 232",
-            "title": "Elementary Organic Chemistry I",
-            "time": {
-              "start": "09:00",
-              "end": "09:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 232",
-            "title": "Elementary Organic Chemistry I",
-            "time": {
-              "start": "10:00",
-              "end": "10:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 232",
-            "title": "Elementary Organic Chemistry I",
-            "time": {
-              "start": "11:00",
-              "end": "11:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 232",
-            "title": "Elementary Organic Chemistry I",
-            "time": {
-              "start": "12:00",
-              "end": "12:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 232",
-            "title": "Elementary Organic Chemistry I",
-            "time": {
-              "start": "13:00",
-              "end": "13:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 232",
-            "title": "Elementary Organic Chemistry I",
-            "time": {
-              "start": "14:00",
-              "end": "14:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 232",
-            "title": "Elementary Organic Chemistry I",
-            "time": {
-              "start": "15:00",
-              "end": "15:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 232",
-            "title": "Elementary Organic Chemistry I",
-            "time": {
-              "start": "08:00",
-              "end": "08:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          }
-        ],
-        "152": [
-          {
-            "course": "CHEM 102",
-            "title": "General Chemistry I",
-            "time": {
-              "start": "13:00",
-              "end": "14:50"
-            },
-            "days": [
-              "W",
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 102",
-            "title": "General Chemistry I",
-            "time": {
-              "start": "15:00",
-              "end": "16:50"
-            },
-            "days": [
-              "M",
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 102",
-            "title": "General Chemistry I",
-            "time": {
-              "start": "09:00",
-              "end": "10:50"
-            },
-            "days": [
-              "W",
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 102",
-            "title": "General Chemistry I",
-            "time": {
-              "start": "11:00",
-              "end": "12:50"
-            },
-            "days": [
-              "W",
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 104",
-            "title": "General Chemistry II",
-            "time": {
-              "start": "11:00",
-              "end": "12:50"
-            },
-            "days": [
-              "T",
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 199",
-            "title": "Undergraduate Open Seminar",
-            "time": {
-              "start": "13:00",
-              "end": "14:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 199",
-            "title": "Undergraduate Open Seminar",
-            "time": {
-              "start": "15:00",
-              "end": "16:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 199",
-            "title": "Undergraduate Open Seminar",
-            "time": {
-              "start": "13:00",
-              "end": "14:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 199",
-            "title": "Undergraduate Open Seminar",
-            "time": {
-              "start": "11:00",
-              "end": "12:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 199",
-            "title": "Undergraduate Open Seminar",
-            "time": {
-              "start": "17:00",
-              "end": "18:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 199",
-            "title": "Undergraduate Open Seminar",
-            "time": {
-              "start": "17:00",
-              "end": "18:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 204",
-            "title": "Accelerated Chemistry II",
-            "time": {
-              "start": "09:00",
-              "end": "10:50"
-            },
-            "days": [
-              "T",
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          }
-        ],
-        "1006": [
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "16:00",
-              "end": "17:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "08:00",
-              "end": "09:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "10:00",
-              "end": "11:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "16:00",
-              "end": "17:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "10:00",
-              "end": "11:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "16:00",
-              "end": "17:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "08:00",
-              "end": "09:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "10:00",
-              "end": "11:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "16:00",
-              "end": "17:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "08:00",
-              "end": "09:50"
-            },
-            "days": [
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "10:00",
-              "end": "11:50"
-            },
-            "days": [
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          }
-        ],
-        "1007": [
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "16:00",
-              "end": "17:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "08:00",
-              "end": "09:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "10:00",
-              "end": "11:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "16:00",
-              "end": "17:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "10:00",
-              "end": "11:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "16:00",
-              "end": "17:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "08:00",
-              "end": "09:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "10:00",
-              "end": "11:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "16:00",
-              "end": "17:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "08:00",
-              "end": "09:50"
-            },
-            "days": [
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "10:00",
-              "end": "11:50"
-            },
-            "days": [
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 103",
-            "title": "General Chemistry Lab I",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          }
-        ],
-        "006": [
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "16:00",
-              "end": "17:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "16:00",
-              "end": "17:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          }
-        ],
-        "2006": [
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "18:00",
-              "end": "19:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "18:00",
-              "end": "19:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "16:00",
-              "end": "17:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "08:00",
-              "end": "09:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "10:00",
-              "end": "11:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "16:00",
-              "end": "17:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "08:00",
-              "end": "09:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "10:00",
-              "end": "11:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "16:00",
-              "end": "17:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "08:00",
-              "end": "09:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "10:00",
-              "end": "11:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "16:00",
-              "end": "17:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "08:00",
-              "end": "09:50"
-            },
-            "days": [
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "10:00",
-              "end": "11:50"
-            },
-            "days": [
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          }
-        ],
-        "2007": [
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "16:00",
-              "end": "17:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "08:00",
-              "end": "09:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "10:00",
-              "end": "11:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "16:00",
-              "end": "17:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "08:00",
-              "end": "09:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "10:00",
-              "end": "11:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "16:00",
-              "end": "17:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "08:00",
-              "end": "09:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "10:00",
-              "end": "11:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "16:00",
-              "end": "17:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "08:00",
-              "end": "09:50"
-            },
-            "days": [
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "10:00",
-              "end": "11:50"
-            },
-            "days": [
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "12:00",
-              "end": "13:50"
-            },
-            "days": [
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 105",
-            "title": "General Chemistry Lab II",
-            "time": {
-              "start": "14:00",
-              "end": "15:50"
-            },
-            "days": [
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          }
-        ],
-        "3026": [
-          {
-            "course": "CHEM 205",
-            "title": "Accelerated Chemistry Lab II",
-            "time": {
-              "start": "13:00",
-              "end": "16:50"
-            },
-            "days": [
-              "W"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 205",
-            "title": "Accelerated Chemistry Lab II",
-            "time": {
-              "start": "13:00",
-              "end": "16:50"
-            },
-            "days": [
-              "R"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 205",
-            "title": "Accelerated Chemistry Lab II",
-            "time": {
-              "start": "13:00",
-              "end": "16:50"
-            },
-            "days": [
-              "F"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 205",
-            "title": "Accelerated Chemistry Lab II",
-            "time": {
-              "start": "13:00",
-              "end": "16:50"
-            },
-            "days": [
-              "T"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          },
-          {
-            "course": "CHEM 205",
-            "title": "Accelerated Chemistry Lab II",
-            "time": {
-              "start": "13:00",
-              "end": "16:50"
-            },
-            "days": [
-              "M"
-            ],
-            "start_date": "2025-01-21",
-            "end_date": "2025-05-07"
-          }
-        ]
-      },
-      "total_sections": 142,
-      "coordinates": {
-        "longitude": -88.22608368107242,
-        "latitude": 40.10780804722546
-      },
-      "hours": {
-        "monday": {
-          "open": "07:00",
-          "close": "22:00"
-        },
-        "tuesday": {
-          "open": "07:00",
-          "close": "22:00"
-        },
-        "wednesday": {
-          "open": "07:00",
-          "close": "22:00"
-        },
-        "thursday": {
-          "open": "07:00",
-          "close": "22:00"
-        },
-        "friday": {
-          "open": "07:00",
-          "close": "22:00"
-        },
-        "saturday": {
-          "open": "11:00",
-          "close": "22:00"
-        },
-        "sunday": {
-          "open": "11:00",
-          "close": "22:00"
-        }
       }
     },
     "Music Building": {
@@ -89055,10 +87129,6 @@
         ]
       },
       "total_sections": 179,
-      "coordinates": {
-        "longitude": -88.2232567447939,
-        "latitude": 40.10631667329207
-      },
       "hours": {
         "monday": {
           "open": "06:30",
@@ -89088,6 +87158,10 @@
           "open": "06:30",
           "close": "23:59"
         }
+      },
+      "coordinates": {
+        "longitude": -88.2232567447939,
+        "latitude": 40.10631667329207
       }
     },
     "Freer Hall": {
@@ -89980,10 +88054,6 @@
         ]
       },
       "total_sections": 66,
-      "coordinates": {
-        "longitude": -88.2228836807803,
-        "latitude": 40.1048766912638
-      },
       "hours": {
         "monday": {
           "open": "06:00",
@@ -90013,6 +88083,10 @@
           "open": "08:00",
           "close": "16:00"
         }
+      },
+      "coordinates": {
+        "longitude": -88.2228836807803,
+        "latitude": 40.1048766912638
       }
     },
     "Engineering Sciences Building": {
@@ -90137,10 +88211,6 @@
         ]
       },
       "total_sections": 8,
-      "coordinates": {
-        "longitude": -88.22309192725582,
-        "latitude": 40.11246398915742
-      },
       "hours": {
         "monday": {
           "open": "07:00",
@@ -90170,6 +88240,10 @@
           "open": null,
           "close": null
         }
+      },
+      "coordinates": {
+        "longitude": -88.22309192725582,
+        "latitude": 40.11246398915742
       }
     }
   }

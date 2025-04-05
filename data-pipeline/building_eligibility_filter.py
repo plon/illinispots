@@ -15,6 +15,7 @@ class BuildingDataFilter:
             "Vet Med Basic Sciences Bldg",
             "Veterinary Teaching Hospital",
             "Grad Sch of Lib & Info Science",
+            "Chemistry Annex"
         }
         # inclusive
         self.min_rooms = 5

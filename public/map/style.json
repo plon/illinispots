@@ -442,19 +442,6 @@
                     {
                         "type": "Feature",
                         "properties": {
-                            "name": "Chemistry Annex"
-                        },
-                        "geometry": {
-                            "coordinates": [
-                                -88.22608368107242,
-                                40.10780804722546
-                            ],
-                            "type": "Point"
-                        }
-                    },
-                    {
-                        "type": "Feature",
-                        "properties": {
                             "name": "Animal Sciences Laboratory"
                         },
                         "geometry": {
