@@ -38,6 +38,7 @@ export default function FacilityMap({
       maxPitch: 85,
       bearing: -60,
       antialias: true,
+      minZoom: 15.2,
     });
 
     const handleResize = () => {
