@@ -1,6 +1,7 @@
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from seleniumwire import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -22,7 +23,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(log_dir / f'tableau_scraper_{datetime.now(timezone.utc).strftime("%Y%m%d")}.log'),
+        logging.FileHandler(log_dir / f'tableau_scraper_{datetime.now(ZoneInfo("America/Chicago")).strftime("%Y%m%d")}.log'),
         logging.StreamHandler(sys.stdout)
     ]
 )
@@ -124,7 +125,7 @@ def load_events_to_db(event_data):
 
     events_to_insert = []
     invalid_events = []
-    today_str = datetime.now(timezone.utc).date().isoformat()
+    today_str = datetime.now(ZoneInfo("America/Chicago")).date().isoformat()
 
     try:
         delete_result = supabase.table('daily_events').delete().neq('event_name', 'dummy_value_to_avoid_error_on_empty_delete').execute()
