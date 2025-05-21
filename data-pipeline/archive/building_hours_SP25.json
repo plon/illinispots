@@ -1,0 +1,230 @@
+{
+  "Literatures, Cultures, & Ling": {
+    "M-TH": "7AM-10PM",
+    "F": "7AM-6PM",
+    "SAT": "7AM-6PM",
+    "SUN": "12PM-10PM"
+  },
+  "Engineering Hall": {
+    "M-TH": "7AM-9PM",
+    "F": "7AM-6PM",
+    "SAT": "LOCKED",
+    "SUN": "LOCKED"
+  },
+  "Education Building": {
+    "M-TH": "7AM-9PM",
+    "F": "7AM-9PM",
+    "SAT": "7AM-6PM",
+    "SUN": "LOCKED"
+  },
+  "Wohlers Hall": {
+    "M-TH": "7AM-11PM",
+    "F": "7AM-9PM",
+    "SAT": "7AM-9PM",
+    "SUN": "12PM-11PM"
+  },
+  "Gregory Hall": {
+    "M-TH": "7AM-11:59PM",
+    "F": "7AM-11:59PM",
+    "SAT": "7AM-11:59PM",
+    "SUN": "7AM-11:59PM"
+  },
+  "Armory": {
+    "M-TH": "5AM-10:30PM",
+    "F": "5AM-10PM",
+    "SAT": "7AM-9PM",
+    "SUN": "7AM-9PM"
+  },
+  "David Kinley Hall": {
+    "M-TH": "7AM-11:59PM",
+    "F": "7AM-11PM",
+    "SAT": "7AM-6PM",
+    "SUN": "9:30AM-11:59PM"
+  },
+  "Lincoln Hall": {
+    "M-TH": "7AM-11PM",
+    "F": "7AM-11PM",
+    "SAT": "7AM-11PM",
+    "SUN": "12PM-11PM"
+  },
+  "Turner Hall": {
+    "M-TH": "7AM-9PM",
+    "F": "7AM-5PM",
+    "SAT": "LOCKED",
+    "SUN": "LOCKED"
+  },
+  "Henry Administration Bldg": {
+    "M-TH": "7AM-5:30PM",
+    "F": "7AM-5:30PM",
+    "SAT": "LOCKED",
+    "SUN": "LOCKED"
+  },
+  "Architecture Building": {
+    "M-TH": "6:30AM-10PM",
+    "F": "6:30AM-5PM",
+    "SAT": "6:30AM-5PM",
+    "SUN": "6:30AM-10PM"
+  },
+  "Bevier Hall": {
+    "M-TH": "7AM-10PM",
+    "F": "7AM-10PM",
+    "SAT": "LOCKED",
+    "SUN": "LOCKED"
+  },
+  "Mumford Hall": {
+    "M-TH": "7AM-11PM",
+    "F": "7AM-6PM",
+    "SAT": "7AM-6PM",
+    "SUN": "12PM-10PM"
+  },
+  "Agricultural Engr Sciences Bld": {
+    "M-TH": "7AM-10PM",
+    "F": "7AM-5PM",
+    "SAT": "1PM-5PM",
+    "SUN": "1PM-10PM"
+  },
+  "Campus Instructional Facility": {
+    "M-TH": "7AM-11PM",
+    "F": "7AM-9PM",
+    "SAT": "9AM-9PM",
+    "SUN": "12PM-11PM"
+  },
+  "Business Instructional Fac": {
+    "M-TH": "6AM-11:59PM",
+    "F": "6AM-8PM",
+    "SAT": "6AM-8PM",
+    "SUN": "10AM-11:59PM"
+  },
+  "Transportation Building": {
+    "M-TH": "7AM-6PM",
+    "F": "7AM-6PM",
+    "SAT": "LOCKED",
+    "SUN": "LOCKED"
+  },
+  "English Building": {
+    "M-TH": "7AM-11:59PM",
+    "F": "7AM-10PM",
+    "SAT": "7AM-10PM",
+    "SUN": "12PM-11:59PM"
+  },
+  "Davenport Hall": {
+    "M-TH": "7AM-6:30PM",
+    "F": "7AM-6:30PM",
+    "SAT": "LOCKED",
+    "SUN": "LOCKED"
+  },
+  "Sidney Lu Mech Engr Bldg": {
+    "M-TH": "7AM-9PM",
+    "F": "7AM-6PM",
+    "SAT": "LOCKED",
+    "SUN": "LOCKED"
+  },
+  "Noyes Laboratory": {
+    "M-TH": "7AM-11PM",
+    "F": "7AM-10PM",
+    "SAT": "7AM-10PM",
+    "SUN": "1PM-11PM"
+  },
+  "Psychology Building": {
+    "M-TH": "7AM-8PM",
+    "F": "7AM-5PM",
+    "SAT": "7AM-5PM",
+    "SUN": "LOCKED"
+  },
+  "Everitt Laboratory": {
+    "M-TH": "7AM-9PM",
+    "F": "7AM-6PM",
+    "SAT": "LOCKED",
+    "SUN": "LOCKED"
+  },
+  "Loomis Laboratory": {
+    "M-TH": "7AM-9PM",
+    "F": "7AM-6PM",
+    "SAT": "LOCKED",
+    "SUN": "LOCKED"
+  },
+  "Electrical & Computer Eng Bldg": {
+    "M-TH": "7:30AM-10PM",
+    "F": "7:30AM-10PM",
+    "SAT": "LOCKED",
+    "SUN": "LOCKED"
+  },
+  "Music Building": {
+    "M-TH": "6:30AM-11:59PM",
+    "F": "6:30AM-11:59PM",
+    "SAT": "6:30AM-11:59PM",
+    "SUN": "6:30AM-11:59PM"
+  },
+  "Siebel Center for Comp Sci": {
+    "M-TH": "7AM-9:30PM",
+    "F": "7AM-9:30PM",
+    "SAT": "7AM-9:30PM",
+    "SUN": "7AM-9:30PM"
+  },
+  "Natural History Building": {
+    "M-TH": "7AM-10PM",
+    "F": "7AM-9PM",
+    "SAT": "7AM-5PM",
+    "SUN": "12PM-10PM"
+  },
+  "Burrill Hall": {
+    "M-TH": "7AM-7PM",
+    "F": "7AM-7PM",
+    "SAT": "LOCKED",
+    "SUN": "LOCKED"
+  },
+  "Flagg Hall": {
+    "M-TH": "6AM-6PM",
+    "F": "6AM-6PM",
+    "SAT": "9AM-6PM",
+    "SUN": "12PM-6PM"
+  },
+  "Art and Design Building": {
+    "M-TH": "6AM-10PM",
+    "F": "6AM-10PM",
+    "SAT": "9AM-5PM",
+    "SUN": "12PM-10PM"
+  },
+  "Newmark Civil Engineering Bldg": {
+    "M-TH": "7AM-6PM",
+    "F": "7AM-6PM",
+    "SAT": "LOCKED",
+    "SUN": "LOCKED"
+  },
+  "Chemistry Annex": {
+    "M-TH": "7:00AM-10PM",
+    "F": "7:00AM-10PM",
+    "SAT": "11AM-10PM",
+    "SUN": "11AM-10PM"
+  },
+  "Animal Sciences Laboratory": {
+    "M-TH": "7AM-9PM",
+    "F": "7AM-6PM",
+    "SAT": "7AM-12PM",
+    "SUN": "LOCKED"
+  },
+  "Huff Hall": {
+    "M-TH": "5AM-10PM",
+    "F": "5AM-6PM",
+    "SAT": "10AM-6PM",
+    "SUN": "6AM-10PM"
+  },
+  "Digital Computer Laboratory": {
+    "M-TH": "6:45AM-10PM",
+    "F": "6:45AM-10PM",
+    "SAT": "11AM-10PM",
+    "SUN": "11AM-10PM"
+  },
+  "Freer Hall": {
+    "M-TH": "6AM-10PM",
+    "F": "6AM-10PM",
+    "SAT": "8AM-4PM",
+    "SUN": "8AM-4PM"
+  },
+  "Engineering Sciences Building": {
+    "M-TH": "7AM-5PM",
+    "F": "7AM-5PM",
+    "SAT": "LOCKED",
+    "SUN": "LOCKED"
+  }
+}
