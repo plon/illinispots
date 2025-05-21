@@ -140,7 +140,7 @@ def verify_data_counts(json_data: Dict, buildings: List[Dict], rooms: List[Dict]
     if len(schedules) != expected_schedules:
         raise DataValidationError(f"Schedule count mismatch. Expected: {expected_schedules}, Got: {len(schedules)}")
 
-def bulk_insert(table_name: str, records: List[Dict]) -> Set:
+def bulk_insert(table_name: str, records: List[Dict], upsert: bool = False) -> Set:
     inserted_ids = set()
     failed_chunks = []
 
@@ -150,11 +150,15 @@ def bulk_insert(table_name: str, records: List[Dict]) -> Set:
         total_chunks = (len(records) + CHUNK_SIZE - 1) // CHUNK_SIZE
 
         try:
-            response = supabase.table(table_name).insert(chunk).execute()
-            print(f"Inserted chunk {chunk_num}/{total_chunks} into {table_name}")
+            if upsert:
+                response = supabase.table(table_name).upsert(chunk).execute()
+                print(f"Processed (upsert) chunk {chunk_num}/{total_chunks} for {table_name}")
+            else:
+                response = supabase.table(table_name).insert(chunk).execute()
+                print(f"Inserted chunk {chunk_num}/{total_chunks} into {table_name}")
 
             current_count = supabase.table(table_name).select('*', count='exact').execute().count
-            print(f"Current total count in {table_name}: {current_count}")
+            print(f"Current total count in {table_name} after chunk: {current_count}")
 
             for record in chunk:
                 if table_name == 'buildings':
@@ -168,38 +172,47 @@ def bulk_insert(table_name: str, records: List[Dict]) -> Set:
                 inserted_ids.add(key)
 
         except Exception as e:
-            print(f"Error inserting chunk {chunk_num}/{total_chunks} into {table_name}")
+            print(f"Error processing chunk {chunk_num}/{total_chunks} for {table_name} (Operation: {'upsert' if upsert else 'insert'})")
             print(f"Error details: {str(e)}")
             failed_chunks.append((i, chunk))
 
     if failed_chunks:
-        raise DataValidationError(f"Failed to insert {len(failed_chunks)} chunks into {table_name}")
+        raise DataValidationError(f"Failed to process {len(failed_chunks)} chunks for {table_name}")
 
-    final_count = supabase.table(table_name).select('*', count='exact').execute().count
-    if final_count != len(records):
-        raise DataValidationError(
-            f"Final count mismatch in {table_name}. Expected: {len(records)}, Got: {final_count}"
-        )
+    final_db_count_for_table = supabase.table(table_name).select('*', count='exact').execute().count
 
-    print(f"Successfully inserted and verified {final_count} records in {table_name}")
+    if upsert:
+        print(f"Successfully processed (upserted) {len(records)} records from the current batch for {table_name}. Final table count: {final_db_count_for_table}")
+    else:
+        # For insert-only (cleared tables), final count should match len(records).
+        if final_db_count_for_table != len(records):
+            raise DataValidationError(
+                f"Final count mismatch in {table_name} (cleared table). Expected: {len(records)}, Got: {final_db_count_for_table}"
+            )
+        print(f"Successfully inserted and verified {final_db_count_for_table} records in {table_name}")
+
     return inserted_ids
 
 def verify_database_contents(buildings: List[Dict], rooms: List[Dict], schedules: List[Dict]) -> None:
-    db_buildings_count = supabase.table('buildings').select('*', count='exact').execute()
-    building_count = db_buildings_count.count
-    if building_count != len(buildings):
+    db_buildings_count_response = supabase.table('buildings').select('*', count='exact').execute()
+    actual_building_count_in_db = db_buildings_count_response.count
+    # For buildings, we expect AT LEAST the number of buildings from the current dataset to be present,
+    # as buildings are preserved across loads.
+    if actual_building_count_in_db < len(buildings):
         raise DataValidationError(
-            f"Building count mismatch in database. Expected: {len(buildings)}, Got: {building_count}"
+            f"Building count issue in database. Expected at least: {len(buildings)} (from current data), Got: {actual_building_count_in_db}"
         )
-    print(f"Verified buildings count: {building_count}")
+    print(f"Verified buildings count in DB: {actual_building_count_in_db} (current dataset has {len(buildings)} buildings)")
 
-    db_rooms_count = supabase.table('rooms').select('*', count='exact').execute()
-    room_count = db_rooms_count.count
-    if room_count != len(rooms):
+    db_rooms_count_response = supabase.table('rooms').select('*', count='exact').execute()
+    actual_room_count_in_db = db_rooms_count_response.count
+    # For rooms, we expect AT LEAST the number of rooms from the current dataset to be present,
+    # as rooms are preserved across loads.
+    if actual_room_count_in_db < len(rooms):
         raise DataValidationError(
-            f"Room count mismatch in database. Expected: {len(rooms)}, Got: {room_count}"
+            f"Room count issue in database. Expected at least: {len(rooms)} (from current data), Got: {actual_room_count_in_db}"
         )
-    print(f"Verified rooms count: {room_count}")
+    print(f"Verified rooms count in DB: {actual_room_count_in_db} (current dataset has {len(rooms)} rooms)")
 
     db_schedules_count = supabase.table('class_schedule').select('*', count='exact').execute()
     schedule_count = db_schedules_count.count
@@ -213,7 +226,6 @@ def verify_database_contents(buildings: List[Dict], rooms: List[Dict], schedules
 
 def clear_table(table_name: str) -> None:
     """Clear all records from a table safely."""
-    # Map tables to their primary key columns
     primary_keys = {
         'daily_events': 'id',
         'buildings': 'name',
@@ -258,21 +270,23 @@ def main():
 
         print("\nClearing existing data...")
         # Clear tables and verify
-        tables = ['daily_events', 'class_schedule', 'rooms', 'buildings', 'academic_terms']
-        for table in tables:
+        # 'buildings' and 'rooms' are not cleared to preserve them across updates.
+        # Rooms are upserted. Buildings will also be upserted.
+        tables_to_clear = ['daily_events', 'class_schedule', 'academic_terms']
+        for table in tables_to_clear:
             clear_table(table)
-        print("Existing data cleared successfully")
+        print("Relevant tables cleared successfully (buildings and rooms preserved)")
 
         print("\nInserting and verifying data...")
 
         academic_terms_ids = bulk_insert('academic_terms', academic_terms_data)
         print(f"Inserted {len(academic_terms_ids)} academic terms")
 
-        building_ids = bulk_insert('buildings', buildings)
-        print(f"Inserted {len(building_ids)} buildings")
+        building_ids = bulk_insert('buildings', buildings, upsert=True)
+        print(f"Processed {len(building_ids)} buildings from current data (upserted)")
 
-        room_ids = bulk_insert('rooms', rooms)
-        print(f"Inserted {len(room_ids)} rooms")
+        room_ids = bulk_insert('rooms', rooms, upsert=True)
+        print(f"Processed {len(room_ids)} rooms from current data (upserted)")
 
         schedule_ids = bulk_insert('class_schedule', schedules)
         print(f"Inserted {len(schedule_ids)} schedules")
@@ -289,10 +303,10 @@ def main():
 
         print("\nFinal Summary:")
         print(f"Academic terms inserted and verified: {len(academic_terms_ids)}")
-        print(f"Buildings inserted and verified: {len(building_ids)}")
-        print(f"Rooms inserted and verified: {len(room_ids)}")
+        print(f"Buildings from current data processed (upserted): {len(building_ids)}")
+        print(f"Rooms from current data processed (upserted): {len(room_ids)}")
         print(f"Class schedules inserted and verified: {len(schedule_ids)}")
-        print("\nAll data has been successfully inserted and verified!")
+        print("\nAll data has been successfully processed and relevant tables verified!")
 
     except DataValidationError as e:
         print(f"\nData Validation Error: {str(e)}")
