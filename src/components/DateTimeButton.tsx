@@ -43,14 +43,14 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
 
   const formattedDate = moment(selectedDateTime).format("MMM D, YYYY");
   const formattedTimeStr = formatTime(moment(selectedDateTime).format("HH:mm"));
+  const formattedDateTimeSubtext =
+    moment(selectedDateTime).format("M/D ") + formattedTimeStr;
 
   const triggerButton = (
     <Button
       variant="outline"
-      size="icon"
       className={cn(
-        `h-6 w-6 md:h-8 md:w-8 rounded-full border-2 border-foreground/20 font-bold ${
-          !isCurrentDateTime ? "bg-muted" : ""
+        `h-auto md:h-9 rounded-lg border-2 flex items-center gap-2 px-2.5 ${!isCurrentDateTime ? "bg-muted" : ""
         }`,
         className,
       )}
@@ -58,7 +58,13 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
       title={`Selected: ${formattedDate} ${formattedTimeStr}`}
       disabled={isFetching}
     >
-      <CalendarClock size={12} />
+      <CalendarClock size={14} />
+      <div className="flex flex-col items-start leading-none">
+        <span className="text-xs">When</span>
+        <span className="text-[10px] font-normal text-muted-foreground">
+          {isCurrentDateTime ? "Now" : formattedDateTimeSubtext}
+        </span>
+      </div>
     </Button>
   );
 

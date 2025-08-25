@@ -167,8 +167,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             <DateTimeButton isFetching={isFetching} />
             <Button
               variant="outline"
-              size="icon"
-              className={`h-6 w-6 md:h-8 md:w-8 rounded-full border-2 border-foreground/20 font-bold ${
+              className={`h-6 md:h-8 rounded-full border-2 flex items-center gap-1.5 px-2.5 ${
                 showMap
                   ? "bg-sky-100/50 hover:bg-sky-100/70 dark:bg-sky-800/30 dark:hover:bg-sky-800/50 border-sky-300/60 dark:border-sky-600/60"
                   : "border-foreground/20 hover:bg-muted"
@@ -177,6 +176,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
               aria-label={showMap ? "Hide map" : "Show map"}
             >
               <MapIcon size={12} />
+              <span className="text-xs pr-1">Map</span>
             </Button>
           </div>
         </div>
