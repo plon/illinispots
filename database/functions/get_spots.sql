@@ -370,7 +370,13 @@ BEGIN
                             AND rs.room_number = mgp.room_number
                         WHERE rs.building_name = dh.name
                     ),
-                    'isOpen', check_time BETWEEN dh.open_time AND dh.close_time,
+                    'isOpen',
+                    CASE
+                        WHEN dh.open_time <= dh.close_time THEN
+                            check_time BETWEEN dh.open_time AND dh.close_time
+                        ELSE
+                            check_time >= dh.open_time OR check_time < dh.close_time
+                    END,
                     'roomCounts', (
                         SELECT jsonb_build_object(
                             'available', rc.available_rooms,
