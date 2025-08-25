@@ -246,7 +246,11 @@ export default function FacilityMap({
             type: "Point" as const,
             coordinates: [f.coordinates.longitude, f.coordinates.latitude],
           },
-          properties: { name: f.name },
+          properties: {
+            id: f.id,
+            type: f.type,
+            name: f.name,
+          },
         }));
 
       const geojson: GeoJSON.FeatureCollection = {
@@ -308,6 +312,95 @@ export default function FacilityMap({
           },
           firstTextLayer && firstTextLayer.id,
         );
+
+        // interactivity for facility labels (hover: popup, click: accordion)
+        const showPopupForFeature = (feature: any) => {
+          try {
+            const props = feature?.properties || {};
+            const id: string = props.id;
+            const type: FacilityType = props.type as FacilityType;
+            const key = `${type}-${id}`;
+            const existing = markersRef.current.get(key)?.data;
+
+            let data: MarkerData | null = existing || null;
+            if (!data && facilityData.facilities[id]) {
+              const f = facilityData.facilities[id];
+              data = {
+                id: f.id,
+                name: f.name,
+                coordinates: {
+                  latitude: f.coordinates.latitude,
+                  longitude: f.coordinates.longitude,
+                },
+                isOpen: f.isOpen,
+                available: f.roomCounts.available,
+                total: f.roomCounts.total,
+                type: f.type,
+                hours: f.hours,
+              };
+            }
+
+            if (!data) return;
+
+            const coords =
+              (feature.geometry && feature.geometry.coordinates) || null;
+
+            activePopupRef.current?.remove();
+            activePopupRef.current = new mapboxgl.Popup({
+              closeButton: false,
+              closeOnClick: false,
+              offset: [0, -10],
+            })
+              .setLngLat(
+                coords && Array.isArray(coords) ? [coords[0], coords[1]] : [
+                  data.coordinates.longitude,
+                  data.coordinates.latitude,
+                ],
+              )
+              .setHTML(createPopupContent(data))
+              .addTo(mapRef);
+          } catch {
+            // no-op
+          }
+        };
+
+        mapRef.on("mouseenter", layerId, (e: any) => {
+          mapRef.getCanvas().style.cursor = "pointer";
+          const feature = e.features && e.features[0];
+          if (!feature) return;
+          showPopupForFeature(feature);
+        });
+
+        mapRef.on("mouseleave", layerId, () => {
+          mapRef.getCanvas().style.cursor = "";
+          activePopupRef.current?.remove();
+          activePopupRef.current = null;
+        });
+
+        mapRef.on("click", layerId, (e: any) => {
+          const feature = e.features && e.features[0];
+          if (!feature) return;
+          const props = feature.properties || {};
+          const id: string = props.id;
+          const type: FacilityType = props.type as FacilityType;
+
+          const coords =
+            (feature.geometry && feature.geometry.coordinates) || null;
+
+          activePopupRef.current?.remove();
+          activePopupRef.current = null;
+
+          if (coords && Array.isArray(coords)) {
+            mapRef.flyTo({
+              center: [coords[0], coords[1]],
+              zoom: 17,
+              duration: 1000,
+              essential: true,
+            });
+          }
+
+          handleMarkerClick(id, type);
+        });
       }
     } catch (e) {
       console.warn("Facility label layer setup failed:", e);
