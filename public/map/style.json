@@ -442,6 +442,19 @@
                     {
                         "type": "Feature",
                         "properties": {
+                            "name": "Chemistry Annex"
+                        },
+                        "geometry": {
+                            "coordinates": [
+                                -88.22608368107242,
+                                40.10780804722546
+                            ],
+                            "type": "Point"
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
                             "name": "Animal Sciences Laboratory"
                         },
                         "geometry": {
@@ -539,6 +552,45 @@
                             "coordinates": [
                                 -88.22883490200387,
                                 40.1047194114613
+                            ],
+                            "type": "Point"
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Wymer Hall"
+                        },
+                        "geometry": {
+                            "coordinates": [
+                                -88.23180761476274,
+                                40.103501813602065
+                            ],
+                            "type": "Point"
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Civil & Envir Eng Bldg"
+                        },
+                        "geometry": {
+                            "coordinates": [
+                                -88.22609156815497,
+                                40.114748386622125
+                            ],
+                            "type": "Point"
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Siebel Center for Design"
+                        },
+                        "geometry": {
+                            "coordinates": [
+                                -88.23257320004831,
+                                40.102776538601546
                             ],
                             "type": "Point"
                         }
