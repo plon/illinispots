@@ -42,7 +42,7 @@ export default function FacilityMap({
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: styleUrl,
-      minZoom: 15.2,
+      // minZoom: 15.2,
       antialias: true,
     });
 
