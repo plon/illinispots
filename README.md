@@ -43,7 +43,7 @@ illiniSpots is a web application that helps UIUC students find available study s
 
 ## Tech Stack
 
-- Frontend: Next.js, React, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, MapLibre GL JS (tiles via [openfreemap](https://openfreemap.org/)).
+- Frontend: Next.js, React, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, Mapbox.
 - Backend: Supabase (PostgreSQL), Next.js API Routes, SQL functions (`database/functions`).
 
 ## Getting Started
@@ -77,6 +77,8 @@ Create `.env.local` with:
 ```env
 SUPABASE_URL=your_supabase_url
 SUPABASE_KEY=your_supabase_key
+NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_token
+NEXT_PUBLIC_MAPBOX_STYLE_URL=mapbox://styles/<user>/<style-id>
 ```
 
 4) Run locally
