@@ -95,8 +95,26 @@ body {
     padding: 4px 8px;
 }
 
-.maplibregl-popup-content {
+.mapboxgl-popup-content {
     padding: 8px !important;
+}
+
+.facility-marker {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    cursor: pointer;
+    box-shadow: 0 0 10px currentColor;
+}
+
+@media (max-width: 768px) {
+    .facility-marker {
+        width: 11px;
+        height: 11px;
+        border-width: 1px;
+        box-shadow: 0 0 6px currentColor;
+    }
 }
 
 @keyframes shimmer {
