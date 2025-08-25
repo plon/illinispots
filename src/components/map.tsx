@@ -26,13 +26,12 @@ export default function FacilityMap({
   useEffect(() => {
     if (!mapContainer.current) return;
 
-    const styleUrl =
-      process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL || "/map/style.json";
+    const styleUrl = process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL;
 
     const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
-    if (styleUrl.startsWith("mapbox://") && !token) {
+    if (!styleUrl || !token) {
       console.error(
-        "Mapbox style is configured but NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN is missing.",
+        "Mapbox style and access token are not configured.",
       );
       return;
     }
@@ -76,7 +75,7 @@ export default function FacilityMap({
       activePopupRef.current = null;
     }
 
-    const createMarkerElement = (data: MarkerData, isMobile: boolean) => {
+    const createMarkerElement = (data: MarkerData) => {
       const markerEl = document.createElement("div");
       markerEl.className = "cursor-pointer";
 
@@ -156,14 +155,12 @@ export default function FacilityMap({
     };
 
     const currentMarkerKeys = new Set(markersRef.current.keys());
-    const width = mapContainer.current?.clientWidth || 0;
-    const isMobile = width < 768;
 
     const createOrUpdateMarker = (markerKey: string, markerData: MarkerData) => {
       const existingMarker = markersRef.current.get(markerKey);
       if (existingMarker) existingMarker.marker.remove();
 
-      const markerEl = createMarkerElement(markerData, isMobile);
+      const markerEl = createMarkerElement(markerData);
       const marker = new mapboxgl.Marker({ element: markerEl })
         .setLngLat([
           markerData.coordinates.longitude,
