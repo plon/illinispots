@@ -1,183 +1,96 @@
 # illiniSpots
 
-illiniSpots is a web application that helps UIUC students find available study spaces and classrooms across campus in real-time. The app shows building availability on an interactive map and provides detailed room status information.
+illiniSpots is a web application that helps UIUC students find available study spaces and classrooms across campus. The app shows live building availability on an interactive map and provides detailed room status information.
 
 ## Features
 
-- **Interactive Map & List View:** Visualize building availability across campus or browse a searchable list.
-- **Real-Time & Future Availability:** Check room status for the current moment or use the **Date/Time Selector** to view availability for _any_ point in the past or future.
-- **Comprehensive Room Coverage:** Includes Academic Classrooms and reservable Library Study Rooms (Grainger, Funk ACES, Main Library).
-- **Accurate Availability:**
-  - Considers official **Class Schedules**.
-  - Integrates **Live University Event Data** for a more accurate picture of actual room usage.
-- **Detailed Room Information:**
-  - **Academic Rooms:** See current/next class or event, availability duration, and view the **Full Daily Schedule** (classes + events) for the selected date.
+- Interactive map and list: Visualize building availability or browse a searchable list.
+- Real-time and time travel: check now or any date/time.
+- Coverage: Academic classrooms and reservable library study rooms (Grainger, Funk ACES, Main Library).
+- Room details:
+  - **Academic Rooms:** See current/next class or event, availability duration, and view the full daily schedule (classes + events) for the selected date.
   - **Library Rooms:** View reservation timelines, direct reservation links, and room photos (where available).
-- **Progressive Web App (PWA):** Installable on your phone's home screen for easy access.
-- **Search/Filter:** Find a specific building or library by typing its name into the search bar.
-- **Responsive Design:** Works seamlessly on desktop and mobile devices.
+- PWA: install on your phone as an app for quick access.  
+    [Need help? See this guide on installing PWAs.](https://www.installpwa.com/from/illinispots.vercel.app)
+- Search and filters: find buildings and libraries fast.
+
+## How It Works
+
+- Combines official class schedules with daily university event data to determine whether a room is in use at a specific date/time.
+- Academic rooms: a room is unavailable if any class or daily event overlaps the selected time; otherwise it’s available. Availability ends at the earliest of the next class/event or building close. Very short gaps (< ~30 minutes) are not surfaced as “available” to avoid unusable slivers.
+- Library rooms: uses the UIUC LibCal reservation grid; a room is available if the current slot is free, and the duration lasts until the next booking or closing time.
+- Time travel: past dates include daily events when available; future dates do not include daily events (classes + building hours only).
+- Timezone: all times are evaluated in campus local time (America/Chicago), handling DST.
+
+## Accuracy & Reliability
+
+- Sources: class data from Course Explorer, daily events from the university Tableau feed, building hours from Facilities, and library reservations from LibCal (links below).
+- Freshness: library reservations are read live; daily events are scraped and updated regularly via a cron job; class/building data is refreshed via the data pipeline.
+- Deterministic rules: availability for academic rooms is computed in SQL (`database/functions/get_spots.sql`), using only official schedules + events and building hours.
+- Known limitations:
+  - Unofficial use (study groups, ad‑hoc meetings) and last‑minute changes may not be reflected.
+  - Departmental access restrictions can make an “available” room unusable.
+  - Special schedules (exams/holidays), maintenance closures, or data source outages can reduce accuracy.
+  - Short “micro‑gaps” are intentionally filtered out (< ~30 minutes) to avoid noise.
+  - Future dates exclude daily events; academic availability for future times uses class schedules + building hours only (events are only available per-day as they are published).
+
+## Data Sources
+
+- Class data: [Course Explorer](https://courses.illinois.edu/). See the data flow in `data-pipeline/README.MD`.
+- Daily events: [Tableau Daily Event Summary](https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents).
+- Building hours: [Facility Scheduling and Resources](https://operations.illinois.edu/facility-scheduling-and-resources/daily-event-summaries/).
+- Library reservations: [UIUC LibCal](https://uiuc.libcal.com/allspaces).
 
 ## Tech Stack
 
-### Frontend
-
-- Next.js
-- React
-- TypeScript
-- Tailwind CSS
-- shadcn/ui
-- TanStack Query
-- MapLibre GL JS (with special thanks to [openfreemap](https://openfreemap.org/) and its creator [Zsolt Ero](https://x.com/hyperknot) for providing free map tiles)
-
-### Backend
-
-- Supabase (PostgreSQL database)
-- Next.js API Routes
-- PostgreSQL Functions (for `get_spots`, `get_room_schedule`)
-
-## Data Source
-
-All data used for calculating room availability is sourced from the University of Illinois at Urbana-Champaign's official resources:
-
-- **Class Data**: Sourced from the [Course Explorer](https://courses.illinois.edu/). This includes information about when classes meet, which is used to determine room occupancy. For more details on the data collection process, please refer to the [data-pipeline README](data-pipeline/README.MD).
-- **Building Hours**: Sourced from the [Facility Scheduling and Resources](https://operations.illinois.edu/facility-scheduling-and-resources/daily-event-summaries/).
-- **Library Data**: Sourced from UIUC Library's [Room Reservation System](https://uiuc.libcal.com/allspaces).
-
-To provide availability information that is more accurate than static class schedules alone, illiniSpots incorporates data for other university-booked events. This data is fetched and updated periodically.
-
-- **Daily Events**: Sourced from the [Tableau Daily Event Summary](https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents).
-
-## Core Algorithm
-
-### [get_spots.sql](database/functions/get_spots.sql)
-
-The availability logic is handled by a PostgreSQL function that processes building and room status through three main stages:
-
-1. **State Detection**
-
-- **How**: Uses a series of CTEs that join current time against class_schedule and daily_events tables
-- **Implementation**: First extracts day code (M-U) from input date, maps to hours via CASE statements, then performs time window overlap with check_time and date range validation
-
-```
-input (2024-01-23 3:15 PM) →
-    1. converts to day 'W'
-    2. checks if date falls within class date ranges
-    3. finds active classes/events → determines if room occupied
-Example: Room 101 has class 3:00-4:00 PM on Wednesdays in Spring 2024 part of term B = unoccupied
-```
-
-2. **Gap Analysis**
-
-- **How**: Recursive CTE traverses chronologically sorted class/event times
-- **Implementation**: For each room:
-  1. Starts at first available time
-  2. Checks interval to next class/event
-  3. If gap >= minimum_useful_minutes (configured at 30), marks as available period
-  4. Repeats until finding valid gap or reaching building close
-
-```
-Example: 3:00-4:00, 5:00-6:00
-Gap found: 4:00-5:00 (60min) = valid gap > minimum_useful_minutes
-```
-
-3. **Duration Calculation**
-
-- **How**: Epoch time arithmetic between check_time and next constraint
-- **Implementation**: Takes earliest of:
-  - Next class/event start time
-  - Building closure time
-  - End of current gap
-
-```
-Example: Current 3:15, Next class 4:00
-Duration = (4:00 - 3:15) = 45 minutes available
-```
-
-### [get_room_schedule.sql](database/functions/get_room_schedule.sql)
-
-This function retrieves the raw chronological schedule for a _single specified academic room_ on a given date, including both classes and booked events.
-
-- **Purpose**: To provide the front-end with all known scheduled occupancies for a specific room and day.
-- **Data Sources**: Queries `class_schedule` and the periodically updated `daily_events` tables.
-- **Output**: Returns an ordered array of schedule blocks, each containing start/end times, status (`class` or `event`), and details (course/event info).
-- **Usage**: This raw data is fetched by the `/api/room-schedule` endpoint, which then processes it for display in the detailed room view (e.g., calculating availability gaps).
-
-## Library Availability System
-
-The library availability system operates through a three-stage pipeline handling UIUC's LibCal reservation data:
-
-1. **Room Data Extraction**
-
-- Scrapes LibCal's client-side JavaScript resource declarations using regex pattern matching
-- Extracts embedded room metadata including IDs, capacities, and asset URLs
-- Maps rooms to their parent libraries using facility IDs
-
-2. **Reservation Status Collection**
-
-- Sends concurrent POST requests to LibCal's availability grid endpoint for each library
-- Special case for Funk ACES (room reservation closes at 2 AM): Retrieves 48hr window vs standard 24hr
-- Accumulates slot data chronologically with booking status flags
-
-3. **Availability Processing**
-
-- Links room metadata with current reservation states
-- Calculates real-time metrics per room:
-  - Current occupancy status
-  - Time until next available slot
-  - Duration of current available period
-  - Chronological sequence of free/busy periods
-- Aggregates library-level statistics (total rooms, currently available)
+- Frontend: Next.js, React, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, MapLibre GL JS (tiles via [openfreemap](https://openfreemap.org/)).
+- Backend: Supabase (PostgreSQL), Next.js API Routes, SQL functions (`database/functions`).
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18.17 or later
+- Node.js 18.17+
 - npm or yarn
-- Supabase account
+- Supabase project (PostgreSQL)
 
-### Installation
+### Setup
 
-1. Clone the repository:
+1) Install dependencies
 
 ```bash
 git clone https://github.com/plon/illinispots
-```
-
-2. Install dependencies:
-
-```bash
 cd illinispots
 npm install
 ```
 
-3. Set up environment variables:
-   Create a `.env.local` file with the following:
+2) Supabase database
+
+- Create a database (e.g., via Supabase).
+- Apply schema: run `database/schema/tables.sql` in the SQL editor.
+- Add functions: run `database/functions/get_spots.sql` and `database/functions/get_room_schedule.sql`.
+
+3) Environment
+
+Create `.env.local` with:
 
 ```env
 SUPABASE_URL=your_supabase_url
 SUPABASE_KEY=your_supabase_key
 ```
 
-4. Run the development server:
+4) Run locally
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the app.
+Open http://localhost:3000.
 
-## Important Notes
+### Optional: Data Pipeline
 
-- Building/room access may be restricted to specific colleges or departments
-- Displayed availability only reflects official class schedules
-- Rooms may be occupied by unofficial meetings or study groups
-- Different schedules may apply during exam periods
-
-## Inspiration
-
-This project was inspired by [Spots](https://spots.aksharbarot.com/), a similar service for University of Waterloo students.
+For collecting and loading source data, see `data-pipeline/README.MD` for Python setup, script order, and outputs (including the daily events job).
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT — see `LICENSE`.
