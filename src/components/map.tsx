@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import mapboxgl from "mapbox-gl";
 import { MarkerData, MapProps, FacilityType } from "@/types";
 import { formatTime } from "@/utils/format";
@@ -58,7 +58,7 @@ export default function FacilityMap({
         const show = m.getZoom() >= POI_MIN_VISIBLE_ZOOM;
         try {
           m.setConfigProperty("basemap", "showPointOfInterestLabels", show);
-        } catch (_) {
+        } catch {
           // Non-standard style or config not supported
         }
       };
