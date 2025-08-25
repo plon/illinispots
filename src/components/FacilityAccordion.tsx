@@ -84,7 +84,7 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
           className="px-4 py-2 hover:no-underline hover:bg-muted group"
         >
           <div className="flex items-center justify-between flex-1 mr-2">
-            <span>{facility.name}</span>
+            <span className="font-semibold">{facility.name}</span>
             <div className="ml-2">
               {!facility.isOpen ? (
                 <Badge
