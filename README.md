@@ -26,7 +26,7 @@ illiniSpots is a web application that helps UIUC students find available study s
 
 - Sources: class data from Course Explorer, daily events from the university Tableau feed, building hours from Facilities, and library reservations from LibCal (links below).
 - Freshness: library reservations are read live; daily events are scraped and updated regularly via a cron job; class/building data is refreshed via the data pipeline.
-- Deterministic rules: availability for academic rooms is computed in SQL (`database/functions/get_spots.sql`), using only official schedules + events and building hours.
+- Deterministic rules: availability for academic rooms is computed in SQL ([`database/functions/get_spots.sql`](database/functions/get_spots.sql)), using only official schedules + events and building hours.
 - Known limitations:
   - Unofficial use (study groups, ad‑hoc meetings) and last‑minute changes may not be reflected.
   - Departmental access restrictions can make an “available” room unusable.
@@ -36,7 +36,7 @@ illiniSpots is a web application that helps UIUC students find available study s
 
 ## Data Sources
 
-- Class data: [Course Explorer](https://courses.illinois.edu/). See the data flow in `data-pipeline/README.MD`.
+- Class data: [Course Explorer](https://courses.illinois.edu/). See the data flow in [`data-pipeline/README.MD`](data-pipeline/README.MD).
 - Daily events: [Tableau Daily Event Summary](https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents).
 - Building hours: [Facility Scheduling and Resources](https://operations.illinois.edu/facility-scheduling-and-resources/daily-event-summaries/).
 - Library reservations: [UIUC LibCal](https://uiuc.libcal.com/allspaces).
@@ -67,8 +67,8 @@ npm install
 2) Supabase database
 
 - Create a database (e.g., via Supabase).
-- Apply schema: run `database/schema/tables.sql` in the SQL editor.
-- Add functions: run `database/functions/get_spots.sql` and `database/functions/get_room_schedule.sql`.
+- Apply schema: run [`database/schema/tables.sql`](database/schema/tables.sql) in the SQL editor.
+- Add functions: run [`database/functions/get_spots.sql`](database/functions/get_spots.sql) and [`database/functions/get_room_schedule.sql`](database/functions/get_room_schedule.sql).
 
 3) Environment
 
@@ -89,8 +89,8 @@ Open http://localhost:3000.
 
 ### Optional: Data Pipeline
 
-For collecting and loading source data, see `data-pipeline/README.MD` for Python setup, script order, and outputs (including the daily events job).
+For collecting and loading source data, see [`data-pipeline/README.MD`](data-pipeline/README.MD) for Python setup, script order, and outputs (including the daily events job).
 
 ## License
 
-MIT — see `LICENSE`.
+MIT — see [`LICENSE`](LICENSE).
