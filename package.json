@@ -23,7 +23,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.454.0",
-    "maplibre-gl": "^4.7.1",
+    "mapbox-gl": "^3.5.1",
     "moment-timezone": "^0.5.46",
     "next": "14.2.16",
     "react": "^18",
