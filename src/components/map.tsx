@@ -49,6 +49,23 @@ export default function FacilityMap({
     map.current.on("load", () => {
       setIsMapLoaded(true);
       onMapLoaded?.();
+
+      // Hide/show POI labels depending on zoom level using Mapbox Standard basemap config
+      const m = map.current!;
+      const POI_MIN_VISIBLE_ZOOM = 17; // Hide POI labels below this zoom
+
+      const applyPoiVisibility = () => {
+        const show = m.getZoom() >= POI_MIN_VISIBLE_ZOOM;
+        try {
+          m.setConfigProperty("basemap", "showPointOfInterestLabels", show);
+        } catch (_) {
+          // Non-standard style or config not supported
+        }
+      };
+
+      // Initialize and bind to zoom updates
+      applyPoiVisibility();
+      m.on("zoom", applyPoiVisibility);
     });
 
     map.current.addControl(new mapboxgl.NavigationControl());
