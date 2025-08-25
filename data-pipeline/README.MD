@@ -8,6 +8,22 @@ This directory contains scripts for collecting and processing UIUC course and bu
 
    - Scrapes all course data from courses.illinois.edu
    - Output: `subjects.json`
+   - Proxy support: pass `--proxy`, `--proxy-http`, or `--proxy-https`
+     - Example (single proxy for both): `python3 one_shot_scraper.py --proxy http://127.0.0.1:8080`
+     - Example (SOCKS): `python3 one_shot_scraper.py --proxy socks5h://127.0.0.1:1080`
+     - Example (per-scheme): `python3 one_shot_scraper.py --proxy-http http://proxy:8080 --proxy-https http://secure-proxy:8443`
+   - Large proxy lists: pass `--proxy-file PATH_OR_URL` for rotation
+     - Accepts a local path or an `http(s)://` URL (e.g., a raw GitHub URL)
+     - File format: one proxy per line; supports `host:port`, `http://user:pass@host:port`, `socks5h://host:port`
+     - Filter schemes: `--proxy-schemes http,socks5,socks5h,socks4` (default excludes `https` proxies, which often fail due to cert issues)
+     - Allow insecure TLS (target): `--insecure` (use only if you understand the risks)
+     - Try entire list per request: `--proxy-try-all`
+     - Drop consistently failing proxies: `--max-proxy-failures 2`
+     - Shuffle proxy order on load: `--proxy-shuffle`
+     - Rotate every request: `python3 one_shot_scraper.py --proxy-file proxies.txt`
+     - Rotate every N requests: `python3 one_shot_scraper.py --proxy-file proxies.txt --rotate-every 5`
+     - Retry across proxies on failures: `--proxy-retries 5` (default 3)
+     - Set per-request timeout: `--timeout 30`
 
 2. **subject_to_buildings.py**
 
@@ -69,7 +85,7 @@ pip install curl-cffi==0.7.3 beautifulsoup4==4.12.3 supabase==1.0.4 python-doten
 2. Run the scripts in sequence:
 
 ```bash
-python3 one_shot_scraper.py
+python3 one_shot_scraper.py --proxy-file proxies.txt --proxy-try-all --max-proxy-failures 2 --rotate-every 3 -v
 python3 subject_to_buildings.py
 python3 building_eligibility_filter.py
 python3 add_building_hours.py

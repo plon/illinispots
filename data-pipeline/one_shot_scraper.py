@@ -211,7 +211,167 @@ def save_subject_data(subjects: List[Subject], year: int, term: str):
     with open(output_file, "w") as f:
         json.dump(data, f, indent=2)
 
-def scrape_all_data(year: Optional[int] = None, term: Optional[str] = None, verbose: bool = False) -> List[Subject]:
+def _normalize_proxy_url(url: str) -> str:
+    """Ensure proxy URL has a scheme. Defaults to http:// if missing."""
+    if not url:
+        return url
+    # If user passes host:port, default to http://
+    if '://' not in url:
+        return f"http://{url}"
+    return url
+
+
+def _build_proxies(proxy: Optional[str] = None,
+                   proxy_http: Optional[str] = None,
+                   proxy_https: Optional[str] = None) -> Optional[dict]:
+    """Create a requests-compatible proxies dict from CLI args.
+
+    - If `proxy` is provided, use it for both http and https.
+    - Otherwise, use `proxy_http` and `proxy_https` individually when provided.
+    - Returns None if no proxies were specified.
+    """
+    if proxy:
+        p = _normalize_proxy_url(proxy)
+        return {"http": p, "https": p}
+
+    proxies = {}
+    if proxy_http:
+        proxies["http"] = _normalize_proxy_url(proxy_http)
+    if proxy_https:
+        proxies["https"] = _normalize_proxy_url(proxy_https)
+
+    return proxies or None
+
+
+def _load_proxy_list(path: str, allowed_schemes: Optional[List[str]] = None) -> List[dict]:
+    """Load a newline-delimited proxy list file.
+
+    - Lines may be formats like:
+        host:port
+        http://host:port
+        http://user:pass@host:port
+        socks5h://host:port
+    - Blank lines and lines starting with '#' are ignored.
+    - Each entry is turned into {"http": url, "https": url} using `_normalize_proxy_url`.
+    """
+    proxies: List[dict] = []
+    try:
+        if path.startswith('http://') or path.startswith('https://'):
+            try:
+                r = requests.get(path, impersonate='chrome123', timeout=30)
+                r.raise_for_status()
+                lines = r.text.splitlines()
+            except Exception as e:
+                print(f"Warning: failed to fetch proxy list from URL '{path}': {e}")
+                lines = []
+        else:
+            with open(path, 'r') as f:
+                lines = f.readlines()
+
+        for raw in lines:
+            line = raw.strip()
+            if not line or line.startswith('#'):
+                continue
+            if ',' in line:
+                line = line.split(',', 1)[0].strip()
+            if ' ' in line:
+                line = line.split()[0].strip()
+            if not line:
+                continue
+            url = _normalize_proxy_url(line)
+            if url.startswith('socks5://'):
+                url = 'socks5h://' + url[len('socks5://'):]
+            if allowed_schemes is not None:
+                scheme = url.split('://', 1)[0] if '://' in url else 'http'
+                if scheme not in allowed_schemes:
+                    continue
+            proxies.append({"http": url, "https": url})
+    except FileNotFoundError:
+        print(f"Warning: proxy list file not found: {path}")
+    except Exception as e:
+        print(f"Warning: error loading proxy list '{path}': {e}")
+    return proxies
+
+
+class ProxyRotator:
+    """Round-robin proxy rotator with stickiness and failure culling."""
+    def __init__(self, proxies: List[dict], rotate_every: int = 1, max_failures: int = 2, shuffle: bool = False):
+        if shuffle:
+            try:
+                import random
+                random.shuffle(proxies)
+            except Exception:
+                pass
+        self.proxies = proxies
+        self.failures = [0] * len(proxies)
+        self.rotate_every = max(1, int(rotate_every))
+        self.max_failures = max(1, int(max_failures))
+        self._idx = 0
+        self._count = 0
+
+    def peek(self) -> Optional[dict]:
+        if not self.proxies:
+            return None
+        return self.proxies[self._idx]
+
+    def advance(self):
+        if not self.proxies:
+            return
+        self._idx = (self._idx + 1) % len(self.proxies)
+        self._count = 0
+
+    def size(self) -> int:
+        return len(self.proxies)
+
+    def _remove_current(self):
+        if not self.proxies:
+            return
+        del self.proxies[self._idx]
+        del self.failures[self._idx]
+        if self._idx >= len(self.proxies):
+            self._idx = 0
+        self._count = 0
+
+    def mark_failure_current(self):
+        if not self.proxies:
+            return
+        self.failures[self._idx] += 1
+        if self.failures[self._idx] >= self.max_failures:
+            self._remove_current()
+        else:
+            self.advance()
+
+    def use(self) -> Optional[dict]:
+        """Get current proxy and apply stickiness accounting.
+
+        After this call, internal counter increases. When it reaches
+        `rotate_every`, we advance to the next proxy.
+        """
+        proxy = self.peek()
+        if proxy is None:
+            return None
+        self._count += 1
+        if self._count >= self.rotate_every:
+            self.advance()
+        return proxy
+
+
+def scrape_all_data(year: Optional[int] = None,
+                    term: Optional[str] = None,
+                    verbose: bool = False,
+                    proxy: Optional[str] = None,
+                    proxy_http: Optional[str] = None,
+                    proxy_https: Optional[str] = None,
+                    proxy_file: Optional[str] = None,
+                    rotate_every: int = 1,
+                    proxy_retries: int = 3,
+                    request_timeout: int = 30,
+                    proxy_schemes: Optional[List[str]] = None,
+                    insecure: bool = False,
+                    proxy_try_all: bool = False,
+                    max_proxy_failures: int = 2,
+                    proxy_shuffle: bool = False,
+                    skip_errors: bool = True) -> List[Subject]:
     start_time = datetime.now()
 
     if year is None:
@@ -223,8 +383,53 @@ def scrape_all_data(year: Optional[int] = None, term: Optional[str] = None, verb
     if term_lower not in VALID_TERMS:
         raise ValueError(f"Invalid term: {term}. Must be one of: {VALID_TERMS}")
 
+    # Build proxies: if a list is provided, use rotator; otherwise static proxies
+    proxies = _build_proxies(proxy=proxy, proxy_http=proxy_http, proxy_https=proxy_https)
+    proxy_list: List[dict] = []
+    rotator: Optional[ProxyRotator] = None
+    if proxy_file:
+        proxy_list = _load_proxy_list(proxy_file, allowed_schemes=proxy_schemes)
+        if proxy_list:
+            rotator = ProxyRotator(proxy_list, rotate_every=rotate_every, max_failures=max_proxy_failures, shuffle=proxy_shuffle)
+
+    def fetch(url: str):
+        last_exc = None
+        if rotator:
+            if rotator.size() == 0:
+                raise RuntimeError("No proxies left in rotation")
+            attempts = max(1, rotator.size()) if proxy_try_all else max(1, int(proxy_retries))
+        else:
+            attempts = 1
+        for attempt in range(1, attempts + 1):
+            # Peek current proxy; only advance on success or explicit failure handling
+            use_proxies = rotator.peek() if rotator else proxies
+            try:
+                r = requests.get(
+                    url,
+                    impersonate='chrome123',
+                    proxies=use_proxies,
+                    timeout=request_timeout,
+                    verify=not insecure,
+                )
+                r.raise_for_status()
+                if rotator:
+                    # Count this as a successful use for rotation stickiness
+                    rotator.use()
+                return r
+            except Exception as e:
+                last_exc = e
+                if verbose:
+                    print(f"  Request failed (attempt {attempt}/{attempts}): {e}")
+                # try next proxy on next iteration
+                if rotator:
+                    rotator.mark_failure_current()
+                continue
+        # Exhausted attempts
+        raise last_exc if last_exc else RuntimeError("Unknown error during request")
+
     print(f"Fetching subjects for {term} {year}...")
-    r = requests.get("https://courses.illinois.edu/schedule/DEFAULT/DEFAULT")
+    r = fetch("https://courses.illinois.edu/schedule/DEFAULT/DEFAULT")
+    r.raise_for_status()
     subjects = scrape_subjects(r.text)
     total_subjects = len(subjects)
     total_courses = 0
@@ -235,7 +440,17 @@ def scrape_all_data(year: Optional[int] = None, term: Optional[str] = None, verb
             subject_start = datetime.now()
             print(f"Processing subject {i}/{total_subjects}: {subject.code}")
 
-            r = requests.get(f"https://courses.illinois.edu/schedule/{year}/{term}/{subject.code}")
+            try:
+                r = fetch(f"https://courses.illinois.edu/schedule/{year}/{term}/{subject.code}")
+                r.raise_for_status()
+            except Exception as e:
+                msg = f"  Failed to fetch subject page for {subject.code}: {e}"
+                if skip_errors:
+                    print(msg)
+                    continue
+                else:
+                    raise
+
             courses = scrape_courses(r.text)
 
             if verbose:
@@ -249,7 +464,17 @@ def scrape_all_data(year: Optional[int] = None, term: Optional[str] = None, verb
                 if verbose:
                     print(f"    Processing course {j}/{len(courses)}: {course.number}")
 
-                course_response = requests.get(course_url)
+                try:
+                    course_response = fetch(course_url)
+                    course_response.raise_for_status()
+                except Exception as e:
+                    msg = f"    Skipping course {course.number}: {e}"
+                    if skip_errors:
+                        print(msg)
+                        continue
+                    else:
+                        raise
+
                 sections = scrape_sections(course_response.text)
 
                 if len(sections) > 0:
@@ -267,7 +492,6 @@ def scrape_all_data(year: Optional[int] = None, term: Optional[str] = None, verb
                 print(f"  Completed {subject.code} in {subject_duration.total_seconds():.1f}s")
                 print(f"  Running totals: {total_courses} courses, {total_sections} sections")
                 print()
-
     except KeyboardInterrupt:
         print("\nScraping interrupted, saving partial results...")
 
@@ -285,13 +509,56 @@ if __name__ == "__main__":
     parser.add_argument('--year', type=int, default=2025)
     parser.add_argument('--term', type=str, default="spring")
     parser.add_argument('-v', '--verbose', action='store_true', help='Show verbose output')
+    parser.add_argument('--proxy', type=str, default=None,
+                        help='Proxy URL for both HTTP and HTTPS (e.g., http://user:pass@host:port or socks5h://host:port)')
+    parser.add_argument('--proxy-http', type=str, default=None,
+                        help='Proxy URL for HTTP only (overrides --proxy for HTTP if both provided)')
+    parser.add_argument('--proxy-https', type=str, default=None,
+                        help='Proxy URL for HTTPS only (overrides --proxy for HTTPS if both provided)')
+    parser.add_argument('--proxy-file', type=str, default=None,
+                        help='Path or URL to a newline-delimited proxy list file. Each line like host:port or scheme://host:port')
+    parser.add_argument('--rotate-every', type=int, default=1,
+                        help='Rotate to the next proxy after this many requests (default: 1)')
+    parser.add_argument('--proxy-retries', type=int, default=3,
+                        help='When using --proxy-file, how many attempts per request to try different proxies (default: 3)')
+    parser.add_argument('--timeout', type=int, default=30,
+                        help='Per-request timeout in seconds (default: 30)')
+    parser.add_argument('--proxy-schemes', type=str, default='http,socks5,socks5h,socks4',
+                        help='Comma-separated list of allowed proxy schemes to load from --proxy-file (default: http,socks5,socks5h,socks4)')
+    parser.add_argument('--insecure', action='store_true',
+                        help='Disable TLS certificate verification for target sites (may help with some proxies)')
+    parser.add_argument('--proxy-try-all', action='store_true',
+                        help='On each request, try every available proxy at most once before failing')
+    parser.add_argument('--max-proxy-failures', type=int, default=2,
+                        help='Remove a proxy from rotation after this many consecutive failures (default: 2)')
+    parser.add_argument('--proxy-shuffle', action='store_true',
+                        help='Shuffle proxy list order on load')
+    parser.add_argument('--no-skip-errors', dest='skip_errors', action='store_false',
+                        help='Fail fast on errors instead of skipping subjects/courses')
 
     args = parser.parse_args()
 
     print("Starting scraper...")
     print("Press Ctrl+C at any time to stop and save partial results")
 
-    subjects = scrape_all_data(year=args.year, term=args.term, verbose=args.verbose)
+    subjects = scrape_all_data(
+        year=args.year,
+        term=args.term,
+        verbose=args.verbose,
+        proxy=args.proxy,
+        proxy_http=args.proxy_http,
+        proxy_https=args.proxy_https,
+        proxy_file=args.proxy_file,
+        rotate_every=args.rotate_every,
+        proxy_retries=args.proxy_retries,
+        request_timeout=args.timeout,
+        proxy_schemes=[s.strip() for s in args.proxy_schemes.split(',') if s.strip()],
+        insecure=args.insecure,
+        proxy_try_all=args.proxy_try_all,
+        max_proxy_failures=args.max_proxy_failures,
+        proxy_shuffle=args.proxy_shuffle,
+        skip_errors=args.skip_errors,
+    )
     print("\nScraping complete!")
     print(f"Scraped {len(subjects)} subjects")
     print(f"Total courses: {sum(len(subject.courses) for subject in subjects)}")
