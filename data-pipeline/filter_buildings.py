@@ -15,7 +15,8 @@ class BuildingDataFilter:
             "Vet Med Basic Sciences Bldg",
             "Veterinary Teaching Hospital",
             "Grad Sch of Lib & Info Science",
-            "Chemistry Annex"
+            "Chemistry Annex",
+            "Allen Residence Hall"
         }
         # inclusive
         self.min_rooms = 5

@@ -31,7 +31,7 @@ This directory contains scripts for collecting and processing UIUC course and bu
    - Input: `subjects.json`
    - Output: `buildings.json`
 
-3. **building_eligibility_filter.py**
+3. **filter_buildings.py**
 
    - Filters buildings based on criteria (minimum rooms, exclusion list)
    - Input: `buildings.json`
