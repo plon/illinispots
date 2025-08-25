@@ -70,7 +70,7 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <link
           rel="stylesheet"
-          href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css"
+          href="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.css"
           crossOrigin="anonymous"
         />
       </head>
