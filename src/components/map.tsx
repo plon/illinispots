@@ -1,7 +1,7 @@
 "use client";
-import React from "react";
-import { useRef, useEffect, useState, useCallback } from "react";
-import maplibregl from "maplibre-gl";
+
+import React, { useRef, useEffect, useState, useCallback } from "react";
+import mapboxgl from "mapbox-gl";
 import { MarkerData, MapProps, FacilityType } from "@/types";
 import { formatTime } from "@/utils/format";
 
@@ -11,74 +11,56 @@ export default function FacilityMap({
   onMapLoaded,
 }: MapProps) {
   const handleMarkerClick = useCallback(
-    (id: string, type: FacilityType) => {
-      onMarkerClick(id, type);
-    },
+    (id: string, type: FacilityType) => onMarkerClick(id, type),
     [onMarkerClick],
   );
 
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<maplibregl.Map | null>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<
-    Map<string, { marker: maplibregl.Marker; data: MarkerData }>
+    Map<string, { marker: mapboxgl.Marker; data: MarkerData }>
   >(new Map());
-  const activePopupRef = useRef<maplibregl.Popup | null>(null);
+  const activePopupRef = useRef<mapboxgl.Popup | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   useEffect(() => {
     if (!mapContainer.current) return;
 
-    const mapContainerEl = mapContainer.current;
-    map.current = new maplibregl.Map({
-      container: mapContainerEl,
-      style: "/map/style.json",
-      center: [-88.22726, 40.106936],
-      zoom: 16,
-      pitch: 60,
-      maxPitch: 85,
-      bearing: -60,
-      antialias: true,
-      minZoom: 15.2,
-    });
+    const styleUrl =
+      process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL || "/map/style.json";
 
-    const handleResize = () => {
-      if (map.current) {
-        map.current.resize();
-        const width = mapContainer.current?.clientWidth || 0;
-        map.current.setLayoutProperty(
-          "building_labels",
-          "text-size",
-          width < 768 ? 8 : 12,
-        );
-      }
-    };
+    const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+    if (styleUrl.startsWith("mapbox://") && !token) {
+      console.error(
+        "Mapbox style is configured but NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN is missing.",
+      );
+      return;
+    }
+    if (token) {
+      mapboxgl.accessToken = token;
+    }
+
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: styleUrl,
+      minZoom: 15.2,
+      antialias: true,
+    });
 
     map.current.on("load", () => {
       setIsMapLoaded(true);
-      if (onMapLoaded) {
-        onMapLoaded();
-      }
-      handleResize();
-      map.current!.setSky({
-        "sky-color": "#192c4a",
-        "sky-horizon-blend": 0.5,
-        "horizon-color": "#fbe7b6",
-        "horizon-fog-blend": 0.5,
-      });
+      onMapLoaded?.();
     });
 
-    window.addEventListener("resize", handleResize);
-
-    map.current.addControl(new maplibregl.NavigationControl());
+    map.current.addControl(new mapboxgl.NavigationControl());
     map.current.addControl(
-      new maplibregl.GeolocateControl({
+      new mapboxgl.GeolocateControl({
         positionOptions: { enableHighAccuracy: true },
         trackUserLocation: true,
       }),
     );
 
     return () => {
-      window.removeEventListener("resize", handleResize);
       if (map.current) {
         map.current.remove();
         map.current = null;
@@ -96,55 +78,43 @@ export default function FacilityMap({
 
     const createMarkerElement = (data: MarkerData, isMobile: boolean) => {
       const markerEl = document.createElement("div");
-      const markerSize = isMobile ? "11px" : "16px";
-      markerEl.style.width = markerSize;
-      markerEl.style.height = markerSize;
-      markerEl.style.borderRadius = "50%";
-      markerEl.style.cursor = "pointer";
+      markerEl.className = "cursor-pointer";
 
       if (!data.isOpen) {
-        markerEl.style.background = "#6b7280";
-        markerEl.style.boxShadow = `0 0 ${isMobile ? "6px" : "10px"} #6b7280`;
+        markerEl.className += " h-2 w-2 rounded-full bg-gray-500 shadow-[0px_0px_4px_2px_rgba(107,114,128,0.7)]";
       } else {
         const hasAvailable = data.available > 0;
-        markerEl.style.background = hasAvailable ? "#22c55e" : "#ef4444";
-        markerEl.style.boxShadow = `0 0 ${isMobile ? "6px" : "10px"} ${
-          hasAvailable ? "#22c55e" : "#ef4444"
-        }`;
+        if (hasAvailable) {
+          markerEl.className += " h-2 w-2 rounded-full bg-green-400 shadow-[0px_0px_4px_2px_rgba(34,197,94,0.7)]";
+        } else {
+          markerEl.className += " h-2 w-2 rounded-full bg-red-500 shadow-[0px_0px_4px_2px_rgba(239,68,68,0.7)]";
+        }
       }
 
-      markerEl.style.border = `${isMobile ? "1px" : "2px"} solid white`;
       return markerEl;
     };
 
-    const createPopupContent = (data: MarkerData) => {
-      return `
-        <div style="padding: 4px 8px;">
-          <strong>${data.name}</strong><br/>
-          ${
-            data.isOpen
-              ? `${data.available}/${data.total} available`
-              : `CLOSED<br/><span style="font-size: 0.9em; color: #666;">${
-                  data.hours.open
-                    ? `Opens ${formatTime(data.hours.open)}`
-                    : "Not open today"
-                }</span>`
-          }
-        </div>
-      `;
-    };
+    const createPopupContent = (data: MarkerData) => `
+      <div style="padding: 4px 8px;">
+        <strong>${data.name}</strong><br/>
+        ${data.isOpen
+        ? `${data.available}/${data.total} available`
+        : `CLOSED<br/><span style="font-size: 0.9em; color: #666;">${data.hours.open
+          ? `Opens ${formatTime(data.hours.open)}`
+          : "Not open today"
+        }</span>`
+      }
+      </div>
+    `;
 
     const setupMarkerInteractions = (
       markerEl: HTMLDivElement,
-      marker: maplibregl.Marker,
       data: MarkerData,
     ) => {
       markerEl.addEventListener("mouseenter", () => {
-        if (activePopupRef.current) {
-          activePopupRef.current.remove();
-        }
+        activePopupRef.current?.remove();
 
-        activePopupRef.current = new maplibregl.Popup({
+        activePopupRef.current = new mapboxgl.Popup({
           closeButton: false,
           closeOnClick: false,
           offset: [0, -10],
@@ -155,17 +125,13 @@ export default function FacilityMap({
       });
 
       markerEl.addEventListener("mouseleave", () => {
-        if (activePopupRef.current) {
-          activePopupRef.current.remove();
-          activePopupRef.current = null;
-        }
+        activePopupRef.current?.remove();
+        activePopupRef.current = null;
       });
 
       markerEl.addEventListener("click", (e) => {
-        if (activePopupRef.current) {
-          activePopupRef.current.remove();
-          activePopupRef.current = null;
-        }
+        activePopupRef.current?.remove();
+        activePopupRef.current = null;
 
         map.current?.flyTo({
           center: [data.coordinates.longitude, data.coordinates.latitude],
@@ -190,43 +156,28 @@ export default function FacilityMap({
     };
 
     const currentMarkerKeys = new Set(markersRef.current.keys());
-    const newMarkerDataMap: { [key: string]: MarkerData } = {};
     const width = mapContainer.current?.clientWidth || 0;
     const isMobile = width < 768;
 
-    // Helper function to create or update markers
-    const createOrUpdateMarker = (
-      markerKey: string,
-      markerData: MarkerData,
-    ) => {
-      // Remove existing marker if it exists
+    const createOrUpdateMarker = (markerKey: string, markerData: MarkerData) => {
       const existingMarker = markersRef.current.get(markerKey);
-      if (existingMarker) {
-        existingMarker.marker.remove();
-      }
+      if (existingMarker) existingMarker.marker.remove();
 
-      // Create new marker element and marker
       const markerEl = createMarkerElement(markerData, isMobile);
-      const marker = new maplibregl.Marker({ element: markerEl })
+      const marker = new mapboxgl.Marker({ element: markerEl })
         .setLngLat([
           markerData.coordinates.longitude,
           markerData.coordinates.latitude,
         ])
         .addTo(map.current!);
 
-      // Set up interactions
-      setupMarkerInteractions(markerEl, marker, markerData);
+      setupMarkerInteractions(markerEl, markerData);
 
-      // Update reference
-      markersRef.current.set(markerKey, {
-        marker,
-        data: markerData,
-      });
+      markersRef.current.set(markerKey, { marker, data: markerData });
     };
 
-    // Process all facilities
+    // Process facilities
     Object.values(facilityData.facilities).forEach((facility) => {
-      // Skip facilities with missing required data
       if (!facility.coordinates || !facility.roomCounts) {
         console.warn(`Facility ${facility.id} is missing required properties`);
         return;
@@ -247,22 +198,18 @@ export default function FacilityMap({
       };
 
       const markerKey = `${facility.type}-${facility.id}`;
-      newMarkerDataMap[markerKey] = markerData;
 
-      // If marker exists, check if it needs updating
       if (currentMarkerKeys.has(markerKey)) {
-        currentMarkerKeys.delete(markerKey); // Remove from keys to delete
+        currentMarkerKeys.delete(markerKey);
 
-        const existingMarkerData = markersRef.current.get(markerKey);
-        if (existingMarkerData) {
+        const existing = markersRef.current.get(markerKey);
+        if (existing) {
           const hasChanged =
-            existingMarkerData.data.isOpen !== markerData.isOpen ||
-            existingMarkerData.data.available !== markerData.available ||
-            existingMarkerData.data.total !== markerData.total;
+            existing.data.isOpen !== markerData.isOpen ||
+            existing.data.available !== markerData.available ||
+            existing.data.total !== markerData.total;
 
-          if (hasChanged) {
-            createOrUpdateMarker(markerKey, markerData);
-          }
+          if (hasChanged) createOrUpdateMarker(markerKey, markerData);
         }
       } else {
         createOrUpdateMarker(markerKey, markerData);
@@ -271,11 +218,90 @@ export default function FacilityMap({
 
     removeUnusedMarkers(currentMarkerKeys);
 
-    return () => {
-      if (activePopupRef.current) {
-        activePopupRef.current.remove();
-        activePopupRef.current = null;
+    // Add/update facility label layer
+    try {
+      const mapRef = map.current!;
+      const sourceId = "facility-points";
+      const layerId = "facility-labels";
+
+      const features = Object.values(facilityData.facilities)
+        .filter((f) => f.coordinates)
+        .map((f) => ({
+          type: "Feature" as const,
+          geometry: {
+            type: "Point" as const,
+            coordinates: [f.coordinates.longitude, f.coordinates.latitude],
+          },
+          properties: { name: f.name },
+        }));
+
+      const geojson: GeoJSON.FeatureCollection = {
+        type: "FeatureCollection",
+        features,
+      };
+
+      const existingSource = mapRef.getSource(sourceId) as
+        | mapboxgl.GeoJSONSource
+        | undefined;
+
+      if (existingSource) {
+        existingSource.setData(geojson as any);
+      } else {
+        mapRef.addSource(sourceId, { type: "geojson", data: geojson });
+
+        const firstTextLayer = mapRef
+          .getStyle()
+          .layers?.find(
+            (l: any) => l.type === "symbol" && l.layout && l.layout["text-field"],
+          );
+
+        mapRef.addLayer(
+          {
+            id: layerId,
+            type: "symbol",
+            source: sourceId,
+            layout: {
+              "text-field": ["coalesce", ["get", "name"], ["get", "Name"]],
+              "text-font": [
+                "literal",
+                ["DIN Pro Medium", "Arial Unicode MS Regular"],
+              ],
+              "text-size": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                15, 11,
+                16, 12,
+                17, 13,
+                18, 14,
+                20, 16,
+              ],
+              "text-allow-overlap": false,
+              "icon-allow-overlap": false,
+              "text-variable-anchor": ["top", "bottom", "left", "right"],
+              "text-radial-offset": 0.6,
+              "text-max-width": 10,
+              "text-letter-spacing": 0.02,
+              "text-justify": "auto",
+            },
+            paint: {
+              "text-color": "#ffffff",
+              "text-halo-color": "#111827",
+              "text-halo-width": 1.2,
+              "text-halo-blur": 0.4,
+              "text-opacity": ["interpolate", ["linear"], ["zoom"], 14.5, 0, 15, 1],
+            },
+          },
+          firstTextLayer && firstTextLayer.id,
+        );
       }
+    } catch (e) {
+      console.warn("Facility label layer setup failed:", e);
+    }
+
+    return () => {
+      activePopupRef.current?.remove();
+      activePopupRef.current = null;
     };
   }, [facilityData, handleMarkerClick, isMapLoaded]);
 
