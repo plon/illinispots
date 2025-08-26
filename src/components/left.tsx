@@ -14,15 +14,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  HybridTooltip,
+  HybridTooltipContent,
+  HybridTooltipTrigger,
+  TooltipProvider,
+} from "@/components/ui/HybridTooltip";
 import { Facility, FacilityStatus, FacilityType, AccordionRefs } from "@/types";
 import {
   Github,
   Map as MapIcon,
-  TriangleAlert,
+  BadgeHelp,
   Search,
   LoaderPinwheel,
 } from "lucide-react";
@@ -97,8 +98,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   const libraryFacilities = useMemo(() => {
     const allLibraries = facilityData
       ? Object.values(facilityData.facilities)
-          .filter((facility) => facility.type === FacilityType.LIBRARY)
-          .sort((a, b) => a.name.localeCompare(b.name))
+        .filter((facility) => facility.type === FacilityType.LIBRARY)
+        .sort((a, b) => a.name.localeCompare(b.name))
       : [];
     return filterFacilities(allLibraries);
   }, [facilityData, filterFacilities]);
@@ -106,8 +107,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   const academicFacilities = useMemo(() => {
     const allAcademic = facilityData
       ? Object.values(facilityData.facilities)
-          .filter((facility) => facility.type === FacilityType.ACADEMIC)
-          .sort((a, b) => a.name.localeCompare(b.name))
+        .filter((facility) => facility.type === FacilityType.ACADEMIC)
+        .sort((a, b) => a.name.localeCompare(b.name))
       : [];
     return filterFacilities(allAcademic);
   }, [facilityData, filterFacilities]);
@@ -116,68 +117,68 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     <div className="h-full bg-background border-t md:border-t-0 md:border-l flex flex-col relative">
       <div className="sidebar-header py-1 pl-3 pr-3 md:p-4 border-b flex flex-col">
         <div className="flex justify-between items-center w-full">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold">
-              <span style={{ color: "#FF5F05" }}>illini</span>
-              <span style={{ color: "#13294B" }}>Spots</span>
-            </h1>
-          </div>
+          <h1 className="text-xl md:text-2xl font-bold">
+            <span style={{ color: "#FF5F05" }}>illini</span>
+            <span style={{ color: "#13294B" }}>Spots</span>
+          </h1>
           <div className="flex gap-2 items-center pt-1">
-            <a
-              href="https://github.com/plon/illinispots"
-              target="_blank"
-              rel="noopener"
-              className="h-6 w-6 md:h-8 md:w-8 rounded-full flex items-center justify-center border-2 border-foreground/20 hover:bg-muted"
-              aria-label="View source on GitHub"
-            >
-              <Github size={14.5} />
-            </a>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-6 w-6 md:h-8 md:w-8 rounded-full border-2 border-foreground/20 font-bold"
-                  aria-label="Important notes about room availability"
-                >
-                  <TriangleAlert size={12} />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                <div className="text-sm space-y-2">
-                  <p className="font-medium">Important Notes:</p>
-                  <ul className="list-disc pl-4 space-y-1">
-                    <li>
-                      Building/room access may be restricted to specific
-                      colleges or departments
-                    </li>
-                    <li>
-                      Displayed availability only reflects official class
-                      schedules and events
-                    </li>
-                    <li>
-                      Rooms may be occupied by unofficial meetings or study
-                      groups
-                    </li>
-                    <li>Different schedules may apply during exam periods</li>
-                  </ul>
-                </div>
-              </PopoverContent>
-            </Popover>
-            <Button
-              variant="outline"
-              className={`h-6 md:h-8 rounded-full border-2 flex items-center gap-1.5 px-2.5 ${
-                showMap
-                  ? "bg-sky-100/50 hover:bg-sky-100/70 dark:bg-sky-800/30 dark:hover:bg-sky-800/50 border-sky-300/60 dark:border-sky-600/60 hover:cursor-e-resize"
-                  : "border-foreground/20 hover:bg-muted hover:cursor-w-resize"
-              }`}
-              onClick={() => setShowMap(!showMap)}
-              aria-label={showMap ? "Hide map" : "Show map"}
-            >
-              <MapIcon size={12} />
-              <span className="text-xs pr-1">Map</span>
-            </Button>
-            <DateTimeButton isFetching={isFetching} />
+            <TooltipProvider delayDuration={50}>
+              <a
+                href="https://github.com/plon/illinispots"
+                target="_blank"
+                rel="noopener"
+                className="h-6 w-6 md:h-8 md:w-8 rounded-full flex items-center justify-center border-2 border-foreground/20 hover:bg-muted"
+                aria-label="View source on GitHub"
+              >
+                <Github size={14.5} />
+              </a>
+              <HybridTooltip>
+                <HybridTooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-6 w-6 md:h-8 md:w-8 rounded-full border-2 border-foreground/20 font-bold hover:cursor-help"
+                    aria-label="Important notes about room availability"
+                  >
+                    <BadgeHelp size={12} />
+                  </Button>
+                </HybridTooltipTrigger>
+                <HybridTooltipContent className="w-80">
+                  <div className="text-sm space-y-2">
+                    <p className="font-medium">Important Notes:</p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li>
+                        Building/room access may be restricted to specific
+                        colleges or departments
+                      </li>
+                      <li>
+                        Displayed availability only reflects official class
+                        schedules and events
+                      </li>
+                      <li>
+                        Rooms may be occupied by unofficial meetings or study
+                        groups
+                      </li>
+                      <li>Different schedules may apply during exam periods</li>
+                    </ul>
+                  </div>
+                </HybridTooltipContent>
+              </HybridTooltip>
+              <Button
+                variant="outline"
+                className={`h-6 md:h-8 rounded-full border-2 flex items-center gap-1.5 px-2.5 ${
+                  showMap
+                    ? "bg-sky-100/50 hover:bg-sky-100/70 dark:bg-sky-800/30 dark:hover:bg-sky-800/50 border-sky-300/60 dark:border-sky-600/60 hover:cursor-e-resize"
+                    : "border-foreground/20 hover:bg-muted hover:cursor-w-resize"
+                }`}
+                onClick={() => setShowMap(!showMap)}
+                aria-label={showMap ? "Hide map" : "Show map"}
+              >
+                <MapIcon size={12} />
+                <span className="text-xs pr-1">Map</span>
+              </Button>
+              <DateTimeButton isFetching={isFetching} />
+            </TooltipProvider>
           </div>
         </div>
         <div className="mt-2 md:mt-3 w-full relative">
