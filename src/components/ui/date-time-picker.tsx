@@ -119,7 +119,7 @@ function DateTimePicker({
             <Label htmlFor={id} className="text-xs">
               Enter time
             </Label>
-            <div className="relative grow">
+            <div className="relative grow min-w-0">
               <Input
                 id={id}
                 type="time"
