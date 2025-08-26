@@ -164,7 +164,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 </div>
               </PopoverContent>
             </Popover>
-            <DateTimeButton isFetching={isFetching} />
             <Button
               variant="outline"
               className={`h-6 md:h-8 rounded-full border-2 flex items-center gap-1.5 px-2.5 ${
@@ -178,6 +177,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
               <MapIcon size={12} />
               <span className="text-xs pr-1">Map</span>
             </Button>
+            <DateTimeButton isFetching={isFetching} />
           </div>
         </div>
         <div className="mt-2 md:mt-3 w-full relative">
