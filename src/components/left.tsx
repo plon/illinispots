@@ -129,6 +129,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 rel="noopener"
                 className="h-6 w-6 md:h-8 md:w-8 rounded-full flex items-center justify-center border-2 border-foreground/20 hover:bg-muted"
                 aria-label="View source on GitHub"
+                title="View source on GitHub"
               >
                 <Github size={14.5} />
               </a>
@@ -173,6 +174,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 }`}
                 onClick={() => setShowMap(!showMap)}
                 aria-label={showMap ? "Hide map" : "Show map"}
+                title={showMap ? "Hide map" : "Show map"}
               >
                 <MapIcon size={12} />
                 <span className="text-xs pr-1">Map</span>
