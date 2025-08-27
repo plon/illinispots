@@ -79,7 +79,13 @@ Web Data → subjects.json → buildings.json → filtered_buildings.json
 1. Install required packages:
 
 ```bash
-pip install curl-cffi==0.7.3 beautifulsoup4==4.12.3 supabase==1.0.4 python-dotenv==1.0.0 selenium==4.27.1 selenium-wire==5.1.0
+pip install -r requirements.txt
+```
+
+Or manually:
+
+```bash
+pip install curl-cffi==0.7.3 supabase==1.0.4 python-dotenv==1.0.0 pandas==2.3.2
 ```
 
 2. Run the scripts in sequence:
@@ -87,7 +93,7 @@ pip install curl-cffi==0.7.3 beautifulsoup4==4.12.3 supabase==1.0.4 python-doten
 ```bash
 python3 one_shot_scraper.py --proxy-file proxies.txt --proxy-try-all --max-proxy-failures 2 --rotate-every 3 -v
 python3 subject_to_buildings.py
-python3 building_eligibility_filter.py
+python3 filter_buildings.py
 python3 add_building_hours.py
 python3 add_building_coordinates.py
 python3 load_to_postgres.py
@@ -96,7 +102,7 @@ python3 load_to_postgres.py
 ## Building Filtering Criteria
 
 - Minimum 7 rooms per building
-- Certain buildings explicitly excluded (see [`building_eligibility_filter.py`](data-pipeline/building_eligibility_filter.py))
+- Certain buildings explicitly excluded (see [`filter_buildings.py`](filter_buildings.py))
 
 ## Database Schema
 
