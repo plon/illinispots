@@ -31,5 +31,9 @@ alias_map = {
     "Sidney Lu Mechanical Engr Bldg": 'Sidney Lu Mech Engr Bldg',
     "Transporation Building": 'Transportation Building',
     "Turner Hall": 'Turner Hall',
-    "Wohlers Hall": 'Wohlers Hall'
+    "Wohlers Hall": 'Wohlers Hall',
+    "Wymer Hall": 'Wymer Hall',
+    "Civil & Envir Eng Bldg" : 'Civil & Envir Eng Bldg',
+    "Siebel Center for Design" : 'Siebel Center for Design'
+
 }
