@@ -71,12 +71,13 @@ BEGIN
             room_number,
             occupant as identifier,
             event_name as title,
-            start_time,
-            end_time,
+            start_time::TIME as start_time,
+            end_time::TIME as end_time,
             'event' as source_type
         FROM daily_events
-        WHERE event_date = check_date
-        AND check_time BETWEEN start_time AND end_time
+        WHERE DATE(start_time AT TIME ZONE 'America/Chicago') = check_date
+        AND check_time BETWEEN (start_time AT TIME ZONE 'America/Chicago')::TIME 
+                           AND (end_time AT TIME ZONE 'America/Chicago')::TIME
     ),
     next_occupancy AS (
         SELECT DISTINCT ON (building_name, room_number)
@@ -110,12 +111,12 @@ BEGIN
                 room_number,
                 occupant as identifier,
                 event_name as title,
-                start_time,
-                end_time,
+                start_time::TIME as start_time,
+                end_time::TIME as end_time,
                 'event' as source_type
             FROM daily_events
-            WHERE event_date = check_date
-            AND start_time > check_time
+            WHERE DATE(start_time AT TIME ZONE 'America/Chicago') = check_date
+            AND (start_time AT TIME ZONE 'America/Chicago')::TIME > check_time
         ) combined
         ORDER BY building_name, room_number, start_time
     ),
@@ -141,10 +142,12 @@ BEGIN
             UNION ALL
 
             -- Remaining events
-            SELECT building_name, room_number, start_time, end_time
+            SELECT building_name, room_number, 
+                   (start_time AT TIME ZONE 'America/Chicago')::TIME as start_time, 
+                   (end_time AT TIME ZONE 'America/Chicago')::TIME as end_time
             FROM daily_events
-            WHERE event_date = check_date
-            AND start_time > check_time
+            WHERE DATE(start_time AT TIME ZONE 'America/Chicago') = check_date
+            AND (start_time AT TIME ZONE 'America/Chicago')::TIME > check_time
         ) combined
         GROUP BY building_name, room_number
     ),
@@ -407,7 +410,7 @@ CREATE INDEX IF NOT EXISTS idx_class_schedule_room_day
     ON class_schedule(building_name, room_number, day_of_week);
 
 CREATE INDEX IF NOT EXISTS idx_daily_events_date_time
-    ON daily_events(event_date, start_time, end_time);
+    ON daily_events(DATE(start_time AT TIME ZONE 'America/Chicago'), start_time, end_time);
 
 CREATE INDEX IF NOT EXISTS idx_daily_events_room
     ON daily_events(building_name, room_number);

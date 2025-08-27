@@ -64,9 +64,8 @@ CREATE TABLE daily_events (
     room_number TEXT NOT NULL,
     event_name TEXT NOT NULL,
     occupant TEXT NOT NULL,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL,
-    event_date DATE NOT NULL,
+    start_time TIMESTAMPTZ NOT NULL,
+    end_time TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
 
     FOREIGN KEY (building_name, room_number)
