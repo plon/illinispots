@@ -147,7 +147,8 @@ async function getReservation(
   const reservationsToday = responseToday.data as ReservationResponse;
 
   // Funk ACES needs data for the *next* day as well because reservations run past midnight
-  if (lid === "3604") {
+  // Only fetch next day data if it's after 10 PM Chicago time (when users might need late night/early morning slots)
+  if (lid === "3604" && targetMoment.hour() >= 22) {
     const dayAfterNextCST = nextDateCST.clone().add(1, "day");
 
     payload.start = endDate; // Start from the next date
