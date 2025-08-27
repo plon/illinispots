@@ -19,7 +19,7 @@ illiniSpots is a web application that helps UIUC students find available study s
 - Combines official class schedules with daily university event data to determine whether a room is in use at a specific date/time.
 - Academic rooms: a room is unavailable if any class or daily event overlaps the selected time; otherwise it’s available. Availability ends at the earliest of the next class/event or building close. Very short gaps (< ~30 minutes) are not surfaced as “available” to avoid unusable slivers.
 - Library rooms: uses the UIUC LibCal reservation grid; a room is available if the current slot is free, and the duration lasts until the next booking or closing time.
-- Time travel: past dates include daily events when available; future dates do not include daily events (classes + building hours only).
+- Time travel: daily events are included for past dates and for future dates up to 14 days ahead; for dates further in the future, only class schedules and building hours are used.
 - Timezone: all times are evaluated in campus local time (America/Chicago), handling DST.
 
 ## Accuracy & Reliability
