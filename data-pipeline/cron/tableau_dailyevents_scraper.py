@@ -4,7 +4,7 @@ from io import StringIO
 from dotenv import load_dotenv, find_dotenv
 from supabase import create_client
 import pandas as pd
-import requests
+from curl_cffi import requests
 from utils.buildingnames import alias_map
 
 
