@@ -66,17 +66,17 @@ BEGIN
         UNION ALL
 
         SELECT
-            start_time,
-            end_time,
+            (start_time AT TIME ZONE 'America/Chicago')::TIME as start_time,
+            (end_time AT TIME ZONE 'America/Chicago')::TIME as end_time,
             'event' as event_type,
             occupant as identifier, -- could use event_name
             event_name as title
         FROM daily_events
         WHERE building_name = building_id_param
           AND room_number = room_number_param
-          AND event_date = check_date
-          AND end_time > building_open_time
-          AND start_time < building_close_time
+          AND DATE(start_time AT TIME ZONE 'America/Chicago') = check_date
+          AND (end_time AT TIME ZONE 'America/Chicago')::TIME > building_open_time
+          AND (start_time AT TIME ZONE 'America/Chicago')::TIME < building_close_time
 
         ORDER BY start_time
     LOOP
