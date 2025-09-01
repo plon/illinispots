@@ -20,6 +20,8 @@ import { RoomBadge } from "@/components/RoomBadge";
 import FacilityRoomDetails from "@/components/FacilityRoomDetails";
 import { getLibraryHoursMessage } from "@/utils/libraryHours";
 import AcademicRoomDetailLoader from "@/components/AcademicRoomDetailLoader";
+import { FavoriteButton } from "@/components/FavoriteButton";
+import { FavoriteItem } from "@/hooks/useFavorites";
 
 interface FacilityAccordionProps {
   facility: Facility;
@@ -28,6 +30,8 @@ interface FacilityAccordionProps {
   toggleItem: (itemId: string) => void;
   accordionRefs: React.MutableRefObject<AccordionRefs>;
   idPrefix: string;
+  isFavorite?: boolean;
+  onToggleFavorite?: (item: FavoriteItem) => void;
 }
 
 const getRoomAvailabilityMessage = (room: LibraryRoom): React.ReactNode => {
@@ -67,6 +71,8 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
   toggleItem,
   accordionRefs,
   idPrefix,
+  isFavorite = false,
+  onToggleFavorite,
 }) => {
   const facilityId = `${idPrefix}-${facility.id}`;
 
@@ -84,8 +90,22 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
           className="px-4 py-2 hover:no-underline hover:bg-muted group"
         >
           <div className="flex items-center justify-between flex-1 mr-2">
-            <span className="font-semibold">{facility.name}</span>
-            <div className="ml-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <span className="font-semibold">{facility.name}</span>
+            </div>
+            <div className="flex items-center gap-1 ml-2">
+              {onToggleFavorite && (
+                <FavoriteButton
+                  facility={{
+                    id: facility.id,
+                    name: facility.name,
+                    type: facilityType === FacilityType.LIBRARY ? 'library' : 'academic',
+                  }}
+                  isFavorite={isFavorite}
+                  onToggle={onToggleFavorite}
+                  size="sm"
+                />
+              )}
               {!facility.isOpen ? (
                 <Badge
                   variant="outline"

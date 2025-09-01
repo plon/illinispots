@@ -29,6 +29,8 @@ import {
 } from "lucide-react";
 import FacilityAccordion from "@/components/FacilityAccordion";
 import DateTimeButton from "@/components/DateTimeButton";
+import { FavoritesSection } from "@/components/FavoritesSection";
+import { useFavorites } from "@/hooks/useFavorites";
 
 interface LeftSidebarProps {
   facilityData: FacilityStatus | null;
@@ -50,6 +52,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   const accordionRefs = useRef<AccordionRefs>({});
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const { favorites, toggleFavorite, isFavorite } = useFavorites();
 
   const scrollToAccordion = useCallback((accordionId: string) => {
     const element = accordionRefs.current[accordionId];
@@ -112,6 +115,19 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
       : [];
     return filterFacilities(allAcademic);
   }, [facilityData, filterFacilities]);
+
+  const handleFavoriteClick = useCallback((facilityId: string, type: 'library' | 'academic') => {
+    // Find the facility and expand its accordion
+    const prefix = type === 'library' ? 'library' : 'building';
+    const accordionId = `${prefix}-${facilityId}`;
+    
+    // Add to expanded items if not already expanded
+    if (!expandedItems.includes(accordionId)) {
+      setExpandedItems(prev => [...prev, accordionId]);
+    }
+    
+    scrollToAccordion(accordionId);
+  }, [expandedItems, setExpandedItems, scrollToAccordion]);
 
   return (
     <div className="h-full bg-background border-t md:border-t-0 md:border-l flex flex-col relative">
@@ -200,6 +216,12 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
       <ScrollArea className="flex-1" ref={scrollAreaRef}>
         {" "}
+        <FavoritesSection
+          favorites={favorites}
+          facilityData={facilityData}
+          onFavoriteClick={handleFavoriteClick}
+          onToggleFavorite={toggleFavorite}
+        />
         {libraryFacilities.length > 0 ? (
           <div className="mt-2">
             <h2 className="text-sm font-normal text-muted-foreground pl-6">
@@ -215,6 +237,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                   toggleItem={toggleItem}
                   accordionRefs={accordionRefs}
                   idPrefix="library"
+                  isFavorite={isFavorite(facility.id)}
+                  onToggleFavorite={toggleFavorite}
                 />
               ))}
             </Accordion>
@@ -236,6 +260,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                   toggleItem={toggleItem}
                   accordionRefs={accordionRefs}
                   idPrefix="building"
+                  isFavorite={isFavorite(facility.id)}
+                  onToggleFavorite={toggleFavorite}
                 />
               ))}
             </Accordion>
