@@ -34,6 +34,9 @@ class BuildingHoursProcessor:
 
         time_str = time_str.strip()
 
+        if time_str.upper() in ['12AM', '12:00AM']:
+            return '23:59'
+
         try:
             if ':' in time_str:
                 return datetime.strptime(time_str, '%I:%M%p').strftime('%H:%M')
