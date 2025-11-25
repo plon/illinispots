@@ -233,7 +233,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                         <MoreHorizontal size={18} />
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-64" align="end">
+                                <PopoverContent className="w-56 md:w-64" align="end">
                                     <div className="space-y-1">
                                         {/* Map Toggle */}
                                         <div className="flex items-center justify-between px-3 py-2">
@@ -262,7 +262,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                                      Important Notes
                                                  </Button>
                                              </PopoverTrigger>
-                                             <PopoverContent className="w-80">
+                                             <PopoverContent className="w-64 md:w-80">
                                                  <div className="text-sm space-y-2">
                                                      <p className="font-medium">Important Notes:</p>
                                                      <ul className="list-disc pl-4 space-y-1">
