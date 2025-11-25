@@ -104,7 +104,7 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                                 type="time"
                                 value={startTime}
                                 onChange={(e) => setStartTime(e.target.value)}
-                                onFocus={(e) => {
+                                onFocus={() => {
                                     if (!startTime) {
                                         const now = new Date();
                                         const hours = String(now.getHours()).padStart(2, '0');
@@ -200,7 +200,7 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                                     type="time"
                                     value={freeUntil}
                                     onChange={(e) => setFreeUntil(e.target.value)}
-                                    onFocus={(e) => {
+                                    onFocus={() => {
                                         if (!freeUntil) {
                                             const now = new Date();
                                             const hours = String(now.getHours()).padStart(2, '0');
