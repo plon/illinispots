@@ -1,8 +1,7 @@
-import datetime
 import os
 from io import StringIO
 from dotenv import load_dotenv, find_dotenv
-from supabase import create_client
+from supabase.client import create_client
 import pandas as pd
 from curl_cffi import requests
 from utils.buildingnames import alias_map
@@ -17,11 +16,12 @@ def get_events_df():
             customer_contact, event_name, room.
     """
 
-    csv_url = "https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents/736dba17-6e8f-4ccf-af5d-fd884dfd32ce/dc632d93-ace1-4bac-b605-143007524566.csv"
+    csv_url = "https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents.csv"
 
-    response = requests.get(csv_url, timeout=10)
+    response = requests.get(csv_url, impersonate='chrome124')
+    print('here')
     csv_data = response.text
-    print("  ✅ Got data from Tableau")
+    print("Fetched data from Tableau")
 
     df = pd.read_csv(StringIO(csv_data))
 
@@ -39,7 +39,7 @@ def get_events_df():
     
     # Create the 'start_time' attribute by combining 'StartDate' and 'StartTime'
     df["start_time"] = pd.to_datetime(
-        df["StartDate"] + " " + df["StartTime"].map(lambda s: s.split(" ", 1)[1] if isinstance(s, str) and " " in s else s),
+        df["StartDate"].astype(str) + " " + df["StartTime"].map(lambda s: s.split(" ", 1)[1] if isinstance(s, str) and " " in s else s),
         format="%m/%d/%Y %I:%M:%S %p",
         errors='coerce'  # Convert invalid dates to NaT
     ).dt.tz_localize("America/Chicago", ambiguous='infer')
@@ -54,7 +54,7 @@ def get_events_df():
     df = df.dropna(subset=['start_time', 'end_time'])
     dropped_count = initial_count - len(df)
     if dropped_count > 0:
-        print(f"  ⚠️  Dropped {dropped_count} rows with invalid timestamps")
+        print(f"Dropped {dropped_count} rows with invalid timestamps")
 
     df = df.drop(columns=["StartDate", "StartTime"])
 
@@ -69,10 +69,9 @@ def get_events_df():
     )
 
     # Normalize building names using alias map
-    df["building_name"] = df["building_name"].map(lambda name: alias_map.get(name, name))
+    df["building_name"] = df["building_name"].map(lambda name: alias_map.get(str(name), str(name)))
 
-    print("  ✅ Finished processing data")
-    print(df)
+    print("Finished processing data")
 
     return df
 
@@ -85,10 +84,13 @@ def load_to_postgres(df):
     """
     load_dotenv(find_dotenv('.env.local'))
 
-    supabase = create_client(
-        os.getenv("SUPABASE_URL"),
-        os.getenv("SUPABASE_KEY")
-    )
+    supabase_url = os.getenv("SUPABASE_URL")
+    supabase_key = os.getenv("SUPABASE_KEY")
+
+    if not supabase_url or not supabase_key:
+        raise ValueError("Supabase URL and Key must be set in .env.local")
+
+    supabase = create_client(supabase_url, supabase_key)
 
     # Get valid rooms from the database
     result = supabase.table('rooms').select('building_name,room_number').execute()
@@ -100,9 +102,9 @@ def load_to_postgres(df):
     # Clear existing events
     try:
         delete_result = supabase.table('daily_events').delete().neq('event_name', 'dummy_value_to_avoid_error_on_empty_delete').execute()
-        print(f"  🗑️  Cleared existing events (Result: {delete_result})")
+        print(f"Cleared existing events (Result: {delete_result})")
     except Exception as e:
-        print(f"  ❌ Error clearing existing events: {str(e)}")
+        print(f"Error clearing existing events: {str(e)}")
 
     for index, row in df.iterrows():
         building_name = row['building_name']
@@ -133,7 +135,7 @@ def load_to_postgres(df):
         
         # Check if room exists in database
         if (building_name, room_number) not in valid_rooms:
-            print(f"  ⚠️  Skipping room not in database: {building_name} - {room_number}")
+            print(f"Skipping room not in database: {building_name} - {room_number}")
             invalid_events.append({
                 'building_name': building_name,
                 'room_number': room_number,
@@ -165,19 +167,19 @@ def load_to_postgres(df):
         })
 
     if invalid_events:
-        print(f"  ⚠️  Skipped {len(invalid_events)} invalid events")
+        print(f"Skipped {len(invalid_events)} invalid events")
 
     # Insert events in batches
     if events_to_insert:
         try:
-            insert_result = supabase.table('daily_events').insert(events_to_insert).execute()
-            print(f"  ✅ Successfully inserted {len(events_to_insert)} events")
+            supabase.table('daily_events').insert(events_to_insert).execute()
+            print(f"Successfully inserted {len(events_to_insert)} events")
             return True
         except Exception as e:
-            print(f"  ❌ Error inserting events: {str(e)}")
+            print(f"Error inserting events: {str(e)}")
             return False
     else:
-        print("  ⚠️  No valid events to insert")
+        print("No valid events to insert")
         return False
 
 def main():
@@ -188,20 +190,20 @@ def main():
     """
 
     print("Step 1: Process data from Tableau dashboard")
+    
     events = get_events_df()
-    print("✅ Finished Step 1")
-    print()
+    print("Finished Step 1")
+    
 
     print("Step 2: Load data to PostgreSQL")
     success = load_to_postgres(events)
     if success:
-        print("✅ Finished Step 2")
+        print("Finished Step 2")
     else:
-        print("❌ Failed Step 2")
+        print("Failed Step 2")
         return "Failed to update data"
-    print()
 
-    print("Job complete! 🎉")
+    print("Job complete!")
 
     return "Updated data"
 
