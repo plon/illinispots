@@ -587,10 +587,10 @@ async function fetchAcademicBuildingData(
       process.env.SUPABASE_KEY!,
     );
 
-    const { data: buildingData, error } = await supabase.rpc("get_spots", {
-      check_time: targetMoment.format("HH:mm:ss"),
-      check_date: targetMoment.format("YYYY-MM-DD"),
-      minimum_useful_minutes: 30,
+    const { data: buildingData, error } = await supabase.rpc("get_cached_spots", {
+      check_time_param: targetMoment.format("HH:mm:ss"),
+      check_date_param: targetMoment.format("YYYY-MM-DD"),
+      min_minutes_param: 30,
     });
 
     if (error) {
@@ -609,7 +609,6 @@ async function fetchAcademicBuildingData(
             string,
             Omit<AcademicRoom, "type" | "status"> & {
               status: "available" | "occupied";
-              available: boolean;
               passingPeriod?: boolean;
               availableAt?: string;
               availableFor?: number;

@@ -7,6 +7,26 @@ from curl_cffi import requests
 from utils.buildingnames import alias_map
 
 
+def get_supabase_client():
+    """Initialize and return Supabase client.
+
+    Returns:
+        Client: Supabase client instance.
+        
+    Raises:
+        ValueError: If Supabase URL or Key are not set.
+    """
+    load_dotenv(find_dotenv('.env.local'))
+    
+    supabase_url = os.getenv("SUPABASE_URL")
+    supabase_key = os.getenv("SUPABASE_KEY")
+    
+    if not supabase_url or not supabase_key:
+        raise ValueError("Supabase URL and Key must be set in .env.local")
+    
+    return create_client(supabase_url, supabase_key)
+
+
 def get_events_df():
     """Fetch events data from a Tableau dashboard and processes it into a pandas DataFrame.
 
@@ -19,7 +39,6 @@ def get_events_df():
     csv_url = "https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents.csv"
 
     response = requests.get(csv_url, impersonate='chrome124')
-    print('here')
     csv_data = response.text
     print("Fetched data from Tableau")
 
@@ -30,7 +49,7 @@ def get_events_df():
         df["EndTime"],
         format="%m/%d/%Y %I:%M:%S %p",
         errors='coerce'  # Convert invalid dates to NaT
-    )
+    ).dt.tz_localize("America/Chicago", ambiguous='infer')
     df = df.drop("EndTime", axis=1)
     df = df.drop("Measure Values", axis=1)
     df = df.drop("Open/Close", axis=1)
@@ -41,11 +60,6 @@ def get_events_df():
     df["start_time"] = pd.to_datetime(
         df["StartDate"].astype(str) + " " + df["StartTime"].map(lambda s: s.split(" ", 1)[1] if isinstance(s, str) and " " in s else s),
         format="%m/%d/%Y %I:%M:%S %p",
-        errors='coerce'  # Convert invalid dates to NaT
-    ).dt.tz_localize("America/Chicago", ambiguous='infer')
-
-    df["end_time"] = pd.to_datetime(
-        df["end_time"], format="%Y-%m-%d %H:%M:%S",
         errors='coerce'  # Convert invalid dates to NaT
     ).dt.tz_localize("America/Chicago", ambiguous='infer')
 
@@ -82,15 +96,7 @@ def load_to_postgres(df):
     Args:
         df (DataFrame): Pandas DataFrame containing events data.
     """
-    load_dotenv(find_dotenv('.env.local'))
-
-    supabase_url = os.getenv("SUPABASE_URL")
-    supabase_key = os.getenv("SUPABASE_KEY")
-
-    if not supabase_url or not supabase_key:
-        raise ValueError("Supabase URL and Key must be set in .env.local")
-
-    supabase = create_client(supabase_url, supabase_key)
+    supabase = get_supabase_client()
 
     # Get valid rooms from the database
     result = supabase.table('rooms').select('building_name,room_number').execute()
@@ -101,8 +107,8 @@ def load_to_postgres(df):
 
     # Clear existing events
     try:
-        delete_result = supabase.table('daily_events').delete().neq('event_name', 'dummy_value_to_avoid_error_on_empty_delete').execute()
-        print(f"Cleared existing events (Result: {delete_result})")
+        supabase.table('daily_events').delete().gte('id', 0).execute()
+        print("Cleared existing events")
     except Exception as e:
         print(f"Error clearing existing events: {str(e)}")
 
@@ -199,6 +205,15 @@ def main():
     success = load_to_postgres(events)
     if success:
         print("Finished Step 2")
+        
+        print("Step 3: Refresh Room Availability Cache")
+        try:
+            supabase = get_supabase_client()
+            supabase.rpc('refresh_room_availability_cache', {}).execute()
+            print("Finished Step 3: Cache refreshed")
+        except Exception as e:
+            print(f"Failed Step 3: Cache refresh error: {e}")
+            # Don't fail the whole job if cache refresh fails, just log it
     else:
         print("Failed Step 2")
         return "Failed to update data"

@@ -71,10 +71,10 @@ export async function GET(request: Request) {
       process.env.SUPABASE_KEY!,
     );
 
-    const { data, error } = await supabase.rpc("get_room_schedule", {
+    const { data, error } = await supabase.rpc("get_room_schedule_cached", {
       building_id_param: buildingId,
       room_number_param: roomNumber,
-      check_date: date,
+      check_date_param: date,
     });
 
     if (error) {

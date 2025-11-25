@@ -75,7 +75,7 @@ export type FacilityRoom = AcademicRoom | LibraryRoom;
 export interface ClassInfo {
   course: string;
   title: string;
-  time: {
+  time?: {
     start: string;
     end: string;
   };
