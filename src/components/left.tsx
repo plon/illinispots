@@ -14,6 +14,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import {
     HybridTooltip,
     HybridTooltipContent,
     HybridTooltipTrigger,
@@ -28,6 +34,7 @@ import {
     LoaderPinwheel,
     Building2,
     DoorOpen,
+    Settings,
 } from "lucide-react";
 import Fuse from "fuse.js";
 import FacilityAccordion from "@/components/FacilityAccordion";
@@ -210,7 +217,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
     return (
         <div className="h-full bg-background border-t md:border-t-0 md:border-l flex flex-col relative">
-            <div className="sidebar-header py-1 pl-3 pr-3 md:p-4 border-b flex flex-col">
+            <div className="sidebar-header pt-1 pb-3 pl-3 pr-3 md:pt-4 md:pb-5 md:pl-4 md:pr-4 border-b flex flex-col">
                 <div className="flex justify-between items-center w-full">
                     <h1 className="text-xl md:text-2xl font-bold">
                         <span style={{ color: "#FF5F05" }}>illini</span>
@@ -218,69 +225,90 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     </h1>
                     <div className="flex gap-2 items-center pt-1">
                         <TooltipProvider delayDuration={50}>
-                            <a
-                                href="https://github.com/plon/illinispots"
-                                target="_blank"
-                                rel="noopener"
-                                className="h-6 w-6 md:h-8 md:w-8 rounded-full flex items-center justify-center border-2 border-foreground/20 hover:bg-muted"
-                                aria-label="View source on GitHub"
-                                title="View source on GitHub"
-                            >
-                                <Github size={14.5} />
-                            </a>
-                            <HybridTooltip>
-                                <HybridTooltipTrigger asChild>
+                            <DateTimeButton isFetching={isFetching} />
+                            <Popover>
+                                <PopoverTrigger asChild>
                                     <Button
                                         variant="outline"
                                         size="icon"
-                                        className="h-6 w-6 md:h-8 md:w-8 rounded-full border-2 border-foreground/20 font-bold hover:cursor-help"
-                                        aria-label="Important notes about room availability"
+                                        className="h-9 w-9 md:h-9 md:w-9 rounded-full border-2 border-foreground/20"
+                                        aria-label="Settings"
+                                        title="Settings"
                                     >
-                                        <BadgeHelp size={12} />
+                                        <Settings size={18} />
                                     </Button>
-                                </HybridTooltipTrigger>
-                                <HybridTooltipContent className="w-80">
-                                    <div className="text-sm space-y-2">
-                                        <p className="font-medium">Important Notes:</p>
-                                        <ul className="list-disc pl-4 space-y-1">
-                                            <li>
-                                                Building/room access may be restricted to specific
-                                                colleges or departments
-                                            </li>
-                                            <li>
-                                                Displayed availability only reflects official class
-                                                schedules and events
-                                            </li>
-                                            <li>
-                                                Rooms may be occupied by unofficial meetings or study
-                                                groups
-                                            </li>
-                                            <li>Different schedules may apply during exam periods</li>
-                                        </ul>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80" align="end">
+                                    <div className="space-y-4">
+                                        {/* Map Toggle */}
+                                        <div className="flex items-center justify-between px-3 py-2">
+                                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                                <MapIcon size={16} />
+                                                Show Map
+                                            </label>
+                                            <Switch
+                                                checked={showMap}
+                                                onCheckedChange={setShowMap}
+                                                aria-label="Toggle map display"
+                                            />
+                                        </div>
+
+                                        {/* Divider */}
+                                        <div className="h-px bg-border"></div>
+
+                                        {/* Help Section */}
+                                        <HybridTooltip>
+                                            <HybridTooltipTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    className="w-full justify-start gap-2 px-3"
+                                                >
+                                                    <BadgeHelp size={16} />
+                                                    Important Notes
+                                                </Button>
+                                            </HybridTooltipTrigger>
+                                            <HybridTooltipContent className="w-80">
+                                                <div className="text-sm space-y-2">
+                                                    <p className="font-medium">Important Notes:</p>
+                                                    <ul className="list-disc pl-4 space-y-1">
+                                                        <li>
+                                                            Building/room access may be restricted to specific
+                                                            colleges or departments
+                                                        </li>
+                                                        <li>
+                                                            Displayed availability only reflects official class
+                                                            schedules and events
+                                                        </li>
+                                                        <li>
+                                                            Rooms may be occupied by unofficial meetings or study
+                                                            groups
+                                                        </li>
+                                                        <li>Different schedules may apply during exam periods</li>
+                                                    </ul>
+                                                </div>
+                                            </HybridTooltipContent>
+                                        </HybridTooltip>
+
+                                        {/* GitHub Link */}
+                                        <a
+                                            href="https://github.com/plon/illinispots"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center justify-start gap-2 px-3 py-2 rounded-md text-sm hover:bg-secondary transition-colors text-foreground"
+                                        >
+                                            <Github size={16} />
+                                            View on GitHub
+                                        </a>
                                     </div>
-                                </HybridTooltipContent>
-                            </HybridTooltip>
-                            <Button
-                                variant="outline"
-                                className={`h-6 md:h-8 rounded-full border-2 flex items-center gap-1.5 px-2.5 ${showMap
-                                    ? "bg-sky-100/50 hover:bg-sky-100/70 dark:bg-sky-800/30 dark:hover:bg-sky-800/50 border-sky-300/60 dark:border-sky-600/60 hover:cursor-e-resize"
-                                    : "border-foreground/20 hover:bg-muted hover:cursor-w-resize"
-                                    }`}
-                                onClick={() => setShowMap(!showMap)}
-                                aria-label={showMap ? "Hide map" : "Show map"}
-                                title={showMap ? "Hide map" : "Show map"}
-                            >
-                                <MapIcon size={12} />
-                                <span className="text-xs pr-1">Map</span>
-                            </Button>
-                            <DateTimeButton isFetching={isFetching} />
+                                </PopoverContent>
+                            </Popover>
                         </TooltipProvider>
                     </div>
                 </div>
                 <div className="mt-2 md:mt-3 w-full relative flex gap-2">
                     <div className="relative flex-1">
                         <Search
-                            className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                             aria-hidden="true"
                         />
                         <Input
@@ -288,18 +316,17 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder={searchMode === "facilities" ? "Search facilities..." : "Search rooms..."}
-                            className="pl-8 pr-24 h-6 md:h-8 rounded-full text-sm"
+                            className="pl-10 pr-24 h-9 md:h-9 rounded-full text-sm"
                             aria-label={searchMode === "facilities" ? "Search facilities" : "Search rooms"}
                         />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                            <div className="w-px h-4 bg-border"></div>
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                            <div className="w-px h-5 bg-border"></div>
                             <button
                                 onClick={() => setSearchMode("facilities")}
-                                className={`p-1 transition-colors ${
-                                    searchMode === "facilities"
-                                        ? "text-foreground"
-                                        : "text-muted-foreground hover:text-foreground"
-                                }`}
+                                className={`p-1 transition-colors ${searchMode === "facilities"
+                                    ? "text-foreground"
+                                    : "text-muted-foreground hover:text-foreground"
+                                    }`}
                                 aria-label="Search facilities"
                                 aria-pressed={searchMode === "facilities"}
                                 title="Search facilities"
@@ -308,11 +335,10 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                             </button>
                             <button
                                 onClick={() => setSearchMode("rooms")}
-                                className={`p-1 transition-colors ${
-                                    searchMode === "rooms"
-                                        ? "text-foreground"
-                                        : "text-muted-foreground hover:text-foreground"
-                                }`}
+                                className={`p-1 transition-colors ${searchMode === "rooms"
+                                    ? "text-foreground"
+                                    : "text-muted-foreground hover:text-foreground"
+                                    }`}
                                 aria-label="Search rooms"
                                 aria-pressed={searchMode === "rooms"}
                                 title="Search rooms"

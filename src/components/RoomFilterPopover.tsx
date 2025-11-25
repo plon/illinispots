@@ -9,29 +9,29 @@ import {
 import { Filter, X, Hourglass, Clock } from "lucide-react";
 
 interface RoomFilterPopoverProps {
-  minDuration: number | undefined;
-  setMinDuration: (value: number | undefined) => void;
-  freeUntil: string;
-  setFreeUntil: (value: string) => void;
-  startTime: string;
-  setStartTime: (value: string) => void;
-  activeFilterCount: number;
-  hasActiveFilters: boolean;
-  onClearAll: () => void;
-  matchingRoomsCount: number;
+    minDuration: number | undefined;
+    setMinDuration: (value: number | undefined) => void;
+    freeUntil: string;
+    setFreeUntil: (value: string) => void;
+    startTime: string;
+    setStartTime: (value: string) => void;
+    activeFilterCount: number;
+    hasActiveFilters: boolean;
+    onClearAll: () => void;
+    matchingRoomsCount: number;
 }
 
 const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
-  minDuration,
-  setMinDuration,
-  freeUntil,
-  setFreeUntil,
-  startTime,
-  setStartTime,
-  activeFilterCount,
-  hasActiveFilters,
-  onClearAll,
-  matchingRoomsCount,
+    minDuration,
+    setMinDuration,
+    freeUntil,
+    setFreeUntil,
+    startTime,
+    setStartTime,
+    activeFilterCount,
+    hasActiveFilters,
+    onClearAll,
+    matchingRoomsCount,
 }) => {
     return (
         <Popover>
@@ -39,13 +39,13 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                 <Button
                     variant={hasActiveFilters ? "default" : "outline"}
                     size="sm"
-                    className={`h-6 md:h-8 rounded-full border-2 flex items-center gap-1.5 px-2.5 transition-all duration-200 ${hasActiveFilters
-                            ? "border-primary bg-primary text-primary-foreground shadow-md"
-                            : "border-foreground/20 hover:border-foreground/40"
+                    className={`h-9 md:h-9 rounded-full border-2 flex items-center gap-2 px-3 transition-all duration-200 ${hasActiveFilters
+                        ? "border-primary bg-primary text-primary-foreground shadow-md"
+                        : "border-foreground/20 hover:border-foreground/40"
                         }`}
                     aria-label="Filter options"
                 >
-                    <Filter size={14} />
+                    <Filter size={16} />
                     <span className="text-xs font-medium">
                         {activeFilterCount > 0 ? `${activeFilterCount}` : "Filter"}
                     </span>
@@ -77,10 +77,10 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                 </div>
 
                 <div className="p-4 space-y-6">
-                  <div className="text-[10px] text-muted-foreground bg-muted/30 -mx-4 -mt-4 px-4 py-2 border-b border-border/50">
-                    <span className="font-medium text-foreground">{matchingRoomsCount}</span> room
-                    {matchingRoomsCount === 1 ? "" : "s"} match
-                  </div>
+                    <div className="text-[10px] text-muted-foreground bg-muted/30 -mx-4 -mt-4 px-4 py-2 border-b border-border/50">
+                        <span className="font-medium text-foreground">{matchingRoomsCount}</span> room
+                        {matchingRoomsCount === 1 ? "" : "s"} match
+                    </div>
 
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
@@ -149,8 +149,8 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                                         setMinDuration(minDuration === mins ? undefined : mins)
                                     }
                                     className={`h-9 text-xs font-medium transition-all ${minDuration === mins
-                                            ? "shadow-sm"
-                                            : "hover:border-primary/50 hover:bg-primary/5"
+                                        ? "shadow-sm"
+                                        : "hover:border-primary/50 hover:bg-primary/5"
                                         }`}
                                 >
                                     {mins < 60 ? `${mins}m` : `${mins / 60}h`}
@@ -187,8 +187,8 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                                             setFreeUntil(freeUntil === time ? "" : time)
                                         }
                                         className={`h-8 text-xs font-medium transition-all ${freeUntil === time
-                                                ? "shadow-sm"
-                                                : "hover:border-primary/50 hover:bg-primary/5"
+                                            ? "shadow-sm"
+                                            : "hover:border-primary/50 hover:bg-primary/5"
                                             }`}
                                     >
                                         {time}
