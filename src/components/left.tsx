@@ -35,7 +35,7 @@ import Fuse from "fuse.js";
 import FacilityAccordion from "@/components/FacilityAccordion";
 import DateTimeButton from "@/components/DateTimeButton";
 import { FavoritesSection } from "@/components/FavoritesSection";
-import RoomFilterPopover from "@/components/RoomFilterPopover";
+import RoomFilter from "@/components/RoomFilter";
 import { useFavorites } from "@/hooks/useFavorites";
 import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
@@ -233,7 +233,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                         <MoreHorizontal size={18} />
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-80" align="end">
+                                <PopoverContent className="w-64" align="end">
                                     <div className="space-y-1">
                                         {/* Map Toggle */}
                                         <div className="flex items-center justify-between px-3 py-2">
@@ -322,9 +322,9 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                             type="search"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder={searchMode === "facilities" ? "Search facilities..." : "Search rooms..."}
+                            placeholder={searchMode === "facilities" ? "Search buildings..." : "Search rooms..."}
                             className="pl-10 pr-24 h-9 md:h-9 rounded-full text-sm"
-                            aria-label={searchMode === "facilities" ? "Search facilities" : "Search rooms"}
+                            aria-label={searchMode === "facilities" ? "Search buildings" : "Search rooms"}
                         />
                         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                             <div className="w-px h-5 bg-border"></div>
@@ -334,9 +334,9 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                     ? "text-foreground"
                                     : "text-muted-foreground hover:text-foreground"
                                     }`}
-                                aria-label="Search facilities"
+                                aria-label="Search buildings"
                                 aria-pressed={searchMode === "facilities"}
-                                title="Search facilities"
+                                title="Search buildings"
                             >
                                 <Building2 size={16} />
                             </button>
@@ -354,7 +354,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                             </button>
                         </div>
                     </div>
-                    <RoomFilterPopover
+                    <RoomFilter
                         minDuration={minDuration}
                         setMinDuration={setMinDuration}
                         freeUntil={freeUntil}
