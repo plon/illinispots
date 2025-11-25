@@ -6,7 +6,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import { Filter, X, Clock, Hourglass } from "lucide-react";
+import { Filter, X, Hourglass, Clock } from "lucide-react";
 
 interface RoomFilterPopoverProps {
   minDuration: number | undefined;
@@ -104,7 +104,15 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                                 type="time"
                                 value={startTime}
                                 onChange={(e) => setStartTime(e.target.value)}
-                                className="h-9 pl-9 font-mono text-sm"
+                                onFocus={(e) => {
+                                    if (!startTime) {
+                                        const now = new Date();
+                                        const hours = String(now.getHours()).padStart(2, '0');
+                                        const minutes = String(now.getMinutes()).padStart(2, '0');
+                                        setStartTime(`${hours}:${minutes}`);
+                                    }
+                                }}
+                                className="h-9 pl-9 font-mono text-sm [&::-webkit-calendar-picker-indicator]:hidden"
                                 placeholder="When room must be free"
                             />
                             <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -192,7 +200,15 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                                     type="time"
                                     value={freeUntil}
                                     onChange={(e) => setFreeUntil(e.target.value)}
-                                    className="h-9 pl-9 font-mono text-sm"
+                                    onFocus={(e) => {
+                                        if (!freeUntil) {
+                                            const now = new Date();
+                                            const hours = String(now.getHours()).padStart(2, '0');
+                                            const minutes = String(now.getMinutes()).padStart(2, '0');
+                                            setFreeUntil(`${hours}:${minutes}`);
+                                        }
+                                    }}
+                                    className="h-9 pl-9 font-mono text-sm [&::-webkit-calendar-picker-indicator]:hidden"
                                     placeholder="Custom time"
                                 />
                                 <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
