@@ -22,6 +22,7 @@ import { getLibraryHoursMessage } from "@/utils/libraryHours";
 import AcademicRoomDetailLoader from "@/components/AcademicRoomDetailLoader";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { FavoriteItem } from "@/hooks/useFavorites";
+import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
 
 interface FacilityAccordionProps {
   facility: Facility;
@@ -32,6 +33,7 @@ interface FacilityAccordionProps {
   idPrefix: string;
   isFavorite?: boolean;
   onToggleFavorite?: (item: FavoriteItem) => void;
+  filterCriteria?: FilterCriteria;
 }
 
 const getRoomAvailabilityMessage = (room: LibraryRoom): React.ReactNode => {
@@ -73,8 +75,26 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
   idPrefix,
   isFavorite = false,
   onToggleFavorite,
+  filterCriteria = {},
 }) => {
   const facilityId = `${idPrefix}-${facility.id}`;
+
+  const filteredAvailableCount = useMemo(() => {
+    return Object.values(facility.rooms).filter((room) => {
+      // Allow PASSING_PERIOD for academic rooms if no strict filter, 
+      // but isRoomAvailable handles the strict check if criteria exists.
+      // We need to match the logic in the child accordions.
+      // Academic: (AVAILABLE || PASSING_PERIOD) && isRoomAvailable
+      // Library: isRoomAvailable
+
+      // For simplicity and consistency with the "Available" section logic:
+      const isAvailableOrPassing =
+        room.status === RoomStatus.AVAILABLE ||
+        room.status === RoomStatus.PASSING_PERIOD;
+
+      return isAvailableOrPassing && isRoomAvailable(room, filterCriteria);
+    }).length;
+  }, [facility.rooms, filterCriteria]);
 
   return (
     <AccordionItem
@@ -116,13 +136,12 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
               ) : (
                 <Badge
                   variant="outline"
-                  className={`${
-                    facility.roomCounts.available > 0
+                  className={`${filteredAvailableCount > 0
                       ? "bg-green-50 text-green-700 border-green-300"
                       : "bg-red-50 text-red-700 border-red-300"
-                  }`}
+                    }`}
                 >
-                  {facility.roomCounts.available}/{facility.roomCounts.total}
+                  {filteredAvailableCount}/{facility.roomCounts.total}
                 </Badge>
               )}
             </div>
@@ -153,6 +172,7 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
             toggleItem={toggleItem}
             accordionRefs={accordionRefs}
             idPrefix={idPrefix}
+            filterCriteria={filterCriteria}
           />
         ) : (
           <AcademicRoomsAccordion
@@ -161,6 +181,7 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
             toggleItem={toggleItem}
             accordionRefs={accordionRefs}
             idPrefix={idPrefix}
+            filterCriteria={filterCriteria}
           />
         )}
       </AccordionContent>
@@ -174,6 +195,7 @@ interface LibraryRoomsAccordionProps {
   toggleItem: (itemId: string) => void;
   accordionRefs: React.MutableRefObject<AccordionRefs>;
   idPrefix: string;
+  filterCriteria?: FilterCriteria;
 }
 
 const LibraryRoomsAccordion: React.FC<LibraryRoomsAccordionProps> = ({
@@ -182,11 +204,13 @@ const LibraryRoomsAccordion: React.FC<LibraryRoomsAccordionProps> = ({
   toggleItem,
   accordionRefs,
   idPrefix,
+  filterCriteria = {},
 }) => {
   return (
     <Accordion type="multiple" value={expandedItems} className="w-full">
       {Object.entries(facility.rooms)
         .sort(([nameA], [nameB]) => nameA.localeCompare(nameB)) // Sort library rooms by name
+        .filter(([, room]) => isRoomAvailable(room, filterCriteria))
         .map(([roomName, room]) => {
           // We know these are library rooms since facility.type is LIBRARY
           const libraryRoom = room as LibraryRoom;
@@ -239,6 +263,7 @@ interface AcademicRoomsAccordionProps {
   toggleItem: (itemId: string) => void;
   accordionRefs: React.MutableRefObject<AccordionRefs>;
   idPrefix: string;
+  filterCriteria?: FilterCriteria;
 }
 
 // --- Helper components for brief room status in trigger ---
@@ -306,6 +331,7 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
   toggleItem,
   accordionRefs, // Refs might need adjustment for deep nesting if scrolling to specific room is needed
   idPrefix,
+  filterCriteria = {},
 }) => {
   // Filter available and occupied rooms
   const availableRooms = useMemo(
@@ -313,8 +339,9 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
       Object.entries(facility.rooms)
         .filter(
           ([, room]) =>
-            room.status === RoomStatus.AVAILABLE ||
-            room.status === RoomStatus.PASSING_PERIOD,
+            (room.status === RoomStatus.AVAILABLE ||
+              room.status === RoomStatus.PASSING_PERIOD) &&
+            isRoomAvailable(room, filterCriteria)
         )
         .sort(([numA], [numB]) =>
           numA.localeCompare(numB, undefined, {
@@ -322,7 +349,7 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
             sensitivity: "base",
           }),
         ),
-    [facility.rooms],
+    [facility.rooms, filterCriteria],
   );
 
   const occupiedRooms = useMemo(
@@ -330,8 +357,9 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
       Object.entries(facility.rooms)
         .filter(
           ([, room]) =>
-            room.status === RoomStatus.OCCUPIED ||
-            room.status === RoomStatus.OPENING_SOON,
+            (room.status === RoomStatus.OCCUPIED ||
+              room.status === RoomStatus.OPENING_SOON) &&
+            isRoomAvailable(room, filterCriteria)
         )
         .sort(([numA], [numB]) =>
           numA.localeCompare(numB, undefined, {
@@ -339,7 +367,7 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
             sensitivity: "base",
           }),
         ),
-    [facility.rooms],
+    [facility.rooms, filterCriteria],
   );
 
   // Function to render the list of rooms within a status group

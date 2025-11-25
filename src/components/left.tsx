@@ -14,6 +14,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   HybridTooltip,
   HybridTooltipContent,
   HybridTooltipTrigger,
@@ -26,12 +31,19 @@ import {
   BadgeHelp,
   Search,
   LoaderPinwheel,
+  Filter,
+  X,
+  Clock,
+  Hourglass,
 } from "lucide-react";
 import Fuse from "fuse.js";
 import FacilityAccordion from "@/components/FacilityAccordion";
 import DateTimeButton from "@/components/DateTimeButton";
 import { FavoritesSection } from "@/components/FavoritesSection";
 import { useFavorites } from "@/hooks/useFavorites";
+import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
+import { useDateTimeContext } from "@/contexts/DateTimeContext";
+import moment from "moment-timezone";
 
 interface LeftSidebarProps {
   facilityData: FacilityStatus | null;
@@ -54,6 +66,22 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
+  const { selectedDateTime } = useDateTimeContext();
+
+  // Filter states
+  const [minDuration, setMinDuration] = useState<number | undefined>(undefined);
+  const [freeUntil, setFreeUntil] = useState<string>("");
+
+  const filterCriteria: FilterCriteria = useMemo(
+    () => ({
+      minDuration,
+      freeUntil: freeUntil || undefined,
+      now: moment(selectedDateTime),
+    }),
+    [minDuration, freeUntil, selectedDateTime],
+  );
+
+  const hasActiveFilters = !!minDuration || !!freeUntil;
 
   const scrollToAccordion = useCallback((accordionId: string) => {
     const element = accordionRefs.current[accordionId];
@@ -88,11 +116,24 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
   const filterFacilities = useCallback(
     (facilities: Facility[]) => {
-      if (!searchTerm) {
-        return facilities;
+      let filtered = facilities;
+
+      // 1. Filter by availability criteria first (if any)
+      if (hasActiveFilters) {
+        filtered = filtered.filter((facility) => {
+          // Check if facility has ANY room that matches the criteria
+          return Object.values(facility.rooms).some((room) =>
+            isRoomAvailable(room, filterCriteria),
+          );
+        });
       }
 
-      const fuse = new Fuse(facilities, {
+      // 2. Filter by search term
+      if (!searchTerm) {
+        return filtered;
+      }
+
+      const fuse = new Fuse(filtered, {
         keys: ["name"],
         threshold: 0.3,
         ignoreLocation: true,
@@ -100,7 +141,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
       return fuse.search(searchTerm).map((result) => result.item);
     },
-    [searchTerm],
+    [searchTerm, hasActiveFilters, filterCriteria],
   );
 
   const libraryFacilities = useMemo(() => {
@@ -133,6 +174,11 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
     scrollToAccordion(accordionId);
   }, [expandedItems, setExpandedItems, scrollToAccordion]);
+
+  const clearFilters = () => {
+    setMinDuration(undefined);
+    setFreeUntil("");
+  };
 
   return (
     <div className="h-full bg-background border-t md:border-t-0 md:border-l flex flex-col relative">
@@ -203,18 +249,101 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             </TooltipProvider>
           </div>
         </div>
-        <div className="mt-2 md:mt-3 w-full relative">
-          <Search
-            className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <Input
-            type="search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8 h-6 md:h-8 rounded-full"
-            aria-label="Search facilities"
-          />
+        <div className="mt-2 md:mt-3 w-full relative flex gap-2">
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <Input
+              type="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8 h-6 md:h-8 rounded-full"
+              aria-label="Search facilities"
+            />
+          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={hasActiveFilters ? "default" : "outline"}
+                size="icon"
+                className={`h-6 w-6 md:h-8 md:w-8 rounded-full border-2 transition-all duration-200 ${hasActiveFilters
+                  ? "border-primary bg-primary text-primary-foreground shadow-md"
+                  : "border-foreground/20 hover:border-foreground/40"
+                  }`}
+                aria-label="Filter options"
+              >
+                <Filter size={14} />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0 overflow-hidden border-border/50 shadow-xl" align="end">
+              <div className="bg-muted/30 p-4 border-b border-border/50 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <div className="bg-primary/10 p-1.5 rounded-md">
+                    <Filter size={14} className="text-primary" />
+                  </div>
+                  <h4 className="font-semibold text-sm">Filters</h4>
+                </div>
+                {hasActiveFilters && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                    onClick={clearFilters}
+                  >
+                    <X size={12} className="mr-1" />
+                    Clear all
+                  </Button>
+                )}
+              </div>
+
+              <div className="p-4 space-y-6">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">
+                    <Clock size={14} className="text-muted-foreground" />
+                    Minimum Duration
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[30, 60, 120, 240].map((mins) => (
+                      <Button
+                        key={mins}
+                        variant={minDuration === mins ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setMinDuration(minDuration === mins ? undefined : mins)}
+                        className={`h-9 text-xs transition-all ${minDuration === mins
+                          ? "shadow-sm font-semibold"
+                          : "hover:border-primary/50 hover:bg-primary/5"
+                          }`}
+                      >
+                        {mins < 60 ? `${mins}m` : `${mins / 60}h`}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">
+                    <Hourglass size={14} className="text-muted-foreground" />
+                    Free Until
+                  </div>
+                  <div className="relative">
+                    <Input
+                      id="freeUntil"
+                      type="time"
+                      value={freeUntil}
+                      onChange={(e) => setFreeUntil(e.target.value)}
+                      className="h-9 pl-9 font-mono text-sm"
+                    />
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground pl-1">
+                    Find rooms that are available at least until this time today.
+                  </p>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
@@ -243,6 +372,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                   idPrefix="library"
                   isFavorite={isFavorite(facility.id)}
                   onToggleFavorite={toggleFavorite}
+                  filterCriteria={filterCriteria}
                 />
               ))}
             </Accordion>
@@ -266,17 +396,18 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                   idPrefix="building"
                   isFavorite={isFavorite(facility.id)}
                   onToggleFavorite={toggleFavorite}
+                  filterCriteria={filterCriteria}
                 />
               ))}
             </Accordion>
           </div>
         ) : searchTerm && libraryFacilities.length === 0 ? null : null}
         {/* No Results Message */}
-        {searchTerm &&
+        {(searchTerm || hasActiveFilters) &&
           libraryFacilities.length === 0 &&
           academicFacilities.length === 0 && (
             <p className="text-center text-muted-foreground text-sm mt-6 px-4">
-              No facilities found matching &quot;{searchTerm}&quot;
+              No facilities found matching your criteria
             </p>
           )}
         <div className="h-4"></div>
