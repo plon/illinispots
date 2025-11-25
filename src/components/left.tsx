@@ -27,6 +27,7 @@ import {
   Search,
   LoaderPinwheel,
 } from "lucide-react";
+import Fuse from "fuse.js";
 import FacilityAccordion from "@/components/FacilityAccordion";
 import DateTimeButton from "@/components/DateTimeButton";
 import { FavoritesSection } from "@/components/FavoritesSection";
@@ -90,10 +91,14 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
       if (!searchTerm) {
         return facilities;
       }
-      const lowerCaseSearchTerm = searchTerm.toLowerCase();
-      return facilities.filter((facility) =>
-        facility.name.toLowerCase().includes(lowerCaseSearchTerm),
-      );
+
+      const fuse = new Fuse(facilities, {
+        keys: ["name"],
+        threshold: 0.3,
+        ignoreLocation: true,
+      });
+
+      return fuse.search(searchTerm).map((result) => result.item);
     },
     [searchTerm],
   );
@@ -120,12 +125,12 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     // Find the facility and expand its accordion
     const prefix = type === 'library' ? 'library' : 'building';
     const accordionId = `${prefix}-${facilityId}`;
-    
+
     // Add to expanded items if not already expanded
     if (!expandedItems.includes(accordionId)) {
       setExpandedItems(prev => [...prev, accordionId]);
     }
-    
+
     scrollToAccordion(accordionId);
   }, [expandedItems, setExpandedItems, scrollToAccordion]);
 
@@ -183,11 +188,10 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
               </HybridTooltip>
               <Button
                 variant="outline"
-                className={`h-6 md:h-8 rounded-full border-2 flex items-center gap-1.5 px-2.5 ${
-                  showMap
-                    ? "bg-sky-100/50 hover:bg-sky-100/70 dark:bg-sky-800/30 dark:hover:bg-sky-800/50 border-sky-300/60 dark:border-sky-600/60 hover:cursor-e-resize"
-                    : "border-foreground/20 hover:bg-muted hover:cursor-w-resize"
-                }`}
+                className={`h-6 md:h-8 rounded-full border-2 flex items-center gap-1.5 px-2.5 ${showMap
+                  ? "bg-sky-100/50 hover:bg-sky-100/70 dark:bg-sky-800/30 dark:hover:bg-sky-800/50 border-sky-300/60 dark:border-sky-600/60 hover:cursor-e-resize"
+                  : "border-foreground/20 hover:bg-muted hover:cursor-w-resize"
+                  }`}
                 onClick={() => setShowMap(!showMap)}
                 aria-label={showMap ? "Hide map" : "Show map"}
                 title={showMap ? "Hide map" : "Show map"}
