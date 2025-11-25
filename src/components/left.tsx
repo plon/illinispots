@@ -26,6 +26,8 @@ import {
     BadgeHelp,
     Search,
     LoaderPinwheel,
+    Building2,
+    DoorOpen,
 } from "lucide-react";
 import Fuse from "fuse.js";
 import FacilityAccordion from "@/components/FacilityAccordion";
@@ -57,6 +59,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const accordionRefs = useRef<AccordionRefs>({});
     const scrollAreaRef = useRef<HTMLDivElement | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [searchMode, setSearchMode] = useState<"facilities" | "rooms">("facilities");
     const { favorites, toggleFavorite, isFavorite } = useFavorites();
     const { selectedDateTime } = useDateTimeContext();
 
@@ -131,15 +134,23 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 return filtered;
             }
 
-            const fuse = new Fuse(filtered, {
-                keys: ["name"],
-                threshold: 0.3,
-                ignoreLocation: true,
-            });
-
-            return fuse.search(searchTerm).map((result) => result.item);
+            if (searchMode === "facilities") {
+                const fuse = new Fuse(filtered, {
+                    keys: ["name"],
+                    threshold: 0.3,
+                    ignoreLocation: true,
+                });
+                return fuse.search(searchTerm).map((result) => result.item);
+            } else {
+                // Search by room names - return facilities that have matching rooms
+                return filtered.filter((facility) =>
+                    Object.keys(facility.rooms).some((roomId) =>
+                        roomId.toLowerCase().includes(searchTerm.toLowerCase()),
+                    ),
+                );
+            }
         },
-        [searchTerm, hasActiveFilters, filterCriteria],
+        [searchTerm, searchMode, hasActiveFilters, filterCriteria],
     );
 
     const libraryFacilities = useMemo(() => {
@@ -276,9 +287,39 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                             type="search"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-8 h-6 md:h-8 rounded-full"
-                            aria-label="Search facilities"
+                            placeholder={searchMode === "facilities" ? "Search facilities..." : "Search rooms..."}
+                            className="pl-8 pr-24 h-6 md:h-8 rounded-full text-sm"
+                            aria-label={searchMode === "facilities" ? "Search facilities" : "Search rooms"}
                         />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                            <div className="w-px h-4 bg-border"></div>
+                            <button
+                                onClick={() => setSearchMode("facilities")}
+                                className={`p-1 transition-colors ${
+                                    searchMode === "facilities"
+                                        ? "text-foreground"
+                                        : "text-muted-foreground hover:text-foreground"
+                                }`}
+                                aria-label="Search facilities"
+                                aria-pressed={searchMode === "facilities"}
+                                title="Search facilities"
+                            >
+                                <Building2 size={16} />
+                            </button>
+                            <button
+                                onClick={() => setSearchMode("rooms")}
+                                className={`p-1 transition-colors ${
+                                    searchMode === "rooms"
+                                        ? "text-foreground"
+                                        : "text-muted-foreground hover:text-foreground"
+                                }`}
+                                aria-label="Search rooms"
+                                aria-pressed={searchMode === "rooms"}
+                                title="Search rooms"
+                            >
+                                <DoorOpen size={16} />
+                            </button>
+                        </div>
                     </div>
                     <RoomFilterPopover
                         minDuration={minDuration}
