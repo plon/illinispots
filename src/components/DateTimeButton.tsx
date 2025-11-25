@@ -97,8 +97,8 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
     return (
         <Drawer open={open} onOpenChange={setOpen}>
             <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
-            <DrawerContent>
-                <div className="p-4 pt-2 flex justify-center">
+            <DrawerContent className="flex flex-col items-center">
+                <div className="p-4 pt-2 flex justify-center w-full">
                     {dateTimePickerComponent}
                 </div>
             </DrawerContent>

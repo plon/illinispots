@@ -422,7 +422,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     libraryFacilities.length === 0 &&
                     academicFacilities.length === 0 && (
                         <p className="text-center text-muted-foreground text-sm mt-6 px-4">
-                            No facilities found matching your criteria
+                            No results found matching your criteria
                         </p>
                     )}
                 <div className="h-4"></div>

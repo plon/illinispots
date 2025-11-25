@@ -102,7 +102,7 @@ function DateTimePicker({
   return (
     <div className={compact ? "w-[280px]" : ""}>
       <div
-        className={`rounded-lg border border-border ${isFetching ? "opacity-70" : ""}`}
+        className={`rounded-lg border border-border overflow-hidden ${isFetching ? "opacity-70" : ""}`}
       >
         {/* Calendar */}
         <Calendar
