@@ -48,8 +48,19 @@ BEGIN
             END as close_time
         FROM buildings b
     ),
+    day_hours_with_status AS (
+        SELECT
+            *,
+            CASE
+                WHEN open_time <= close_time THEN
+                    check_time BETWEEN open_time AND close_time
+                ELSE
+                    check_time >= open_time OR check_time < close_time
+            END as is_open
+        FROM day_hours
+    ),
     current_occupancy AS (
-        -- Classes currently in session
+        -- Classes currently in session - only for open facilities
         SELECT
             building_name,
             room_number,
@@ -62,10 +73,11 @@ BEGIN
         WHERE day_of_week = check_day
         AND check_time BETWEEN start_time AND end_time
         AND check_date <@ date_range
+        AND building_name IN (SELECT name FROM day_hours_with_status WHERE is_open)
 
         UNION ALL
 
-        -- Current daily events
+        -- Current daily events - only for open facilities
         SELECT
             building_name,
             room_number,
@@ -78,6 +90,7 @@ BEGIN
         WHERE DATE(start_time AT TIME ZONE 'America/Chicago') = check_date
         AND check_time BETWEEN (start_time AT TIME ZONE 'America/Chicago')::TIME 
                            AND (end_time AT TIME ZONE 'America/Chicago')::TIME
+        AND building_name IN (SELECT name FROM day_hours_with_status WHERE is_open)
     ),
     next_occupancy AS (
         SELECT DISTINCT ON (building_name, room_number)
@@ -89,7 +102,7 @@ BEGIN
             end_time,
             source_type
         FROM (
-            -- Next scheduled classes
+            -- Next scheduled classes - only for open facilities
             SELECT
                 building_name,
                 room_number,
@@ -102,10 +115,11 @@ BEGIN
             WHERE day_of_week = check_day
             AND start_time > check_time
             AND check_date <@ date_range
+            AND building_name IN (SELECT name FROM day_hours_with_status WHERE is_open)
 
             UNION ALL
 
-            -- Next daily events
+            -- Next daily events - only for open facilities
             SELECT
                 building_name,
                 room_number,
@@ -117,6 +131,7 @@ BEGIN
             FROM daily_events
             WHERE DATE(start_time AT TIME ZONE 'America/Chicago') = check_date
             AND (start_time AT TIME ZONE 'America/Chicago')::TIME > check_time
+            AND building_name IN (SELECT name FROM day_hours_with_status WHERE is_open)
         ) combined
         ORDER BY building_name, room_number, start_time
     ),
@@ -132,22 +147,24 @@ BEGIN
                 ORDER BY start_time
             ) as class_sequence
         FROM (
-            -- Remaining classes
+            -- Remaining classes - only for open facilities
             SELECT building_name, room_number, start_time, end_time
             FROM class_schedule
             WHERE day_of_week = check_day
             AND start_time > check_time
             AND check_date <@ date_range
+            AND building_name IN (SELECT name FROM day_hours_with_status WHERE is_open)
 
             UNION ALL
 
-            -- Remaining events
+            -- Remaining events - only for open facilities
             SELECT building_name, room_number, 
                    (start_time AT TIME ZONE 'America/Chicago')::TIME as start_time, 
                    (end_time AT TIME ZONE 'America/Chicago')::TIME as end_time
             FROM daily_events
             WHERE DATE(start_time AT TIME ZONE 'America/Chicago') = check_date
             AND (start_time AT TIME ZONE 'America/Chicago')::TIME > check_time
+            AND building_name IN (SELECT name FROM day_hours_with_status WHERE is_open)
         ) combined
         GROUP BY building_name, room_number
     ),
@@ -188,6 +205,7 @@ BEGIN
             AND r.room_number = co.room_number
         LEFT JOIN next_occupancy no ON r.building_name = no.building_name
             AND r.room_number = no.room_number
+        WHERE r.building_name IN (SELECT name FROM day_hours_with_status WHERE is_open)
     ),
     meaningful_gap AS (
         SELECT
@@ -204,7 +222,7 @@ BEGIN
                         LEFT JOIN remaining_occupancy rc
                             ON rs2.building_name = rc.building_name
                             AND rs2.room_number = rc.room_number
-                        CROSS JOIN day_hours dh
+                        CROSS JOIN day_hours_with_status dh
                         WHERE dh.name = rs2.building_name
                         AND rs2.building_name = rs.building_name
                         AND rs2.room_number = rs.room_number
@@ -373,13 +391,7 @@ BEGIN
                             AND rs.room_number = mgp.room_number
                         WHERE rs.building_name = dh.name
                     ),
-                    'isOpen',
-                    CASE
-                        WHEN dh.open_time <= dh.close_time THEN
-                            check_time BETWEEN dh.open_time AND dh.close_time
-                        ELSE
-                            check_time >= dh.open_time OR check_time < dh.close_time
-                    END,
+                    'isOpen', dh.is_open,
                     'roomCounts', (
                         SELECT jsonb_build_object(
                             'available', rc.available_rooms,
@@ -390,7 +402,7 @@ BEGIN
                     )
                 )
             )
-            FROM day_hours dh
+            FROM day_hours_with_status dh
         )
     ) INTO result;
 

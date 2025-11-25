@@ -50,20 +50,20 @@ const libraries: Libraries = {
 
 const pattern = new RegExp(
   "resources\\.push\\(\\{\\s*" +
-    'id:\\s*"(?<id>[^"]+)",\\s*' +
-    'title:\\s*"(?<title>[^"]+)",\\s*' +
-    'url:\\s*"(?<url>[^"]+)",\\s*' +
-    "eid:\\s*(?<eid>\\d+),\\s*" +
-    "gid:\\s*(?<gid>\\d+),\\s*" +
-    "lid:\\s*(?<lid>\\d+),\\s*" +
-    'grouping:\\s*"(?<grouping>[^"]+)",\\s*' +
-    "gtype:\\s*(?<gtype>\\d+),\\s*" +
-    "gBookingSelectableTime:\\s*(?<selectable>true|false),\\s*" +
-    "capacity:\\s*(?<capacity>\\d+),\\s*" +
-    "hasInfo:\\s*(?<hasInfo>true|false),\\s*" +
-    'thumbnail:\\s*"(?<thumbnail>[^"]*)",\\s*' +
-    "filterIds:\\s*\\[(?<filterIds>[^\\]]*)\\],?\\s*" +
-    "\\}\\);",
+  'id:\\s*"(?<id>[^"]+)",\\s*' +
+  'title:\\s*"(?<title>[^"]+)",\\s*' +
+  'url:\\s*"(?<url>[^"]+)",\\s*' +
+  "eid:\\s*(?<eid>\\d+),\\s*" +
+  "gid:\\s*(?<gid>\\d+),\\s*" +
+  "lid:\\s*(?<lid>\\d+),\\s*" +
+  'grouping:\\s*"(?<grouping>[^"]+)",\\s*' +
+  "gtype:\\s*(?<gtype>\\d+),\\s*" +
+  "gBookingSelectableTime:\\s*(?<selectable>true|false),\\s*" +
+  "capacity:\\s*(?<capacity>\\d+),\\s*" +
+  "hasInfo:\\s*(?<hasInfo>true|false),\\s*" +
+  'thumbnail:\\s*"(?<thumbnail>[^"]*)",\\s*' +
+  "filterIds:\\s*\\[(?<filterIds>[^\\]]*)\\],?\\s*" +
+  "\\}\\);",
   "g",
 );
 
@@ -629,11 +629,11 @@ async function fetchAcademicBuildingData(
           coordinates: building.coordinates,
           hours: building.hours, // These hours are for the *day*
           isOpen: building.isOpen, // This reflects if open AT targetMoment
-          roomCounts: building.roomCounts, // Counts are based on targetMoment
+          roomCounts: building.roomCounts || { available: 0, total: 0 }, // Counts are based on targetMoment
           rooms: {},
         };
 
-        Object.entries(building.rooms).forEach(([roomNumber, roomData]) => {
+        Object.entries(building.rooms || {}).forEach(([roomNumber, roomData]) => {
           let status: RoomStatus;
           if (roomData.status === "available") {
             if (roomData.passingPeriod) {
