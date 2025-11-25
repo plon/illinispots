@@ -63,20 +63,23 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     // Filter states
     const [minDuration, setMinDuration] = useState<number | undefined>(undefined);
     const [freeUntil, setFreeUntil] = useState<string>("");
+    const [startTime, setStartTime] = useState<string>("");
 
     // Calculate active filter count
-    const activeFilterCount = (!!minDuration ? 1 : 0) + (!!freeUntil ? 1 : 0);
+    const activeFilterCount =
+        (!!minDuration ? 1 : 0) + (!!freeUntil ? 1 : 0) + (!!startTime ? 1 : 0);
 
     const filterCriteria: FilterCriteria = useMemo(
         () => ({
             minDuration,
             freeUntil: freeUntil || undefined,
+            startTime: startTime || undefined,
             now: moment(selectedDateTime),
         }),
-        [minDuration, freeUntil, selectedDateTime],
+        [minDuration, freeUntil, startTime, selectedDateTime],
     );
 
-    const hasActiveFilters = !!minDuration || !!freeUntil;
+    const hasActiveFilters = !!minDuration || !!freeUntil || !!startTime;
 
     const scrollToAccordion = useCallback((accordionId: string) => {
         const element = accordionRefs.current[accordionId];
@@ -157,22 +160,41 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         return filterFacilities(allAcademic);
     }, [facilityData, filterFacilities]);
 
-    const handleFavoriteClick = useCallback((facilityId: string, type: 'library' | 'academic') => {
-        // Find the facility and expand its accordion
-        const prefix = type === 'library' ? 'library' : 'building';
-        const accordionId = `${prefix}-${facilityId}`;
+    const handleFavoriteClick = useCallback(
+        (facilityId: string, type: "library" | "academic") => {
+            // Find the facility and expand its accordion
+            const prefix = type === "library" ? "library" : "building";
+            const accordionId = `${prefix}-${facilityId}`;
 
-        // Add to expanded items if not already expanded
-        if (!expandedItems.includes(accordionId)) {
-            setExpandedItems(prev => [...prev, accordionId]);
-        }
+            // Add to expanded items if not already expanded
+            if (!expandedItems.includes(accordionId)) {
+                setExpandedItems((prev) => [...prev, accordionId]);
+            }
 
-        scrollToAccordion(accordionId);
-    }, [expandedItems, setExpandedItems, scrollToAccordion]);
+            scrollToAccordion(accordionId);
+        },
+        [expandedItems, setExpandedItems, scrollToAccordion],
+    );
+
+    const matchingRoomsCount = useMemo(() => {
+        const allFacilities = facilityData
+            ? Object.values(facilityData.facilities)
+            : [];
+        let count = 0;
+        allFacilities.forEach((facility) => {
+            Object.values(facility.rooms).forEach((room) => {
+                if (isRoomAvailable(room, filterCriteria)) {
+                    count++;
+                }
+            });
+        });
+        return count;
+    }, [facilityData, filterCriteria]);
 
     const clearFilters = () => {
         setMinDuration(undefined);
         setFreeUntil("");
+        setStartTime("");
     };
 
     return (
@@ -263,9 +285,12 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         setMinDuration={setMinDuration}
                         freeUntil={freeUntil}
                         setFreeUntil={setFreeUntil}
+                        startTime={startTime}
+                        setStartTime={setStartTime}
                         activeFilterCount={activeFilterCount}
                         hasActiveFilters={hasActiveFilters}
                         onClearAll={clearFilters}
+                        matchingRoomsCount={matchingRoomsCount}
                     />
                 </div>
             </div>

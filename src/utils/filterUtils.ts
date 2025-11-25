@@ -4,14 +4,19 @@ import moment, { Moment } from "moment-timezone";
 export interface FilterCriteria {
     minDuration?: number; // in minutes
     freeUntil?: string; // HH:mm
-    now?: Moment; // Reference time for "free until" calculation
+    startTime?: string; // HH:mm - room must be free by this time
+    now?: Moment; // Reference time for filtering
 }
 
 export const isRoomAvailable = (
     room: FacilityRoom,
     criteria: FilterCriteria,
 ): boolean => {
-    if (!criteria.minDuration && !criteria.freeUntil) {
+    if (
+        !criteria.minDuration &&
+        !criteria.freeUntil &&
+        !criteria.startTime
+    ) {
         return true;
     }
 
@@ -21,6 +26,25 @@ export const isRoomAvailable = (
     }
 
     const availableFor = room.availableFor || 0;
+    const now = criteria.now ? criteria.now.clone() : moment().tz("America/Chicago");
+
+    // Check Start Time (room must be free by this time)
+    if (criteria.startTime) {
+        const [hours, minutes] = criteria.startTime.split(':').map(Number);
+        const startTargetTime = now.clone().hour(hours).minute(minutes).second(0);
+
+        // If start time is before now, it has passed
+        const minutesUntilStart = startTargetTime.diff(now, 'minutes');
+
+        if (minutesUntilStart < 0) {
+            return false;
+        }
+
+        // Room must be available by the start time
+        if (availableFor < minutesUntilStart) {
+            return false;
+        }
+    }
 
     // Check Minimum Duration
     if (criteria.minDuration && availableFor < criteria.minDuration) {
@@ -29,15 +53,8 @@ export const isRoomAvailable = (
 
     // Check Free Until
     if (criteria.freeUntil) {
-        // Use provided reference time or default to current time
-        const now = criteria.now ? criteria.now.clone() : moment().tz("America/Chicago");
-
-        // If criteria.now is provided, we assume the user wants "free until HH:mm on that day".
-        // So we take the date from 'now' and the time from 'freeUntil'.
         const [hours, minutes] = criteria.freeUntil.split(':').map(Number);
         const targetTime = now.clone().hour(hours).minute(minutes).second(0);
-
-        // If target time is before 'now', it means the time has passed for today.
 
         const diffMinutes = targetTime.diff(now, 'minutes');
 
