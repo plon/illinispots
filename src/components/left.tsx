@@ -19,12 +19,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import {
-    HybridTooltip,
-    HybridTooltipContent,
-    HybridTooltipTrigger,
-    TooltipProvider,
-} from "@/components/ui/HybridTooltip";
+import { TooltipProvider } from "@/components/ui/HybridTooltip";
 import { Facility, FacilityStatus, FacilityType, AccordionRefs } from "@/types";
 import {
     Github,
@@ -34,7 +29,7 @@ import {
     LoaderPinwheel,
     Building2,
     DoorOpen,
-    Settings,
+    MoreHorizontal,
 } from "lucide-react";
 import Fuse from "fuse.js";
 import FacilityAccordion from "@/components/FacilityAccordion";
@@ -232,14 +227,14 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                         variant="outline"
                                         size="icon"
                                         className="h-9 w-9 md:h-9 md:w-9 rounded-full border-2 border-foreground/20"
-                                        aria-label="Settings"
-                                        title="Settings"
+                                        aria-label="Menu"
+                                        title="Menu"
                                     >
-                                        <Settings size={18} />
+                                        <MoreHorizontal size={18} />
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-80" align="end">
-                                    <div className="space-y-4">
+                                    <div className="space-y-1">
                                         {/* Map Toggle */}
                                         <div className="flex items-center justify-between px-3 py-2">
                                             <label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -257,49 +252,61 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                         <div className="h-px bg-border"></div>
 
                                         {/* Help Section */}
-                                        <HybridTooltip>
-                                            <HybridTooltipTrigger asChild>
-                                                <Button
-                                                    variant="ghost"
-                                                    className="w-full justify-start gap-2 px-3"
-                                                >
-                                                    <BadgeHelp size={16} />
-                                                    Important Notes
-                                                </Button>
-                                            </HybridTooltipTrigger>
-                                            <HybridTooltipContent className="w-80">
-                                                <div className="text-sm space-y-2">
-                                                    <p className="font-medium">Important Notes:</p>
-                                                    <ul className="list-disc pl-4 space-y-1">
-                                                        <li>
-                                                            Building/room access may be restricted to specific
-                                                            colleges or departments
-                                                        </li>
-                                                        <li>
-                                                            Displayed availability only reflects official class
-                                                            schedules and events
-                                                        </li>
-                                                        <li>
-                                                            Rooms may be occupied by unofficial meetings or study
-                                                            groups
-                                                        </li>
-                                                        <li>Different schedules may apply during exam periods</li>
-                                                    </ul>
-                                                </div>
-                                            </HybridTooltipContent>
-                                        </HybridTooltip>
+                                         <Popover>
+                                             <PopoverTrigger asChild>
+                                                 <Button
+                                                     variant="ghost"
+                                                     className="w-full justify-start gap-2 px-3"
+                                                 >
+                                                     <BadgeHelp size={16} />
+                                                     Important Notes
+                                                 </Button>
+                                             </PopoverTrigger>
+                                             <PopoverContent className="w-80">
+                                                 <div className="text-sm space-y-2">
+                                                     <p className="font-medium">Important Notes:</p>
+                                                     <ul className="list-disc pl-4 space-y-1">
+                                                         <li>
+                                                             Building/room access may be restricted to specific
+                                                             colleges or departments
+                                                         </li>
+                                                         <li>
+                                                             Displayed availability only reflects official class
+                                                             schedules and events
+                                                         </li>
+                                                         <li>
+                                                             Rooms may be occupied by unofficial meetings or study
+                                                             groups
+                                                         </li>
+                                                         <li>Different schedules may apply during exam periods</li>
+                                                     </ul>
+                                                 </div>
+                                             </PopoverContent>
+                                         </Popover>
 
                                         {/* GitHub Link */}
-                                        <a
-                                            href="https://github.com/plon/illinispots"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center justify-start gap-2 px-3 py-2 rounded-md text-sm hover:bg-secondary transition-colors text-foreground"
-                                        >
-                                            <Github size={16} />
-                                            View on GitHub
-                                        </a>
-                                    </div>
+                                         <a
+                                             href="https://github.com/plon/illinispots"
+                                             target="_blank"
+                                             rel="noopener noreferrer"
+                                             className="flex items-center justify-start gap-2 px-3 py-2 rounded-md text-sm hover:bg-secondary transition-colors text-foreground"
+                                         >
+                                             <Github size={16} />
+                                             View on GitHub
+                                         </a>
+
+                                         {/* Divider */}
+                                         <div className="h-px bg-border"></div>
+
+                                         {/* Data Updates Section */}
+                                         <div className="px-3 py-2 text-xs text-muted-foreground space-y-1">
+                                             <p>
+                                                 <span className="font-medium text-foreground">Data Updates:</span>
+                                             </p>
+                                             <p>• General campus events: Daily</p>
+                                             <p>• Class schedules: Fall 2025</p>
+                                         </div>
+                                        </div>
                                 </PopoverContent>
                             </Popover>
                         </TooltipProvider>
