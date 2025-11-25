@@ -1,14 +1,12 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Filter, X, Clock, Hourglass, ClockIcon } from "lucide-react";
-import { Label } from "react-aria-components";
-import { Time } from "@internationalized/date";
+import { Input } from "@/components/ui/input";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import { DateInput, TimeField } from "@/components/ui/datefield-rac";
+import { Filter, X, Clock, Hourglass } from "lucide-react";
 
 interface RoomFilterPopoverProps {
   minDuration: number | undefined;
@@ -101,26 +99,16 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                                 </Button>
                             )}
                         </div>
-                        <TimeField 
-                            className="*:not-first:mt-2"
-                            autoFocus={false}
-                            value={startTime ? new Time(parseInt(startTime.split(':')[0]), parseInt(startTime.split(':')[1])) : null}
-                            onChange={(value: any) => {
-                                if (value) {
-                                    const hours = String(value.hour).padStart(2, '0');
-                                    const minutes = String(value.minute).padStart(2, '0');
-                                    setStartTime(`${hours}:${minutes}`);
-                                }
-                            }}
-                        >
-                            <Label className="sr-only">Start time</Label>
-                            <div className="relative">
-                                <div className="pointer-events-none absolute inset-y-0 start-0 z-10 flex items-center justify-center ps-3 text-muted-foreground/80">
-                                    <ClockIcon size={16} aria-hidden="true" />
-                                </div>
-                                <DateInput className="ps-9" />
-                            </div>
-                        </TimeField>
+                        <div className="relative">
+                            <Input
+                                type="time"
+                                value={startTime}
+                                onChange={(e) => setStartTime(e.target.value)}
+                                className="h-9 pl-9 font-mono text-sm"
+                                placeholder="When room must be free"
+                            />
+                            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                        </div>
                         <p className="text-[10px] text-muted-foreground pl-1">
                             Find rooms that are available by this time.
                         </p>
@@ -199,26 +187,16 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                                     </Button>
                                 ))}
                             </div>
-                            <TimeField 
-                                className="*:not-first:mt-2"
-                                autoFocus={false}
-                                value={freeUntil ? new Time(parseInt(freeUntil.split(':')[0]), parseInt(freeUntil.split(':')[1])) : null}
-                                onChange={(value: any) => {
-                                    if (value) {
-                                        const hours = String(value.hour).padStart(2, '0');
-                                        const minutes = String(value.minute).padStart(2, '0');
-                                        setFreeUntil(`${hours}:${minutes}`);
-                                    }
-                                }}
-                            >
-                                <Label className="sr-only">Free until time</Label>
-                                <div className="relative">
-                                    <div className="pointer-events-none absolute inset-y-0 start-0 z-10 flex items-center justify-center ps-3 text-muted-foreground/80">
-                                        <ClockIcon size={16} aria-hidden="true" />
-                                    </div>
-                                    <DateInput className="ps-9" />
-                                </div>
-                            </TimeField>
+                            <div className="relative">
+                                <Input
+                                    type="time"
+                                    value={freeUntil}
+                                    onChange={(e) => setFreeUntil(e.target.value)}
+                                    className="h-9 pl-9 font-mono text-sm"
+                                    placeholder="Custom time"
+                                />
+                                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                            </div>
                         </div>
                         <p className="text-[10px] text-muted-foreground pl-1">
                             Find rooms available at least until this time today.
