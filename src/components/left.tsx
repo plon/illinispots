@@ -369,9 +369,16 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 </div>
             </div>
 
-            <ScrollArea className="flex-1" ref={scrollAreaRef}>
-                {" "}
-                <FavoritesSection
+            <ScrollArea 
+                className="flex-1 relative" 
+                ref={scrollAreaRef}
+                style={{
+                    maskImage: 'linear-gradient(to bottom, transparent 0%, black 2%, black 98%, transparent 100%)',
+                    WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 2%, black 98%, transparent 100%)',
+                }}
+            >
+                 {" "}
+                 <FavoritesSection
                     favorites={favorites}
                     facilityData={facilityData}
                     onFavoriteClick={handleFavoriteClick}
