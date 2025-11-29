@@ -115,12 +115,12 @@ BEGIN
                 'name', bi.name,
                 'coordinates', jsonb_build_object('latitude', bi.latitude, 'longitude', bi.longitude),
                 'hours', jsonb_build_object('open', bi.open_time, 'close', bi.close_time),
-                'isOpen', (check_time_param >= bi.open_time AND check_time_param < bi.close_time),
+                'isOpen', COALESCE((check_time_param >= bi.open_time AND check_time_param < bi.close_time), false),
                 'roomCounts', jsonb_build_object(
                     'total', COUNT(fm.room_number),
                     'available', COUNT(fm.room_number) FILTER (WHERE fm.status_text = 'available')
                 ),
-                'rooms', jsonb_object_agg(
+                'rooms', COALESCE(jsonb_object_agg(
                     fm.room_number,
                     jsonb_build_object(
                         'status', fm.status_text,
@@ -131,7 +131,7 @@ BEGIN
                         'availableUntil', fm.available_until_time,
                         'availableFor', fm.available_for_minutes
                     )
-                )
+                ) FILTER (WHERE fm.room_number IS NOT NULL), '{}'::jsonb)
             ) as building_data
         FROM building_info bi
         LEFT JOIN final_metrics fm ON bi.name = fm.building_name
