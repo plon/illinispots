@@ -44,6 +44,11 @@ BEGIN
         AND c.check_date = check_date_param
     WHERE b.name = building_id_param;
 
+    -- If cache doesn't exist (and building exists), fall back to real-time calculation
+    IF cached_activities IS NULL AND building_open_time IS NOT NULL THEN
+        RETURN get_room_schedule(building_id_param, room_number_param, check_date_param);
+    END IF;
+
     -- If building closed or no data, return empty
     IF building_open_time IS NULL OR building_close_time IS NULL OR building_open_time >= building_close_time THEN
         RETURN '[]'::JSONB;

@@ -10,6 +10,11 @@ DECLARE
     min_interval INTERVAL;
 BEGIN
     SET LOCAL statement_timeout = '6s';
+
+    -- If cache doesn't exist for this date, fall back to real-time calculation
+    IF NOT EXISTS (SELECT 1 FROM room_availability_cache WHERE check_date = check_date_param LIMIT 1) THEN
+        RETURN get_spots(check_time_param, check_date_param, min_minutes_param);
+    END IF;
     check_timestamp := (check_date_param || ' ' || check_time_param)::timestamp;
     min_interval := (min_minutes_param || ' minutes')::interval;
 
