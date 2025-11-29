@@ -203,20 +203,19 @@ def main():
 
     print("Step 2: Load data to PostgreSQL")
     success = load_to_postgres(events)
-    if success:
-        print("Finished Step 2")
-        
-        print("Step 3: Refresh Room Availability Cache")
-        try:
-            supabase = get_supabase_client()
-            supabase.rpc('refresh_room_availability_cache', {}).execute()
-            print("Finished Step 3: Cache refreshed")
-        except Exception as e:
-            print(f"Failed Step 3: Cache refresh error: {e}")
-            # Don't fail the whole job if cache refresh fails, just log it
+    if not success:
+        print("Failed Step 2: No valid events to insert")
     else:
-        print("Failed Step 2")
-        return "Failed to update data"
+        print("Finished Step 2")
+    
+    print("Step 3: Refresh Room Availability Cache")
+    try:
+        supabase = get_supabase_client()
+        supabase.rpc('refresh_room_availability_cache', {}).execute()
+        print("Finished Step 3: Cache refreshed")
+    except Exception as e:
+        print(f"Failed Step 3: Cache refresh error: {e}")
+        # Don't fail the whole job if cache refresh fails, just log it
 
     print("Job complete!")
 
