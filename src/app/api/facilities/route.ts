@@ -9,7 +9,6 @@ import {
   RoomReservations,
   FormattedLibraryData,
   ReservationResponse,
-  RegexGroups,
   FacilityType,
   Facility,
   FacilityStatus,
@@ -21,11 +20,6 @@ import {
 import { isLibraryOpen, LIBRARY_HOURS } from "@/utils/libraryHours";
 
 export const dynamic = "force-dynamic";
-
-const USER_AGENT = {
-  "User-Agent":
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36",
-};
 
 const libraries: Libraries = {
   "Funk ACES Library": {
@@ -48,69 +42,331 @@ const libraries: Libraries = {
   },
 };
 
-const pattern = new RegExp(
-  "resources\\.push\\(\\{\\s*" +
-  'id:\\s*"(?<id>[^"]+)",\\s*' +
-  'title:\\s*"(?<title>[^"]+)",\\s*' +
-  'url:\\s*"(?<url>[^"]+)",\\s*' +
-  "eid:\\s*(?<eid>\\d+),\\s*" +
-  "gid:\\s*(?<gid>\\d+),\\s*" +
-  "lid:\\s*(?<lid>\\d+),\\s*" +
-  'grouping:\\s*"(?<grouping>[^"]+)",\\s*' +
-  "gtype:\\s*(?<gtype>\\d+),\\s*" +
-  "gBookingSelectableTime:\\s*(?<selectable>true|false),\\s*" +
-  "capacity:\\s*(?<capacity>\\d+),\\s*" +
-  "hasInfo:\\s*(?<hasInfo>true|false),\\s*" +
-  'thumbnail:\\s*"(?<thumbnail>[^"]*)",\\s*' +
-  "filterIds:\\s*\\[(?<filterIds>[^\\]]*)\\],?\\s*" +
-  "\\}\\);",
-  "g",
-);
-
-// ===== Library Data Processing Functions =====
-
-/**
- * Extracts study room information from HTML content
- */
-function extractStudyRooms(htmlContent: string): StudyRoom[] {
-  const matches = Array.from(htmlContent.matchAll(pattern));
-  const resources: StudyRoom[] = [];
-
-  for (const match of matches) {
-    const groups = match.groups as RegexGroups;
-    let thumbnail = groups.thumbnail;
-    if (thumbnail.startsWith("//")) {
-      thumbnail = "https:" + thumbnail;
-    }
-    let url = groups.url;
-    if (!url.startsWith("https://")) {
-      url = "https://uiuc.libcal.com" + url;
-    }
-
-    resources.push({
-      id: groups.id,
-      title: JSON.parse(`"${groups.title}"`),
-      url,
-      eid: parseInt(groups.eid),
-      lid: parseInt(groups.lid),
-      grouping: JSON.parse(`"${groups.grouping}"`),
-      thumbnail,
-    });
-  }
-  return resources;
-}
+const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
+  "3604": [
+    {
+      id: "eid_23939",
+      title: "301",
+      url: "https://uiuc.libcal.com/space/23939",
+      eid: 23939,
+      lid: 3604,
+      grouping: "Group Study Rooms",
+      thumbnail: "https://libapps.s3.amazonaws.com/accounts/57193/images/sr301.jpg",
+    },
+    {
+      id: "eid_23940",
+      title: "305",
+      url: "https://uiuc.libcal.com/space/23940",
+      eid: 23940,
+      lid: 3604,
+      grouping: "Group Study Rooms",
+      thumbnail: "https://libapps.s3.amazonaws.com/accounts/57193/images/sr305.jpg",
+    },
+    {
+      id: "eid_23941",
+      title: "309",
+      url: "https://uiuc.libcal.com/space/23941",
+      eid: 23941,
+      lid: 3604,
+      grouping: "Group Study Rooms",
+      thumbnail: "https://libapps.s3.amazonaws.com/accounts/57193/images/sr309.jpg",
+    },
+    {
+      id: "eid_23942",
+      title: "401",
+      url: "https://uiuc.libcal.com/space/23942",
+      eid: 23942,
+      lid: 3604,
+      grouping: "Group Study Rooms",
+      thumbnail: "https://libapps.s3.amazonaws.com/accounts/57193/images/sr401.jpg",
+    },
+    {
+      id: "eid_23943",
+      title: "405",
+      url: "https://uiuc.libcal.com/space/23943",
+      eid: 23943,
+      lid: 3604,
+      grouping: "Group Study Rooms",
+      thumbnail: "https://libapps.s3.amazonaws.com/accounts/57193/images/sr405.jpg",
+    },
+    {
+      id: "eid_23944",
+      title: "409",
+      url: "https://uiuc.libcal.com/space/23944",
+      eid: 23944,
+      lid: 3604,
+      grouping: "Group Study Rooms",
+      thumbnail: "https://libapps.s3.amazonaws.com/accounts/57193/images/sr409.jpg",
+    },
+  ],
+  "3606": [
+    {
+      id: "eid_171104",
+      title: "040E",
+      url: "https://uiuc.libcal.com/space/171104",
+      eid: 171104,
+      lid: 3606,
+      grouping: "Group Room",
+      thumbnail: "",
+    },
+    {
+      id: "eid_25428",
+      title: "405",
+      url: "https://uiuc.libcal.com/space/25428",
+      eid: 25428,
+      lid: 3606,
+      grouping: "Group Room",
+      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_4cap.jpg",
+    },
+    {
+      id: "eid_25436",
+      title: "407",
+      url: "https://uiuc.libcal.com/space/25436",
+      eid: 25436,
+      lid: 3606,
+      grouping: "Group Room",
+      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_4cap.jpg",
+    },
+    {
+      id: "eid_25437",
+      title: "408 collaboration",
+      url: "https://uiuc.libcal.com/space/25437",
+      eid: 25437,
+      lid: 3606,
+      grouping: "Group Room",
+      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_clb.jpg",
+    },
+    {
+      id: "eid_25438",
+      title: "409",
+      url: "https://uiuc.libcal.com/space/25438",
+      eid: 25438,
+      lid: 3606,
+      grouping: "Group Room",
+      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_4cap.jpg",
+    },
+    {
+      id: "eid_25439",
+      title: "410 collaboration",
+      url: "https://uiuc.libcal.com/space/25439",
+      eid: 25439,
+      lid: 3606,
+      grouping: "Group Room",
+      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_clb.jpg",
+    },
+    {
+      id: "eid_25440",
+      title: "411",
+      url: "https://uiuc.libcal.com/space/25440",
+      eid: 25440,
+      lid: 3606,
+      grouping: "Group Room",
+      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_4cap.jpg",
+    },
+    {
+      id: "eid_25441",
+      title: "412",
+      url: "https://uiuc.libcal.com/space/25441",
+      eid: 25441,
+      lid: 3606,
+      grouping: "Group Room",
+      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_8cap.jpg",
+    },
+    {
+      id: "eid_25442",
+      title: "413",
+      url: "https://uiuc.libcal.com/space/25442",
+      eid: 25442,
+      lid: 3606,
+      grouping: "Group Room",
+      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_8cap.jpg",
+    },
+    {
+      id: "eid_25443",
+      title: "414",
+      url: "https://uiuc.libcal.com/space/25443",
+      eid: 25443,
+      lid: 3606,
+      grouping: "Group Room",
+      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_8cap.jpg",
+    },
+    {
+      id: "eid_25444",
+      title: "415",
+      url: "https://uiuc.libcal.com/space/25444",
+      eid: 25444,
+      lid: 3606,
+      grouping: "Group Room",
+      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_8cap.jpg",
+    },
+  ],
+  "3608": [
+    {
+      id: "eid_25914",
+      title: "Collaboration Room 1, Main Library 220",
+      url: "https://uiuc.libcal.com/space/25914",
+      eid: 25914,
+      lid: 3608,
+      grouping: "Media Commons Main Library Room 220 Collaboration Rooms",
+      thumbnail: "",
+    },
+    {
+      id: "eid_23216",
+      title: "Collaboration Room 2, Main Library 220",
+      url: "https://uiuc.libcal.com/space/23216",
+      eid: 23216,
+      lid: 3608,
+      grouping: "Media Commons Main Library Room 220 Collaboration Rooms",
+      thumbnail: "",
+    },
+    {
+      id: "eid_142312",
+      title: "Collaboration Room 3, Main Library 220",
+      url: "https://uiuc.libcal.com/space/142312",
+      eid: 142312,
+      lid: 3608,
+      grouping: "Media Commons Main Library Room 220 Collaboration Rooms",
+      thumbnail: "",
+    },
+    {
+      id: "eid_170116",
+      title: "Collaboration Room 4, Main Library 220",
+      url: "https://uiuc.libcal.com/space/170116",
+      eid: 170116,
+      lid: 3608,
+      grouping: "Media Commons Main Library Room 220 Collaboration Rooms",
+      thumbnail: "",
+    },
+    {
+      id: "eid_19861",
+      title: "Study Room 01",
+      url: "https://uiuc.libcal.com/reserve/theorangeroom/room1",
+      eid: 19861,
+      lid: 3608,
+      grouping: "The Orange Room Study Rooms",
+      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Rooms1-3.jpg",
+    },
+    {
+      id: "eid_19864",
+      title: "Study Room 02",
+      url: "https://uiuc.libcal.com/reserve/theorangeroom/room2",
+      eid: 19864,
+      lid: 3608,
+      grouping: "The Orange Room Study Rooms",
+      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Rooms1-3.jpg",
+    },
+    {
+      id: "eid_19865",
+      title: "Study Room 03",
+      url: "https://uiuc.libcal.com/reserve/theorangeroom/room3",
+      eid: 19865,
+      lid: 3608,
+      grouping: "The Orange Room Study Rooms",
+      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Rooms1-3.jpg",
+    },
+    {
+      id: "eid_19866",
+      title: "Study Room 04 - Zoom Room",
+      url: "https://uiuc.libcal.com/reserve/theorangeroom/room4",
+      eid: 19866,
+      lid: 3608,
+      grouping: "The Orange Room Study Rooms",
+      thumbnail: "https://libapps.s3.amazonaws.com/accounts/109534/images/AIR-23_Studio_High_NW.jpg",
+    },
+    {
+      id: "eid_19867",
+      title: "Study Room 05 - Zoom Room",
+      url: "https://uiuc.libcal.com/reserve/theorangeroom/room5",
+      eid: 19867,
+      lid: 3608,
+      grouping: "The Orange Room Study Rooms",
+      thumbnail: "https://libapps.s3.amazonaws.com/accounts/109534/images/AIR-23_Studio_High_NW.jpg",
+    },
+    {
+      id: "eid_19868",
+      title: "Study Room 06",
+      url: "https://uiuc.libcal.com/reserve/theorangeroom/room6",
+      eid: 19868,
+      lid: 3608,
+      grouping: "The Orange Room Study Rooms",
+      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Room11.jpg",
+    },
+    {
+      id: "eid_19869",
+      title: "Study Room 07 - Orange Box",
+      url: "https://uiuc.libcal.com/reserve/theorangeroom/room7",
+      eid: 19869,
+      lid: 3608,
+      grouping: "The Orange Room Study Rooms",
+      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Orange_Box_picture_2.jpeg",
+    },
+    {
+      id: "eid_19870",
+      title: "Study Room 08",
+      url: "https://uiuc.libcal.com/reserve/theorangeroom/room8",
+      eid: 19870,
+      lid: 3608,
+      grouping: "The Orange Room Study Rooms",
+      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Rooms6-8.jpg",
+    },
+    {
+      id: "eid_19871",
+      title: "Study Room 09",
+      url: "https://uiuc.libcal.com/reserve/theorangeroom/room9",
+      eid: 19871,
+      lid: 3608,
+      grouping: "The Orange Room Study Rooms",
+      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Rooms9-12.jpg",
+    },
+    {
+      id: "eid_19872",
+      title: "Study Room 10",
+      url: "https://uiuc.libcal.com/reserve/theorangeroom/room10",
+      eid: 19872,
+      lid: 3608,
+      grouping: "The Orange Room Study Rooms",
+      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Rooms9-12.jpg",
+    },
+    {
+      id: "eid_19873",
+      title: "Study Room 11",
+      url: "https://uiuc.libcal.com/reserve/theorangeroom/room11",
+      eid: 19873,
+      lid: 3608,
+      grouping: "The Orange Room Study Rooms",
+      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Room11.jpg",
+    },
+    {
+      id: "eid_109178",
+      title: "Study Room 12",
+      url: "https://uiuc.libcal.com/reserve/theorangeroom/room12",
+      eid: 109178,
+      lid: 3608,
+      grouping: "The Orange Room Study Rooms",
+      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Rooms9-12.jpg",
+    },
+    {
+      id: "eid_118410",
+      title: "Accessible Study Space (room 109)",
+      url: "https://uiuc.libcal.com/space/118410",
+      eid: 118410,
+      lid: 3608,
+      grouping: "Accessible Study Space, Main Library 109",
+      thumbnail: "",
+    },
+  ],
+};
 
 /**
  * Retrieves reservation data for a specific library for the relevant date(s)
  */
 async function getReservation(
   lid: string,
-  targetMoment: moment.Moment, // Use targetMoment
+  targetMoment: moment.Moment,
 ): Promise<ReservationResponse> {
   const url = "https://uiuc.libcal.com/spaces/availability/grid";
   const timezone = "America/Chicago";
 
-  // Use the date part of targetMoment
   const targetDateCST = targetMoment.clone().tz(timezone).startOf("day");
   const nextDateCST = targetDateCST.clone().add(1, "day");
 
@@ -177,7 +433,7 @@ async function getReservation(
 function calculateAvailabilityDuration(
   slots: ReservationResponse["slots"],
   startIndex: number,
-  fromTime: moment.Moment, // Time to calculate duration *from*
+  fromTime: moment.Moment, // Time to calculate duration
   libraryClosingTime: moment.Moment | null, // Pass closing time, null if not applicable
 ): number {
   const currentSlot = slots[startIndex];
@@ -496,33 +752,20 @@ async function getFormattedLibraryData(
   }
 
   try {
-    // Fetching all spaces HTML is independent of time, still needed for room metadata
-    const allSpacesUrl = "https://uiuc.libcal.com/allspaces";
-    const allSpacesResponse = await axios.get(allSpacesUrl, {
-      headers: USER_AGENT,
-    });
-    const htmlContent = allSpacesResponse.data;
-    const studyRooms = extractStudyRooms(htmlContent);
-
-    // Group rooms by library ID
-    const roomsByLibrary: Record<string, StudyRoom[]> = {};
-    studyRooms.forEach((room) => {
-      const lid = room.lid.toString();
-      if (!roomsByLibrary[lid]) {
-        roomsByLibrary[lid] = [];
-      }
-      roomsByLibrary[lid].push(room);
-    });
-
     // Process only the libraries that are open at targetMoment
     const libraryPromises = openLibraries.map(async (libraryName) => {
       const libraryInfo = libraries[libraryName];
       if (!libraryInfo) return null; // Should not happen if openLibraries is correct
 
       const lid = libraryInfo.id;
+      const libraryRooms = STATIC_ROOMS_BY_LIBRARY[lid] || [];
+      if (libraryRooms.length === 0) {
+        console.warn(`No static room metadata found for library ${libraryName} (lid ${lid})`);
+        return null;
+      }
+
       // Get reservation data relevant to the targetMoment
       const reservationData = await getReservation(lid, targetMoment);
-      const libraryRooms = roomsByLibrary[lid] || [];
       // Link reservations using targetMoment
       const roomReservations = linkRoomsReservations(
         libraryRooms,
@@ -771,10 +1014,10 @@ async function updateLibraryFacilities(
           Object.entries(data.rooms).forEach(([roomName, roomData]) => {
             libraryFacility.rooms[roomName] = {
               type: "library",
-              status: roomData.status, // Use status calculated in linkRoomsReservations
+              status: roomData.status,
               url: roomData.url,
               thumbnail: roomData.thumbnail,
-              slots: roomData.slots, // Keep all slots for display
+              slots: roomData.slots,
               availableAt: roomData.availableAt,
               availableFor: roomData.availableDuration,
             } as LibraryRoom;
@@ -803,14 +1046,13 @@ export async function GET(request: Request) {
     let targetMoment: moment.Moment;
     const timezone = "America/Chicago";
 
-    // Validate and parse date/time parameters
     if (
       dateParam &&
       timeParam &&
       moment(
         `${dateParam} ${timeParam}`,
-        "YYYY-MM-DD HH:mm:ss", // Strict parsing
-        true, // Use strict parsing
+        "YYYY-MM-DD HH:mm:ss",
+        true,
       ).isValid()
     ) {
       targetMoment = moment.tz(
