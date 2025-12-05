@@ -29,7 +29,6 @@ interface FacilityAccordionProps {
   toggleItem: (itemId: string) => void;
   accordionRefs: React.MutableRefObject<AccordionRefs>;
   idPrefix: string;
-  isFavorite?: boolean;
   filterCriteria?: FilterCriteria;
 }
 
@@ -70,7 +69,6 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
   toggleItem,
   accordionRefs,
   idPrefix,
-  isFavorite = false,
   filterCriteria = {},
 }) => {
   const facilityId = `${idPrefix}-${facility.id}`;

@@ -64,7 +64,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const scrollAreaRef = useRef<HTMLDivElement | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [searchMode, setSearchMode] = useState<"facilities" | "rooms">("facilities");
-    const { favorites, toggleFavorite, isFavorite } = useFavorites();
+    const { favorites, toggleFavorite } = useFavorites();
     const { selectedDateTime } = useDateTimeContext();
 
     // Filter states
@@ -415,7 +415,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                     toggleItem={toggleItem}
                                     accordionRefs={accordionRefs}
                                     idPrefix="library"
-                                    isFavorite={isFavorite(facility.id)}
                                     // onToggleFavorite removed
                                     filterCriteria={filterCriteria}
                                 />
@@ -439,7 +438,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                     toggleItem={toggleItem}
                                     accordionRefs={accordionRefs}
                                     idPrefix="building"
-                                    isFavorite={isFavorite(facility.id)}
                                     filterCriteria={filterCriteria}
                                 />
                             ))}

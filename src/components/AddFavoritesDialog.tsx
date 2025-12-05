@@ -103,7 +103,7 @@ export const AddFavoritesDialog: React.FC<AddFavoritesDialogProps> = ({
                             })
                         ) : (
                             <p className="text-center text-muted-foreground text-sm py-8 border-none">
-                                No buildings found matching "{searchTerm}"
+                                No buildings found matching &quot;{searchTerm}&quot;
                             </p>
                         )}
                     </div>
