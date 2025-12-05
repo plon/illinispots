@@ -35,6 +35,8 @@ import Fuse from "fuse.js";
 import FacilityAccordion from "@/components/FacilityAccordion";
 import DateTimeButton from "@/components/DateTimeButton";
 import { FavoritesSection } from "@/components/FavoritesSection";
+import { AddFavoritesDialog } from "@/components/AddFavoritesDialog";
+import { Star } from "lucide-react";
 import RoomFilter from "@/components/RoomFilter";
 import { useFavorites } from "@/hooks/useFavorites";
 import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
@@ -210,6 +212,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         setStartTime("");
     };
 
+    const [isFavoritesDialogOpen, setIsFavoritesDialogOpen] = useState(false);
+
     return (
         <div className="h-full bg-background border-t md:border-t-0 md:border-l flex flex-col relative">
             <div className="sidebar-header pt-1 pb-3 pl-3 pr-3 md:pt-4 md:pb-5 md:pl-4 md:pr-4 border-b flex flex-col">
@@ -235,6 +239,18 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                 </PopoverTrigger>
                                 <PopoverContent className="w-56 md:w-64" align="end">
                                     <div className="space-y-1">
+                                        {/* Favorites Option */}
+                                        <button
+                                            onClick={() => setIsFavoritesDialogOpen(true)}
+                                            className="w-full flex items-center justify-start gap-2 px-3 py-2 rounded-md text-sm hover:bg-secondary transition-colors text-foreground text-left"
+                                        >
+                                            <Star size={16} />
+                                            Manage Favorites
+                                        </button>
+
+                                        {/* Divider */}
+                                        <div className="h-px bg-border"></div>
+
                                         {/* Map Toggle */}
                                         <div className="flex items-center justify-between px-3 py-2">
                                             <label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -252,61 +268,61 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                         <div className="h-px bg-border"></div>
 
                                         {/* Help Section */}
-                                         <Popover>
-                                             <PopoverTrigger asChild>
-                                                 <Button
-                                                     variant="ghost"
-                                                     className="w-full justify-start gap-2 px-3"
-                                                 >
-                                                     <BadgeHelp size={16} />
-                                                     Important Notes
-                                                 </Button>
-                                             </PopoverTrigger>
-                                             <PopoverContent className="w-64 md:w-80">
-                                                 <div className="text-sm space-y-2">
-                                                     <p className="font-medium">Important Notes:</p>
-                                                     <ul className="list-disc pl-4 space-y-1">
-                                                         <li>
-                                                             Building/room access may be restricted to specific
-                                                             colleges or departments
-                                                         </li>
-                                                         <li>
-                                                             Displayed availability only reflects official class
-                                                             schedules and events
-                                                         </li>
-                                                         <li>
-                                                             Rooms may be occupied by unofficial meetings or study
-                                                             groups
-                                                         </li>
-                                                         <li>Different schedules may apply during exam periods</li>
-                                                     </ul>
-                                                 </div>
-                                             </PopoverContent>
-                                         </Popover>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    className="w-full justify-start gap-2 px-3"
+                                                >
+                                                    <BadgeHelp size={16} />
+                                                    Important Notes
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-64 md:w-80">
+                                                <div className="text-sm space-y-2">
+                                                    <p className="font-medium">Important Notes:</p>
+                                                    <ul className="list-disc pl-4 space-y-1">
+                                                        <li>
+                                                            Building/room access may be restricted to specific
+                                                            colleges or departments
+                                                        </li>
+                                                        <li>
+                                                            Displayed availability only reflects official class
+                                                            schedules and events
+                                                        </li>
+                                                        <li>
+                                                            Rooms may be occupied by unofficial meetings or study
+                                                            groups
+                                                        </li>
+                                                        <li>Different schedules may apply during exam periods</li>
+                                                    </ul>
+                                                </div>
+                                            </PopoverContent>
+                                        </Popover>
 
                                         {/* GitHub Link */}
-                                         <a
-                                             href="https://github.com/plon/illinispots"
-                                             target="_blank"
-                                             rel="noopener noreferrer"
-                                             className="flex items-center justify-start gap-2 px-3 py-2 rounded-md text-sm hover:bg-secondary transition-colors text-foreground"
-                                         >
-                                             <Github size={16} />
-                                             View on GitHub
-                                         </a>
+                                        <a
+                                            href="https://github.com/plon/illinispots"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center justify-start gap-2 px-3 py-2 rounded-md text-sm hover:bg-secondary transition-colors text-foreground"
+                                        >
+                                            <Github size={16} />
+                                            View on GitHub
+                                        </a>
 
-                                         {/* Divider */}
-                                         <div className="h-px bg-border"></div>
+                                        {/* Divider */}
+                                        <div className="h-px bg-border"></div>
 
-                                         {/* Data Updates Section */}
-                                         <div className="px-3 py-2 text-xs text-muted-foreground space-y-1">
-                                             <p>
-                                                 <span className="font-medium text-foreground">Data Updates:</span>
-                                             </p>
-                                             <p>• General campus events: Daily</p>
-                                             <p>• Class schedules: Fall 2025</p>
-                                         </div>
+                                        {/* Data Updates Section */}
+                                        <div className="px-3 py-2 text-xs text-muted-foreground space-y-1">
+                                            <p>
+                                                <span className="font-medium text-foreground">Data Updates:</span>
+                                            </p>
+                                            <p>• General campus events: Daily</p>
+                                            <p>• Class schedules: Fall 2025</p>
                                         </div>
+                                    </div>
                                 </PopoverContent>
                             </Popover>
                         </TooltipProvider>
@@ -369,16 +385,16 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 </div>
             </div>
 
-            <ScrollArea 
-                className="flex-1 relative" 
+            <ScrollArea
+                className="flex-1 relative"
                 ref={scrollAreaRef}
                 style={{
                     maskImage: 'linear-gradient(to bottom, transparent 0%, black 2%, black 98%, transparent 100%)',
                     WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 2%, black 98%, transparent 100%)',
                 }}
             >
-                 {" "}
-                 <FavoritesSection
+                {" "}
+                <FavoritesSection
                     favorites={favorites}
                     facilityData={facilityData}
                     onFavoriteClick={handleFavoriteClick}
@@ -400,7 +416,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                     accordionRefs={accordionRefs}
                                     idPrefix="library"
                                     isFavorite={isFavorite(facility.id)}
-                                    onToggleFavorite={toggleFavorite}
+                                    // onToggleFavorite removed
                                     filterCriteria={filterCriteria}
                                 />
                             ))}
@@ -424,7 +440,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                     accordionRefs={accordionRefs}
                                     idPrefix="building"
                                     isFavorite={isFavorite(facility.id)}
-                                    onToggleFavorite={toggleFavorite}
                                     filterCriteria={filterCriteria}
                                 />
                             ))}
@@ -449,6 +464,14 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     <LoaderPinwheel className="h-6 w-6 animate-spin text-primary" />
                 </div>
             )}
+
+            <AddFavoritesDialog
+                isOpen={isFavoritesDialogOpen}
+                onOpenChange={setIsFavoritesDialogOpen}
+                facilityData={facilityData}
+                favorites={favorites}
+                onToggleFavorite={toggleFavorite}
+            />
         </div>
     );
 };

@@ -20,8 +20,6 @@ import { RoomBadge } from "@/components/RoomBadge";
 import FacilityRoomDetails from "@/components/FacilityRoomDetails";
 import { getLibraryHoursMessage } from "@/utils/libraryHours";
 import AcademicRoomDetailLoader from "@/components/AcademicRoomDetailLoader";
-import { FavoriteButton } from "@/components/FavoriteButton";
-import { FavoriteItem } from "@/hooks/useFavorites";
 import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
 
 interface FacilityAccordionProps {
@@ -32,7 +30,6 @@ interface FacilityAccordionProps {
   accordionRefs: React.MutableRefObject<AccordionRefs>;
   idPrefix: string;
   isFavorite?: boolean;
-  onToggleFavorite?: (item: FavoriteItem) => void;
   filterCriteria?: FilterCriteria;
 }
 
@@ -74,20 +71,12 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
   accordionRefs,
   idPrefix,
   isFavorite = false,
-  onToggleFavorite,
   filterCriteria = {},
 }) => {
   const facilityId = `${idPrefix}-${facility.id}`;
 
   const filteredAvailableCount = useMemo(() => {
     return Object.values(facility.rooms).filter((room) => {
-      // Allow PASSING_PERIOD for academic rooms if no strict filter, 
-      // but isRoomAvailable handles the strict check if criteria exists.
-      // We need to match the logic in the child accordions.
-      // Academic: (AVAILABLE || PASSING_PERIOD) && isRoomAvailable
-      // Library: isRoomAvailable
-
-      // For simplicity and consistency with the "Available" section logic:
       const isAvailableOrPassing =
         room.status === RoomStatus.AVAILABLE ||
         room.status === RoomStatus.PASSING_PERIOD;
@@ -114,19 +103,8 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
               <span className="font-semibold">{facility.name}</span>
             </div>
             <div className="flex items-center gap-1 ml-2">
-              {onToggleFavorite && (
-                <FavoriteButton
-                  facility={{
-                    id: facility.id,
-                    name: facility.name,
-                    type: facilityType === FacilityType.LIBRARY ? 'library' : 'academic',
-                  }}
-                  isFavorite={isFavorite}
-                  onToggle={onToggleFavorite}
-                  size="sm"
-                />
-              )}
               {!facility.isOpen ? (
+
                 <Badge
                   variant="outline"
                   className="bg-gray-50 text-gray-700 border-gray-300"
@@ -137,8 +115,8 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
                 <Badge
                   variant="outline"
                   className={`${filteredAvailableCount > 0
-                      ? "bg-green-50 text-green-700 border-green-300"
-                      : "bg-red-50 text-red-700 border-red-300"
+                    ? "bg-green-50 text-green-700 border-green-300"
+                    : "bg-red-50 text-red-700 border-red-300"
                     }`}
                 >
                   {filteredAvailableCount}/{facility.roomCounts.total}
