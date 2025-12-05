@@ -29,30 +29,30 @@ This directory contains scripts for collecting and processing UIUC course and bu
 
    - Transforms subject-sorted data into building-sorted data
    - Input: `subjects.json`
-   - Output: `buildings.json`
+   - Output: `buildings_derived.json`
 
 3. **filter_buildings.py**
 
    - Filters buildings based on criteria (minimum rooms, exclusion list)
-   - Input: `buildings.json`
-   - Output: `filtered_buildings.json`
+   - Input: `buildings_derived.json`
+   - Output: `buildings_filtered.json`
 
 4. **add_building_hours.py**
 
    - Adds operating hours to each building
-   - Input: `filtered_buildings.json`, `building_hours.json`
-   - Updates: `filtered_buildings.json`
+   - Input: `buildings_filtered.json`, `building_hours.json`
+   - Updates: `buildings_filtered.json`
 
 5. **add_building_coordinates.py**
 
    - Adds geographical coordinates to each building
-   - Input: `filtered_buildings.json`, `uiuc_buildings.geojson`
-   - Updates: `filtered_buildings.json`
+   - Input: `buildings_filtered.json`, `uiuc_buildings.geojson`
+   - Output: `buildings_enriched.json`
 
 6. **load_to_postgres.py**
 
    - Loads the final data into PostgreSQL database
-   - Input: `filtered_buildings.json`
+   - Input: `buildings_enriched.json`
    - Creates and populates database tables
 
 7. **tableau_dailyevents_scraper.py**
@@ -63,45 +63,48 @@ This directory contains scripts for collecting and processing UIUC course and bu
 ## Data Flow Diagram
 
 ```
-Web Data → subjects.json → buildings.json → filtered_buildings.json
-                                                        ↓
-                                          [+ building hours & coordinates]
-                                                        ↓
-                                                  Database Load
-                                                        ↓
-                                          [+ daily events from Tableau]
-                                                        ↓
-                                                  Database Update
+Web Data → subjects.json → buildings_derived.json → buildings_filtered.json
+                                                       ↓
+                                         [+ building hours & coordinates]
+                                                       ↓
+                                          buildings_enriched.json
+                                                       ↓
+                                                 Database Load
+                                                       ↓
+                                         [+ daily events from Tableau]
+                                                       ↓
+                                                 Database Update
 ```
 
-## Setup
+## Environment
 
-1. Install required packages:
+- Python 3.11+
+- Install dependencies: `pip install -r requirements.txt`
+- `.env.local` with `SUPABASE_URL` and `SUPABASE_KEY` (needed for `load_to_postgres.py` and the Tableau cache refresh)
 
-```bash
-pip install -r requirements.txt
-```
+## Quick run
 
-Or manually:
+1) Scrape subjects → `subjects.json`  
+`python3 one_shot_scraper.py`
 
-```bash
-pip install curl-cffi==0.7.3 supabase==1.0.4 python-dotenv==1.0.0 pandas==2.3.2
-```
+2) Derive buildings → `buildings_derived.json`  
+`python3 subject_to_buildings.py`
 
-2. Run the scripts in sequence:
+3) Filter buildings → `buildings_filtered.json`  
+`python3 filter_buildings.py`
 
-```bash
-python3 one_shot_scraper.py --proxy-file proxies.txt --proxy-try-all --max-proxy-failures 2 --rotate-every 3 -v
-python3 subject_to_buildings.py
-python3 filter_buildings.py
-python3 add_building_hours.py
-python3 add_building_coordinates.py
-python3 load_to_postgres.py
-```
+4) Add hours (in place) → `buildings_filtered.json`  
+`python3 add_building_hours.py`
+
+5) Add coordinates → `buildings_enriched.json` (canonical), also copied to `buildings.json` for convenience  
+`python3 add_building_coordinates.py`
+
+6) Load to Postgres (reads `buildings_enriched.json`)  
+`python3 load_to_postgres.py`
 
 ## Building Filtering Criteria
 
-- Minimum 7 rooms per building
+- Minimum 5 rooms per building
 - Certain buildings explicitly excluded (see [`filter_buildings.py`](filter_buildings.py))
 
 ## Database Schema
@@ -116,5 +119,6 @@ python3 load_to_postgres.py
 ## Output Files
 
 - `subjects.json`: Raw course data organized by subject
-- `buildings.json`: Data reorganized by building and room
-- `filtered_buildings.json`: Final processed building data including hours and coordinates
+- `buildings_derived.json`: Data reorganized by building and room
+- `buildings_filtered.json`: Filtered building data (exclusions/min rooms), also enriched with hours
+- `buildings_enriched.json`: Final processed building data including hours and coordinates

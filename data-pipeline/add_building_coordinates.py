@@ -2,45 +2,51 @@ from pathlib import Path
 import json
 from typing import Dict, Any, List, Tuple
 
+
 class BuildingCoordinateProcessor:
     def __init__(self):
         self.data_dir = Path(__file__).parent / "data"
         self.geojson_file = self.data_dir / "uiuc_buildings.geojson"
-        self.buildings_file = self.data_dir / "filtered_buildings.json"
+        self.buildings_input_file = self.data_dir / "buildings_filtered.json"
+        self.buildings_output_file = self.data_dir / "buildings_enriched.json"
+        self.canonical_file = self.data_dir / "buildings.json"
 
     def load_data(self) -> tuple[Dict[str, Any], Dict[str, Any]]:
-        with open(self.geojson_file, 'r') as f:
+        with open(self.geojson_file, "r") as f:
             geojson_data = json.load(f)
 
-        with open(self.buildings_file, 'r') as f:
+        with open(self.buildings_input_file, "r") as f:
             building_data = json.load(f)
 
         return geojson_data, building_data
 
     def save_data(self, data: Dict[str, Any]) -> None:
-        with open(self.buildings_file, 'w') as f:
+        with open(self.buildings_output_file, "w") as f:
+            json.dump(data, f, indent=2)
+        # Convenience: keep canonical buildings.json pointing at enriched output
+        with open(self.canonical_file, "w") as f:
             json.dump(data, f, indent=2)
 
-    def create_coordinates_map(self, geojson_data: Dict[str, Any]) -> Dict[str, List[float]]:
+    def create_coordinates_map(
+        self, geojson_data: Dict[str, Any]
+    ) -> Dict[str, List[float]]:
         coordinates_map = {}
-        for feature in geojson_data['features']:
-            building_name = feature['properties']['name']
-            coordinates = feature['geometry']['coordinates']
+        for feature in geojson_data["features"]:
+            building_name = feature["properties"]["name"]
+            coordinates = feature["geometry"]["coordinates"]
             coordinates_map[building_name] = coordinates
         return coordinates_map
 
     def add_coordinates_to_buildings(
-        self,
-        building_data: Dict[str, Any],
-        coordinates_map: Dict[str, List[float]]
+        self, building_data: Dict[str, Any], coordinates_map: Dict[str, List[float]]
     ) -> Tuple[Dict[str, Any], int]:
         buildings_updated = 0
 
-        for building_name in building_data['buildings']:
+        for building_name in building_data["buildings"]:
             if building_name in coordinates_map:
-                building_data['buildings'][building_name]['coordinates'] = {
-                    'longitude': coordinates_map[building_name][0],
-                    'latitude': coordinates_map[building_name][1]
+                building_data["buildings"][building_name]["coordinates"] = {
+                    "longitude": coordinates_map[building_name][0],
+                    "latitude": coordinates_map[building_name][1],
                 }
                 buildings_updated += 1
                 print(f"Added coordinates for: {building_name}")
@@ -53,27 +59,27 @@ class BuildingCoordinateProcessor:
         coordinates_map = self.create_coordinates_map(geojson_data)
 
         updated_data, buildings_updated = self.add_coordinates_to_buildings(
-            building_data,
-            coordinates_map
+            building_data, coordinates_map
         )
 
         self.save_data(updated_data)
 
-        print(f"\nProcessing complete!")
+        print("\nProcessing complete!")
         print(f"Added coordinates to {buildings_updated} buildings")
 
         missing_coordinates = [
-            name for name in building_data['buildings']
-            if name not in coordinates_map
+            name for name in building_data["buildings"] if name not in coordinates_map
         ]
         if missing_coordinates:
             print("\nBuildings missing coordinates:")
             for name in missing_coordinates:
                 print(f"- {name}")
 
+
 def main():
     processor = BuildingCoordinateProcessor()
     processor.process()
+
 
 if __name__ == "__main__":
     main()
