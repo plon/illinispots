@@ -195,6 +195,38 @@ def scrape_sections(html_content: str) -> List[Section]:
 
     return sections
 
+def get_progress_file(year: int, term: str) -> Path:
+    """Get path to the progress file for tracking resumability."""
+    data_dir = Path(__file__).parent / "data"
+    data_dir.mkdir(exist_ok=True)
+    return data_dir / f"progress_{year}_{term}.json"
+
+def load_progress(year: int, term: str) -> dict:
+    """Load existing progress from disk if available."""
+    progress_file = get_progress_file(year, term)
+    if progress_file.exists():
+        with open(progress_file, "r") as f:
+            return json.load(f)
+    return {"completed_subjects": {}, "last_updated": None}
+
+def save_progress(year: int, term: str, completed_subjects: dict):
+    """Save progress to disk for resumability."""
+    progress_file = get_progress_file(year, term)
+    data = {
+        "last_updated": datetime.now().isoformat(),
+        "year": year,
+        "term": term,
+        "completed_subjects": completed_subjects
+    }
+    with open(progress_file, "w") as f:
+        json.dump(data, f, indent=2)
+
+def clear_progress(year: int, term: str):
+    """Remove progress file after successful completion."""
+    progress_file = get_progress_file(year, term)
+    if progress_file.exists():
+        progress_file.unlink()
+
 def save_subject_data(subjects: List[Subject], year: int, term: str):
     data_dir = Path(__file__).parent / "data"
     data_dir.mkdir(exist_ok=True)
@@ -371,7 +403,9 @@ def scrape_all_data(year: Optional[int] = None,
                     proxy_try_all: bool = False,
                     max_proxy_failures: int = 2,
                     proxy_shuffle: bool = False,
-                    skip_errors: bool = True) -> List[Subject]:
+                    skip_errors: bool = True,
+                    resume: bool = True,
+                    fresh: bool = False) -> List[Subject]:
     start_time = datetime.now()
 
     if year is None:
@@ -427,16 +461,67 @@ def scrape_all_data(year: Optional[int] = None,
         # Exhausted attempts
         raise last_exc if last_exc else RuntimeError("Unknown error during request")
 
+    # Handle resumability
+    if fresh:
+        clear_progress(year, term)
+        progress = {"completed_subjects": {}}
+        print(f"Starting fresh scrape for {term} {year}...")
+    elif resume:
+        progress = load_progress(year, term)
+        if progress["completed_subjects"]:
+            print(f"Resuming scrape for {term} {year} ({len(progress['completed_subjects'])} subjects already completed)...")
+        else:
+            print(f"Starting scrape for {term} {year}...")
+    else:
+        progress = {"completed_subjects": {}}
+        print(f"Starting scrape for {term} {year}...")
+
+    completed_subjects = progress["completed_subjects"]
+
     print(f"Fetching subjects for {term} {year}...")
     r = fetch("https://courses.illinois.edu/schedule/DEFAULT/DEFAULT")
     r.raise_for_status()
     subjects = scrape_subjects(r.text)
     total_subjects = len(subjects)
-    total_courses = 0
-    total_sections = 0
+    
+    # Rebuild subjects list from progress for already completed ones
+    final_subjects: List[Subject] = []
+    for subject in subjects:
+        if subject.code in completed_subjects:
+            # Reconstruct from saved progress
+            saved_data = completed_subjects[subject.code]
+            subject.courses = [
+                Course(
+                    number=c["number"],
+                    title=c["title"],
+                    sections=[
+                        Section(
+                            time=TimeSlot(start=s["time"]["start"], end=s["time"]["end"]),
+                            location=Location(building=s["location"]["building"], room=s["location"]["room"]),
+                            days=s["days"],
+                            start_date=s["start_date"],
+                            end_date=s["end_date"]
+                        )
+                        for s in c["sections"]
+                    ]
+                )
+                for c in saved_data["courses"]
+            ]
+            if subject.courses:
+                final_subjects.append(subject)
+    
+    total_courses = sum(len(s.courses) for s in final_subjects)
+    total_sections = sum(sum(len(c.sections) for c in s.courses) for s in final_subjects)
+    skipped_count = len([s for s in subjects if s.code in completed_subjects])
 
     try:
         for i, subject in enumerate(subjects, 1):
+            # Skip already completed subjects
+            if subject.code in completed_subjects:
+                if verbose:
+                    print(f"Skipping subject {i}/{total_subjects}: {subject.code} (already completed)")
+                continue
+                
             subject_start = datetime.now()
             print(f"Processing subject {i}/{total_subjects}: {subject.code}")
 
@@ -487,16 +572,31 @@ def scrape_all_data(year: Optional[int] = None,
                         print(f"      Found {len(sections)} sections ({course_duration.total_seconds():.1f}s)")
 
             total_courses += len(subject.courses)
+            
+            # Save progress after each subject
+            if subject.courses:
+                final_subjects.append(subject)
+            completed_subjects[subject.code] = {
+                "name": subject.name,
+                "courses": [asdict(c) for c in subject.courses]
+            }
+            save_progress(year, term, completed_subjects)
+            
             if verbose:
                 subject_duration = datetime.now() - subject_start
                 print(f"  Completed {subject.code} in {subject_duration.total_seconds():.1f}s")
                 print(f"  Running totals: {total_courses} courses, {total_sections} sections")
                 print()
     except KeyboardInterrupt:
-        print("\nScraping interrupted, saving partial results...")
+        print("\nScraping interrupted, progress saved. Run again to resume.")
 
-    subjects = [subject for subject in subjects if len(subject.courses) > 0]
+    subjects = [subject for subject in final_subjects if len(subject.courses) > 0]
     save_subject_data(subjects, year=year, term=term)
+    
+    # Clear progress file on successful completion
+    if len(completed_subjects) >= total_subjects:
+        clear_progress(year, term)
+        print("Scrape complete, progress file cleared.")
 
     total_duration = datetime.now() - start_time
     print(f"\nTotal time: {total_duration.total_seconds():.1f}s")
@@ -535,6 +635,10 @@ if __name__ == "__main__":
                         help='Shuffle proxy list order on load')
     parser.add_argument('--no-skip-errors', dest='skip_errors', action='store_false',
                         help='Fail fast on errors instead of skipping subjects/courses')
+    parser.add_argument('--no-resume', dest='resume', action='store_false',
+                        help='Disable resumability (start fresh without loading progress)')
+    parser.add_argument('--fresh', action='store_true',
+                        help='Clear any existing progress and start fresh')
 
     args = parser.parse_args()
 
@@ -558,6 +662,8 @@ if __name__ == "__main__":
         max_proxy_failures=args.max_proxy_failures,
         proxy_shuffle=args.proxy_shuffle,
         skip_errors=args.skip_errors,
+        resume=args.resume,
+        fresh=args.fresh,
     )
     print("\nScraping complete!")
     print(f"Scraped {len(subjects)} subjects")
