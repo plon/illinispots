@@ -450,6 +450,8 @@ def scrape_all_data(year: Optional[int] = None,
                     # Count this as a successful use for rotation stickiness
                     rotator.use()
                 return r
+            except KeyboardInterrupt:
+                raise
             except Exception as e:
                 last_exc = e
                 if verbose:
