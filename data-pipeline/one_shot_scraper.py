@@ -541,6 +541,7 @@ def scrape_all_data(year: Optional[int] = None,
             if verbose:
                 print(f"  Found {len(courses)} courses in {subject.code}")
 
+            failed_courses = 0
             for j, course in enumerate(courses, 1):
                 course_start = datetime.now()
                 course_number = course.number.split()[1]
@@ -556,6 +557,7 @@ def scrape_all_data(year: Optional[int] = None,
                     msg = f"    Skipping course {course.number}: {e}"
                     if skip_errors:
                         print(msg)
+                        failed_courses += 1
                         continue
                     else:
                         raise
@@ -572,6 +574,11 @@ def scrape_all_data(year: Optional[int] = None,
                         print(f"      Found {len(sections)} sections ({course_duration.total_seconds():.1f}s)")
 
             total_courses += len(subject.courses)
+            
+            # Only mark subject as complete if no courses failed
+            if failed_courses > 0:
+                print(f"  WARNING: {subject.code} had {failed_courses}/{len(courses)} failed courses, NOT marking as complete")
+                continue
             
             # Save progress after each subject
             if subject.courses:
