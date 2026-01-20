@@ -5,9 +5,20 @@ from curl_cffi import requests
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 import json
+import signal
 from typing import List, Optional
 
 VALID_TERMS = {'spring', 'summer', 'fall', 'winter'}
+
+# Global flag for graceful shutdown
+_shutdown_requested = False
+
+def _signal_handler(signum, frame):
+    global _shutdown_requested
+    _shutdown_requested = True
+    print("\n[Shutdown requested, finishing current operation...]")
+
+signal.signal(signal.SIGINT, _signal_handler)
 
 @dataclass
 class TimeSlot:
@@ -516,88 +527,96 @@ def scrape_all_data(year: Optional[int] = None,
     total_sections = sum(sum(len(c.sections) for c in s.courses) for s in final_subjects)
     skipped_count = len([s for s in subjects if s.code in completed_subjects])
 
-    try:
-        for i, subject in enumerate(subjects, 1):
-            # Skip already completed subjects
-            if subject.code in completed_subjects:
-                if verbose:
-                    print(f"Skipping subject {i}/{total_subjects}: {subject.code} (already completed)")
+    for i, subject in enumerate(subjects, 1):
+        # Check for shutdown request
+        if _shutdown_requested:
+            print("\nShutdown requested, saving progress...")
+            break
+            
+        # Skip already completed subjects
+        if subject.code in completed_subjects:
+            if verbose:
+                print(f"Skipping subject {i}/{total_subjects}: {subject.code} (already completed)")
+            continue
+            
+        subject_start = datetime.now()
+        print(f"Processing subject {i}/{total_subjects}: {subject.code}")
+
+        try:
+            r = fetch(f"https://courses.illinois.edu/schedule/{year}/{term}/{subject.code}")
+            r.raise_for_status()
+        except Exception as e:
+            msg = f"  Failed to fetch subject page for {subject.code}: {e}"
+            if skip_errors:
+                print(msg)
                 continue
+            else:
+                raise
+
+        courses = scrape_courses(r.text)
+
+        if verbose:
+            print(f"  Found {len(courses)} courses in {subject.code}")
+
+        failed_courses = 0
+        for j, course in enumerate(courses, 1):
+            # Check for shutdown request
+            if _shutdown_requested:
+                print("\n  Shutdown requested mid-subject, will retry this subject next run...")
+                failed_courses = len(courses)  # Force subject to not be marked complete
+                break
                 
-            subject_start = datetime.now()
-            print(f"Processing subject {i}/{total_subjects}: {subject.code}")
+            course_start = datetime.now()
+            course_number = course.number.split()[1]
+            course_url = f"https://courses.illinois.edu/schedule/{year}/{term}/{subject.code}/{course_number}"
+
+            if verbose:
+                print(f"    Processing course {j}/{len(courses)}: {course.number}")
 
             try:
-                r = fetch(f"https://courses.illinois.edu/schedule/{year}/{term}/{subject.code}")
-                r.raise_for_status()
+                course_response = fetch(course_url)
+                course_response.raise_for_status()
             except Exception as e:
-                msg = f"  Failed to fetch subject page for {subject.code}: {e}"
+                msg = f"    Skipping course {course.number}: {e}"
                 if skip_errors:
                     print(msg)
+                    failed_courses += 1
                     continue
                 else:
                     raise
 
-            courses = scrape_courses(r.text)
+            sections = scrape_sections(course_response.text)
 
-            if verbose:
-                print(f"  Found {len(courses)} courses in {subject.code}")
-
-            failed_courses = 0
-            for j, course in enumerate(courses, 1):
-                course_start = datetime.now()
-                course_number = course.number.split()[1]
-                course_url = f"https://courses.illinois.edu/schedule/{year}/{term}/{subject.code}/{course_number}"
+            if len(sections) > 0:
+                course.sections = sections
+                subject.courses.append(course)
+                total_sections += len(sections)
 
                 if verbose:
-                    print(f"    Processing course {j}/{len(courses)}: {course.number}")
+                    course_duration = datetime.now() - course_start
+                    print(f"      Found {len(sections)} sections ({course_duration.total_seconds():.1f}s)")
 
-                try:
-                    course_response = fetch(course_url)
-                    course_response.raise_for_status()
-                except Exception as e:
-                    msg = f"    Skipping course {course.number}: {e}"
-                    if skip_errors:
-                        print(msg)
-                        failed_courses += 1
-                        continue
-                    else:
-                        raise
-
-                sections = scrape_sections(course_response.text)
-
-                if len(sections) > 0:
-                    course.sections = sections
-                    subject.courses.append(course)
-                    total_sections += len(sections)
-
-                    if verbose:
-                        course_duration = datetime.now() - course_start
-                        print(f"      Found {len(sections)} sections ({course_duration.total_seconds():.1f}s)")
-
-            total_courses += len(subject.courses)
-            
-            # Only mark subject as complete if no courses failed
-            if failed_courses > 0:
-                print(f"  WARNING: {subject.code} had {failed_courses}/{len(courses)} failed courses, NOT marking as complete")
-                continue
-            
-            # Save progress after each subject
-            if subject.courses:
-                final_subjects.append(subject)
-            completed_subjects[subject.code] = {
-                "name": subject.name,
-                "courses": [asdict(c) for c in subject.courses]
-            }
-            save_progress(year, term, completed_subjects)
-            
-            if verbose:
-                subject_duration = datetime.now() - subject_start
-                print(f"  Completed {subject.code} in {subject_duration.total_seconds():.1f}s")
-                print(f"  Running totals: {total_courses} courses, {total_sections} sections")
-                print()
-    except KeyboardInterrupt:
-        print("\nScraping interrupted, progress saved. Run again to resume.")
+        total_courses += len(subject.courses)
+        
+        # Only mark subject as complete if no courses failed
+        if failed_courses > 0:
+            print(f"  WARNING: {subject.code} had {failed_courses}/{len(courses)} failed courses, NOT marking as complete")
+            continue
+        
+        # Save progress after each subject
+        if subject.courses:
+            final_subjects.append(subject)
+        completed_subjects[subject.code] = {
+            "name": subject.name,
+            "courses": [asdict(c) for c in subject.courses]
+        }
+        save_progress(year, term, completed_subjects)
+        
+        if verbose:
+            subject_duration = datetime.now() - subject_start
+            print(f"  Completed {subject.code} in {subject_duration.total_seconds():.1f}s")
+            print(f"  Running totals: {total_courses} courses, {total_sections} sections")
+            print()
 
     subjects = [subject for subject in final_subjects if len(subject.courses) > 0]
     save_subject_data(subjects, year=year, term=term)
