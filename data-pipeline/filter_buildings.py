@@ -18,6 +18,7 @@ class BuildingDataFilter:
             "Grad Sch of Lib & Info Science",
             "Chemistry Annex",
             "Allen Residence Hall",
+            "Ceramics Building"
         }
         # inclusive
         self.min_rooms = 5
