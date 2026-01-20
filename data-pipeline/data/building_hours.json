@@ -24,22 +24,22 @@
     "SUN": "12PM-11PM"
   },
   "Gregory Hall": {
-    "M-TH": "7AM-12AM",
-    "F": "7AM-12AM",
-    "SAT": "7AM-12AM",
-    "SUN": "7AM-12AM"
+    "M-TH": "7AM-11:59PM",
+    "F": "7AM-11:59PM",
+    "SAT": "7AM-11:59PM",
+    "SUN": "7AM-11:59PM"
   },
   "Armory": {
     "M-TH": "5AM-10PM",
     "F": "5AM-10PM",
-    "SAT": "8AM-5PM",
-    "SUN": "8AM-5PM"
+    "SAT": "7AM-9PM",
+    "SUN": "7AM-9PM"
   },
   "David Kinley Hall": {
-    "M-TH": "7AM-12AM",
+    "M-TH": "7AM-11:59PM",
     "F": "7AM-11PM",
     "SAT": "7AM-6PM",
-    "SUN": "9:30AM-12AM"
+    "SUN": "9:30AM-11:59PM"
   },
   "Lincoln Hall": {
     "M-TH": "7AM-11PM",
@@ -90,10 +90,10 @@
     "SUN": "12PM-11PM"
   },
   "Business Instructional Fac": {
-    "M-TH": "6AM-12AM",
+    "M-TH": "6AM-11:59PM",
     "F": "6AM-8PM",
     "SAT": "6AM-8PM",
-    "SUN": "10AM-12AM"
+    "SUN": "10AM-11:59PM"
   },
   "Transportation Building": {
     "M-TH": "7AM-9PM",
@@ -102,20 +102,20 @@
     "SUN": "7AM-9PM"
   },
   "English Building": {
-    "M-TH": "7AM-12AM",
+    "M-TH": "7AM-11:59PM",
     "F": "7AM-10PM",
     "SAT": "7AM-10PM",
-    "SUN": "12PM-12AM"
+    "SUN": "12PM-11:59PM"
   },
   "Davenport Hall": {
-    "M-TH": "7AM-6:30PM",
-    "F": "7AM-6:30PM",
+    "M-TH": "7AM-6PM",
+    "F": "7AM-6PM",
     "SAT": "LOCKED",
     "SUN": "LOCKED"
   },
   "Sidney Lu Mech Engr Bldg": {
-    "M-TH": "7AM-9PM",
-    "F": "7AM-6PM",
+    "M-TH": "6:30AM-9PM",
+    "F": "6:30AM-6PM",
     "SAT": "LOCKED",
     "SUN": "LOCKED"
   },
@@ -150,10 +150,10 @@
     "SUN": "LOCKED"
   },
   "Music Building": {
-    "M-TH": "6:30AM-12AM",
-    "F": "6:30AM-12AM",
-    "SAT": "6:30AM-12AM",
-    "SUN": "6:30AM-12AM"
+    "M-TH": "6:30AM-11:59PM",
+    "F": "6:30AM-11:59PM",
+    "SAT": "6:30AM-11:59PM",
+    "SUN": "6:30AM-11:59PM"
   },
   "Siebel Center for Comp Sci": {
     "M-TH": "7AM-9:30PM",
@@ -168,8 +168,8 @@
     "SUN": "12PM-10PM"
   },
   "Burrill Hall": {
-    "M-TH": "7AM-7PM",
-    "F": "7AM-7PM",
+    "M-TH": "7AM-6PM",
+    "F": "7AM-6PM",
     "SAT": "LOCKED",
     "SUN": "LOCKED"
   },
@@ -186,8 +186,8 @@
     "SUN": "12PM-10PM"
   },
   "Newmark Civil Engineering Bldg": {
-    "M-TH": "7AM-6PM",
-    "F": "7AM-6PM",
+    "M-TH": "6AM-6PM",
+    "F": "6AM-6PM",
     "SAT": "LOCKED",
     "SUN": "LOCKED"
   },
@@ -228,10 +228,10 @@
     "SUN": "LOCKED"
   },
   "Wymer Hall": {
-    "M-TH": "7AM-8PM",
-    "F": "7AM-6PM",
-    "SAT": "LOCKED",
-    "SUN": "LOCKED"
+    "M-TH": "7AM-10PM",
+    "F": "7AM-8PM",
+    "SAT": "9AM-8PM",
+    "SUN": "12PM-8PM"
   },
   "Civil & Envir Eng Bldg": {
     "M-TH": "7AM-6PM",
@@ -240,9 +240,15 @@
     "SUN": "LOCKED"
   },
   "Siebel Center for Design": {
-    "M-TH": "7AM-12AM",
-    "F": "7AM-12AM",
-    "SAT": "7AM-12AM",
-    "SUN": "7AM-12AM"
+    "M-TH": "7AM-11:59PM",
+    "F": "7AM-11:59PM",
+    "SAT": "7AM-11:59PM",
+    "SUN": "7AM-11:59PM"
+  },
+  "Sch of Info Sciences Bldg": {
+    "M-TH": "7:30AM-6:30PM",
+    "F": "7:30AM-6:30PM",
+    "SAT": "LOCKED",
+    "SUN": "LOCKED"
   }
 }
