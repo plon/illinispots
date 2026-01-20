@@ -542,10 +542,10 @@
         "name": "Wymer Hall"
       },
       "geometry": {
-       "coordinates": [
-        -88.23180761476274,
-        40.103501813602065
-      ],
+        "coordinates": [
+          -88.23180761476274,
+          40.103501813602065
+        ],
         "type": "Point"
       }
     },
@@ -571,6 +571,19 @@
         "coordinates": [
           -88.23257320004831,
           40.102776538601546
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Sch of Info Sciences Bldg"
+      },
+      "geometry": {
+        "coordinates": [
+          40.10766704287157,
+          -88.23149693912607
         ],
         "type": "Point"
       }
