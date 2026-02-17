@@ -12,7 +12,7 @@ import {
     DrawerTrigger,
 } from "@/components/ui/drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { Filter, X, Hourglass, Clock } from "lucide-react";
+import { ListFilter, Hourglass, Clock, Building2, DoorOpen, Search } from "lucide-react";
 
 interface RoomFilterPopoverProps {
     minDuration: number | undefined;
@@ -21,10 +21,11 @@ interface RoomFilterPopoverProps {
     setFreeUntil: (value: string) => void;
     startTime: string;
     setStartTime: (value: string) => void;
-    activeFilterCount: number;
     hasActiveFilters: boolean;
     onClearAll: () => void;
     matchingRoomsCount: number;
+    searchMode: "facilities" | "rooms";
+    setSearchMode: (mode: "facilities" | "rooms") => void;
 }
 
 const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
@@ -34,10 +35,11 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
     setFreeUntil,
     startTime,
     setStartTime,
-    activeFilterCount,
     hasActiveFilters,
     onClearAll,
     matchingRoomsCount,
+    searchMode,
+    setSearchMode,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -45,46 +47,68 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
     const TriggerButton = (
         <Button
             variant={hasActiveFilters ? "default" : "outline"}
-            size="sm"
-            className={`h-9 md:h-9 rounded-full border-2 flex items-center gap-2 px-3 transition-all duration-200 ${hasActiveFilters
+            size="icon"
+            className={`h-9 w-9 rounded-full border transition-all duration-200 ${hasActiveFilters
                 ? "border-primary bg-primary text-primary-foreground shadow-md"
-                : "border-foreground/20 hover:border-foreground/40"
+                : "border-input hover:border-foreground/40"
                 }`}
             aria-label="Filter options"
         >
-            <Filter size={16} />
-            <span className="text-xs font-medium">
-                {activeFilterCount > 0 ? `${activeFilterCount}` : "Filter"}
-            </span>
+            <ListFilter size={16} />
         </Button>
     );
 
     const content = (
         <div>
-            <div className="bg-muted/30 p-4 border-b border-border/50 flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                    <div className="bg-primary/10 p-1.5 rounded-md">
-                        <Filter size={14} className="text-primary" />
-                    </div>
-                    <h4 className="font-semibold text-sm">Filters</h4>
-                </div>
-                {hasActiveFilters && (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                        onClick={onClearAll}
-                    >
-                        <X size={12} className="mr-1" />
-                        Clear all
-                    </Button>
-                )}
-            </div>
-
             <div className="px-4 space-y-6 pb-4">
-                <div className="text-[10px] text-muted-foreground bg-muted/30 -mx-4 px-4 py-2 border-b border-border/50">
-                    <span className="font-medium text-foreground">{matchingRoomsCount}</span> room
-                    {matchingRoomsCount === 1 ? "" : "s"} match
+                <div className="text-xs text-muted-foreground bg-muted/30 -mx-4 px-4 py-3 border-b border-border/50 flex items-center justify-between">
+                    <span>
+                        <span className="font-medium text-foreground">{matchingRoomsCount}</span> room
+                        {matchingRoomsCount === 1 ? "" : "s"} match
+                    </span>
+                    {hasActiveFilters && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 px-1 text-xs text-muted-foreground hover:text-destructive hover:bg-transparent underline"
+                            onClick={onClearAll}
+                        >
+                            Clear all
+                        </Button>
+                    )}
+                </div>
+
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">
+                        <Search size={14} className="text-muted-foreground" />
+                        Search By
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                        <Button
+                            variant={searchMode === "facilities" ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setSearchMode("facilities")}
+                            className={`h-9 text-xs font-medium transition-all flex items-center gap-1.5 ${searchMode === "facilities"
+                                ? "shadow-sm"
+                                : "hover:border-primary/50 hover:bg-primary/5"
+                                }`}
+                        >
+                            <Building2 size={14} />
+                            Building
+                        </Button>
+                        <Button
+                            variant={searchMode === "rooms" ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setSearchMode("rooms")}
+                            className={`h-9 text-xs font-medium transition-all flex items-center gap-1.5 ${searchMode === "rooms"
+                                ? "shadow-sm"
+                                : "hover:border-primary/50 hover:bg-primary/5"
+                                }`}
+                        >
+                            <DoorOpen size={14} />
+                            Room
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="space-y-3">

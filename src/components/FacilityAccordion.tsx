@@ -98,7 +98,7 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
         >
           <div className="flex items-center justify-between flex-1 mr-2">
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <span className="font-semibold">{facility.name}</span>
+              <span className="font-medium">{facility.name}</span>
             </div>
             <div className="flex items-center gap-1 ml-2">
               {!facility.isOpen ? (
@@ -422,7 +422,7 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
       >
         <AccordionTrigger
           onClick={() => toggleItem(`${idPrefix}-${facility.id}-available`)}
-          className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm"
+          className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm font-normal"
         >
           Available Rooms ({availableRooms.length})
         </AccordionTrigger>
@@ -446,7 +446,7 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
       >
         <AccordionTrigger
           onClick={() => toggleItem(`${idPrefix}-${facility.id}-occupied`)}
-          className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm"
+          className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm font-normal"
         >
           Occupied Rooms ({occupiedRooms.length})
         </AccordionTrigger>

@@ -26,9 +26,8 @@ import {
     Map as MapIcon,
     BadgeHelp,
     Search,
+    X,
     LoaderPinwheel,
-    Building2,
-    DoorOpen,
     MoreHorizontal,
 } from "lucide-react";
 import Fuse from "fuse.js";
@@ -71,10 +70,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const [minDuration, setMinDuration] = useState<number | undefined>(undefined);
     const [freeUntil, setFreeUntil] = useState<string>("");
     const [startTime, setStartTime] = useState<string>("");
-
-    // Calculate active filter count
-    const activeFilterCount =
-        (!!minDuration ? 1 : 0) + (!!freeUntil ? 1 : 0) + (!!startTime ? 1 : 0);
 
     const filterCriteria: FilterCriteria = useMemo(
         () => ({
@@ -216,182 +211,157 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
     return (
         <div className="h-full bg-background border-t md:border-t-0 md:border-l flex flex-col relative">
-            <div className="sidebar-header pt-1 pb-3 pl-3 pr-3 md:pt-4 md:pb-5 md:pl-4 md:pr-4 border-b flex flex-col">
-                <div className="flex justify-between items-center w-full">
-                    <h1 className="text-xl md:text-2xl font-bold">
-                        <span style={{ color: "#FF5F05" }}>illini</span>
-                        <span style={{ color: "#13294B" }}>Spots</span>
-                    </h1>
-                    <div className="flex gap-2 items-center pt-1">
-                        <TooltipProvider delayDuration={50}>
-                            <DateTimeButton isFetching={isFetching} />
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        size="icon"
-                                        className="h-9 w-9 md:h-9 md:w-9 rounded-full border-2 border-foreground/20"
-                                        aria-label="Menu"
-                                        title="Menu"
-                                    >
-                                        <MoreHorizontal size={18} />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-56 md:w-64" align="end">
-                                    <div className="space-y-1">
-                                        {/* Favorites Option */}
-                                        <button
-                                            onClick={() => setIsFavoritesDialogOpen(true)}
-                                            className="w-full flex items-center justify-start gap-2 px-3 py-2 rounded-md text-sm hover:bg-secondary transition-colors text-foreground text-left"
-                                        >
-                                            <Star size={16} />
-                                            Manage Favorites
-                                        </button>
-
-                                        {/* Divider */}
-                                        <div className="h-px bg-border"></div>
-
-                                        {/* Map Toggle */}
-                                        <div className="flex items-center justify-between px-3 py-2">
-                                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                                <MapIcon size={16} />
-                                                Show Map
-                                            </label>
-                                            <Switch
-                                                checked={showMap}
-                                                onCheckedChange={setShowMap}
-                                                aria-label="Toggle map display"
-                                            />
-                                        </div>
-
-                                        {/* Divider */}
-                                        <div className="h-px bg-border"></div>
-
-                                        {/* Help Section */}
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button
-                                                    variant="ghost"
-                                                    className="w-full justify-start gap-2 px-3"
-                                                >
-                                                    <BadgeHelp size={16} />
-                                                    Important Notes
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-64 md:w-80">
-                                                <div className="text-sm space-y-2">
-                                                    <p className="font-medium">Important Notes:</p>
-                                                    <ul className="list-disc pl-4 space-y-1">
-                                                        <li>
-                                                            Building/room access may be restricted to specific
-                                                            colleges or departments
-                                                        </li>
-                                                        <li>
-                                                            Displayed availability only reflects official class
-                                                            schedules and events
-                                                        </li>
-                                                        <li>
-                                                            Rooms may be occupied by unofficial meetings or study
-                                                            groups
-                                                        </li>
-                                                        <li>Different schedules may apply during exam periods</li>
-                                                    </ul>
-                                                </div>
-                                            </PopoverContent>
-                                        </Popover>
-
-                                        {/* GitHub Link */}
-                                        <a
-                                            href="https://github.com/plon/illinispots"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center justify-start gap-2 px-3 py-2 rounded-md text-sm hover:bg-secondary transition-colors text-foreground"
-                                        >
-                                            <Github size={16} />
-                                            View on GitHub
-                                        </a>
-
-                                        {/* Divider */}
-                                        <div className="h-px bg-border"></div>
-
-                                        {/* Data Updates Section */}
-                                        <div className="px-3 py-2 text-xs text-muted-foreground space-y-1">
-                                            <p>
-                                                <span className="font-medium text-foreground">Data Updates:</span>
-                                            </p>
-                                            <p>• General campus events: Daily</p>
-                                            <p>• Class schedules: Spring 2026</p>
-                                        </div>
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
-                        </TooltipProvider>
-                    </div>
-                </div>
-                <div className="mt-2 md:mt-3 w-full relative flex gap-2">
-                    <div className="relative flex-1">
-                        <Search
-                            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                            aria-hidden="true"
-                        />
-                        <Input
-                            type="search"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder={searchMode === "facilities" ? "Search buildings..." : "Search rooms..."}
-                            className="pl-10 pr-24 h-9 md:h-9 rounded-full text-sm"
-                            aria-label={searchMode === "facilities" ? "Search buildings" : "Search rooms"}
-                        />
-                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                            <div className="w-px h-5 bg-border"></div>
-                            <button
-                                onClick={() => setSearchMode("facilities")}
-                                className={`p-1 transition-colors ${searchMode === "facilities"
-                                    ? "text-foreground"
-                                    : "text-muted-foreground hover:text-foreground"
-                                    }`}
-                                aria-label="Search buildings"
-                                aria-pressed={searchMode === "facilities"}
-                                title="Search buildings"
-                            >
-                                <Building2 size={16} />
-                            </button>
-                            <button
-                                onClick={() => setSearchMode("rooms")}
-                                className={`p-1 transition-colors ${searchMode === "rooms"
-                                    ? "text-foreground"
-                                    : "text-muted-foreground hover:text-foreground"
-                                    }`}
-                                aria-label="Search rooms"
-                                aria-pressed={searchMode === "rooms"}
-                                title="Search rooms"
-                            >
-                                <DoorOpen size={16} />
-                            </button>
+            <div className="sidebar-header py-2 px-3 md:py-3 md:px-4 border-b flex select-none items-center gap-2">
+                <h1 className="text-base md:text-lg font-bold shrink-0 leading-none">
+                    <span style={{ color: "#FF5F05" }}>illini</span>
+                    <span style={{ color: "#13294B" }}>Spots</span>
+                </h1>
+                <TooltipProvider delayDuration={50}>
+                    <div className="flex-1 min-w-0 flex gap-2 items-center">
+                        <div className="relative flex-1 min-w-0">
+                            <Search
+                                className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                                aria-hidden="true"
+                            />
+                            <Input
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                placeholder={searchMode === "facilities" ? "Search buildings" : "Search rooms"}
+                                className={`pl-8 ${searchTerm ? "pr-8" : ""} h-9 md:h-9 rounded-full text-sm`}
+                                aria-label={searchMode === "facilities" ? "Search buildings" : "Search rooms"}
+                            />
+                            {searchTerm && (
+                                <button
+                                    onClick={() => setSearchTerm("")}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                    aria-label="Clear search"
+                                >
+                                    <X size={14} />
+                                </button>
+                            )}
                         </div>
+                        <RoomFilter
+                            minDuration={minDuration}
+                            setMinDuration={setMinDuration}
+                            freeUntil={freeUntil}
+                            setFreeUntil={setFreeUntil}
+                            startTime={startTime}
+                            setStartTime={setStartTime}
+                            hasActiveFilters={hasActiveFilters}
+                            onClearAll={clearFilters}
+                            matchingRoomsCount={matchingRoomsCount}
+                            searchMode={searchMode}
+                            setSearchMode={setSearchMode}
+                        />
+                        <DateTimeButton isFetching={isFetching} />
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-9 w-9 rounded-full border border-input shrink-0"
+                                    aria-label="Menu"
+                                    title="Menu"
+                                >
+                                    <MoreHorizontal size={18} />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-56 md:w-64" align="end">
+                                <div className="space-y-1">
+                                    {/* Favorites Option */}
+                                    <button
+                                        onClick={() => setIsFavoritesDialogOpen(true)}
+                                        className="w-full flex items-center justify-start gap-2 px-3 py-2 rounded-md text-sm hover:bg-secondary transition-colors text-foreground text-left"
+                                    >
+                                        <Star size={16} />
+                                        Manage Favorites
+                                    </button>
+
+                                    {/* Divider */}
+                                    <div className="h-px bg-border"></div>
+
+                                    {/* Map Toggle */}
+                                    <div className="flex items-center justify-between px-3 py-2">
+                                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                            <MapIcon size={16} />
+                                            Show Map
+                                        </label>
+                                        <Switch
+                                            checked={showMap}
+                                            onCheckedChange={setShowMap}
+                                            aria-label="Toggle map display"
+                                        />
+                                    </div>
+
+                                    {/* Divider */}
+                                    <div className="h-px bg-border"></div>
+
+                                    {/* Help Section */}
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                className="w-full justify-start gap-2 px-3"
+                                            >
+                                                <BadgeHelp size={16} />
+                                                Important Notes
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-64 md:w-80">
+                                            <div className="text-sm space-y-2">
+                                                <p className="font-medium">Important Notes:</p>
+                                                <ul className="list-disc pl-4 space-y-1">
+                                                    <li>
+                                                        Building/room access may be restricted to specific
+                                                        colleges or departments
+                                                    </li>
+                                                    <li>
+                                                        Displayed availability only reflects official class
+                                                        schedules and events
+                                                    </li>
+                                                    <li>
+                                                        Rooms may be occupied by unofficial meetings or study
+                                                        groups
+                                                    </li>
+                                                    <li>Different schedules may apply during exam periods</li>
+                                                </ul>
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
+
+                                    {/* GitHub Link */}
+                                    <a
+                                        href="https://github.com/plon/illinispots"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-start gap-2 px-3 py-2 rounded-md text-sm hover:bg-secondary transition-colors text-foreground"
+                                    >
+                                        <Github size={16} />
+                                        View on GitHub
+                                    </a>
+
+                                    {/* Divider */}
+                                    <div className="h-px bg-border"></div>
+
+                                    {/* Data Updates Section */}
+                                    <div className="px-3 py-2 text-xs text-muted-foreground space-y-1">
+                                        <p>
+                                            <span className="font-medium text-foreground">Data Updates:</span>
+                                        </p>
+                                        <p>• General campus events: Daily</p>
+                                        <p>• Class schedules: Spring 2026</p>
+                                    </div>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
                     </div>
-                    <RoomFilter
-                        minDuration={minDuration}
-                        setMinDuration={setMinDuration}
-                        freeUntil={freeUntil}
-                        setFreeUntil={setFreeUntil}
-                        startTime={startTime}
-                        setStartTime={setStartTime}
-                        activeFilterCount={activeFilterCount}
-                        hasActiveFilters={hasActiveFilters}
-                        onClearAll={clearFilters}
-                        matchingRoomsCount={matchingRoomsCount}
-                    />
-                </div>
+                </TooltipProvider>
             </div>
 
             <ScrollArea
                 className="flex-1 relative"
                 ref={scrollAreaRef}
-                style={{
-                    maskImage: 'linear-gradient(to bottom, transparent 0%, black 2%, black 98%, transparent 100%)',
-                    WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 2%, black 98%, transparent 100%)',
-                }}
             >
                 {" "}
                 <FavoritesSection
