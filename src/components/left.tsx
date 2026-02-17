@@ -218,7 +218,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 </h1>
                 <TooltipProvider delayDuration={50}>
                     <div className="flex-1 min-w-0 flex gap-2 items-center">
-                        <div className="relative flex-1 min-w-0">
+                        <div className="relative flex-1 min-w-[70px]">
                             <Search
                                 className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                                 aria-hidden="true"
@@ -227,7 +227,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder={searchMode === "facilities" ? "Search buildings" : "Search rooms"}
+                                placeholder="Search"
                                 className={`pl-8 ${searchTerm ? "pr-8" : ""} h-9 md:h-9 rounded-full text-sm`}
                                 aria-label={searchMode === "facilities" ? "Search buildings" : "Search rooms"}
                             />

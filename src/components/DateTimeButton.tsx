@@ -50,7 +50,7 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
         <Button
             variant="outline"
             className={cn(
-                `h-9 rounded-full md:rounded-lg border flex items-center gap-2 w-9 md:w-auto px-0 md:px-3 shrink-0 ${!isCurrentDateTime ? "bg-muted" : ""
+                `h-9 rounded-full lg:rounded-lg border flex items-center gap-2 w-9 lg:w-auto px-0 lg:px-3 shrink-0 ${!isCurrentDateTime ? "bg-muted" : ""
                 }`,
                 className,
             )}
@@ -58,8 +58,8 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
             title={`Selected: ${formattedDate} ${formattedTimeStr}`}
             disabled={isFetching}
         >
-            <CalendarClock size={16} className="md:w-4 md:h-4" />
-            <span className="hidden md:inline text-sm font-light">
+            <CalendarClock size={16} className="lg:w-4 lg:h-4" />
+            <span className="hidden lg:inline text-sm font-light">
                 {isCurrentDateTime ? "Now" : formattedDateTimeSubtext}
             </span>
         </Button>
