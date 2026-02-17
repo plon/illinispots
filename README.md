@@ -39,7 +39,7 @@ illiniSpots is a web application that helps UIUC students find available study s
 - Class data: [Course Explorer](https://courses.illinois.edu/). See the data flow in [`data-pipeline/README.MD`](data-pipeline/README.MD).
 - Daily events: [Tableau Daily Event Summary](https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents).
 - Building hours: [Facility Scheduling and Resources](https://operations.illinois.edu/facility-scheduling-and-resources/daily-event-summaries/).
-- Library reservations: [UIUC LibCal](https://uiuc.libcal.com/allspaces).
+- Library reservations: [UIUC LibCal](https://libcal.library.illinois.edu/allspaces).
 
 ## Tech Stack
 

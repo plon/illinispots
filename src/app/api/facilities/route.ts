@@ -47,7 +47,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_23939",
       title: "301",
-      url: "https://uiuc.libcal.com/space/23939",
+      url: "https://libcal.library.illinois.edu/space/23939",
       eid: 23939,
       lid: 3604,
       grouping: "Group Study Rooms",
@@ -56,7 +56,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_23940",
       title: "305",
-      url: "https://uiuc.libcal.com/space/23940",
+      url: "https://libcal.library.illinois.edu/space/23940",
       eid: 23940,
       lid: 3604,
       grouping: "Group Study Rooms",
@@ -65,7 +65,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_23941",
       title: "309",
-      url: "https://uiuc.libcal.com/space/23941",
+      url: "https://libcal.library.illinois.edu/space/23941",
       eid: 23941,
       lid: 3604,
       grouping: "Group Study Rooms",
@@ -74,7 +74,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_23942",
       title: "401",
-      url: "https://uiuc.libcal.com/space/23942",
+      url: "https://libcal.library.illinois.edu/space/23942",
       eid: 23942,
       lid: 3604,
       grouping: "Group Study Rooms",
@@ -83,7 +83,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_23943",
       title: "405",
-      url: "https://uiuc.libcal.com/space/23943",
+      url: "https://libcal.library.illinois.edu/space/23943",
       eid: 23943,
       lid: 3604,
       grouping: "Group Study Rooms",
@@ -92,7 +92,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_23944",
       title: "409",
-      url: "https://uiuc.libcal.com/space/23944",
+      url: "https://libcal.library.illinois.edu/space/23944",
       eid: 23944,
       lid: 3604,
       grouping: "Group Study Rooms",
@@ -103,7 +103,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_171104",
       title: "040E",
-      url: "https://uiuc.libcal.com/space/171104",
+      url: "https://libcal.library.illinois.edu/space/171104",
       eid: 171104,
       lid: 3606,
       grouping: "Group Room",
@@ -112,7 +112,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_25428",
       title: "405",
-      url: "https://uiuc.libcal.com/space/25428",
+      url: "https://libcal.library.illinois.edu/space/25428",
       eid: 25428,
       lid: 3606,
       grouping: "Group Room",
@@ -121,7 +121,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_25436",
       title: "407",
-      url: "https://uiuc.libcal.com/space/25436",
+      url: "https://libcal.library.illinois.edu/space/25436",
       eid: 25436,
       lid: 3606,
       grouping: "Group Room",
@@ -130,7 +130,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_25437",
       title: "408 collaboration",
-      url: "https://uiuc.libcal.com/space/25437",
+      url: "https://libcal.library.illinois.edu/space/25437",
       eid: 25437,
       lid: 3606,
       grouping: "Group Room",
@@ -139,7 +139,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_25438",
       title: "409",
-      url: "https://uiuc.libcal.com/space/25438",
+      url: "https://libcal.library.illinois.edu/space/25438",
       eid: 25438,
       lid: 3606,
       grouping: "Group Room",
@@ -148,7 +148,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_25439",
       title: "410 collaboration",
-      url: "https://uiuc.libcal.com/space/25439",
+      url: "https://libcal.library.illinois.edu/space/25439",
       eid: 25439,
       lid: 3606,
       grouping: "Group Room",
@@ -157,7 +157,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_25440",
       title: "411",
-      url: "https://uiuc.libcal.com/space/25440",
+      url: "https://libcal.library.illinois.edu/space/25440",
       eid: 25440,
       lid: 3606,
       grouping: "Group Room",
@@ -166,7 +166,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_25441",
       title: "412",
-      url: "https://uiuc.libcal.com/space/25441",
+      url: "https://libcal.library.illinois.edu/space/25441",
       eid: 25441,
       lid: 3606,
       grouping: "Group Room",
@@ -175,7 +175,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_25442",
       title: "413",
-      url: "https://uiuc.libcal.com/space/25442",
+      url: "https://libcal.library.illinois.edu/space/25442",
       eid: 25442,
       lid: 3606,
       grouping: "Group Room",
@@ -184,7 +184,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_25443",
       title: "414",
-      url: "https://uiuc.libcal.com/space/25443",
+      url: "https://libcal.library.illinois.edu/space/25443",
       eid: 25443,
       lid: 3606,
       grouping: "Group Room",
@@ -193,7 +193,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_25444",
       title: "415",
-      url: "https://uiuc.libcal.com/space/25444",
+      url: "https://libcal.library.illinois.edu/space/25444",
       eid: 25444,
       lid: 3606,
       grouping: "Group Room",
@@ -204,7 +204,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_25914",
       title: "Collaboration Room 1, Main Library 220",
-      url: "https://uiuc.libcal.com/space/25914",
+      url: "https://libcal.library.illinois.edu/space/25914",
       eid: 25914,
       lid: 3608,
       grouping: "Media Commons Main Library Room 220 Collaboration Rooms",
@@ -213,7 +213,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_23216",
       title: "Collaboration Room 2, Main Library 220",
-      url: "https://uiuc.libcal.com/space/23216",
+      url: "https://libcal.library.illinois.edu/space/23216",
       eid: 23216,
       lid: 3608,
       grouping: "Media Commons Main Library Room 220 Collaboration Rooms",
@@ -222,7 +222,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_142312",
       title: "Collaboration Room 3, Main Library 220",
-      url: "https://uiuc.libcal.com/space/142312",
+      url: "https://libcal.library.illinois.edu/space/142312",
       eid: 142312,
       lid: 3608,
       grouping: "Media Commons Main Library Room 220 Collaboration Rooms",
@@ -231,7 +231,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_170116",
       title: "Collaboration Room 4, Main Library 220",
-      url: "https://uiuc.libcal.com/space/170116",
+      url: "https://libcal.library.illinois.edu/space/170116",
       eid: 170116,
       lid: 3608,
       grouping: "Media Commons Main Library Room 220 Collaboration Rooms",
@@ -240,7 +240,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_19861",
       title: "Study Room 01",
-      url: "https://uiuc.libcal.com/reserve/theorangeroom/room1",
+      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room1",
       eid: 19861,
       lid: 3608,
       grouping: "The Orange Room Study Rooms",
@@ -249,7 +249,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_19864",
       title: "Study Room 02",
-      url: "https://uiuc.libcal.com/reserve/theorangeroom/room2",
+      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room2",
       eid: 19864,
       lid: 3608,
       grouping: "The Orange Room Study Rooms",
@@ -258,7 +258,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_19865",
       title: "Study Room 03",
-      url: "https://uiuc.libcal.com/reserve/theorangeroom/room3",
+      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room3",
       eid: 19865,
       lid: 3608,
       grouping: "The Orange Room Study Rooms",
@@ -267,7 +267,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_19866",
       title: "Study Room 04 - Zoom Room",
-      url: "https://uiuc.libcal.com/reserve/theorangeroom/room4",
+      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room4",
       eid: 19866,
       lid: 3608,
       grouping: "The Orange Room Study Rooms",
@@ -276,7 +276,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_19867",
       title: "Study Room 05 - Zoom Room",
-      url: "https://uiuc.libcal.com/reserve/theorangeroom/room5",
+      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room5",
       eid: 19867,
       lid: 3608,
       grouping: "The Orange Room Study Rooms",
@@ -285,7 +285,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_19868",
       title: "Study Room 06",
-      url: "https://uiuc.libcal.com/reserve/theorangeroom/room6",
+      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room6",
       eid: 19868,
       lid: 3608,
       grouping: "The Orange Room Study Rooms",
@@ -294,7 +294,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_19869",
       title: "Study Room 07 - Orange Box",
-      url: "https://uiuc.libcal.com/reserve/theorangeroom/room7",
+      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room7",
       eid: 19869,
       lid: 3608,
       grouping: "The Orange Room Study Rooms",
@@ -303,7 +303,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_19870",
       title: "Study Room 08",
-      url: "https://uiuc.libcal.com/reserve/theorangeroom/room8",
+      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room8",
       eid: 19870,
       lid: 3608,
       grouping: "The Orange Room Study Rooms",
@@ -312,7 +312,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_19871",
       title: "Study Room 09",
-      url: "https://uiuc.libcal.com/reserve/theorangeroom/room9",
+      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room9",
       eid: 19871,
       lid: 3608,
       grouping: "The Orange Room Study Rooms",
@@ -321,7 +321,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_19872",
       title: "Study Room 10",
-      url: "https://uiuc.libcal.com/reserve/theorangeroom/room10",
+      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room10",
       eid: 19872,
       lid: 3608,
       grouping: "The Orange Room Study Rooms",
@@ -330,7 +330,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_19873",
       title: "Study Room 11",
-      url: "https://uiuc.libcal.com/reserve/theorangeroom/room11",
+      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room11",
       eid: 19873,
       lid: 3608,
       grouping: "The Orange Room Study Rooms",
@@ -339,7 +339,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_109178",
       title: "Study Room 12",
-      url: "https://uiuc.libcal.com/reserve/theorangeroom/room12",
+      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room12",
       eid: 109178,
       lid: 3608,
       grouping: "The Orange Room Study Rooms",
@@ -348,7 +348,7 @@ const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
     {
       id: "eid_118410",
       title: "Accessible Study Space (room 109)",
-      url: "https://uiuc.libcal.com/space/118410",
+      url: "https://libcal.library.illinois.edu/space/118410",
       eid: 118410,
       lid: 3608,
       grouping: "Accessible Study Space, Main Library 109",
@@ -364,7 +364,7 @@ async function getReservation(
   lid: string,
   targetMoment: moment.Moment,
 ): Promise<ReservationResponse> {
-  const url = "https://uiuc.libcal.com/spaces/availability/grid";
+  const url = "https://libcal.library.illinois.edu/spaces/availability/grid";
   const timezone = "America/Chicago";
 
   const targetDateCST = targetMoment.clone().tz(timezone).startOf("day");
@@ -390,8 +390,8 @@ async function getReservation(
     accept: "application/json, text/javascript, */*; q=0.01",
     "accept-language": "en-US,en;q=0.9",
     "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-    origin: "https://uiuc.libcal.com",
-    referer: "https://uiuc.libcal.com/allspaces",
+    origin: "https://libcal.library.illinois.edu",
+    referer: "https://libcal.library.illinois.edu/allspaces",
     "user-agent":
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0",
     "x-requested-with": "XMLHttpRequest",
