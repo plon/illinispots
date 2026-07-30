@@ -326,6 +326,10 @@ def main():
 
         print("\nPreparing and validating data...")
         buildings, rooms, schedules = prepare_and_validate_data(json_data)
+        if not buildings or not rooms or not schedules:
+            raise DataValidationError(
+                "Generated course dataset is empty; refusing to clear database tables"
+            )
         verify_data_counts(json_data, buildings, rooms, schedules)
         print("Data preparation validated successfully")
 
