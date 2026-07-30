@@ -38,7 +38,8 @@ def get_events_df():
 
     csv_url = "https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents.csv"
 
-    response = requests.get(csv_url, impersonate='chrome124')
+    response = requests.get(csv_url, impersonate='chrome124', timeout=60)
+    response.raise_for_status()
     csv_data = response.text
     print("Fetched data from Tableau")
 
@@ -204,9 +205,9 @@ def main():
     print("Step 2: Load data to PostgreSQL")
     success = load_to_postgres(events)
     if not success:
-        print("Failed Step 2: No valid events to insert")
-    else:
-        print("Finished Step 2")
+        raise RuntimeError("Failed Step 2: No valid events were inserted")
+
+    print("Finished Step 2")
     
     print("Step 3: Refresh Room Availability Cache")
     try:

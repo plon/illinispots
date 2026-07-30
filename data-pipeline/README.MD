@@ -58,7 +58,8 @@ This directory contains scripts for collecting and processing UIUC course and bu
 7. **tableau_dailyevents_scraper.py**
    - Scrapes daily event data from [Tableau](https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents) and loads it into PostgreSQL
    - Updates the `daily_events` table with current day's events
-   - **Note:** This script is intended to run as a cron job daily to keep the `daily_events` table up-to-date.
+   - Runs daily through [the GitHub Actions workflow](../.github/workflows/tableau-daily-events.yml), and can also be started manually from the Actions tab
+   - The repository must define `SUPABASE_URL` and `SUPABASE_KEY` as GitHub Actions repository secrets; the key must be allowed to read `rooms`, replace `daily_events`, and invoke `refresh_room_availability_cache`
 
 ## Data Flow Diagram
 
