@@ -2,8 +2,8 @@ name: Course Explorer weekly update
 
 on:
   schedule:
-    # Sunday at 3:17 AM CST / 4:17 AM CDT. GitHub cron uses UTC.
-    - cron: "17 9 * * 0"
+    # Saturday at 3:17 AM CST / 4:17 AM CDT. GitHub cron uses UTC.
+    - cron: "17 9 * * 6"
   workflow_dispatch:
     inputs:
       year:
