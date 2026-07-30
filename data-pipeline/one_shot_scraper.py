@@ -3,12 +3,13 @@ from pathlib import Path
 import re
 from curl_cffi import requests
 from dataclasses import dataclass, field, asdict
-from datetime import datetime
+from datetime import date, datetime
 import json
 import random
 import signal
 import time
 from typing import List, Optional
+from zoneinfo import ZoneInfo
 
 VALID_TERMS = {'spring', 'summer', 'fall', 'winter'}
 
@@ -69,18 +70,54 @@ def scrape_subjects(html_content) -> List[Subject]:
     return subjects
 
 
-def resolve_default_schedule(html_content: str) -> tuple[int, str]:
-    """Extract Course Explorer's default schedule year and term."""
-    match = re.search(
-        r"<caption[^>]*>\s*(spring|summer|fall|winter)\s+(\d{4})\s+Subjects\b",
-        html_content,
-        re.IGNORECASE,
-    )
-    if not match:
-        raise ValueError("Could not determine Course Explorer's default term")
+def resolve_active_schedule(
+    calendar_path: Optional[Path] = None,
+    current_date: Optional[date] = None,
+) -> tuple[int, str]:
+    """Resolve the active UIUC term from the local academic calendar."""
+    if calendar_path is None:
+        calendar_path = Path(__file__).parent / "data" / "academic_calendar.json"
+    if current_date is None:
+        current_date = datetime.now(ZoneInfo("America/Chicago")).date()
 
-    term, year = match.groups()
-    return int(year), term.lower()
+    with open(calendar_path, "r") as calendar_file:
+        calendar_entries = json.load(calendar_file)
+
+    term_ranges = {}
+    for entry in calendar_entries:
+        term = entry["term"].lower()
+        if term not in VALID_TERMS:
+            continue
+
+        key = (entry["academic_year"], term)
+        start_date = date.fromisoformat(entry["start_date"])
+        end_date = date.fromisoformat(entry["end_date"])
+
+        if key not in term_ranges:
+            term_ranges[key] = [start_date, end_date]
+        else:
+            term_ranges[key][0] = min(term_ranges[key][0], start_date)
+            term_ranges[key][1] = max(term_ranges[key][1], end_date)
+
+    active_terms = [
+        (start_date, end_date, term)
+        for (_, term), (start_date, end_date) in term_ranges.items()
+        if start_date <= current_date <= end_date
+    ]
+    if active_terms:
+        start_date, _, term = max(active_terms, key=lambda item: item[0])
+        return start_date.year, term
+
+    upcoming_terms = [
+        (start_date, term)
+        for (_, term), (start_date, _) in term_ranges.items()
+        if start_date > current_date
+    ]
+    if upcoming_terms:
+        start_date, term = min(upcoming_terms, key=lambda item: item[0])
+        return start_date.year, term
+
+    raise ValueError(f"No active or upcoming term found for {current_date}")
 
 def scrape_courses(html_content) -> List[Course]:
     soup = BeautifulSoup(html_content, 'html.parser')
@@ -500,17 +537,12 @@ def scrape_all_data(year: Optional[int] = None,
         # Exhausted attempts
         raise last_exc if last_exc else RuntimeError("Unknown error during request")
 
-    default_schedule_response = fetch(
-        "https://courses.illinois.edu/schedule/DEFAULT/DEFAULT"
-    )
-    default_year, default_term = resolve_default_schedule(
-        default_schedule_response.text
-    )
+    active_year, active_term = resolve_active_schedule()
 
     if year is None:
-        year = default_year
+        year = active_year
     if term is None:
-        term = default_term
+        term = active_term
 
     term = term.lower()
     if term not in VALID_TERMS:
@@ -681,13 +713,13 @@ if __name__ == "__main__":
         '--year',
         type=int,
         default=None,
-        help="Schedule year (defaults to Course Explorer's current default)",
+        help="Schedule year (defaults to the active academic-calendar term)",
     )
     parser.add_argument(
         '--term',
         type=str,
         default=None,
-        help="Schedule term (defaults to Course Explorer's current default)",
+        help="Schedule term (defaults to the active academic-calendar term)",
     )
     parser.add_argument('-v', '--verbose', action='store_true', help='Show verbose output')
     parser.add_argument('--proxy', type=str, default=None,

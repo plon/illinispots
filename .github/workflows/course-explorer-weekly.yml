@@ -7,11 +7,11 @@ on:
   workflow_dispatch:
     inputs:
       year:
-        description: "Course Explorer year (leave blank to use its default term)"
+        description: "Course Explorer year (leave blank to use the active term)"
         required: false
         type: string
       term:
-        description: "Course Explorer term"
+        description: "Course Explorer term (auto uses the active term)"
         required: false
         default: auto
         type: choice
