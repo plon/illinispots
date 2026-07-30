@@ -350,7 +350,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                             <span className="font-medium text-foreground">Data Updates:</span>
                                         </p>
                                         <p>• General campus events: Daily</p>
-                                        <p>• Class schedules: Spring 2026</p>
+                                        <p>• Class schedules: Weekly</p>
                                     </div>
                                 </div>
                             </PopoverContent>
