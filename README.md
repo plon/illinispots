@@ -67,8 +67,11 @@ npm install
 2) Supabase database
 
 - Create a database (e.g., via Supabase).
-- Apply schema: run [`database/schema/tables.sql`](database/schema/tables.sql) in the SQL editor.
-- Add functions: run [`database/functions/get_spots.sql`](database/functions/get_spots.sql) and [`database/functions/get_room_schedule.sql`](database/functions/get_room_schedule.sql).
+- Link the project with `npx supabase link --project-ref <project-ref>`.
+- Apply the versioned schema and security policies with `npx supabase db push`.
+- The files under [`database/`](database) remain readable references for the
+  current tables and functions; [`supabase/migrations`](supabase/migrations) is
+  the deployment source of truth.
 
 3) Environment
 
