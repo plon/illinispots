@@ -9,5 +9,3 @@ CREATE TABLE IF NOT EXISTS room_availability_cache (
 );
 
 CREATE INDEX IF NOT EXISTS idx_cache_check_date ON room_availability_cache(check_date);
--- GIST index for fast overlap queries
-CREATE INDEX IF NOT EXISTS idx_cache_busy_times ON room_availability_cache USING GIST (busy_times);

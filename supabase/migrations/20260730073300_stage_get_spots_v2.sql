@@ -1,4 +1,7 @@
-CREATE OR REPLACE FUNCTION get_spots(
+-- Stage the optimized implementation under a temporary name so its JSON
+-- contract and timing can be compared with the deployed function before
+-- replacing the public endpoint.
+CREATE OR REPLACE FUNCTION public.get_spots_v2(
     check_time TIME,
     check_date DATE,
     minimum_useful_minutes INTEGER DEFAULT 30
