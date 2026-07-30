@@ -106,4 +106,5 @@ BEGIN
 
     RETURN to_jsonb(schedule_blocks);
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SET search_path = pg_catalog, public;

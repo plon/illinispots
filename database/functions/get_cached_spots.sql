@@ -145,4 +145,5 @@ BEGIN
 
     RETURN result;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SET search_path = pg_catalog, public;

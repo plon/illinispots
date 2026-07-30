@@ -25,6 +25,7 @@ CREATE TABLE rooms (
 );
 
 CREATE TABLE class_schedule (
+    id BIGSERIAL PRIMARY KEY,
     building_name TEXT,
     room_number TEXT,
     course_code TEXT NOT NULL,
@@ -55,7 +56,7 @@ CREATE INDEX idx_class_schedule_next
     ON class_schedule(day_of_week, start_time);
 CREATE INDEX idx_class_schedule_room_day
     ON class_schedule(building_name, room_number, day_of_week);
-CREATE INDEX idx_class_schedule_daterange
+CREATE INDEX idx_class_schedule_date_range
     ON class_schedule USING gist (date_range);
 
 CREATE TABLE daily_events (
@@ -74,8 +75,6 @@ CREATE TABLE daily_events (
         CHECK (end_time > start_time)
 );
 
-CREATE INDEX idx_daily_events_date_time
-    ON daily_events(event_date, start_time, end_time);
 CREATE INDEX idx_daily_events_room
     ON daily_events(building_name, room_number);
 
@@ -92,6 +91,3 @@ CREATE TABLE academic_terms (
     CONSTRAINT valid_term_dates
         CHECK (end_date > start_date)
 );
-
-CREATE INDEX idx_academic_terms_dates
-    ON academic_terms(start_date, end_date);

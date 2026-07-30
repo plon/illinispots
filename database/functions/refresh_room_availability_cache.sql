@@ -139,4 +139,5 @@ BEGIN
     FROM calculated_data cd;
 
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SET search_path = pg_catalog, public;
