@@ -15,6 +15,7 @@ const badgeStyles: Record<RoomStatus, string> = {
   [RoomStatus.OPENING_SOON]: "bg-blue-50 text-blue-700 border-blue-300",
   [RoomStatus.RESERVED]: "bg-red-50 text-red-700 border-red-300",
   [RoomStatus.OCCUPIED]: "bg-red-50 text-red-700 border-red-300",
+  [RoomStatus.UNAVAILABLE]: "bg-gray-50 text-gray-700 border-gray-300",
 };
 
 const getStatusText = (
@@ -28,6 +29,7 @@ const getStatusText = (
     [RoomStatus.RESERVED]:
       facilityType === FacilityType.LIBRARY ? "Reserved" : "Occupied",
     [RoomStatus.OCCUPIED]: "Occupied",
+    [RoomStatus.UNAVAILABLE]: "Unavailable",
   };
 
   return statusTexts[status];

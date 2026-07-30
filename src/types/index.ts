@@ -14,6 +14,7 @@ export enum RoomStatus {
   RESERVED = "reserved",
   OCCUPIED = "occupied",
   OPENING_SOON = "opening_soon",
+  UNAVAILABLE = "unavailable",
 }
 
 export interface FacilityStatus {

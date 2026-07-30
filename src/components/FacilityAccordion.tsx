@@ -33,7 +33,9 @@ interface FacilityAccordionProps {
 }
 
 const getRoomAvailabilityMessage = (room: LibraryRoom): React.ReactNode => {
-  if (room.status === RoomStatus.AVAILABLE) {
+  if (room.status === RoomStatus.UNAVAILABLE) {
+    return <span className="text-xs text-muted-foreground">Unavailable</span>;
+  } else if (room.status === RoomStatus.AVAILABLE) {
     return (
       room.availableFor && (
         <span className="text-xs text-muted-foreground">
@@ -57,7 +59,7 @@ const getRoomAvailabilityMessage = (room: LibraryRoom): React.ReactNode => {
       </span>
     );
   } else {
-    // Handle case where it's fully booked with no future availability info
+    // Reserved with no future availability is fully booked.
     return <span className="text-xs text-muted-foreground">Fully booked</span>;
   }
 };

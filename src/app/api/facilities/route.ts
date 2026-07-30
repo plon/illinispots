@@ -646,7 +646,13 @@ function linkRoomsReservations(
       }
     }
 
-    if (!isCurrentlyAvailable) {
+    if (roomSpecificSlots.length === 0) {
+      // LibCal returns timeblocks even when every block is reserved. No blocks
+      // means the room is not open/bookable for the selected date.
+      roomStatus = RoomStatus.UNAVAILABLE;
+      availableDuration = 0;
+      availableAt = undefined;
+    } else if (!isCurrentlyAvailable) {
       // If not currently available, check if we found a future available slot
       if (nextAvailableSlotIndex !== -1 && nextAvailableStartTime) {
         availableAt = nextAvailableStartTime.format("HH:mm:ss");
