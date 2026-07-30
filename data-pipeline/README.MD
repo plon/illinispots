@@ -54,6 +54,8 @@ This directory contains scripts for collecting and processing UIUC course and bu
    - Loads the final data into PostgreSQL database
    - Input: `buildings_enriched.json`
    - Creates and populates database tables
+   - Runs weekly through [the Course Explorer GitHub Actions workflow](../.github/workflows/course-explorer-weekly.yml), which automatically follows Course Explorer's default term and supports manual year/term overrides
+   - The workflow paces Course Explorer requests and retries transient failures with exponential backoff
 
 7. **tableau_dailyevents_scraper.py**
    - Scrapes daily event data from [Tableau](https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents) and loads it into PostgreSQL

@@ -333,7 +333,7 @@ def main():
         # Clear tables and verify
         # 'buildings' and 'rooms' are not cleared to preserve them across updates.
         # Rooms are upserted. Buildings will also be upserted.
-        tables_to_clear = ["daily_events", "class_schedule", "academic_terms"]
+        tables_to_clear = ["class_schedule", "academic_terms"]
         for table in tables_to_clear:
             clear_table(table)
         print("Relevant tables cleared successfully (buildings and rooms preserved)")
@@ -373,11 +373,16 @@ def main():
             "\nAll data has been successfully processed and relevant tables verified!"
         )
 
+        print("\nRefreshing room availability cache...")
+        supabase.rpc("refresh_room_availability_cache", {}).execute()
+        print("Room availability cache refreshed successfully")
+
     except DataValidationError as e:
         print(f"\nData Validation Error: {str(e)}")
+        raise
     except Exception as e:
         print(f"\nUnexpected Error: {str(e)}")
-        raise e
+        raise
 
 
 if __name__ == "__main__":

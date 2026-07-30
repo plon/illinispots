@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: tableau-daily-events
+  group: scheduling-data-writes
   cancel-in-progress: false
 
 jobs:

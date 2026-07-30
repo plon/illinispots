@@ -5,7 +5,9 @@ from curl_cffi import requests
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 import json
+import random
 import signal
+import time
 from typing import List, Optional
 
 VALID_TERMS = {'spring', 'summer', 'fall', 'winter'}
@@ -65,6 +67,20 @@ def scrape_subjects(html_content) -> List[Subject]:
                 subjects.append(Subject(code=code, name=name))
 
     return subjects
+
+
+def resolve_default_schedule(html_content: str) -> tuple[int, str]:
+    """Extract Course Explorer's default schedule year and term."""
+    match = re.search(
+        r"<caption[^>]*>\s*(spring|summer|fall|winter)\s+(\d{4})\s+Subjects\b",
+        html_content,
+        re.IGNORECASE,
+    )
+    if not match:
+        raise ValueError("Could not determine Course Explorer's default term")
+
+    term, year = match.groups()
+    return int(year), term.lower()
 
 def scrape_courses(html_content) -> List[Course]:
     soup = BeautifulSoup(html_content, 'html.parser')
@@ -409,6 +425,7 @@ def scrape_all_data(year: Optional[int] = None,
                     rotate_every: int = 1,
                     proxy_retries: int = 3,
                     request_timeout: int = 30,
+                    request_delay: float = 0,
                     proxy_schemes: Optional[List[str]] = None,
                     insecure: bool = False,
                     proxy_try_all: bool = False,
@@ -418,15 +435,6 @@ def scrape_all_data(year: Optional[int] = None,
                     resume: bool = True,
                     fresh: bool = False) -> List[Subject]:
     start_time = datetime.now()
-
-    if year is None:
-        year = 2024
-    if term is None:
-        term = "fall"
-
-    term_lower = term.lower()
-    if term_lower not in VALID_TERMS:
-        raise ValueError(f"Invalid term: {term}. Must be one of: {VALID_TERMS}")
 
     # Build proxies: if a list is provided, use rotator; otherwise static proxies
     proxies = _build_proxies(proxy=proxy, proxy_http=proxy_http, proxy_https=proxy_https)
@@ -444,10 +452,14 @@ def scrape_all_data(year: Optional[int] = None,
                 raise RuntimeError("No proxies left in rotation")
             attempts = max(1, rotator.size()) if proxy_try_all else max(1, int(proxy_retries))
         else:
-            attempts = 1
+            attempts = max(1, int(proxy_retries))
         for attempt in range(1, attempts + 1):
             # Peek current proxy; only advance on success or explicit failure handling
             use_proxies = rotator.peek() if rotator else proxies
+
+            if request_delay > 0:
+                time.sleep(request_delay + random.uniform(0, request_delay * 0.25))
+
             try:
                 r = requests.get(
                     url,
@@ -465,14 +477,46 @@ def scrape_all_data(year: Optional[int] = None,
                 raise
             except Exception as e:
                 last_exc = e
-                if verbose:
-                    print(f"  Request failed (attempt {attempt}/{attempts}): {e}")
+                response = getattr(e, "response", None)
+                status_code = getattr(response, "status_code", None)
+                if verbose or status_code in {403, 429}:
+                    print(
+                        f"  Request failed (attempt {attempt}/{attempts}, "
+                        f"status {status_code or 'unknown'}): {e}"
+                    )
+
                 # try next proxy on next iteration
                 if rotator:
                     rotator.mark_failure_current()
+
+                if attempt < attempts:
+                    retry_after = getattr(response, "headers", {}).get("Retry-After")
+                    try:
+                        backoff = float(retry_after)
+                    except (TypeError, ValueError):
+                        backoff = min(60, 2 ** attempt)
+                    time.sleep(backoff + random.uniform(0, 1))
                 continue
         # Exhausted attempts
         raise last_exc if last_exc else RuntimeError("Unknown error during request")
+
+    default_schedule_response = fetch(
+        "https://courses.illinois.edu/schedule/DEFAULT/DEFAULT"
+    )
+    default_year, default_term = resolve_default_schedule(
+        default_schedule_response.text
+    )
+
+    if year is None:
+        year = default_year
+    if term is None:
+        term = default_term
+
+    term = term.lower()
+    if term not in VALID_TERMS:
+        raise ValueError(f"Invalid term: {term}. Must be one of: {VALID_TERMS}")
+
+    print(f"Using Course Explorer schedule: {term} {year}")
 
     # Handle resumability
     if fresh:
@@ -492,8 +536,7 @@ def scrape_all_data(year: Optional[int] = None,
     completed_subjects = progress["completed_subjects"]
 
     print(f"Fetching subjects for {term} {year}...")
-    r = fetch("https://courses.illinois.edu/schedule/DEFAULT/DEFAULT")
-    r.raise_for_status()
+    r = fetch(f"https://courses.illinois.edu/schedule/{year}/{term}")
     subjects = scrape_subjects(r.text)
     total_subjects = len(subjects)
     
@@ -634,8 +677,18 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Scrape UIUC course data')
-    parser.add_argument('--year', type=int, default=2025)
-    parser.add_argument('--term', type=str, default="spring")
+    parser.add_argument(
+        '--year',
+        type=int,
+        default=None,
+        help="Schedule year (defaults to Course Explorer's current default)",
+    )
+    parser.add_argument(
+        '--term',
+        type=str,
+        default=None,
+        help="Schedule term (defaults to Course Explorer's current default)",
+    )
     parser.add_argument('-v', '--verbose', action='store_true', help='Show verbose output')
     parser.add_argument('--proxy', type=str, default=None,
                         help='Proxy URL for both HTTP and HTTPS (e.g., http://user:pass@host:port or socks5h://host:port)')
@@ -648,9 +701,15 @@ if __name__ == "__main__":
     parser.add_argument('--rotate-every', type=int, default=1,
                         help='Rotate to the next proxy after this many requests (default: 1)')
     parser.add_argument('--proxy-retries', type=int, default=3,
-                        help='When using --proxy-file, how many attempts per request to try different proxies (default: 3)')
+                        help='Maximum attempts per request (default: 3)')
     parser.add_argument('--timeout', type=int, default=30,
                         help='Per-request timeout in seconds (default: 30)')
+    parser.add_argument(
+        '--request-delay',
+        type=float,
+        default=0,
+        help='Minimum delay between requests in seconds (default: 0)',
+    )
     parser.add_argument('--proxy-schemes', type=str, default='http,socks5,socks5h,socks4',
                         help='Comma-separated list of allowed proxy schemes to load from --proxy-file (default: http,socks5,socks5h,socks4)')
     parser.add_argument('--insecure', action='store_true',
@@ -684,6 +743,7 @@ if __name__ == "__main__":
         rotate_every=args.rotate_every,
         proxy_retries=args.proxy_retries,
         request_timeout=args.timeout,
+        request_delay=args.request_delay,
         proxy_schemes=[s.strip() for s in args.proxy_schemes.split(',') if s.strip()],
         insecure=args.insecure,
         proxy_try_all=args.proxy_try_all,

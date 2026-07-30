@@ -1,0 +1,96 @@
+name: Course Explorer weekly update
+
+on:
+  schedule:
+    # Sunday at 3:17 AM CST / 4:17 AM CDT. GitHub cron uses UTC.
+    - cron: "17 9 * * 0"
+  workflow_dispatch:
+    inputs:
+      year:
+        description: "Course Explorer year (leave blank to use its default term)"
+        required: false
+        type: string
+      term:
+        description: "Course Explorer term"
+        required: false
+        default: auto
+        type: choice
+        options:
+          - auto
+          - spring
+          - summer
+          - fall
+          - winter
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scheduling-data-writes
+  cancel-in-progress: false
+
+jobs:
+  update-course-data:
+    name: Update course data
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    defaults:
+      run:
+        working-directory: data-pipeline
+
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: data-pipeline/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install --requirement requirements.txt
+
+      - name: Scrape Course Explorer
+        env:
+          COURSE_YEAR: ${{ inputs.year }}
+          COURSE_TERM: ${{ inputs.term }}
+        run: |
+          args=(
+            --fresh
+            --no-skip-errors
+            --proxy-retries 5
+            --request-delay 0.5
+            --timeout 45
+          )
+
+          if [[ -n "$COURSE_YEAR" ]]; then
+            args+=(--year "$COURSE_YEAR")
+          fi
+
+          if [[ -n "$COURSE_TERM" && "$COURSE_TERM" != "auto" ]]; then
+            args+=(--term "$COURSE_TERM")
+          fi
+
+          python one_shot_scraper.py "${args[@]}"
+
+      - name: Transform subjects into buildings
+        run: python subject_to_buildings.py
+
+      - name: Filter buildings
+        run: python filter_buildings.py
+
+      - name: Add building hours
+        run: python add_building_hours.py
+
+      - name: Add building coordinates
+        run: python add_building_coordinates.py
+
+      - name: Load course data into Supabase
+        run: python load_to_postgres.py
