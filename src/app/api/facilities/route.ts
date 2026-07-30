@@ -1040,8 +1040,22 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const dateParam = url.searchParams.get("date");
     const timeParam = url.searchParams.get("time"); // Expect HH:mm:ss
-    const includeAcademic = url.searchParams.get("academic") !== "false";
-    const includeLibraries = url.searchParams.get("libraries") !== "false";
+    const facilityType = url.searchParams.get("type");
+
+    if (
+      facilityType &&
+      !["academic", "library", "all"].includes(facilityType)
+    ) {
+      return NextResponse.json(
+        { error: 'Invalid type. Expected "academic", "library", or "all".' },
+        { status: 400 },
+      );
+    }
+
+    const includeAcademic =
+      !facilityType || facilityType === "all" || facilityType === "academic";
+    const includeLibraries =
+      !facilityType || facilityType === "all" || facilityType === "library";
 
     let targetMoment: moment.Moment;
     const timezone = "America/Chicago";

@@ -49,6 +49,7 @@ interface LeftSidebarProps {
     expandedItems: string[];
     setExpandedItems: Dispatch<SetStateAction<string[]>>;
     isFetching: boolean;
+    isLibraryFetching: boolean;
 }
 
 const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -58,6 +59,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     expandedItems,
     setExpandedItems,
     isFetching,
+    isLibraryFetching,
 }) => {
     const accordionRefs = useRef<AccordionRefs>({});
     const scrollAreaRef = useRef<HTMLDivElement | null>(null);
@@ -390,6 +392,39 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                 />
                             ))}
                         </Accordion>
+                    </div>
+                ) : isLibraryFetching && !searchTerm && !hasActiveFilters ? (
+                    <div
+                        className="mt-2"
+                        role="status"
+                        aria-busy="true"
+                        aria-label="Loading library availability"
+                    >
+                        <h2 className="text-sm font-normal text-muted-foreground pl-6">
+                            Library
+                        </h2>
+                        <span className="sr-only">Loading library availability…</span>
+                        <div aria-hidden="true">
+                            {[0, 1, 2].map((index) => (
+                                <div key={index} className="border-b">
+                                    <div className="h-[38px] px-4 flex items-center justify-between">
+                                        <div
+                                            className={`h-4 rounded bg-muted animate-pulse ${
+                                                index === 0
+                                                    ? "w-44"
+                                                    : index === 1
+                                                      ? "w-32"
+                                                      : "w-28"
+                                            }`}
+                                        />
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-[22px] w-12 rounded-full bg-muted animate-pulse" />
+                                            <div className="h-4 w-4 rounded bg-muted animate-pulse" />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 ) : searchTerm && academicFacilities.length === 0 ? null : null}
                 {/* Academic Buildings Section */}

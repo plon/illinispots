@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { getUpdatedAccordionItems } from "@/utils/accordion";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import moment from "moment-timezone";
@@ -12,10 +12,11 @@ import { useDateTimeContext } from "@/contexts/DateTimeContext";
 
 const fetchFacilityData = async (
   selectedDateTime: Date,
+  type: "academic" | "library",
 ): Promise<FacilityStatus> => {
   const dateParam = moment(selectedDateTime).format("YYYY-MM-DD");
   const timeParam = moment(selectedDateTime).format("HH:mm:ss");
-  const apiUrl = `/api/facilities?date=${dateParam}&time=${timeParam}`;
+  const apiUrl = `/api/facilities?date=${dateParam}&time=${timeParam}&type=${type}`;
 
   const res = await fetch(apiUrl);
   if (!res.ok) {
@@ -41,14 +42,14 @@ const IlliniSpotsPage: React.FC = () => {
   const [mountLoadingScreen, setMountLoadingScreen] = useState(true);
 
   const {
-    data: facilityData,
-    isLoading,
-    isFetching,
-    error: queryError,
-    isSuccess,
+    data: academicData,
+    isLoading: isAcademicLoading,
+    isFetching: isAcademicFetching,
+    error: academicQueryError,
+    isSuccess: isAcademicSuccess,
   } = useQuery<FacilityStatus, Error>({
-    queryKey: ["facilities", selectedDateTime.toISOString()],
-    queryFn: () => fetchFacilityData(selectedDateTime),
+    queryKey: ["facilities", "academic", selectedDateTime.toISOString()],
+    queryFn: () => fetchFacilityData(selectedDateTime, "academic"),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -57,7 +58,40 @@ const IlliniSpotsPage: React.FC = () => {
     placeholderData: keepPreviousData,
   });
 
-  const error = queryError ? queryError.message : null;
+  const {
+    data: libraryData,
+    isFetching: isLibraryFetching,
+  } = useQuery<FacilityStatus, Error>({
+    queryKey: ["facilities", "library", selectedDateTime.toISOString()],
+    queryFn: () => fetchFacilityData(selectedDateTime, "library"),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+    placeholderData: keepPreviousData,
+  });
+
+  const facilityData = useMemo<FacilityStatus | undefined>(() => {
+    if (!academicData) {
+      return undefined;
+    }
+
+    const matchingLibraryFacilities =
+      libraryData?.timestamp === academicData.timestamp
+        ? libraryData.facilities
+        : {};
+
+    return {
+      timestamp: academicData.timestamp,
+      facilities: {
+        ...academicData.facilities,
+        ...matchingLibraryFacilities,
+      },
+    };
+  }, [academicData, libraryData]);
+
+  const error = academicQueryError ? academicQueryError.message : null;
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -96,10 +130,11 @@ const IlliniSpotsPage: React.FC = () => {
     setMapLoaded(true);
   }, []);
 
-  const isDataReady = !isLoading && isSuccess && !!facilityData && !error;
+  const isDataReady =
+    !isAcademicLoading && isAcademicSuccess && !!facilityData && !error;
   const isMapReady = !showMap || mapLoaded;
   const isUIReady = isDataReady && isMapReady;
-  const loadingScreenError = error && !isLoading ? error : null;
+  const loadingScreenError = error && !isAcademicLoading ? error : null;
 
   // Effect to trigger the loading screen fade-out when the UI is ready
   useEffect(() => {
@@ -113,7 +148,8 @@ const IlliniSpotsPage: React.FC = () => {
     setMountLoadingScreen(false);
   }, []);
 
-  const showFetchingOverlay = isFetching && !isLoading; 
+  const showFetchingOverlay =
+    isAcademicFetching && !isAcademicLoading;
 
   const mainContentClasses = `h-screen flex ${
     showMap ? "md:flex-row" : ""
@@ -154,6 +190,7 @@ const IlliniSpotsPage: React.FC = () => {
             showMap={showMap}
             setShowMap={setShowMap}
             isFetching={showFetchingOverlay}
+            isLibraryFetching={isLibraryFetching}
           />
         </div>
       </div>
