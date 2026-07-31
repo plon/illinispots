@@ -11,7 +11,7 @@ illiniSpots is a web application that helps UIUC students find available study s
   - **Academic Rooms:** See current/next class or event, availability duration, and view the full daily schedule (classes + events) for the selected date.
   - **Library Rooms:** View reservation timelines, direct reservation links, and room photos (where available).
 - PWA: install on your phone as an app for quick access.  
-    [Need help? See this guide on installing PWAs.](https://www.installpwa.com/from/illinispots.vercel.app)
+    [Need help? See this guide on installing PWAs.](https://www.installpwa.com/from/illinispots.com)
 - Search and filters: find buildings and libraries fast.
 
 ## How It Works

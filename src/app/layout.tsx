@@ -66,7 +66,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="illiniSpots" />
-        <link rel="canonical" href="https://illinispots.vercel.app/" />
+        <link rel="canonical" href="https://illinispots.com/" />
         <link rel="manifest" href="/manifest.json" />
         <link
           rel="stylesheet"
