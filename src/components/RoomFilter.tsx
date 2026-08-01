@@ -14,6 +14,9 @@ import {
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { ListFilter, Hourglass, Clock, Building2, DoorOpen, Search } from "lucide-react";
 
+const PRESET_DURATIONS = [30, 60, 120, 240] as const;
+const MIN_CUSTOM_DURATION = 1;
+
 interface RoomFilterPopoverProps {
     minDuration: number | undefined;
     setMinDuration: (value: number | undefined) => void;
@@ -43,6 +46,63 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const isDesktop = useMediaQuery("(min-width: 768px)");
+    const [isCustomDurationOpen, setIsCustomDurationOpen] = useState(false);
+    const [customDuration, setCustomDuration] = useState(() =>
+        minDuration !== undefined && !PRESET_DURATIONS.includes(minDuration as (typeof PRESET_DURATIONS)[number])
+            ? String(minDuration)
+            : "",
+    );
+
+    const customDurationNumber = customDuration === "" ? undefined : Number(customDuration);
+    const isCustomDurationValid =
+        customDurationNumber !== undefined &&
+        Number.isInteger(customDurationNumber) &&
+        customDurationNumber >= MIN_CUSTOM_DURATION;
+    const hasCustomDurationError = customDuration !== "" && !isCustomDurationValid;
+
+    const handleCustomDurationChange = (value: string) => {
+        setCustomDuration(value);
+
+        if (value === "") {
+            setMinDuration(undefined);
+            return;
+        }
+
+        const parsedValue = Number(value);
+        if (
+            Number.isInteger(parsedValue) &&
+            parsedValue >= MIN_CUSTOM_DURATION
+        ) {
+            setMinDuration(parsedValue);
+        } else {
+            setMinDuration(undefined);
+        }
+    };
+
+    const openCustomDuration = () => {
+        if (!customDuration && minDuration !== undefined) {
+            setCustomDuration(String(minDuration));
+        }
+        setIsCustomDurationOpen(true);
+    };
+
+    const selectPresetDuration = (duration: number | undefined) => {
+        setIsCustomDurationOpen(false);
+        setCustomDuration("");
+        setMinDuration(duration);
+    };
+
+    const clearMinimumDuration = () => {
+        setIsCustomDurationOpen(false);
+        setCustomDuration("");
+        setMinDuration(undefined);
+    };
+
+    const clearAllFilters = () => {
+        setIsCustomDurationOpen(false);
+        setCustomDuration("");
+        onClearAll();
+    };
 
     const TriggerButton = (
         <Button
@@ -71,7 +131,7 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                             variant="ghost"
                             size="sm"
                             className="h-5 px-1 text-xs text-muted-foreground hover:text-destructive hover:bg-transparent underline"
-                            onClick={onClearAll}
+                            onClick={clearAllFilters}
                         >
                             Clear all
                         </Button>
@@ -155,29 +215,27 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">
                             <Clock size={14} className="text-muted-foreground" />
-                            Minimum Duration
+                            Available for at least
                         </div>
                         {minDuration && (
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 className="h-5 px-1 text-xs text-muted-foreground hover:text-foreground hover:bg-transparent underline"
-                                onClick={() => setMinDuration(undefined)}
+                                onClick={clearMinimumDuration}
                             >
                                 Clear
                             </Button>
                         )}
                     </div>
-                    <div className="grid grid-cols-4 gap-2">
-                        {[30, 60, 120, 240].map((mins) => (
+                    <div className="grid grid-cols-5 gap-2">
+                        {PRESET_DURATIONS.map((mins) => (
                             <Button
                                 key={mins}
-                                variant={minDuration === mins ? "default" : "outline"}
+                                variant={minDuration === mins && !isCustomDurationOpen ? "default" : "outline"}
                                 size="sm"
-                                onClick={() =>
-                                    setMinDuration(minDuration === mins ? undefined : mins)
-                                }
-                                className={`h-9 text-xs font-medium transition-all ${minDuration === mins
+                                onClick={() => selectPresetDuration(minDuration === mins && !isCustomDurationOpen ? undefined : mins)}
+                                className={`h-9 text-xs font-medium transition-all ${minDuration === mins && !isCustomDurationOpen
                                     ? "shadow-sm"
                                     : "hover:border-primary/50 hover:bg-primary/5"
                                     }`}
@@ -185,7 +243,44 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                                 {mins < 60 ? `${mins}m` : `${mins / 60}h`}
                             </Button>
                         ))}
+                        <Button
+                            variant={isCustomDurationOpen ? "default" : "outline"}
+                            size="sm"
+                            onClick={openCustomDuration}
+                            className={`h-9 text-xs font-medium transition-all ${isCustomDurationOpen
+                                ? "shadow-sm"
+                                : "hover:border-primary/50 hover:bg-primary/5"
+                                }`}
+                        >
+                            Custom
+                        </Button>
                     </div>
+                    {isCustomDurationOpen && (
+                        <div className="space-y-1.5">
+                            <div className="relative">
+                                <Input
+                                    type="number"
+                                    inputMode="numeric"
+                                    min={MIN_CUSTOM_DURATION}
+                                    step={1}
+                                    value={customDuration}
+                                    onChange={(e) => handleCustomDurationChange(e.target.value)}
+                                    placeholder="e.g. 90"
+                                    aria-label="Custom minimum availability duration in minutes"
+                                    aria-invalid={hasCustomDurationError}
+                                    className={`h-9 pr-14 font-mono text-sm ${hasCustomDurationError ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                                    min
+                                </span>
+                            </div>
+                            {hasCustomDurationError && (
+                                <p className="text-[10px] pl-1 text-destructive">
+                                    Enter a whole number of minutes, at least 1.
+                                </p>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div className="space-y-3">

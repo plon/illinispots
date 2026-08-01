@@ -47,3 +47,4 @@ venv/
 
 # Cron
 logs/
+.env*

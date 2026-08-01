@@ -20,8 +20,10 @@ export const isRoomAvailable = (
         return true;
     }
 
-    // Only consider available rooms for now
-    if (room.status !== RoomStatus.AVAILABLE) {
+    if (
+        room.status !== RoomStatus.AVAILABLE &&
+        room.status !== RoomStatus.PASSING_PERIOD
+    ) {
         return false;
     }
 
