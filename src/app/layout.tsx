@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { TouchProvider } from "@/components/ui/HybridTooltip";
 import { Providers } from "./providers";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -78,6 +79,7 @@ export default function RootLayout({
         <Providers>
           <TouchProvider>{children}</TouchProvider>
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
