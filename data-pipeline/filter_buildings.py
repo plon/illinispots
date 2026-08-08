@@ -18,7 +18,9 @@ class BuildingDataFilter:
             "Grad Sch of Lib & Info Science",
             "Chemistry Annex",
             "Allen Residence Hall",
-            "Ceramics Building"
+            "Ceramics Building",
+            # Off-campus address occasionally returned by Course Explorer.
+            "200 S Wacker",
         }
         # inclusive
         self.min_rooms = 5

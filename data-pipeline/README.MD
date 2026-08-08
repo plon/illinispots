@@ -49,7 +49,14 @@ This directory contains scripts for collecting and processing UIUC course and bu
    - Input: `buildings_filtered.json`, `uiuc_buildings.geojson`
    - Output: `buildings_enriched.json`
 
-6. **load_to_postgres.py**
+6. **audit_building_metadata.py**
+
+   - Audits hours and coordinates before loading
+   - Excludes buildings with incomplete metadata from the current load
+   - Emits GitHub Actions warnings and a job-summary table
+   - Writes `data/metadata_issues.json`, uploaded as a workflow artifact
+
+7. **load_to_postgres.py**
 
    - Loads the final data into PostgreSQL database
    - Input: `buildings_enriched.json`
@@ -57,7 +64,7 @@ This directory contains scripts for collecting and processing UIUC course and bu
    - Runs weekly through [the Course Explorer GitHub Actions workflow](../.github/workflows/course-explorer-weekly.yml), which selects the active term from `academic_calendar.json` in the America/Chicago timezone and supports manual year/term overrides
    - The workflow paces Course Explorer requests and retries transient failures with exponential backoff
 
-7. **tableau_dailyevents_scraper.py**
+8. **tableau_dailyevents_scraper.py**
    - Scrapes daily event data from [Tableau](https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents) and loads it into PostgreSQL
    - Updates the `daily_events` table with current day's events
    - Runs daily through [the GitHub Actions workflow](../.github/workflows/tableau-daily-events.yml), and can also be started manually from the Actions tab
@@ -102,7 +109,10 @@ Web Data → subjects.json → buildings_derived.json → buildings_filtered.jso
 5) Add coordinates → `buildings_enriched.json` (canonical), also copied to `buildings.json` for convenience  
 `python3 add_building_coordinates.py`
 
-6) Load to Postgres (reads `buildings_enriched.json`)  
+6) Audit building metadata → excludes incomplete buildings and writes a report
+`python3 audit_building_metadata.py`
+
+7) Load to Postgres (reads `buildings_enriched.json`)
 `python3 load_to_postgres.py`
 
 ## Building Filtering Criteria
