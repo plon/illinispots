@@ -48,6 +48,3 @@ venv/
 # Cron
 logs/
 .env*
-
-# Generated data-pipeline audit report
-/data-pipeline/data/metadata_issues.json

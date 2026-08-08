@@ -54,7 +54,6 @@ This directory contains scripts for collecting and processing UIUC course and bu
    - Audits hours and coordinates before loading
    - Excludes buildings with incomplete metadata from the current load
    - Emits GitHub Actions warnings and a job-summary table
-   - Writes `data/metadata_issues.json`, uploaded as a workflow artifact
 
 7. **load_to_postgres.py**
 
@@ -109,7 +108,7 @@ Web Data → subjects.json → buildings_derived.json → buildings_filtered.jso
 5) Add coordinates → `buildings_enriched.json` (canonical), also copied to `buildings.json` for convenience  
 `python3 add_building_coordinates.py`
 
-6) Audit building metadata → excludes incomplete buildings and writes a report
+6) Audit building metadata → excludes incomplete buildings and reports issues
 `python3 audit_building_metadata.py`
 
 7) Load to Postgres (reads `buildings_enriched.json`)

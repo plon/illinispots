@@ -95,13 +95,5 @@ jobs:
       - name: Audit building metadata
         run: python audit_building_metadata.py
 
-      - name: Upload building metadata report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: building-metadata-report
-          path: data-pipeline/data/metadata_issues.json
-          if-no-files-found: ignore
-
       - name: Load course data into Supabase
         run: python load_to_postgres.py

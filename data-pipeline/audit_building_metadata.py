@@ -9,7 +9,6 @@ from typing import Any, Dict, List
 DATA_DIR = Path(__file__).parent / "data"
 ENRICHED_FILE = DATA_DIR / "buildings_enriched.json"
 CANONICAL_FILE = DATA_DIR / "buildings.json"
-REPORT_FILE = DATA_DIR / "metadata_issues.json"
 
 REQUIRED_BUILDING_KEYS = {"hours", "coordinates", "rooms"}
 REQUIRED_HOURS_KEYS = {
@@ -131,15 +130,6 @@ def main() -> None:
         building_data = json.load(enriched_file)
 
     issues = audit_buildings(building_data["buildings"])
-    report = {
-        "last_updated": building_data.get("last_updated"),
-        "issues": issues,
-        "excluded_buildings": sorted(issue["building"] for issue in issues),
-        "remaining_buildings": len(building_data["buildings"]) - len(issues),
-    }
-
-    with open(REPORT_FILE, "w") as report_file:
-        json.dump(report, report_file, indent=2)
 
     if issues:
         filtered_data = remove_incomplete_buildings(building_data, issues)
@@ -157,7 +147,6 @@ def main() -> None:
 
     emit_github_warnings(issues)
     write_github_summary(issues)
-    print(f"Metadata report written to {REPORT_FILE}")
 
 
 if __name__ == "__main__":
