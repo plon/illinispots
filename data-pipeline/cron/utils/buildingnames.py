@@ -21,6 +21,8 @@ alias_map = {
     "Lincoln Hall": 'Lincoln Hall',
     "Literatures, Cultures, and Linguistics Building": 'Literatures, Cultures, & Ling',
     "Loomis Laboratory of Physics": 'Loomis Laboratory',
+    "Material Science and Engineering Building": 'Materials Science & Eng Bld',
+    "Materials Science and Engineering Building": 'Materials Science & Eng Bld',
     "Mumford Hall": 'Mumford Hall',
     "Music Building=": 'Music Building',
     "Natural History Building": 'Natural History Building',

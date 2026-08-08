@@ -143,6 +143,12 @@
     "SAT": "LOCKED",
     "SUN": "LOCKED"
   },
+  "Materials Science & Eng Bld": {
+    "M-TH": "7AM-9PM",
+    "F": "7AM-6PM",
+    "SAT": "7AM-12PM",
+    "SUN": "LOCKED"
+  },
   "Electrical & Computer Eng Bldg": {
     "M-TH": "7:30AM-10PM",
     "F": "7:30AM-10PM",
