@@ -30,6 +30,19 @@
     {
       "type": "Feature",
       "properties": {
+        "name": "Materials Science & Eng Bld"
+      },
+      "geometry": {
+        "coordinates": [
+          -88.225874,
+          40.110757
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
         "name": "Education Building"
       },
       "geometry": {
