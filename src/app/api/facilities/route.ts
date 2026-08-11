@@ -372,7 +372,11 @@ async function getReservation(
   const nextDateCST = targetDateCST.clone().add(1, "day");
 
   const startDate = targetDateCST.format("YYYY-MM-DD");
-  const endDate = nextDateCST.format("YYYY-MM-DD");
+  const fetchNextDay =
+    lid === "3604" && targetMoment.hour() >= 22;
+  const endDate = fetchNextDay
+    ? nextDateCST.clone().add(1, "day").format("YYYY-MM-DD")
+    : nextDateCST.format("YYYY-MM-DD");
 
   const payload = {
     lid: lid,
@@ -382,7 +386,7 @@ async function getReservation(
     seatId: "0",
     zone: "0",
     start: startDate, // Fetch for the target date
-    end: endDate, // Fetch until the start of the next date
+    end: endDate, // Fetch until the start of the day after the target date when needed
     pageIndex: "0",
     pageSize: "10000",
   };
@@ -398,7 +402,7 @@ async function getReservation(
     "x-requested-with": "XMLHttpRequest",
   };
 
-  const responseToday = await Sentry.startSpan(
+  const response = await Sentry.startSpan(
     {
       name: "Fetch LibCal availability",
       op: "app.library.availability",
@@ -406,32 +410,8 @@ async function getReservation(
     },
     () => axios.post(url, new URLSearchParams(payload), { headers }),
   );
-  const reservationsToday = responseToday.data as ReservationResponse;
 
-  // Funk ACES needs data for the *next* day as well because reservations run past midnight
-  // Only fetch next day data if it's after 10 PM Chicago time (when users might need late night/early morning slots)
-  if (lid === "3604" && targetMoment.hour() >= 22) {
-    const dayAfterNextCST = nextDateCST.clone().add(1, "day");
-
-    payload.start = endDate; // Start from the next date
-    payload.end = dayAfterNextCST.format("YYYY-MM-DD"); // End at the start of the day after
-
-    const responseTomorrow = await Sentry.startSpan(
-      {
-        name: "Fetch next-day LibCal availability",
-        op: "app.library.availability",
-        attributes: { "library.id": lid },
-      },
-      () => axios.post(url, new URLSearchParams(payload), { headers }),
-    );
-    const reservationsTomorrow = responseTomorrow.data as ReservationResponse;
-
-    return {
-      slots: [...reservationsToday.slots, ...reservationsTomorrow.slots],
-    };
-  }
-
-  return reservationsToday;
+  return response.data as ReservationResponse;
 }
 
 /**
