@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import * as Sentry from "@sentry/nextjs";
 import axios from "axios";
 import moment from "moment-timezone";
 import {
@@ -397,9 +398,14 @@ async function getReservation(
     "x-requested-with": "XMLHttpRequest",
   };
 
-  const responseToday = await axios.post(url, new URLSearchParams(payload), {
-    headers,
-  });
+  const responseToday = await Sentry.startSpan(
+    {
+      name: "Fetch LibCal availability",
+      op: "app.library.availability",
+      attributes: { "library.id": lid },
+    },
+    () => axios.post(url, new URLSearchParams(payload), { headers }),
+  );
   const reservationsToday = responseToday.data as ReservationResponse;
 
   // Funk ACES needs data for the *next* day as well because reservations run past midnight
@@ -410,12 +416,13 @@ async function getReservation(
     payload.start = endDate; // Start from the next date
     payload.end = dayAfterNextCST.format("YYYY-MM-DD"); // End at the start of the day after
 
-    const responseTomorrow = await axios.post(
-      url,
-      new URLSearchParams(payload),
+    const responseTomorrow = await Sentry.startSpan(
       {
-        headers,
+        name: "Fetch next-day LibCal availability",
+        op: "app.library.availability",
+        attributes: { "library.id": lid },
       },
+      () => axios.post(url, new URLSearchParams(payload), { headers }),
     );
     const reservationsTomorrow = responseTomorrow.data as ReservationResponse;
 
@@ -807,6 +814,10 @@ async function getFormattedLibraryData(
       }
     });
   } catch (error) {
+    Sentry.captureException(error, {
+      tags: { component: "libcal", operation: "fetch-availability" },
+    });
+    Sentry.getActiveSpan()?.setAttribute("result.partial", true);
     console.error("Error fetching library data:", error);
     // Consider how to handle partial errors if needed
   }
@@ -836,13 +847,24 @@ async function fetchAcademicBuildingData(
       process.env.SUPABASE_KEY!,
     );
 
-    const { data: buildingData, error } = await supabase.rpc("get_cached_spots", {
-      check_time_param: targetMoment.format("HH:mm:ss"),
-      check_date_param: targetMoment.format("YYYY-MM-DD"),
-      min_minutes_param: 30,
-    });
+    const { data: buildingData, error } = await Sentry.startSpan(
+      {
+        name: "Supabase RPC get_cached_spots",
+        op: "db.rpc",
+      },
+      () =>
+        supabase.rpc("get_cached_spots", {
+          check_time_param: targetMoment.format("HH:mm:ss"),
+          check_date_param: targetMoment.format("YYYY-MM-DD"),
+          min_minutes_param: 30,
+        }),
+    );
 
     if (error) {
+      Sentry.captureException(error, {
+        tags: { component: "supabase", operation: "get_cached_spots" },
+      });
+      Sentry.getActiveSpan()?.setAttribute("result.partial", true);
       console.error("Error fetching building data from Supabase:", error);
       return facilities; // Return empty on error
     }
@@ -919,6 +941,10 @@ async function fetchAcademicBuildingData(
       });
     }
   } catch (error) {
+    Sentry.captureException(error, {
+      tags: { component: "supabase", operation: "get_cached_spots" },
+    });
+    Sentry.getActiveSpan()?.setAttribute("result.partial", true);
     console.error("Error in fetchAcademicBuildingData:", error);
   }
 
@@ -1032,6 +1058,10 @@ async function updateLibraryFacilities(
       });
     }
   } catch (error) {
+    Sentry.captureException(error, {
+      tags: { component: "libcal", operation: "update-facilities" },
+    });
+    Sentry.getActiveSpan()?.setAttribute("result.partial", true);
     console.error("Error in updateLibraryFacilities:", error);
   }
 
@@ -1118,6 +1148,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json(facilityStatus);
   } catch (error) {
+    Sentry.captureException(error, {
+      tags: { component: "api", route: "/api/facilities" },
+    });
     console.error("Error in unified API:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Failed to fetch data";

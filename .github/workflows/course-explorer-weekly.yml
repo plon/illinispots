@@ -42,6 +42,8 @@ jobs:
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      SENTRY_ENVIRONMENT: production
 
     steps:
       - name: Check out repository
@@ -56,6 +58,16 @@ jobs:
 
       - name: Install dependencies
         run: python -m pip install --requirement requirements.txt
+
+      - name: Start Sentry monitor
+        id: sentry-monitor
+        continue-on-error: true
+        run: >-
+          python sentry_monitor.py start
+          --monitor-slug course-explorer-weekly
+          --schedule "17 9 * * 6"
+          --checkin-margin 60
+          --max-runtime 180
 
       - name: Scrape Course Explorer
         env:
@@ -97,3 +109,12 @@ jobs:
 
       - name: Load course data into Supabase
         run: python load_to_postgres.py
+
+      - name: Complete Sentry monitor
+        if: ${{ always() }}
+        continue-on-error: true
+        run: >-
+          python sentry_monitor.py finish
+          --monitor-slug course-explorer-weekly
+          --check-in-id "${{ steps.sentry-monitor.outputs.check_in_id }}"
+          --status "${{ job.status == 'success' && 'ok' || 'error' }}"
