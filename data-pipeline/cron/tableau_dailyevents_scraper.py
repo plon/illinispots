@@ -112,6 +112,7 @@ def load_to_postgres(df):
         print("Cleared existing events")
     except Exception as e:
         print(f"Error clearing existing events: {str(e)}")
+        raise
 
     for index, row in df.iterrows():
         building_name = row['building_name']
@@ -216,7 +217,7 @@ def main():
         print("Finished Step 3: Cache refreshed")
     except Exception as e:
         print(f"Failed Step 3: Cache refresh error: {e}")
-        # Don't fail the whole job if cache refresh fails, just log it
+        raise
 
     print("Job complete!")
 

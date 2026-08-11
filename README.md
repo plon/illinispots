@@ -96,6 +96,23 @@ Open http://localhost:3000.
 
 For collecting and loading source data, see [`data-pipeline/README.MD`](data-pipeline/README.MD) for Python setup, script order, and outputs (including the daily events job).
 
+## Observability
+
+The Next.js application reports production errors and performance traces
+to the `illinispots` Sentry project. Vercel needs a sensitive
+`SENTRY_AUTH_TOKEN` environment variable in the Production and Preview
+environments so its builds can upload source maps.
+
+The scheduled data pipelines report start, success, failure, missed-run, and
+runtime check-ins to these Sentry Cron Monitors:
+
+- `tableau-daily-events`
+- `course-explorer-weekly`
+
+Add `SENTRY_DSN` under GitHub repository **Settings → Secrets and variables →
+Actions** using the DSN from Sentry **Project Settings → Client Keys (DSN)**.
+The monitors are created or updated automatically by the next workflow run.
+
 ## License
 
 MIT — see [`LICENSE`](LICENSE).

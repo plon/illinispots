@@ -26,6 +26,8 @@ jobs:
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      SENTRY_ENVIRONMENT: production
       PYTHONPATH: .
 
     steps:
@@ -42,5 +44,24 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --requirement requirements.txt
 
+      - name: Start Sentry monitor
+        id: sentry-monitor
+        continue-on-error: true
+        run: >-
+          python sentry_monitor.py start
+          --monitor-slug tableau-daily-events
+          --schedule "17 11 * * *"
+          --checkin-margin 30
+          --max-runtime 15
+
       - name: Update Tableau daily events
         run: python cron/tableau_dailyevents_scraper.py
+
+      - name: Complete Sentry monitor
+        if: ${{ always() }}
+        continue-on-error: true
+        run: >-
+          python sentry_monitor.py finish
+          --monitor-slug tableau-daily-events
+          --check-in-id "${{ steps.sentry-monitor.outputs.check_in_id }}"
+          --status "${{ job.status == 'success' && 'ok' || 'error' }}"

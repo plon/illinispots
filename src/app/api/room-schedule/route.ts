@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import * as Sentry from "@sentry/nextjs";
 import moment from "moment-timezone";
 import { RoomScheduleBlock } from "@/types";
 
@@ -60,6 +61,10 @@ export async function GET(request: Request) {
 
   try {
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
+      Sentry.captureMessage("Missing Supabase environment variables", {
+        level: "error",
+        tags: { component: "api", route: "/api/room-schedule" },
+      });
       console.error("Missing Supabase environment variables");
       return NextResponse.json(
         { error: "Server configuration error" },
@@ -71,13 +76,26 @@ export async function GET(request: Request) {
       process.env.SUPABASE_KEY!,
     );
 
-    const { data, error } = await supabase.rpc("get_room_schedule_cached", {
-      building_id_param: buildingId,
-      room_number_param: roomNumber,
-      check_date_param: date,
-    });
+    const { data, error } = await Sentry.startSpan(
+      {
+        name: "Supabase RPC get_room_schedule_cached",
+        op: "db.rpc",
+      },
+      () =>
+        supabase.rpc("get_room_schedule_cached", {
+          building_id_param: buildingId,
+          room_number_param: roomNumber,
+          check_date_param: date,
+        }),
+    );
 
     if (error) {
+      Sentry.captureException(error, {
+        tags: {
+          component: "supabase",
+          operation: "get_room_schedule_cached",
+        },
+      });
       console.error(`Supabase error for ${buildingId} - ${roomNumber}:`, error);
       return NextResponse.json(
         { error: "Database error fetching schedule" },
@@ -139,6 +157,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json(relevantSchedule);
   } catch (error: unknown) {
+    Sentry.captureException(error, {
+      tags: { component: "api", route: "/api/room-schedule" },
+    });
     console.error(
       `Error in /api/room-schedule for ${buildingId} - ${roomNumber}:`,
       error,
