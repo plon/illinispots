@@ -1,10 +1,17 @@
 import os
+import time
 from io import StringIO
 from dotenv import load_dotenv, find_dotenv
 from supabase.client import create_client
 import pandas as pd
 from curl_cffi import requests
 from utils.buildingnames import alias_map
+
+
+TABLEAU_CSV_URL = "https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents.csv"
+TABLEAU_REQUEST_ATTEMPTS = 3
+TABLEAU_REQUEST_TIMEOUT = 60
+TABLEAU_RETRY_BACKOFF_SECONDS = 5
 
 
 def get_supabase_client():
@@ -36,11 +43,31 @@ def get_events_df():
             customer_contact, event_name, room.
     """
 
-    csv_url = "https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents.csv"
+    for attempt in range(1, TABLEAU_REQUEST_ATTEMPTS + 1):
+        try:
+            response = requests.get(
+                TABLEAU_CSV_URL,
+                impersonate="chrome124",
+                timeout=TABLEAU_REQUEST_TIMEOUT,
+            )
+            response.raise_for_status()
+            csv_data = response.text
+            break
+        except requests.exceptions.RequestException as exc:
+            if attempt == TABLEAU_REQUEST_ATTEMPTS:
+                raise RuntimeError(
+                    f"Unable to fetch Tableau daily events after "
+                    f"{TABLEAU_REQUEST_ATTEMPTS} attempts"
+                ) from exc
 
-    response = requests.get(csv_url, impersonate='chrome124', timeout=60)
-    response.raise_for_status()
-    csv_data = response.text
+            delay = TABLEAU_RETRY_BACKOFF_SECONDS * (2 ** (attempt - 1))
+            print(
+                f"Tableau request failed (attempt {attempt}/"
+                f"{TABLEAU_REQUEST_ATTEMPTS}): {exc}. "
+                f"Retrying in {delay} seconds"
+            )
+            time.sleep(delay)
+
     print("Fetched data from Tableau")
 
     df = pd.read_csv(StringIO(csv_data))
