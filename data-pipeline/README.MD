@@ -91,6 +91,22 @@ Web Data → subjects.json → buildings_derived.json → buildings_filtered.jso
 - Install dependencies: `pip install -r requirements.txt`
 - `.env.local` with `SUPABASE_URL` and `SUPABASE_KEY` (needed for `load_to_postgres.py` and the Tableau cache refresh)
 
+## Scheduled-run observability
+
+Both GitHub Actions pipelines use Sentry Cron Monitors to detect missed, failed,
+and over-time runs. Pipeline stage failures are also reported as Sentry errors
+tagged with the pipeline and exact failing stage. Set the optional `SENTRY_DSN`
+repository secret to enable reporting.
+
+Successful, verified loads emit Sentry Application Metrics for database and
+current-load building, room, class-schedule, and academic-term counts. The
+daily pipeline emits Tableau source rows, valid rows, inserted daily events,
+invalid timestamps, unloadable events, and total skipped events. Weekly metrics
+include academic year and term attributes so they can be filtered in Sentry.
+
+Sentry reporting is best-effort: a Sentry outage does not fail the data
+pipeline, and the original stage command's exit code is always preserved.
+
 ## Quick run
 
 1) Scrape subjects → `subjects.json`  

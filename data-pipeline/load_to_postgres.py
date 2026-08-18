@@ -5,6 +5,7 @@ from typing import List, Dict, Set
 from datetime import datetime
 import os
 from dotenv import load_dotenv, find_dotenv
+from sentry_monitor import emit_gauges
 
 load_dotenv(find_dotenv(".env.local"))
 
@@ -240,7 +241,7 @@ def bulk_insert(table_name: str, records: List[Dict], upsert: bool = False) -> S
 
 def verify_database_contents(
     buildings: List[Dict], rooms: List[Dict], schedules: List[Dict]
-) -> None:
+) -> Dict[str, int]:
     db_buildings_count_response = (
         supabase.table("buildings").select("*", count="exact").execute()
     )
@@ -280,6 +281,11 @@ def verify_database_contents(
     print(f"Verified schedules count: {schedule_count}")
 
     print("All count verifications passed successfully!")
+    return {
+        "buildings": actual_building_count_in_db,
+        "rooms": actual_room_count_in_db,
+        "class_schedule_rows": schedule_count,
+    }
 
 
 def clear_table(table_name: str) -> None:
@@ -306,6 +312,19 @@ def clear_table(table_name: str) -> None:
     except Exception as e:
         print(f"Error clearing table {table_name}: {str(e)}")
         raise
+
+
+def get_metric_attributes(data_dir: Path) -> Dict[str, object]:
+    """Read optional schedule dimensions without making metrics block a load."""
+    attributes: Dict[str, object] = {"pipeline": "course-explorer-weekly"}
+    try:
+        with open(data_dir / "subjects.json", "r") as subject_file:
+            subject_metadata = json.load(subject_file)
+        attributes["academic_year"] = subject_metadata.get("year", "unknown")
+        attributes["term"] = subject_metadata.get("term", "unknown")
+    except (OSError, AttributeError, json.JSONDecodeError) as error:
+        print(f"Unable to read metric dimensions from subjects.json: {error}")
+    return attributes
 
 
 def main():
@@ -357,7 +376,7 @@ def main():
         print(f"Inserted {len(schedule_ids)} schedules")
 
         print("\nPerforming final database verification...")
-        verify_database_contents(buildings, rooms, schedules)
+        database_counts = verify_database_contents(buildings, rooms, schedules)
 
         db_terms_count = (
             supabase.table("academic_terms").select("*", count="exact").execute()
@@ -380,6 +399,21 @@ def main():
         print("\nRefreshing room availability cache...")
         supabase.rpc("refresh_room_availability_cache", {}).execute()
         print("Room availability cache refreshed successfully")
+
+        emit_gauges(
+            {
+                "pipeline.database.buildings": database_counts["buildings"],
+                "pipeline.database.rooms": database_counts["rooms"],
+                "pipeline.database.class_schedule_rows": database_counts[
+                    "class_schedule_rows"
+                ],
+                "pipeline.database.academic_terms": db_terms_count.count,
+                "pipeline.load.buildings": len(buildings),
+                "pipeline.load.rooms": len(rooms),
+                "pipeline.load.class_schedule_rows": len(schedules),
+            },
+            get_metric_attributes(data_dir),
+        )
 
     except DataValidationError as e:
         print(f"\nData Validation Error: {str(e)}")

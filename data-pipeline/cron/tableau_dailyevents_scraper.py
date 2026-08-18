@@ -6,6 +6,7 @@ from supabase.client import create_client
 import pandas as pd
 from curl_cffi import requests
 from utils.buildingnames import alias_map
+from sentry_monitor import emit_gauges
 
 
 TABLEAU_CSV_URL = "https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents.csv"
@@ -112,6 +113,8 @@ def get_events_df():
 
     # Normalize building names using alias map
     df["building_name"] = df["building_name"].map(lambda name: alias_map.get(str(name), str(name)))
+    df.attrs["tableau_rows"] = initial_count
+    df.attrs["invalid_timestamp_events"] = dropped_count
 
     print("Finished processing data")
 
@@ -123,6 +126,10 @@ def load_to_postgres(df):
 
     Args:
         df (DataFrame): Pandas DataFrame containing events data.
+
+    Returns:
+        dict | bool: Inserted and unloadable event counts, or False when no
+            events were inserted.
     """
     supabase = get_supabase_client()
 
@@ -209,7 +216,10 @@ def load_to_postgres(df):
         try:
             supabase.table('daily_events').insert(events_to_insert).execute()
             print(f"Successfully inserted {len(events_to_insert)} events")
-            return True
+            return {
+                "inserted_events": len(events_to_insert),
+                "unloadable_events": len(invalid_events),
+            }
         except Exception as e:
             print(f"Error inserting events: {str(e)}")
             return False
@@ -231,8 +241,8 @@ def main():
     
 
     print("Step 2: Load data to PostgreSQL")
-    success = load_to_postgres(events)
-    if not success:
+    load_counts = load_to_postgres(events)
+    if not load_counts:
         raise RuntimeError("Failed Step 2: No valid events were inserted")
 
     print("Finished Step 2")
@@ -245,6 +255,22 @@ def main():
     except Exception as e:
         print(f"Failed Step 3: Cache refresh error: {e}")
         raise
+
+    invalid_timestamp_events = events.attrs.get("invalid_timestamp_events", 0)
+    unloadable_events = load_counts["unloadable_events"]
+    emit_gauges(
+        {
+            "pipeline.data.tableau_rows": events.attrs.get("tableau_rows", len(events)),
+            "pipeline.data.valid_timestamp_events": len(events),
+            "pipeline.database.daily_events": load_counts["inserted_events"],
+            "pipeline.data.invalid_timestamp_events": invalid_timestamp_events,
+            "pipeline.data.unloadable_events": unloadable_events,
+            "pipeline.data.skipped_events": (
+                invalid_timestamp_events + unloadable_events
+            ),
+        },
+        {"pipeline": "tableau-daily-events"},
+    )
 
     print("Job complete!")
 

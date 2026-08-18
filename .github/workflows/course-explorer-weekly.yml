@@ -44,6 +44,7 @@ jobs:
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
       SENTRY_ENVIRONMENT: production
+      PYTHONUNBUFFERED: "1"
 
     steps:
       - name: Check out repository
@@ -90,25 +91,59 @@ jobs:
             args+=(--term "$COURSE_TERM")
           fi
 
-          python one_shot_scraper.py "${args[@]}"
+          python sentry_monitor.py run-stage \
+            --monitor-slug course-explorer-weekly \
+            --stage scrape-course-explorer \
+            --label "Scrape Course Explorer" \
+            -- python one_shot_scraper.py "${args[@]}"
 
       - name: Transform subjects into buildings
-        run: python subject_to_buildings.py
+        run: >-
+          python sentry_monitor.py run-stage
+          --monitor-slug course-explorer-weekly
+          --stage transform-subjects
+          --label "Transform subjects into buildings"
+          -- python subject_to_buildings.py
 
       - name: Filter buildings
-        run: python filter_buildings.py
+        run: >-
+          python sentry_monitor.py run-stage
+          --monitor-slug course-explorer-weekly
+          --stage filter-buildings
+          --label "Filter buildings"
+          -- python filter_buildings.py
 
       - name: Add building hours
-        run: python add_building_hours.py
+        run: >-
+          python sentry_monitor.py run-stage
+          --monitor-slug course-explorer-weekly
+          --stage add-building-hours
+          --label "Add building hours"
+          -- python add_building_hours.py
 
       - name: Add building coordinates
-        run: python add_building_coordinates.py
+        run: >-
+          python sentry_monitor.py run-stage
+          --monitor-slug course-explorer-weekly
+          --stage add-building-coordinates
+          --label "Add building coordinates"
+          -- python add_building_coordinates.py
 
       - name: Audit building metadata
-        run: python audit_building_metadata.py
+        run: >-
+          python sentry_monitor.py run-stage
+          --monitor-slug course-explorer-weekly
+          --stage audit-building-metadata
+          --label "Audit building metadata"
+          -- python audit_building_metadata.py
 
       - name: Load course data into Supabase
-        run: python load_to_postgres.py
+        run: >-
+          python sentry_monitor.py run-stage
+          --monitor-slug course-explorer-weekly
+          --stage load-course-data
+          --label "Load course data into Supabase"
+          -- python load_to_postgres.py
 
       - name: Complete Sentry monitor
         if: ${{ always() }}
