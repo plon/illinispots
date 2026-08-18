@@ -411,6 +411,7 @@ def main():
                 "pipeline.load.buildings": len(buildings),
                 "pipeline.load.rooms": len(rooms),
                 "pipeline.load.class_schedule_rows": len(schedules),
+                "pipeline.load.academic_terms": len(academic_terms_data),
             },
             get_metric_attributes(data_dir),
         )
