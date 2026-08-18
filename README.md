@@ -26,7 +26,7 @@ illiniSpots is a web application that helps UIUC students find available study s
 
 - Sources: class data from Course Explorer, daily events from the university Tableau feed, building hours from Facilities, and library reservations from LibCal (links below).
 - Freshness: library reservations are read live; daily events are scraped and updated regularly via a cron job; class/building data is refreshed via the data pipeline.
-- Deterministic rules: availability for academic rooms is computed in SQL ([`database/functions/get_spots.sql`](database/functions/get_spots.sql)), using only official schedules + events and building hours.
+- Deterministic rules: availability for academic rooms is computed in SQL ([`get_spots` migration](supabase/migrations/20260819000100_optimize_get_spots.sql)), using only official schedules + events and building hours.
 - Known limitations:
   - Unofficial use (study groups, ad‑hoc meetings) and last‑minute changes may not be reflected.
   - Departmental access restrictions can make an “available” room unusable.

@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION get_room_schedule_cached(
+CREATE OR REPLACE FUNCTION public.get_room_schedule_cached(
     building_id_param TEXT,
     room_number_param TEXT,
     check_date_param DATE
@@ -15,64 +15,68 @@ DECLARE
     activity_end TIME;
     check_day TEXT;
 BEGIN
-    SET LOCAL statement_timeout = '3s';
-
-    -- Determine day character
     check_day := CASE EXTRACT(DOW FROM check_date_param)
         WHEN 1 THEN 'M' WHEN 2 THEN 'T' WHEN 3 THEN 'W' WHEN 4 THEN 'R'
         WHEN 5 THEN 'F' WHEN 6 THEN 'S' WHEN 0 THEN 'U'
     END;
 
-    -- Get building hours and cached activities
     SELECT
         CASE check_day
-            WHEN 'M' THEN b.monday_open WHEN 'T' THEN b.tuesday_open WHEN 'W' THEN b.wednesday_open
-            WHEN 'R' THEN b.thursday_open WHEN 'F' THEN b.friday_open WHEN 'S' THEN b.saturday_open
+            WHEN 'M' THEN b.monday_open WHEN 'T' THEN b.tuesday_open
+            WHEN 'W' THEN b.wednesday_open WHEN 'R' THEN b.thursday_open
+            WHEN 'F' THEN b.friday_open WHEN 'S' THEN b.saturday_open
             WHEN 'U' THEN b.sunday_open
         END,
         CASE check_day
-            WHEN 'M' THEN b.monday_close WHEN 'T' THEN b.tuesday_close WHEN 'W' THEN b.wednesday_close
-            WHEN 'R' THEN b.thursday_close WHEN 'F' THEN b.friday_close WHEN 'S' THEN b.saturday_close
+            WHEN 'M' THEN b.monday_close WHEN 'T' THEN b.tuesday_close
+            WHEN 'W' THEN b.wednesday_close WHEN 'R' THEN b.thursday_close
+            WHEN 'F' THEN b.friday_close WHEN 'S' THEN b.saturday_close
             WHEN 'U' THEN b.sunday_close
         END,
         c.schedule_data
     INTO building_open_time, building_close_time, cached_activities
     FROM buildings b
-    LEFT JOIN room_availability_cache c 
-        ON b.name = c.building_name 
-        AND c.room_number = room_number_param
-        AND c.check_date = check_date_param
+    LEFT JOIN room_availability_cache c
+        ON c.building_name = b.name
+       AND c.room_number = room_number_param
+       AND c.check_date = check_date_param
     WHERE b.name = building_id_param;
 
-    -- If cache doesn't exist (and building exists), fall back to real-time calculation
     IF cached_activities IS NULL AND building_open_time IS NOT NULL THEN
-        RETURN get_room_schedule(building_id_param, room_number_param, check_date_param);
+        RETURN get_room_schedule(
+            building_id_param,
+            room_number_param,
+            check_date_param
+        );
     END IF;
 
-    -- If building closed or no data, return empty
-    IF building_open_time IS NULL OR building_close_time IS NULL OR building_open_time >= building_close_time THEN
+    IF building_open_time IS NULL
+       OR building_close_time IS NULL
+       OR building_open_time >= building_close_time THEN
         RETURN '[]'::JSONB;
     END IF;
 
     current_pointer_time := building_open_time;
 
-    -- If we have activities, process them
     IF cached_activities IS NOT NULL THEN
         FOR activity IN SELECT * FROM jsonb_array_elements(cached_activities)
         LOOP
-            activity_start := (activity->>'start')::TIME;
-            activity_end := (activity->>'end')::TIME;
+            activity_start := GREATEST(
+                (activity->>'start')::TIME,
+                building_open_time
+            );
+            activity_end := LEAST(
+                (activity->>'end')::TIME,
+                building_close_time
+            );
 
-            -- Clamp to building hours
-            activity_start := GREATEST(activity_start, building_open_time);
-            activity_end := LEAST(activity_end, building_close_time);
-
-            -- Skip invalid
-            IF activity_start >= activity_end OR activity_start < current_pointer_time THEN
+            IF activity_start >= activity_end
+               OR activity_end <= current_pointer_time THEN
                 CONTINUE;
             END IF;
 
-            -- Add gap if exists
+            activity_start := GREATEST(activity_start, current_pointer_time);
+
             IF activity_start > current_pointer_time THEN
                 schedule_blocks := array_append(schedule_blocks, jsonb_build_object(
                     'start', current_pointer_time::TEXT,
@@ -82,19 +86,16 @@ BEGIN
                 ));
             END IF;
 
-            -- Add activity
             schedule_blocks := array_append(schedule_blocks, jsonb_build_object(
                 'start', activity_start::TEXT,
                 'end', activity_end::TEXT,
                 'status', activity->>'status',
                 'details', activity->'details'
             ));
-
             current_pointer_time := activity_end;
         END LOOP;
     END IF;
 
-    -- Add final gap
     IF current_pointer_time < building_close_time THEN
         schedule_blocks := array_append(schedule_blocks, jsonb_build_object(
             'start', current_pointer_time::TEXT,
@@ -108,3 +109,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql
 SET search_path = pg_catalog, public;
+
+REVOKE EXECUTE ON FUNCTION
+    public.get_room_schedule_cached(text, text, date)
+FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION
+    public.get_room_schedule_cached(text, text, date)
+TO anon, authenticated;
