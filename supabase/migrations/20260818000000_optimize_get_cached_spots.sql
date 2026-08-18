@@ -1,4 +1,9 @@
-CREATE OR REPLACE FUNCTION get_cached_spots(
+-- Avoid repeatedly expanding and sorting every room's cached JSON schedule.
+-- The schedule is already stored in start-time order by
+-- refresh_room_availability_cache, so one pass can locate both the current and
+-- next activity. Materialized CTEs prevent PostgreSQL from inlining those
+-- lookups once for every output field that consumes them.
+CREATE OR REPLACE FUNCTION public.get_cached_spots(
     check_time_param TIME,
     check_date_param DATE,
     min_minutes_param INTEGER DEFAULT 30
@@ -26,11 +31,10 @@ BEGIN
     min_interval := (min_minutes_param || ' minutes')::interval;
 
     WITH building_info AS MATERIALIZED (
-        SELECT 
+        SELECT
             b.name,
             b.latitude,
             b.longitude,
-            -- Determine open/close for this specific day
             CASE EXTRACT(DOW FROM check_date_param)
                 WHEN 1 THEN b.monday_open WHEN 2 THEN b.tuesday_open WHEN 3 THEN b.wednesday_open
                 WHEN 4 THEN b.thursday_open WHEN 5 THEN b.friday_open WHEN 6 THEN b.saturday_open
@@ -43,23 +47,15 @@ BEGIN
             END as close_time
         FROM buildings b
     ),
-    -- Materialize the expensive JSON extraction. Without this barrier,
-    -- PostgreSQL can inline the CTE and evaluate each correlated JSON scan
-    -- again for currentClass, nextClass, and the availability metrics.
     room_state AS MATERIALIZED (
         SELECT
             c.building_name,
             c.room_number,
             bi.open_time,
             bi.close_time,
-            -- Is the room currently occupied?
             (c.busy_times @> check_timestamp) as is_occupied,
-
-            -- schedule_data is written in start-time order. Expand it once
-            -- and use the first matching array positions for both lookups.
             c.schedule_data -> ((matches.current_ordinal - 1)::integer) as current_class_json,
             c.schedule_data -> ((matches.next_ordinal - 1)::integer) as next_class_json
-
         FROM room_availability_cache c
         JOIN building_info bi ON c.building_name = bi.name
         CROSS JOIN LATERAL (
@@ -75,17 +71,14 @@ BEGIN
                 WITH ORDINALITY as activity(item, ordinality)
         ) matches
         WHERE c.check_date = check_date_param
-          AND bi.open_time IS NOT NULL -- Only consider open buildings
+          AND bi.open_time IS NOT NULL
     ),
     calculated_availability AS MATERIALIZED (
         SELECT
             rs.*,
-            -- Extract timestamps from JSON for easier math
             (rs.current_class_json->>'end')::time as current_end_time,
             (rs.next_class_json->>'start')::time as next_start_time,
-            
-            -- Calculate Available Until
-            CASE 
+            CASE
                 WHEN NOT rs.is_occupied THEN
                     COALESCE((rs.next_class_json->>'start')::time, rs.close_time)
                 ELSE NULL
@@ -95,33 +88,22 @@ BEGIN
     final_metrics AS MATERIALIZED (
         SELECT
             ca.*,
-            CASE 
-                WHEN is_occupied THEN 'occupied' 
-                ELSE 'available' 
+            CASE
+                WHEN is_occupied THEN 'occupied'
+                ELSE 'available'
             END as status_text,
-            
-            -- passingPeriod logic: Available, but for less than min interval
             (NOT is_occupied AND (available_until_time - check_time_param) < min_interval) as is_passing_period,
-            
-            -- availableFor logic
-            CASE 
-                WHEN NOT is_occupied THEN 
+            CASE
+                WHEN NOT is_occupied THEN
                     EXTRACT(EPOCH FROM (available_until_time - check_time_param))/60
-                ELSE 
-                    -- If occupied, complex logic for "when next available". 
-                    -- Simplified: Available at end of current class.
-                    -- Does NOT do recursive gap check (too complex for simple cache read)
-                    NULL
+                ELSE NULL
             END as available_for_minutes,
-            
-            -- availableAt logic
             CASE
                 WHEN is_occupied THEN current_end_time
                 ELSE NULL
             END as available_at_time
         FROM calculated_availability ca
     ),
-    -- Aggregation per building
     building_agg AS (
         SELECT
             bi.name,

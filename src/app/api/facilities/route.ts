@@ -832,12 +832,52 @@ async function fetchAcademicBuildingData(
         name: "Supabase RPC get_cached_spots",
         op: "db.rpc",
       },
-      () =>
-        supabase.rpc("get_cached_spots", {
+      async (span) => {
+        const response = await supabase.rpc("get_cached_spots", {
           check_time_param: targetMoment.format("HH:mm:ss"),
           check_date_param: targetMoment.format("YYYY-MM-DD"),
           min_minutes_param: 30,
-        }),
+        });
+
+        const cacheMetadata = (
+          response.data as {
+            _cache?: {
+              hit?: boolean;
+              source?: string;
+              reason?: string;
+            };
+          } | null
+        )?._cache;
+        const cacheResult = response.error
+          ? "error"
+          : cacheMetadata?.hit === true
+            ? "hit"
+            : cacheMetadata?.hit === false
+              ? "fallback"
+              : "unknown";
+
+        span.setAttributes({
+          "cache.result": cacheResult,
+          "cache.hit": cacheMetadata?.hit,
+          "cache.source": cacheMetadata?.source,
+          "cache.fallback_reason": cacheMetadata?.reason,
+          "availability.check_date": targetMoment.format("YYYY-MM-DD"),
+        });
+
+        if (cacheResult === "fallback") {
+          span.addEvent("cache.fallback", {
+            "fallback.operation": "get_spots",
+            "fallback.reason": cacheMetadata?.reason ?? "unknown",
+            "availability.check_date": targetMoment.format("YYYY-MM-DD"),
+          });
+        }
+
+        Sentry.metrics.count("academic_availability.cache_lookup", 1, {
+          attributes: { result: cacheResult },
+        });
+
+        return response;
+      },
     );
 
     if (error) {
