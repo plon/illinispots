@@ -14,11 +14,12 @@ DECLARE
     check_timestamp TIMESTAMP;
     min_interval INTERVAL;
 BEGIN
-    SET LOCAL statement_timeout = '6s';
-
     -- If cache doesn't exist for this date, fall back to real-time calculation
     IF NOT EXISTS (SELECT 1 FROM room_availability_cache WHERE check_date = check_date_param LIMIT 1) THEN
-        result := get_spots(check_time_param, check_date_param, min_minutes_param);
+        result := COALESCE(
+            get_spots(check_time_param, check_date_param, min_minutes_param),
+            '{}'::jsonb
+        );
         RETURN result || jsonb_build_object(
             '_cache', jsonb_build_object(
                 'hit', false,
@@ -72,6 +73,7 @@ BEGIN
         ) matches
         WHERE c.check_date = check_date_param
           AND bi.open_time IS NOT NULL
+          AND bi.close_time IS NOT NULL
     ),
     calculated_availability AS MATERIALIZED (
         SELECT
@@ -148,3 +150,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql
 SET search_path = pg_catalog, public;
+
+-- PostgREST serves this RPC with the anon role. A role-level timeout is active
+-- when the RPC statement starts; changing statement_timeout inside the function
+-- would not affect the already-running outer statement.
+ALTER ROLE anon SET statement_timeout = '6s';
+NOTIFY pgrst, 'reload config';

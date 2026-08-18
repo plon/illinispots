@@ -856,25 +856,29 @@ async function fetchAcademicBuildingData(
               ? "fallback"
               : "unknown";
 
-        span.setAttributes({
-          "cache.result": cacheResult,
-          "cache.hit": cacheMetadata?.hit,
-          "cache.source": cacheMetadata?.source,
-          "cache.fallback_reason": cacheMetadata?.reason,
-          "availability.check_date": targetMoment.format("YYYY-MM-DD"),
-        });
-
-        if (cacheResult === "fallback") {
-          span.addEvent("cache.fallback", {
-            "fallback.operation": "get_spots",
-            "fallback.reason": cacheMetadata?.reason ?? "unknown",
+        try {
+          span.setAttributes({
+            "cache.result": cacheResult,
+            "cache.hit": cacheMetadata?.hit,
+            "cache.source": cacheMetadata?.source,
+            "cache.fallback_reason": cacheMetadata?.reason,
             "availability.check_date": targetMoment.format("YYYY-MM-DD"),
           });
-        }
 
-        Sentry.metrics.count("academic_availability.cache_lookup", 1, {
-          attributes: { result: cacheResult },
-        });
+          if (cacheResult === "fallback") {
+            span.addEvent("cache.fallback", {
+              "fallback.operation": "get_spots",
+              "fallback.reason": cacheMetadata?.reason ?? "unknown",
+              "availability.check_date": targetMoment.format("YYYY-MM-DD"),
+            });
+          }
+
+          Sentry.metrics.count("academic_availability.cache_lookup", 1, {
+            attributes: { result: cacheResult },
+          });
+        } catch (telemetryError) {
+          console.warn("Cache telemetry failed:", telemetryError);
+        }
 
         return response;
       },

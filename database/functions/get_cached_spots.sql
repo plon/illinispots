@@ -9,11 +9,12 @@ DECLARE
     check_timestamp TIMESTAMP;
     min_interval INTERVAL;
 BEGIN
-    SET LOCAL statement_timeout = '6s';
-
     -- If cache doesn't exist for this date, fall back to real-time calculation
     IF NOT EXISTS (SELECT 1 FROM room_availability_cache WHERE check_date = check_date_param LIMIT 1) THEN
-        result := get_spots(check_time_param, check_date_param, min_minutes_param);
+        result := COALESCE(
+            get_spots(check_time_param, check_date_param, min_minutes_param),
+            '{}'::jsonb
+        );
         RETURN result || jsonb_build_object(
             '_cache', jsonb_build_object(
                 'hit', false,
@@ -75,7 +76,8 @@ BEGIN
                 WITH ORDINALITY as activity(item, ordinality)
         ) matches
         WHERE c.check_date = check_date_param
-          AND bi.open_time IS NOT NULL -- Only consider open buildings
+          AND bi.open_time IS NOT NULL
+          AND bi.close_time IS NOT NULL -- Only consider buildings with valid hours
     ),
     calculated_availability AS MATERIALIZED (
         SELECT
