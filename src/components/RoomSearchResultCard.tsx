@@ -16,18 +16,15 @@ import {
   BookOpen,
   Image as ImageIcon,
   Clock,
-  MapPin,
 } from "lucide-react";
 import Image from "next/image";
 
 interface RoomSearchResultCardProps {
   roomResult: SearchResultRoom;
-  onBuildingClick?: (facilityId: string, type: "library" | "academic") => void;
 }
 
 export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
   roomResult,
-  onBuildingClick,
 }) => {
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
@@ -36,14 +33,6 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
   const isAcademic = facilityType === FacilityType.ACADEMIC;
   const academicRoom = isAcademic ? (room as AcademicRoom) : null;
   const libraryRoom = !isAcademic ? (room as LibraryRoom) : null;
-
-  const handleFacilityClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onBuildingClick?.(
-      facility.id,
-      facilityType === FacilityType.LIBRARY ? "library" : "academic",
-    );
-  };
 
   return (
     <div className="rounded-lg border border-border/80 bg-card p-3.5 shadow-xs hover:border-primary/40 transition-all duration-150 space-y-2.5">
@@ -62,17 +51,12 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
           </div>
 
           {/* Building Link */}
-          <button
-            type="button"
-            onClick={handleFacilityClick}
-            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 mt-0.5 transition-colors group text-left"
-            title={`View ${facility.name}`}
-          >
-            <Building2 className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
-            <span className="truncate max-w-[200px] md:max-w-[260px] font-medium underline-offset-2 group-hover:underline">
+          <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+            <Building2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            <span className="truncate max-w-[200px] md:max-w-[260px] font-medium">
               {facility.name}
             </span>
-          </button>
+          </div>
         </div>
 
         {/* Room Status Badge */}
@@ -144,7 +128,7 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
       </div>
 
       {/* Action Buttons Row */}
-      <div className="flex items-center justify-between gap-2 pt-1">
+      <div className="flex items-center gap-2 pt-1">
         <div className="flex items-center gap-2">
           {/* Schedule Toggle Button */}
           <Button
@@ -219,19 +203,6 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
             </>
           )}
         </div>
-
-        {/* View on Map/Building Button */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={handleFacilityClick}
-          className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
-          title="Locate building"
-        >
-          <MapPin className="w-3.5 h-3.5 text-primary" />
-          <span className="hidden sm:inline">Locate</span>
-        </Button>
       </div>
 
       {/* Collapsible Detailed Schedule */}

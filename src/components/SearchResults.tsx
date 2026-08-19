@@ -21,8 +21,6 @@ interface SearchResultsProps {
   hasActiveFilters: boolean;
   onClearFilters: () => void;
   onClearSearch: () => void;
-  onBuildingClick?: (facilityId: string, type: "library" | "academic") => void;
-  onOpenInAccordion?: (facilityId: string, type: "library" | "academic") => void;
 }
 
 type TabType = "all" | "rooms" | "buildings";
@@ -34,8 +32,6 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
   hasActiveFilters,
   onClearFilters,
   onClearSearch,
-  onBuildingClick,
-  onOpenInAccordion,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>("all");
 
@@ -193,8 +189,6 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
                       <BuildingSearchResultCard
                         key={`bldg-${buildingResult.facilityId}`}
                         buildingResult={buildingResult}
-                        onBuildingClick={onBuildingClick}
-                        onOpenInAccordion={onOpenInAccordion}
                       />
                     ))}
                   </div>
@@ -213,7 +207,6 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
                       <RoomSearchResultCard
                         key={`room-${roomResult.facilityId}-${roomResult.roomNumber}`}
                         roomResult={roomResult}
-                        onBuildingClick={onBuildingClick}
                       />
                     ))}
                   </div>
@@ -230,7 +223,6 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
                   <RoomSearchResultCard
                     key={`room-tab-${roomResult.facilityId}-${roomResult.roomNumber}`}
                     roomResult={roomResult}
-                    onBuildingClick={onBuildingClick}
                   />
                 ))
               ) : (
@@ -249,8 +241,6 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
                   <BuildingSearchResultCard
                     key={`bldg-tab-${buildingResult.facilityId}`}
                     buildingResult={buildingResult}
-                    onBuildingClick={onBuildingClick}
-                    onOpenInAccordion={onOpenInAccordion}
                   />
                 ))
               ) : (

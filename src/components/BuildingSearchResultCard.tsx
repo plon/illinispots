@@ -12,20 +12,14 @@ import {
   ChevronUp,
   Clock,
   DoorOpen,
-  MapPin,
-  ExternalLink,
 } from "lucide-react";
 
 interface BuildingSearchResultCardProps {
   buildingResult: SearchResultBuilding;
-  onBuildingClick?: (facilityId: string, type: "library" | "academic") => void;
-  onOpenInAccordion?: (facilityId: string, type: "library" | "academic") => void;
 }
 
 export const BuildingSearchResultCard: React.FC<BuildingSearchResultCardProps> = ({
   buildingResult,
-  onBuildingClick,
-  onOpenInAccordion,
 }) => {
   const [isRoomsOpen, setIsRoomsOpen] = useState(false);
   const {
@@ -39,16 +33,6 @@ export const BuildingSearchResultCard: React.FC<BuildingSearchResultCardProps> =
 
   const isLibrary = facilityType === FacilityType.LIBRARY;
   const isOpen = facility.isOpen;
-
-  const handleLocateClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onBuildingClick?.(facility.id, isLibrary ? "library" : "academic");
-  };
-
-  const handleOpenAccordion = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onOpenInAccordion?.(facility.id, isLibrary ? "library" : "academic");
-  };
 
   // Prepare rooms for preview (matching rooms or all rooms in facility)
   const previewRooms = React.useMemo(() => {
@@ -153,58 +137,28 @@ export const BuildingSearchResultCard: React.FC<BuildingSearchResultCardProps> =
       </div>
 
       {/* Actions Row */}
-      <div className="flex items-center justify-between gap-2 pt-1">
-        <div className="flex items-center gap-2">
-          {/* Toggle Rooms Button */}
-          {previewRooms.length > 0 && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsRoomsOpen(!isRoomsOpen)}
-              className="h-8 text-xs font-medium gap-1.5 hover:bg-secondary"
-              aria-expanded={isRoomsOpen}
-            >
-              <DoorOpen className="w-3.5 h-3.5" />
-              {isRoomsOpen
-                ? "Hide Rooms"
-                : `View Rooms (${previewRooms.length})`}
-              {isRoomsOpen ? (
-                <ChevronUp className="w-3.5 h-3.5 ml-0.5" />
-              ) : (
-                <ChevronDown className="w-3.5 h-3.5 ml-0.5" />
-              )}
-            </Button>
-          )}
-
-          {/* Open in Accordion View Button */}
-          {onOpenInAccordion && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleOpenAccordion}
-              className="h-8 text-xs text-muted-foreground hover:text-foreground gap-1"
-              title="Open building in accordion view"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Open in list</span>
-            </Button>
-          )}
-        </div>
-
-        {/* Locate on Map Button */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={handleLocateClick}
-          className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
-          title="Locate building on map"
-        >
-          <MapPin className="w-3.5 h-3.5 text-primary" />
-          <span className="hidden sm:inline">Locate</span>
-        </Button>
+      <div className="flex items-center gap-2 pt-1">
+        {/* Toggle Rooms Button */}
+        {previewRooms.length > 0 && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setIsRoomsOpen(!isRoomsOpen)}
+            className="h-8 text-xs font-medium gap-1.5 hover:bg-secondary"
+            aria-expanded={isRoomsOpen}
+          >
+            <DoorOpen className="w-3.5 h-3.5" />
+            {isRoomsOpen
+              ? "Hide Rooms"
+              : `View Rooms (${previewRooms.length})`}
+            {isRoomsOpen ? (
+              <ChevronUp className="w-3.5 h-3.5 ml-0.5" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5 ml-0.5" />
+            )}
+          </Button>
+        )}
       </div>
 
       {/* Collapsible Rooms List */}
@@ -218,7 +172,6 @@ export const BuildingSearchResultCard: React.FC<BuildingSearchResultCardProps> =
               <RoomSearchResultCard
                 key={`${roomResult.facilityId}-${roomResult.roomNumber}`}
                 roomResult={roomResult}
-                onBuildingClick={onBuildingClick}
               />
             ))}
           </div>

@@ -164,17 +164,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         [expandedItems, setExpandedItems, scrollToAccordion],
     );
 
-    const handleOpenInAccordion = useCallback(
-        (facilityId: string, type: "library" | "academic") => {
-            setSearchTerm("");
-            // Use setTimeout to ensure accordion list is rendered before scrolling/expanding
-            setTimeout(() => {
-                handleFavoriteClick(facilityId, type);
-            }, 50);
-        },
-        [handleFavoriteClick],
-    );
-
     const matchingRoomsCount = useMemo(() => {
         const allFacilities = facilityData
             ? Object.values(facilityData.facilities)
@@ -358,8 +347,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         hasActiveFilters={hasActiveFilters}
                         onClearFilters={clearFilters}
                         onClearSearch={() => setSearchTerm("")}
-                        onBuildingClick={handleFavoriteClick}
-                        onOpenInAccordion={handleOpenInAccordion}
                     />
                 ) : (
                     <>
