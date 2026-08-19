@@ -150,13 +150,21 @@ const IlliniSpotsPage: React.FC = () => {
   }, [isLibrarySuccess, libraryData, recordLoadMilestone]);
 
   useEffect(() => {
-    const storedShowMap = localStorage.getItem("showMap");
-    setShowMapPreference(storedShowMap === null || storedShowMap === "true");
+    try {
+      const storedShowMap = localStorage.getItem("showMap");
+      setShowMapPreference(storedShowMap === null || storedShowMap === "true");
+    } catch {
+      setShowMapPreference(true);
+    }
   }, []);
 
   useEffect(() => {
-    if (showMapPreference !== null) {
+    if (showMapPreference === null) return;
+
+    try {
       localStorage.setItem("showMap", showMapPreference.toString());
+    } catch {
+      // Continue without persistence when browser storage is unavailable.
     }
   }, [showMapPreference]);
 
