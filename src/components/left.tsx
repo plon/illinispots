@@ -29,14 +29,14 @@ import {
     X,
     LoaderPinwheel,
     MoreHorizontal,
+    Star,
 } from "lucide-react";
-import Fuse from "fuse.js";
 import FacilityAccordion from "@/components/FacilityAccordion";
 import DateTimeButton from "@/components/DateTimeButton";
 import { FavoritesSection } from "@/components/FavoritesSection";
 import { AddFavoritesDialog } from "@/components/AddFavoritesDialog";
-import { Star } from "lucide-react";
 import RoomFilter from "@/components/RoomFilter";
+import { SearchResults } from "@/components/SearchResults";
 import { useFavorites } from "@/hooks/useFavorites";
 import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
@@ -64,7 +64,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const accordionRefs = useRef<AccordionRefs>({});
     const scrollAreaRef = useRef<HTMLDivElement | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
-    const [searchMode, setSearchMode] = useState<"facilities" | "rooms">("facilities");
     const { favorites, toggleFavorite } = useFavorites();
     const { selectedDateTime } = useDateTimeContext();
 
@@ -84,6 +83,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     );
 
     const hasActiveFilters = !!minDuration || !!freeUntil || !!startTime;
+    const isSearching = searchTerm.trim().length > 0;
 
     const scrollToAccordion = useCallback((accordionId: string) => {
         const element = accordionRefs.current[accordionId];
@@ -116,42 +116,18 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         prevExpandedItemsRef.current = expandedItems;
     }, [expandedItems, scrollToAccordion]);
 
-    const filterFacilities = useCallback(
+    const filterFacilitiesByAvailability = useCallback(
         (facilities: Facility[]) => {
-            let filtered = facilities;
-
-            // 1. Filter by availability criteria first (if any)
-            if (hasActiveFilters) {
-                filtered = filtered.filter((facility) => {
-                    // Check if facility has ANY room that matches the criteria
-                    return Object.values(facility.rooms).some((room) =>
-                        isRoomAvailable(room, filterCriteria),
-                    );
-                });
+            if (!hasActiveFilters) {
+                return facilities;
             }
-
-            // 2. Filter by search term
-            if (!searchTerm) {
-                return filtered;
-            }
-
-            if (searchMode === "facilities") {
-                const fuse = new Fuse(filtered, {
-                    keys: ["name"],
-                    threshold: 0.3,
-                    ignoreLocation: true,
-                });
-                return fuse.search(searchTerm).map((result) => result.item);
-            } else {
-                // Search by room names - return facilities that have matching rooms
-                return filtered.filter((facility) =>
-                    Object.keys(facility.rooms).some((roomId) =>
-                        roomId.toLowerCase().includes(searchTerm.toLowerCase()),
-                    ),
+            return facilities.filter((facility) => {
+                return Object.values(facility.rooms).some((room) =>
+                    isRoomAvailable(room, filterCriteria),
                 );
-            }
+            });
         },
-        [searchTerm, searchMode, hasActiveFilters, filterCriteria],
+        [hasActiveFilters, filterCriteria],
     );
 
     const libraryFacilities = useMemo(() => {
@@ -160,8 +136,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 .filter((facility) => facility.type === FacilityType.LIBRARY)
                 .sort((a, b) => a.name.localeCompare(b.name))
             : [];
-        return filterFacilities(allLibraries);
-    }, [facilityData, filterFacilities]);
+        return filterFacilitiesByAvailability(allLibraries);
+    }, [facilityData, filterFacilitiesByAvailability]);
 
     const academicFacilities = useMemo(() => {
         const allAcademic = facilityData
@@ -169,8 +145,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 .filter((facility) => facility.type === FacilityType.ACADEMIC)
                 .sort((a, b) => a.name.localeCompare(b.name))
             : [];
-        return filterFacilities(allAcademic);
-    }, [facilityData, filterFacilities]);
+        return filterFacilitiesByAvailability(allAcademic);
+    }, [facilityData, filterFacilitiesByAvailability]);
 
     const handleFavoriteClick = useCallback(
         (facilityId: string, type: "library" | "academic") => {
@@ -229,9 +205,9 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Search"
+                                placeholder="Search buildings & rooms..."
                                 className={`pl-8 ${searchTerm ? "pr-8" : ""} h-9 md:h-9 rounded-full text-sm`}
-                                aria-label={searchMode === "facilities" ? "Search buildings" : "Search rooms"}
+                                aria-label="Search buildings and rooms"
                             />
                             {searchTerm && (
                                 <button
@@ -253,8 +229,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                             hasActiveFilters={hasActiveFilters}
                             onClearAll={clearFilters}
                             matchingRoomsCount={matchingRoomsCount}
-                            searchMode={searchMode}
-                            setSearchMode={setSearchMode}
                         />
                         <DateTimeButton isFetching={isFetching} />
                         <Popover>
@@ -365,99 +339,112 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 className="flex-1 relative"
                 ref={scrollAreaRef}
             >
-                {" "}
-                <FavoritesSection
-                    favorites={favorites}
-                    facilityData={facilityData}
-                    onFavoriteClick={handleFavoriteClick}
-                    onToggleFavorite={toggleFavorite}
-                />
-                {libraryFacilities.length > 0 ? (
-                    <div className="mt-2">
-                        <h2 className="text-sm font-normal text-muted-foreground pl-6">
-                            Library
-                        </h2>
-                        <Accordion type="multiple" value={expandedItems} className="w-full">
-                            {libraryFacilities.map((facility) => (
-                                <FacilityAccordion
-                                    key={`library-${facility.id}`}
-                                    facility={facility}
-                                    facilityType={FacilityType.LIBRARY}
-                                    expandedItems={expandedItems}
-                                    toggleItem={toggleItem}
-                                    accordionRefs={accordionRefs}
-                                    idPrefix="library"
-                                    // onToggleFavorite removed
-                                    filterCriteria={filterCriteria}
-                                />
-                            ))}
-                        </Accordion>
-                    </div>
-                ) : isLibraryFetching && !searchTerm && !hasActiveFilters ? (
-                    <div
-                        className="mt-2"
-                        role="status"
-                        aria-busy="true"
-                        aria-label="Loading library availability"
-                    >
-                        <h2 className="text-sm font-normal text-muted-foreground pl-6">
-                            Library
-                        </h2>
-                        <span className="sr-only">Loading library availability…</span>
-                        <div aria-hidden="true">
-                            {[0, 1, 2].map((index) => (
-                                <div key={index} className="border-b">
-                                    <div className="h-[38px] px-4 flex items-center justify-between">
-                                        <div
-                                            className={`h-4 rounded bg-muted animate-pulse ${
-                                                index === 0
-                                                    ? "w-44"
-                                                    : index === 1
-                                                      ? "w-32"
-                                                      : "w-28"
-                                            }`}
+                {isSearching ? (
+                    <SearchResults
+                        facilityData={facilityData}
+                        searchTerm={searchTerm}
+                        filterCriteria={filterCriteria}
+                        hasActiveFilters={hasActiveFilters}
+                        onClearFilters={clearFilters}
+                        onClearSearch={() => setSearchTerm("")}
+                    />
+                ) : (
+                    <>
+                        <FavoritesSection
+                            favorites={favorites}
+                            facilityData={facilityData}
+                            onFavoriteClick={handleFavoriteClick}
+                            onToggleFavorite={toggleFavorite}
+                        />
+                        {libraryFacilities.length > 0 ? (
+                            <div className="mt-2">
+                                <h2 className="text-sm font-normal text-muted-foreground pl-6">
+                                    Library
+                                </h2>
+                                <Accordion type="multiple" value={expandedItems} className="w-full">
+                                    {libraryFacilities.map((facility) => (
+                                        <FacilityAccordion
+                                            key={`library-${facility.id}`}
+                                            facility={facility}
+                                            facilityType={FacilityType.LIBRARY}
+                                            expandedItems={expandedItems}
+                                            toggleItem={toggleItem}
+                                            accordionRefs={accordionRefs}
+                                            idPrefix="library"
+                                            filterCriteria={filterCriteria}
                                         />
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-[22px] w-12 rounded-full bg-muted animate-pulse" />
-                                            <div className="h-4 w-4 rounded bg-muted animate-pulse" />
+                                    ))}
+                                </Accordion>
+                            </div>
+                        ) : isLibraryFetching && !hasActiveFilters ? (
+                            <div
+                                className="mt-2"
+                                role="status"
+                                aria-busy="true"
+                                aria-label="Loading library availability"
+                            >
+                                <h2 className="text-sm font-normal text-muted-foreground pl-6">
+                                    Library
+                                </h2>
+                                <span className="sr-only">Loading library availability…</span>
+                                <div aria-hidden="true">
+                                    {[0, 1, 2].map((index) => (
+                                        <div key={index} className="border-b">
+                                            <div className="h-[38px] px-4 flex items-center justify-between">
+                                                <div
+                                                    className={`h-4 rounded bg-muted animate-pulse ${
+                                                        index === 0
+                                                            ? "w-44"
+                                                            : index === 1
+                                                              ? "w-32"
+                                                              : "w-28"
+                                                    }`}
+                                                />
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-[22px] w-12 rounded-full bg-muted animate-pulse" />
+                                                    <div className="h-4 w-4 rounded bg-muted animate-pulse" />
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                ) : searchTerm && academicFacilities.length === 0 ? null : null}
-                {/* Academic Buildings Section */}
-                {academicFacilities.length > 0 ? (
-                    <div className="mt-5">
-                        <h2 className="text-sm font-normal text-muted-foreground pl-6">
-                            Academic
-                        </h2>
-                        <Accordion type="multiple" value={expandedItems} className="w-full">
-                            {academicFacilities.map((facility) => (
-                                <FacilityAccordion
-                                    key={`building-${facility.id}`}
-                                    facility={facility}
-                                    facilityType={FacilityType.ACADEMIC}
-                                    expandedItems={expandedItems}
-                                    toggleItem={toggleItem}
-                                    accordionRefs={accordionRefs}
-                                    idPrefix="building"
-                                    filterCriteria={filterCriteria}
-                                />
-                            ))}
-                        </Accordion>
-                    </div>
-                ) : searchTerm && libraryFacilities.length === 0 ? null : null}
-                {/* No Results Message */}
-                {(searchTerm || hasActiveFilters) &&
-                    libraryFacilities.length === 0 &&
-                    academicFacilities.length === 0 && (
-                        <p className="text-center text-muted-foreground text-sm mt-6 px-4">
-                            No results found matching your criteria
-                        </p>
-                    )}
-                <div className="h-4"></div>
+                            </div>
+                        ) : null}
+
+                        {/* Academic Buildings Section */}
+                        {academicFacilities.length > 0 && (
+                            <div className="mt-5">
+                                <h2 className="text-sm font-normal text-muted-foreground pl-6">
+                                    Academic
+                                </h2>
+                                <Accordion type="multiple" value={expandedItems} className="w-full">
+                                    {academicFacilities.map((facility) => (
+                                        <FacilityAccordion
+                                            key={`building-${facility.id}`}
+                                            facility={facility}
+                                            facilityType={FacilityType.ACADEMIC}
+                                            expandedItems={expandedItems}
+                                            toggleItem={toggleItem}
+                                            accordionRefs={accordionRefs}
+                                            idPrefix="building"
+                                            filterCriteria={filterCriteria}
+                                        />
+                                    ))}
+                                </Accordion>
+                            </div>
+                        )}
+
+                        {/* No Results Message for active filters */}
+                        {hasActiveFilters &&
+                            libraryFacilities.length === 0 &&
+                            academicFacilities.length === 0 && (
+                                <p className="text-center text-muted-foreground text-sm mt-6 px-4">
+                                    No results found matching your criteria
+                                </p>
+                            )}
+                        <div className="h-4"></div>
+                    </>
+                )}
             </ScrollArea>
 
             {/* Dimming Overlay*/}

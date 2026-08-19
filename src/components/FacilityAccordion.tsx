@@ -32,7 +32,7 @@ interface FacilityAccordionProps {
   filterCriteria?: FilterCriteria;
 }
 
-const getRoomAvailabilityMessage = (room: LibraryRoom): React.ReactNode => {
+export const getRoomAvailabilityMessage = (room: LibraryRoom): React.ReactNode => {
   if (room.status === RoomStatus.UNAVAILABLE) {
     return <span className="text-xs text-muted-foreground">Unavailable</span>;
   } else if (room.status === RoomStatus.AVAILABLE) {

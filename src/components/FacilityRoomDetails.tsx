@@ -79,7 +79,7 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
   );
 };
 
-const RoomSchedule = ({ slots }: RoomScheduleProps) => {
+export const RoomSchedule = ({ slots }: RoomScheduleProps) => {
   const slotDurations = useMemo(() => {
     if (slots.length === 0) return { common: 0, all: [] };
 
