@@ -8,7 +8,6 @@ import { formatTime } from "@/utils/format";
 export default function FacilityMap({
   facilityData,
   onMarkerClick,
-  onMapLoaded,
 }: MapProps) {
   const handleMarkerClick = useCallback(
     (id: string, type: FacilityType) => onMarkerClick(id, type),
@@ -22,59 +21,80 @@ export default function FacilityMap({
   >(new Map());
   const activePopupRef = useRef<mapboxgl.Popup | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!mapContainer.current) return;
 
-    const styleUrl = process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL;
+    setIsMapLoaded(false);
+    setMapError(null);
 
+    const styleUrl = process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL;
     const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+
     if (!styleUrl || !token) {
-      console.error(
-        "Mapbox style and access token are not configured.",
-      );
+      console.error("Mapbox style and access token are not configured.");
+      setMapError("The map is not configured.");
       return;
     }
-    if (token) {
-      mapboxgl.accessToken = token;
-    }
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: styleUrl,
-      // minZoom: 15.2,
-      antialias: true,
-    });
+    mapboxgl.accessToken = token;
 
-    map.current.on("load", () => {
-      setIsMapLoaded(true);
-      onMapLoaded?.();
+    try {
+      const mapInstance = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: styleUrl,
+        // minZoom: 15.2,
+        antialias: true,
+      });
+      let hasLoaded = false;
 
-      // Hide/show POI labels depending on zoom level using Mapbox Standard basemap config
-      const m = map.current!;
-      const POI_MIN_VISIBLE_ZOOM = 17; // Hide POI labels below this zoom
+      map.current = mapInstance;
 
-      const applyPoiVisibility = () => {
-        const show = m.getZoom() >= POI_MIN_VISIBLE_ZOOM;
-        try {
-          m.setConfigProperty("basemap", "showPointOfInterestLabels", show);
-        } catch {
-          // Non-standard style or config not supported
+      mapInstance.on("error", (event) => {
+        console.error("Mapbox failed to load:", event.error);
+        if (!hasLoaded) {
+          setMapError("The map could not be loaded.");
         }
-      };
+      });
 
-      // Initialize and bind to zoom updates
-      applyPoiVisibility();
-      m.on("zoom", applyPoiVisibility);
-    });
+      mapInstance.on("load", () => {
+        hasLoaded = true;
+        setMapError(null);
+        setIsMapLoaded(true);
 
-    map.current.addControl(new mapboxgl.NavigationControl());
-    map.current.addControl(
-      new mapboxgl.GeolocateControl({
-        positionOptions: { enableHighAccuracy: true },
-        trackUserLocation: true,
-      }),
-    );
+        // Hide/show POI labels depending on zoom level using Mapbox Standard basemap config
+        const POI_MIN_VISIBLE_ZOOM = 17; // Hide POI labels below this zoom
+
+        const applyPoiVisibility = () => {
+          const show = mapInstance.getZoom() >= POI_MIN_VISIBLE_ZOOM;
+          try {
+            mapInstance.setConfigProperty(
+              "basemap",
+              "showPointOfInterestLabels",
+              show,
+            );
+          } catch {
+            // Non-standard style or config not supported
+          }
+        };
+
+        // Initialize and bind to zoom updates
+        applyPoiVisibility();
+        mapInstance.on("zoom", applyPoiVisibility);
+      });
+
+      mapInstance.addControl(new mapboxgl.NavigationControl());
+      mapInstance.addControl(
+        new mapboxgl.GeolocateControl({
+          positionOptions: { enableHighAccuracy: true },
+          trackUserLocation: true,
+        }),
+      );
+    } catch (error) {
+      console.error("Mapbox initialization failed:", error);
+      setMapError("The map could not be loaded.");
+    }
 
     return () => {
       if (map.current) {
@@ -82,7 +102,7 @@ export default function FacilityMap({
         map.current = null;
       }
     };
-  }, [onMapLoaded]);
+  }, []);
 
   useEffect(() => {
     if (!map.current || !isMapLoaded || !facilityData) return;
@@ -412,5 +432,34 @@ export default function FacilityMap({
     };
   }, [facilityData, handleMarkerClick, isMapLoaded]);
 
-  return <div ref={mapContainer} className="w-full h-full" />;
+  return (
+    <div className="relative h-full w-full bg-background">
+      <div ref={mapContainer} className="h-full w-full" />
+
+      {!isMapLoaded && !mapError && (
+        <div
+          className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="h-2 w-48 overflow-hidden rounded-full bg-gray-200">
+            <div className="loading-bar h-full" />
+          </div>
+          <span className="text-sm text-muted-foreground">Loading map…</span>
+        </div>
+      )}
+
+      {mapError && (
+        <div
+          className="absolute inset-0 z-10 flex items-center justify-center bg-background p-6 text-center"
+          role="alert"
+        >
+          <div>
+            <p className="font-medium">Map unavailable</p>
+            <p className="mt-1 text-sm text-muted-foreground">{mapError}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
