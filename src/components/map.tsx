@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback } from "react";
 import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 import { MarkerData, MapProps, FacilityType } from "@/types";
 import { formatTime } from "@/utils/format";
 import {
@@ -86,7 +87,7 @@ export default function FacilityMap({
         recordMapOutcome("success");
         if (trackInitialLoadRef.current && !mapReadyRecorded.current) {
           mapReadyRecorded.current = true;
-          recordInitialLoadMilestone("map_ready");
+          recordInitialLoadMilestone("map_ready", true);
         }
         setMapError(null);
         setIsMapLoaded(true);
