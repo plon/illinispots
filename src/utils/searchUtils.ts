@@ -162,6 +162,16 @@ export const performSearch = (
   }
 
   const roomItems: RoomSearchItem[] = [];
+  const toSearchResultRoom = (item: RoomSearchItem): SearchResultRoom => ({
+    type: "room",
+    roomNumber: item.roomNumber,
+    facilityId: item.facilityId,
+    facilityName: item.facilityName,
+    facilityType: item.facilityType,
+    room: item.room,
+    facility: item.facility,
+    score: 0.5,
+  });
 
   facilities.forEach((facility) => {
     const aliases = getBuildingAliases(facility.name);
@@ -454,9 +464,23 @@ export const performSearch = (
     return a.facilityName.localeCompare(b.facilityName);
   });
 
+  // Keep a filtered room fallback for building cards. The room fuzzy search
+  // can be skipped once enough direct room matches exist, but a fuzzy building
+  // result still needs rooms that satisfy the active availability filters.
+  const eligibleRoomsByFacility = new Map<string, SearchResultRoom[]>();
+  roomItems.forEach((item) => {
+    const rooms = eligibleRoomsByFacility.get(item.facilityId) ?? [];
+    rooms.push(toSearchResultRoom(item));
+    eligibleRoomsByFacility.set(item.facilityId, rooms);
+  });
+
   // Attach matching rooms to building results for rich preview
   buildingResults.forEach((b) => {
-    b.matchingRooms = allRooms.filter((r) => r.facilityId === b.facilityId);
+    const matchingRooms = allRooms.filter((r) => r.facilityId === b.facilityId);
+    b.matchingRooms =
+      matchingRooms.length > 0 || !hasActiveFilters
+        ? matchingRooms
+        : eligibleRoomsByFacility.get(b.facilityId) ?? [];
   });
 
   return {
