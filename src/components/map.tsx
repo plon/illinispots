@@ -4,10 +4,16 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import mapboxgl from "mapbox-gl";
 import { MarkerData, MapProps, FacilityType } from "@/types";
 import { formatTime } from "@/utils/format";
+import {
+  recordInitialLoadMilestone,
+  recordMapLoadDuration,
+  type MapLoadResult,
+} from "@/utils/loadingMetrics";
 
 export default function FacilityMap({
   facilityData,
   onMarkerClick,
+  trackInitialLoad,
 }: MapProps) {
   const handleMarkerClick = useCallback(
     (id: string, type: FacilityType) => onMarkerClick(id, type),
@@ -20,11 +26,26 @@ export default function FacilityMap({
     Map<string, { marker: mapboxgl.Marker; data: MarkerData }>
   >(new Map());
   const activePopupRef = useRef<mapboxgl.Popup | null>(null);
+  const trackInitialLoadRef = useRef(trackInitialLoad);
+  const mapLoadOutcomeRecorded = useRef(false);
+  const mapReadyRecorded = useRef(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!mapContainer.current) return;
+
+    const mapLoadStartedAt = performance.now();
+    const recordMapOutcome = (result: MapLoadResult) => {
+      if (mapLoadOutcomeRecorded.current) return;
+
+      mapLoadOutcomeRecorded.current = true;
+      recordMapLoadDuration(
+        performance.now() - mapLoadStartedAt,
+        result,
+        trackInitialLoadRef.current,
+      );
+    };
 
     setIsMapLoaded(false);
     setMapError(null);
@@ -34,6 +55,7 @@ export default function FacilityMap({
 
     if (!styleUrl || !token) {
       console.error("Mapbox style and access token are not configured.");
+      recordMapOutcome("missing_configuration");
       setMapError("The map is not configured.");
       return;
     }
@@ -54,12 +76,18 @@ export default function FacilityMap({
       mapInstance.on("error", (event) => {
         console.error("Mapbox failed to load:", event.error);
         if (!hasLoaded) {
+          recordMapOutcome("load_error");
           setMapError("The map could not be loaded.");
         }
       });
 
       mapInstance.on("load", () => {
         hasLoaded = true;
+        recordMapOutcome("success");
+        if (trackInitialLoadRef.current && !mapReadyRecorded.current) {
+          mapReadyRecorded.current = true;
+          recordInitialLoadMilestone("map_ready");
+        }
         setMapError(null);
         setIsMapLoaded(true);
 
@@ -93,6 +121,7 @@ export default function FacilityMap({
       );
     } catch (error) {
       console.error("Mapbox initialization failed:", error);
+      recordMapOutcome("initialization_error");
       setMapError("The map could not be loaded.");
     }
 

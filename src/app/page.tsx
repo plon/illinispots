@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { getUpdatedAccordionItems } from "@/utils/accordion";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import moment from "moment-timezone";
@@ -9,6 +15,10 @@ import FacilityMap from "@/components/map";
 import LoadingScreen from "@/components/LoadingScreen" // Ensure path is correct
 import { FacilityStatus, FacilityType } from "@/types";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
+import {
+  recordInitialLoadMilestone,
+  type InitialLoadMilestone,
+} from "@/utils/loadingMetrics";
 
 const fetchFacilityData = async (
   selectedDateTime: Date,
@@ -39,6 +49,17 @@ const IlliniSpotsPage: React.FC = () => {
 
   const [showLoadingScreen, setShowLoadingScreen] = useState(true);
   const [mountLoadingScreen, setMountLoadingScreen] = useState(true);
+  const recordedLoadMilestones = useRef(new Set<InitialLoadMilestone>());
+
+  const recordLoadMilestone = useCallback(
+    (milestone: InitialLoadMilestone) => {
+      if (recordedLoadMilestones.current.has(milestone)) return;
+
+      recordedLoadMilestones.current.add(milestone);
+      recordInitialLoadMilestone(milestone);
+    },
+    [],
+  );
 
   const {
     data: academicData,
@@ -60,6 +81,7 @@ const IlliniSpotsPage: React.FC = () => {
   const {
     data: libraryData,
     isFetching: isLibraryFetching,
+    isSuccess: isLibrarySuccess,
   } = useQuery<FacilityStatus, Error>({
     queryKey: ["facilities", "library", selectedDateTime.toISOString()],
     queryFn: () => fetchFacilityData(selectedDateTime, "library"),
@@ -91,6 +113,18 @@ const IlliniSpotsPage: React.FC = () => {
   }, [academicData, libraryData]);
 
   const error = academicQueryError ? academicQueryError.message : null;
+
+  useEffect(() => {
+    if (isAcademicSuccess && academicData) {
+      recordLoadMilestone("academic_data_ready");
+    }
+  }, [academicData, isAcademicSuccess, recordLoadMilestone]);
+
+  useEffect(() => {
+    if (isLibrarySuccess && libraryData) {
+      recordLoadMilestone("library_data_ready");
+    }
+  }, [isLibrarySuccess, libraryData, recordLoadMilestone]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -133,14 +167,16 @@ const IlliniSpotsPage: React.FC = () => {
   // Effect to trigger the loading screen fade-out when the UI is ready
   useEffect(() => {
     if (isUIReady) {
+      recordLoadMilestone("content_ready");
       setShowLoadingScreen(false);
     }
-  }, [isUIReady]);
+  }, [isUIReady, recordLoadMilestone]);
 
   // Callback function passed to LoadingScreen, called when its fade-out transition ends
   const handleLoadingScreenExited = useCallback(() => {
+    recordLoadMilestone("loading_screen_exited");
     setMountLoadingScreen(false);
-  }, []);
+  }, [recordLoadMilestone]);
 
   const showFetchingOverlay =
     isAcademicFetching && !isAcademicLoading;
@@ -167,6 +203,7 @@ const IlliniSpotsPage: React.FC = () => {
             <FacilityMap
               facilityData={isDataReady ? facilityData : null}
               onMarkerClick={handleMarkerClick}
+              trackInitialLoad={mountLoadingScreen}
             />
           </div>
         )}
