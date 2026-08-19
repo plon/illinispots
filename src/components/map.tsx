@@ -34,6 +34,10 @@ export default function FacilityMap({
   const [mapError, setMapError] = useState<string | null>(null);
 
   useEffect(() => {
+    trackInitialLoadRef.current = trackInitialLoad;
+  }, [trackInitialLoad]);
+
+  useEffect(() => {
     if (!mapContainer.current) return;
 
     const mapLoadStartedAt = performance.now();
