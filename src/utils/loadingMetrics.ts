@@ -15,6 +15,7 @@ export type MapLoadResult =
 
 export function recordInitialLoadMilestone(
   milestone: InitialLoadMilestone,
+  mapEnabled: boolean,
 ): void {
   if (typeof performance === "undefined") return;
 
@@ -24,7 +25,10 @@ export function recordInitialLoadMilestone(
       performance.now(),
       {
         unit: "millisecond",
-        attributes: { milestone },
+        attributes: {
+          milestone,
+          map_enabled: mapEnabled,
+        },
       },
     );
   } catch (error) {

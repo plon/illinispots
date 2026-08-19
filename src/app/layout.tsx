@@ -68,11 +68,6 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="illiniSpots" />
         <link rel="canonical" href="https://illinispots.com/" />
         <link rel="manifest" href="/manifest.json" />
-        <link
-          rel="stylesheet"
-          href="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.css"
-          crossOrigin="anonymous"
-        />
       </head>
       <body className={inter.className}>
         <Providers>

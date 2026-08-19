@@ -10,15 +10,31 @@ import React, {
 import { getUpdatedAccordionItems } from "@/utils/accordion";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import moment from "moment-timezone";
+import dynamic from "next/dynamic";
 import LeftSidebar from "@/components/left";
-import FacilityMap from "@/components/map";
-import LoadingScreen from "@/components/LoadingScreen" // Ensure path is correct
+import LoadingScreen from "@/components/LoadingScreen";
 import { FacilityStatus, FacilityType } from "@/types";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
 import {
   recordInitialLoadMilestone,
   type InitialLoadMilestone,
 } from "@/utils/loadingMetrics";
+
+const FacilityMap = dynamic(() => import("@/components/map"), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="flex h-full w-full flex-col items-center justify-center gap-3 bg-background"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="h-2 w-48 overflow-hidden rounded-full bg-gray-200">
+        <div className="loading-bar h-full" />
+      </div>
+      <span className="text-sm text-muted-foreground">Loading map…</span>
+    </div>
+  ),
+});
 
 const fetchFacilityData = async (
   selectedDateTime: Date,
@@ -44,7 +60,9 @@ const fetchFacilityData = async (
 
 const IlliniSpotsPage: React.FC = () => {
   const { selectedDateTime } = useDateTimeContext();
-  const [showMap, setShowMap] = useState(true);
+  const [showMapPreference, setShowMapPreference] = useState<boolean | null>(
+    null,
+  );
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   const [showLoadingScreen, setShowLoadingScreen] = useState(true);
@@ -53,12 +71,17 @@ const IlliniSpotsPage: React.FC = () => {
 
   const recordLoadMilestone = useCallback(
     (milestone: InitialLoadMilestone) => {
-      if (recordedLoadMilestones.current.has(milestone)) return;
+      if (
+        showMapPreference === null ||
+        recordedLoadMilestones.current.has(milestone)
+      ) {
+        return;
+      }
 
       recordedLoadMilestones.current.add(milestone);
-      recordInitialLoadMilestone(milestone);
+      recordInitialLoadMilestone(milestone, showMapPreference);
     },
-    [],
+    [showMapPreference],
   );
 
   const {
@@ -127,19 +150,35 @@ const IlliniSpotsPage: React.FC = () => {
   }, [isLibrarySuccess, libraryData, recordLoadMilestone]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    try {
       const storedShowMap = localStorage.getItem("showMap");
-      if (storedShowMap !== null) {
-        setShowMap(storedShowMap === "true");
-      }
+      setShowMapPreference(storedShowMap === null || storedShowMap === "true");
+    } catch {
+      setShowMapPreference(true);
     }
   }, []);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("showMap", showMap.toString());
+    if (showMapPreference === null) return;
+
+    try {
+      localStorage.setItem("showMap", showMapPreference.toString());
+    } catch {
+      // Continue without persistence when browser storage is unavailable.
     }
-  }, [showMap]);
+  }, [showMapPreference]);
+
+  const setShowMap = useCallback<React.Dispatch<React.SetStateAction<boolean>>>(
+    (value) => {
+      setShowMapPreference((currentValue) => {
+        const hydratedValue = currentValue ?? true;
+        return typeof value === "function" ? value(hydratedValue) : value;
+      });
+    },
+    [],
+  );
+
+  const showMap = showMapPreference === true;
 
   const handleMarkerClick = useCallback(
     (id: string, facilityType: FacilityType) => {
