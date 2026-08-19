@@ -250,7 +250,10 @@ export const performSearch = (
       });
     });
 
-    if (buildingScore >= 0.4) {
+    // Do not return a building that has no rooms matching the active
+    // availability filters. Otherwise its card falls back to rendering all
+    // facility rooms, including rooms that were filtered out.
+    if (buildingScore >= 0.4 && (!hasActiveFilters || availableRoomsCount > 0)) {
       buildingResults.push({
         type: "building",
         facilityId: facility.id,
@@ -403,17 +406,19 @@ export const performSearch = (
         }).length;
         const totalRoomsCount = facility.roomCounts?.total ?? Object.keys(facility.rooms).length;
 
-        buildingResults.push({
-          type: "building",
-          facilityId: facility.id,
-          facilityName: facility.name,
-          facilityType: facility.type,
-          facility,
-          score: Math.max(0.45, 1 - (res.score ?? 0.5) * 0.7),
-          availableRoomsCount,
-          totalRoomsCount,
-          matchingRooms: [],
-        });
+        if (!hasActiveFilters || availableRoomsCount > 0) {
+          buildingResults.push({
+            type: "building",
+            facilityId: facility.id,
+            facilityName: facility.name,
+            facilityType: facility.type,
+            facility,
+            score: Math.max(0.45, 1 - (res.score ?? 0.5) * 0.7),
+            availableRoomsCount,
+            totalRoomsCount,
+            matchingRooms: [],
+          });
+        }
       }
     });
   }
