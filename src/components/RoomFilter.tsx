@@ -12,7 +12,7 @@ import {
     DrawerTrigger,
 } from "@/components/ui/drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { ListFilter, Hourglass, Clock, Building2, DoorOpen, Search } from "lucide-react";
+import { ListFilter, Hourglass, Clock } from "lucide-react";
 
 const PRESET_DURATIONS = [30, 60, 120, 240] as const;
 const MIN_CUSTOM_DURATION = 1;
@@ -27,8 +27,6 @@ interface RoomFilterPopoverProps {
     hasActiveFilters: boolean;
     onClearAll: () => void;
     matchingRoomsCount: number;
-    searchMode: "facilities" | "rooms";
-    setSearchMode: (mode: "facilities" | "rooms") => void;
 }
 
 const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
@@ -41,8 +39,6 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
     hasActiveFilters,
     onClearAll,
     matchingRoomsCount,
-    searchMode,
-    setSearchMode,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -138,38 +134,7 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                     )}
                 </div>
 
-                <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">
-                        <Search size={14} className="text-muted-foreground" />
-                        Search By
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                        <Button
-                            variant={searchMode === "facilities" ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSearchMode("facilities")}
-                            className={`h-9 text-xs font-medium transition-all flex items-center gap-1.5 ${searchMode === "facilities"
-                                ? "shadow-sm"
-                                : "hover:border-primary/50 hover:bg-primary/5"
-                                }`}
-                        >
-                            <Building2 size={14} />
-                            Building
-                        </Button>
-                        <Button
-                            variant={searchMode === "rooms" ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSearchMode("rooms")}
-                            className={`h-9 text-xs font-medium transition-all flex items-center gap-1.5 ${searchMode === "rooms"
-                                ? "shadow-sm"
-                                : "hover:border-primary/50 hover:bg-primary/5"
-                                }`}
-                        >
-                            <DoorOpen size={14} />
-                            Room
-                        </Button>
-                    </div>
-                </div>
+
 
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
