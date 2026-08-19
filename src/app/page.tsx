@@ -34,7 +34,6 @@ const fetchFacilityData = async (
 
 const IlliniSpotsPage: React.FC = () => {
   const { selectedDateTime } = useDateTimeContext();
-  const [mapLoaded, setMapLoaded] = useState(false);
   const [showMap, setShowMap] = useState(true);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
@@ -126,14 +125,9 @@ const IlliniSpotsPage: React.FC = () => {
     [],
   );
 
-  const handleMapLoaded = useCallback(() => {
-    setMapLoaded(true);
-  }, []);
-
   const isDataReady =
     !isAcademicLoading && isAcademicSuccess && !!facilityData && !error;
-  const isMapReady = !showMap || mapLoaded;
-  const isUIReady = isDataReady && isMapReady;
+  const isUIReady = isDataReady;
   const loadingScreenError = error && !isAcademicLoading ? error : null;
 
   // Effect to trigger the loading screen fade-out when the UI is ready
@@ -173,7 +167,6 @@ const IlliniSpotsPage: React.FC = () => {
             <FacilityMap
               facilityData={isDataReady ? facilityData : null}
               onMarkerClick={handleMarkerClick}
-              onMapLoaded={handleMapLoaded}
             />
           </div>
         )}
