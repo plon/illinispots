@@ -1,5 +1,5 @@
 import moment from "moment-timezone";
-import { formatTime } from "@/utils/format";
+import { formatTime } from "./format";
 
 export interface LibraryHours {
   [key: string]: {
@@ -118,4 +118,3 @@ export const getLibraryHoursMessage = (
 
   return `Reservable hours for ${dayOfWeek}: ${openFormatted} - ${closeFormatted}${hours.nextDay ? " (next day)" : ""}`;
 };
-

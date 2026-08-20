@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/HybridTooltip";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import moment from "moment-timezone";
-import Image from "next/image";
 
 const TimeBlock = ({ slot }: TimeBlockProps) => {
   const startTime = moment.tz(`1970-01-01T${slot.start}`, "America/Chicago");
@@ -196,14 +195,13 @@ export default function FacilityRoomDetails({
                   {isImageLoading && (
                     <div className="absolute inset-0 w-full h-full bg-gray-300 animate-pulse rounded-md" />
                   )}
-                  <Image
+                  <img
                     src={libraryRoom.thumbnail}
                     alt={`${roomName} thumbnail`}
-                    fill
-                    className="object-cover rounded-md"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    priority
-                    onLoadingComplete={() => setIsImageLoading(false)}
+                    className="absolute inset-0 h-full w-full rounded-md object-cover"
+                    loading="lazy"
+                    decoding="async"
+                    onLoad={() => setIsImageLoading(false)}
                   />
                 </div>
               </DialogContent>

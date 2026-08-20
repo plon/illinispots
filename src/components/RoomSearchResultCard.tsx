@@ -17,7 +17,6 @@ import {
   Image as ImageIcon,
   Clock,
 } from "lucide-react";
-import Image from "next/image";
 
 interface RoomSearchResultCardProps {
   roomResult: SearchResultRoom;
@@ -187,14 +186,13 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
                       {isImageLoading && (
                         <div className="absolute inset-0 w-full h-full bg-gray-300 animate-pulse rounded-md" />
                       )}
-                      <Image
+                      <img
                         src={libraryRoom.thumbnail}
                         alt={`${roomNumber} thumbnail`}
-                        fill
-                        className="object-cover rounded-md"
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        priority
-                        onLoadingComplete={() => setIsImageLoading(false)}
+                        className="absolute inset-0 h-full w-full rounded-md object-cover"
+                        loading="lazy"
+                        decoding="async"
+                        onLoad={() => setIsImageLoading(false)}
                       />
                     </div>
                   </DialogContent>

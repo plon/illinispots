@@ -1,0 +1,13 @@
+.env*
+.github
+.tanstack
+.vercel
+coverage
+data-pipeline
+database
+dist
+node_modules
+supabase
+*.tsbuildinfo
+Dockerfile
+README.md
