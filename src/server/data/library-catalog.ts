@@ -10,7 +10,7 @@ export const LIBRARIES: Libraries = {
   "Grainger Engineering Library": {
     id: "3606",
     name: "Grainger Engineering Library",
-    num_rooms: 15,
+    num_rooms: 9,
     address: "1301 W Springfield Ave, Urbana, IL 61801",
   },
   "Main Library": {
@@ -116,15 +116,6 @@ export const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
       thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_clb.jpg",
     },
     {
-      id: "eid_25438",
-      title: "409",
-      url: "https://libcal.library.illinois.edu/space/25438",
-      eid: 25438,
-      lid: 3606,
-      grouping: "Group Room",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_4cap.jpg",
-    },
-    {
       id: "eid_25439",
       title: "410 collaboration",
       url: "https://libcal.library.illinois.edu/space/25439",
@@ -141,15 +132,6 @@ export const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
       lid: 3606,
       grouping: "Group Room",
       thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_4cap.jpg",
-    },
-    {
-      id: "eid_25441",
-      title: "412",
-      url: "https://libcal.library.illinois.edu/space/25441",
-      eid: 25441,
-      lid: 3606,
-      grouping: "Group Room",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_8cap.jpg",
     },
     {
       id: "eid_25442",
