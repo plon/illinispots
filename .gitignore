@@ -48,3 +48,10 @@ venv/
 # Cron
 logs/
 .env*
+
+# Generated data-pipeline artifacts
+/data-pipeline/data/subjects.json
+/data-pipeline/data/buildings_derived.json
+/data-pipeline/data/buildings_filtered.json
+/data-pipeline/data/buildings_enriched.json
+/data-pipeline/data/buildings.json
