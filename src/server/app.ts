@@ -12,10 +12,15 @@ import {
   type RoomScheduleRouteDependencies,
 } from "./routes/room-schedule";
 import { Sentry, sentryTracing } from "./observability";
+import { getPublicClientConfig } from "./config";
+import { injectClientConfig, loadIndexHtml } from "./html";
 
 export interface AppDependencies {
   facilities?: FacilitiesRouteDependencies;
   roomSchedule?: RoomScheduleRouteDependencies;
+  indexHtmlPath?: string;
+  rawIndexHtml?: string;
+  environment?: Record<string, string | undefined>;
 }
 
 export function createApp(dependencies: AppDependencies = {}) {
@@ -107,23 +112,48 @@ export function createApp(dependencies: AppDependencies = {}) {
     context.json({ error: "API route not found" }, 404),
   );
 
-  if (isProduction) {
+  if (isProduction || dependencies.rawIndexHtml) {
+    const rawHtml =
+      dependencies.rawIndexHtml ??
+      loadIndexHtml(dependencies.indexHtmlPath ?? "./dist/client/index.html");
+    const clientConfig = getPublicClientConfig(
+      dependencies.environment ?? process.env,
+    );
+    const injectedHtml = rawHtml
+      ? injectClientConfig(rawHtml, clientConfig)
+      : "";
+
+    app.use(
+      "/assets/*",
+      serveStatic({
+        root: "./dist/client",
+        precompressed: true,
+        onFound: (_path, context) => {
+          context.header(
+            "Cache-Control",
+            "public, max-age=31536000, immutable",
+          );
+        },
+      }),
+    );
+
     app.use(
       "*",
       serveStatic({
         root: "./dist/client",
         precompressed: true,
-        onFound: (path, context) => {
-          if (path.includes("/assets/")) {
-            context.header(
-              "Cache-Control",
-              "public, max-age=31536000, immutable",
-            );
+        rewriteRequestPath: (path) => {
+          if (path === "/" || path === "/index.html") {
+            return "/__bypass_static_html__";
           }
+          return path;
         },
       }),
     );
-    app.get("*", serveStatic({ path: "./dist/client/index.html" }));
+
+    if (injectedHtml) {
+      app.get("*", (context) => context.html(injectedHtml));
+    }
   }
 
   app.notFound((context) =>

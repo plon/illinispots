@@ -102,7 +102,7 @@ VITE_MAPBOX_ACCESS_TOKEN=your_public_mapbox_token
 VITE_MAPBOX_STYLE_URL=mapbox://styles/<user>/<style-id>
 ```
 
-`SUPABASE_PUBLISHABLE_KEY` is used by the Hono server for read-only database queries. The public Mapbox configuration is supplied directly to the client via Vite environment variables. Writing pipeline scrapers (`data-pipeline/`) use `SUPABASE_SECRET_KEY` (service role).
+`SUPABASE_PUBLISHABLE_KEY` is used by the Hono server for read-only database queries. In local development, Mapbox and Sentry configuration is read from `.env` (`VITE_*`). In production/staging, the server injects configuration at runtime from environment variables / Fly secrets. Writing pipeline scrapers (`data-pipeline/`) use `SUPABASE_SECRET_KEY` (service role).
 4) Run locally
 
 ```bash

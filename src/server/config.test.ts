@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import {
+  getPublicClientConfig,
   getServerConfig,
   getSupabaseConfig,
   resolveAppEnvironment,
@@ -80,5 +81,36 @@ describe("getSupabaseConfig", () => {
     expect(() =>
       getSupabaseConfig({ SUPABASE_PUBLISHABLE_KEY: "pub_key_123" }),
     ).toThrow(ServerConfigurationError);
+  });
+});
+
+describe("getPublicClientConfig", () => {
+  it("resolves public client config from standard or VITE_ prefixed environment variables", () => {
+    expect(
+      getPublicClientConfig({
+        APP_ENV: "staging",
+        MAPBOX_ACCESS_TOKEN: "pk.standard_token",
+        MAPBOX_STYLE_URL: "mapbox://styles/standard",
+        SENTRY_DSN: "https://standard@sentry.io/1",
+      }),
+    ).toEqual({
+      appEnv: "staging",
+      mapboxAccessToken: "pk.standard_token",
+      mapboxStyleUrl: "mapbox://styles/standard",
+      sentryDsn: "https://standard@sentry.io/1",
+    });
+
+    expect(
+      getPublicClientConfig({
+        VITE_MAPBOX_ACCESS_TOKEN: "pk.vite_token",
+        VITE_MAPBOX_STYLE_URL: "mapbox://styles/vite",
+        VITE_SENTRY_DSN: "https://vite@sentry.io/2",
+      }),
+    ).toEqual({
+      appEnv: "development",
+      mapboxAccessToken: "pk.vite_token",
+      mapboxStyleUrl: "mapbox://styles/vite",
+      sentryDsn: "https://vite@sentry.io/2",
+    });
   });
 });

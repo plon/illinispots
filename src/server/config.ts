@@ -54,3 +54,30 @@ export function getServerConfig(
     sentryDsn: environment.SENTRY_DSN,
   };
 }
+
+export interface PublicClientConfig {
+  appEnv: string;
+  mapboxAccessToken?: string;
+  mapboxStyleUrl?: string;
+  sentryDsn?: string;
+}
+
+export function getPublicClientConfig(
+  environment: EnvironmentVariables = process.env,
+): PublicClientConfig {
+  return {
+    appEnv: resolveAppEnvironment(environment),
+    mapboxAccessToken:
+      environment.MAPBOX_ACCESS_TOKEN ||
+      environment.VITE_MAPBOX_ACCESS_TOKEN ||
+      "",
+    mapboxStyleUrl:
+      environment.MAPBOX_STYLE_URL ||
+      environment.VITE_MAPBOX_STYLE_URL ||
+      "",
+    sentryDsn:
+      environment.SENTRY_DSN ||
+      environment.VITE_SENTRY_DSN ||
+      "",
+  };
+}

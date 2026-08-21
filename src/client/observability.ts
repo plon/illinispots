@@ -1,15 +1,12 @@
 import * as Sentry from "@sentry/react";
 import type { AnyRouter } from "@tanstack/react-router";
-
-type ClientEnvironmentVariables = {
-  readonly MODE: string;
-  readonly VITE_APP_ENV?: string;
-};
+import { getClientConfig, type FallbackClientEnvironment } from "./config";
 
 export function resolveClientAppEnvironment(
-  environment: ClientEnvironmentVariables = import.meta.env,
+  environment: FallbackClientEnvironment = import.meta.env,
+  windowRef?: { __APP_CONFIG__?: { appEnv?: string } },
 ): string {
-  return environment.VITE_APP_ENV || environment.MODE || "development";
+  return getClientConfig(environment, windowRef).appEnv;
 }
 
 export const resolveClientSentryEnvironment = resolveClientAppEnvironment;
@@ -24,12 +21,12 @@ export const CLIENT_TRACE_PROPAGATION_TARGETS = [
 export function initializeClientObservability(router: AnyRouter): void {
   if (Sentry.isInitialized()) return;
 
-  const dsn = import.meta.env.VITE_SENTRY_DSN;
-  if (!dsn) return;
+  const config = getClientConfig();
+  if (!config.sentryDsn) return;
 
   Sentry.init({
-    dsn,
-    environment: resolveClientSentryEnvironment(),
+    dsn: config.sentryDsn,
+    environment: config.appEnv,
     integrations: [Sentry.tanstackRouterBrowserTracingIntegration(router)],
     tracesSampleRate: 1,
     tracePropagationTargets: CLIENT_TRACE_PROPAGATION_TARGETS,

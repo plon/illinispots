@@ -52,10 +52,6 @@ jobs:
         run: |
           flyctl deploy \
             --config fly.staging.toml \
-            --build-arg VITE_MAPBOX_ACCESS_TOKEN="${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}" \
-            --build-arg VITE_MAPBOX_STYLE_URL="${{ secrets.VITE_MAPBOX_STYLE_URL }}" \
-            --build-arg VITE_SENTRY_DSN="${{ secrets.VITE_SENTRY_DSN }}" \
-            --build-arg VITE_APP_ENV="staging" \
             --build-arg SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}"
 
       - name: Deploy to Production
@@ -65,8 +61,4 @@ jobs:
         run: |
           flyctl deploy \
             --config fly.toml \
-            --build-arg VITE_MAPBOX_ACCESS_TOKEN="${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}" \
-            --build-arg VITE_MAPBOX_STYLE_URL="${{ secrets.VITE_MAPBOX_STYLE_URL }}" \
-            --build-arg VITE_SENTRY_DSN="${{ secrets.VITE_SENTRY_DSN }}" \
-            --build-arg VITE_APP_ENV="production" \
             --build-arg SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}"

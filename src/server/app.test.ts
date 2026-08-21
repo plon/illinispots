@@ -224,4 +224,31 @@ describe("server application", () => {
     expect(tagAlpha).toBe("req-alpha");
     expect(tagBeta).toBe("req-beta");
   });
+
+  it("serves HTML with injected runtime client config on root and SPA routes", async () => {
+    const rawIndexHtml = "<!doctype html><html><head><title>Test App</title></head><body><div id='root'></div></body></html>";
+    const app = createApp({
+      rawIndexHtml,
+      environment: {
+        APP_ENV: "staging",
+        MAPBOX_ACCESS_TOKEN: "pk.test_token_123",
+        MAPBOX_STYLE_URL: "mapbox://styles/test/style",
+        SENTRY_DSN: "https://test@sentry.io/456",
+      },
+    });
+
+    const rootResponse = await app.request("/");
+    expect(rootResponse.status).toBe(200);
+    const rootHtml = await rootResponse.text();
+    expect(rootHtml).toContain(
+      '<script>window.__APP_CONFIG__={"appEnv":"staging","mapboxAccessToken":"pk.test_token_123","mapboxStyleUrl":"mapbox://styles/test/style","sentryDsn":"https://test@sentry.io/456"};</script>',
+    );
+
+    const spaResponse = await app.request("/grainger");
+    expect(spaResponse.status).toBe(200);
+    const spaHtml = await spaResponse.text();
+    expect(spaHtml).toContain(
+      '<script>window.__APP_CONFIG__={"appEnv":"staging","mapboxAccessToken":"pk.test_token_123","mapboxStyleUrl":"mapbox://styles/test/style","sentryDsn":"https://test@sentry.io/456"};</script>',
+    );
+  });
 });

@@ -13,7 +13,7 @@ import {
   recordMapLoadDuration,
   type MapLoadResult,
 } from "@/utils/loadingMetrics";
-
+import { getClientConfig } from "@/client/config";
 export default function FacilityMap({
   facilityData,
   onMarkerClick,
@@ -58,9 +58,9 @@ export default function FacilityMap({
     setIsMapLoaded(false);
     setMapError(null);
 
-    const styleUrl = import.meta.env.VITE_MAPBOX_STYLE_URL;
-    const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
-
+    const config = getClientConfig();
+    const styleUrl = config.mapboxStyleUrl;
+    const token = config.mapboxAccessToken;
     if (!styleUrl || !token) {
       console.error(
         "Mapbox style and access token are not configured.",
