@@ -1,66 +1,53 @@
-import * as Sentry from "@sentry/bun";
-import type { MiddlewareHandler } from "hono";
+import * as Sentry from "@sentry/hono/bun";
+import type { Hono, MiddlewareHandler } from "hono";
 import { getServerConfig } from "./config";
 
-const config = getServerConfig();
+const TRACED_API_PATHS = new Set([
+  "/api/facilities",
+  "/api/room-schedule",
+]);
 
-if (config.sentryDsn) {
-  Sentry.init({
+export function shouldTraceServerPath(pathname: string): boolean {
+  return TRACED_API_PATHS.has(pathname);
+}
+
+function requestPathname(url: string | undefined): string {
+  if (!url) return "";
+
+  try {
+    return new URL(url, "http://sentry.local").pathname;
+  } catch {
+    return "";
+  }
+}
+
+export function sentryTracing(app: Hono): MiddlewareHandler {
+  const config = getServerConfig();
+  if (!config.sentryDsn) {
+    return async (_context, next) => await next();
+  }
+
+  return Sentry.sentry(app, {
     dsn: config.sentryDsn,
     environment: config.environment,
-    tracesSampleRate: 1,
+    tracesSampler: ({ normalizedRequest, inheritOrSampleWith }) =>
+      shouldTraceServerPath(requestPathname(normalizedRequest?.url))
+        ? inheritOrSampleWith(1)
+        : 0,
     sendDefaultPii: false,
   });
 }
 
-export function sentryTracing(): MiddlewareHandler {
+export function sentryRequestContext(): MiddlewareHandler {
   return async (context, next) => {
-    const path = context.req.path;
-    if (
-      !path.startsWith("/api/facilities") &&
-      !path.startsWith("/api/room-schedule")
-    ) {
-      return await next();
+    const span = Sentry.getActiveSpan();
+    const reqId = context.get("requestId");
+    if (span && reqId && typeof reqId === "string") {
+      span.setAttribute("http.request_id", reqId);
+      Sentry.setTag("request_id", reqId);
     }
 
-    const sentryTrace = context.req.header("sentry-trace");
-    const baggage = context.req.header("baggage");
-
-    return Sentry.withIsolationScope(() => {
-      return Sentry.continueTrace({ sentryTrace, baggage }, () => {
-        return Sentry.startSpan(
-          {
-            name: `${context.req.method} ${context.req.path}`,
-            op: "http.server",
-            attributes: {
-              "http.method": context.req.method,
-              "http.url": context.req.url,
-              "http.route": context.req.path,
-            },
-          },
-          async (span) => {
-            const reqId = context.get("requestId");
-            if (reqId && typeof reqId === "string") {
-              span?.setAttribute("http.request_id", reqId);
-              Sentry.setTag("request_id", reqId);
-            }
-
-            try {
-              await next();
-            } catch (error) {
-              if (span) {
-                Sentry.setHttpStatus(span, 500);
-              }
-              throw error;
-            } finally {
-              if (span && context.finalized) {
-                Sentry.setHttpStatus(span, context.res.status);
-              }
-            }
-          },
-        );
-      });
-    });
+    await next();
   };
 }
 

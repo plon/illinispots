@@ -11,7 +11,7 @@ import {
   createRoomScheduleRoutes,
   type RoomScheduleRouteDependencies,
 } from "./routes/room-schedule";
-import { Sentry, sentryTracing } from "./observability";
+import { sentryRequestContext, sentryTracing } from "./observability";
 import { getPublicClientConfig } from "./config";
 import { injectClientConfig, loadIndexHtml } from "./html";
 
@@ -28,8 +28,9 @@ export function createApp(dependencies: AppDependencies = {}) {
   const isProduction = process.env.NODE_ENV === "production";
   const isTest = process.env.NODE_ENV === "test";
   const appEnv = process.env.APP_ENV;
+  app.use(sentryTracing(app));
   app.use("*", requestId());
-  app.use("*", sentryTracing());
+  app.use("*", sentryRequestContext());
   app.use("*", secureHeaders());
 
   if (!isTest) {
@@ -173,9 +174,6 @@ export function createApp(dependencies: AppDependencies = {}) {
   );
 
   app.onError((error, context) => {
-    Sentry.captureException(error, {
-      tags: { component: "server", route: context.req.path },
-    });
     console.error("Unhandled server error:", error);
     return context.json({ error: "Internal server error" }, 500);
   });

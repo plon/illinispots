@@ -3,9 +3,9 @@ import type { AnyRouter } from "@tanstack/react-router";
 import { getClientConfig } from "./config";
 export const CLIENT_TRACE_PROPAGATION_TARGETS = [
   /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:[/:?#]|$)/,
-  /^\//,
+  /^\/(?!\/)/,
   /^https:\/\/(?:(?:www|staging)\.)?illinispots\.com(?:[/:?#]|$)/,
-  /^https:\/\/(?:[a-zA-Z0-9-]+\.)*fly\.dev(?:[/:?#]|$)/,
+  /^https:\/\/illinispots(?:-staging)?\.fly\.dev(?:[/:?#]|$)/,
 ];
 
 export function initializeClientObservability(router: AnyRouter): void {
