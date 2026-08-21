@@ -22,6 +22,8 @@ import {
   STATIC_ROOMS_BY_LIBRARY,
 } from "../data/library-catalog";
 
+const LIBCAL_REQUEST_TIMEOUT_MS = 10_000;
+
 /**
  * Retrieves reservation data for a specific library for the relevant date(s)
  */
@@ -77,6 +79,7 @@ async function getReservation(
         method: "POST",
         headers,
         body: new URLSearchParams(payload),
+        signal: AbortSignal.timeout(LIBCAL_REQUEST_TIMEOUT_MS),
       }),
   );
 
