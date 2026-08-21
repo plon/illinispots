@@ -8,6 +8,8 @@ export interface SupabaseConfig {
   key: string;
 }
 
+type EnvironmentVariables = Readonly<Record<string, string | undefined>>;
+
 export class ServerConfigurationError extends Error {
   constructor(message: string) {
     super(message);
@@ -49,11 +51,23 @@ export function getClientConfig(): ClientConfig {
   };
 }
 
+export function resolveSentryEnvironment(
+  environment: EnvironmentVariables = process.env,
+): string {
+  return (
+    environment.SENTRY_ENVIRONMENT ||
+    environment.VERCEL_TARGET_ENV ||
+    environment.VERCEL_ENV ||
+    environment.NODE_ENV ||
+    "development"
+  );
+}
+
 export function getServerConfig() {
   const parsedPort = Number.parseInt(process.env.PORT ?? "3000", 10);
 
   return {
-    environment: process.env.SENTRY_ENVIRONMENT ?? process.env.NODE_ENV ?? "development",
+    environment: resolveSentryEnvironment(),
     port: Number.isFinite(parsedPort) ? parsedPort : 3000,
     sentryDsn: process.env.SENTRY_DSN ?? DEFAULT_SENTRY_DSN,
   };

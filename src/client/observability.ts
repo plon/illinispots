@@ -9,7 +9,10 @@ export function initializeClientObservability(router: AnyRouter): void {
 
   Sentry.init({
     dsn,
-    environment: import.meta.env.MODE,
+    environment:
+      import.meta.env.VITE_VERCEL_TARGET_ENV ||
+      import.meta.env.VITE_VERCEL_ENV ||
+      import.meta.env.MODE,
     integrations: [Sentry.tanstackRouterBrowserTracingIntegration(router)],
     tracesSampleRate: 1,
     sendDefaultPii: false,
