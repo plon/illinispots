@@ -61,7 +61,7 @@ export function createApp(dependencies: AppDependencies = {}) {
 
       if (
         isProduction &&
-        hostname === "www.illinispots.com"
+        (hostname === "www.illinispots.com" || hostname.endsWith(".vercel.app"))
       ) {
         const canonicalUrl = new URL(context.req.url);
         canonicalUrl.protocol = "https:";

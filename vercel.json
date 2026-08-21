@@ -9,5 +9,12 @@
     "api/[...route].ts": {
       "maxDuration": 30
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "https://illinispots.com/$1",
+      "permanent": true
+    }
+  ]
 }

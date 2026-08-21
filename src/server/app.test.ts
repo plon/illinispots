@@ -37,6 +37,22 @@ describe("server application", () => {
     }
   });
 
+  it("redirects legacy vercel.app domains to illinispots.com in production", async () => {
+    const previousNodeEnv = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = "production";
+      const app = createApp();
+      const response = await app.request("http://illinispots.vercel.app/map?x=2");
+
+      expect(response.status).toBe(308);
+      expect(response.headers.get("location")).toBe(
+        "https://illinispots.com/map?x=2",
+      );
+    } finally {
+      process.env.NODE_ENV = previousNodeEnv;
+    }
+  });
+
   it("redirects raw fly.dev staging domain to staging.illinispots.com", async () => {
     const previousNodeEnv = process.env.NODE_ENV;
     const previousAppEnv = process.env.APP_ENV;
