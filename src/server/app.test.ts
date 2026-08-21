@@ -21,21 +21,6 @@ describe("server application", () => {
     expect(await response.json()).toEqual({ error: "API route not found" });
   });
 
-  it("redirects the www host to the canonical HTTPS origin in production", async () => {
-    const previousNodeEnv = process.env.NODE_ENV;
-    try {
-      process.env.NODE_ENV = "production";
-      const app = createApp();
-      const response = await app.request("http://www.illinispots.com/path?x=1");
-
-      expect(response.status).toBe(308);
-      expect(response.headers.get("location")).toBe(
-        "https://illinispots.com/path?x=1",
-      );
-    } finally {
-      process.env.NODE_ENV = previousNodeEnv;
-    }
-  });
 
   it("redirects raw fly.dev staging domain to staging.illinispots.com", async () => {
     const previousNodeEnv = process.env.NODE_ENV;

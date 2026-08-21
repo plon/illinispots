@@ -48,26 +48,15 @@ export function createApp(dependencies: AppDependencies = {}) {
       hostname === "localhost" ||
       hostname === "127.0.0.1";
 
-    if (!isLocal) {
-      if (
-        appEnv === "staging" &&
-        hostname === "illinispots-staging.fly.dev"
-      ) {
-        const canonicalUrl = new URL(context.req.url);
-        canonicalUrl.protocol = "https:";
-        canonicalUrl.hostname = "staging.illinispots.com";
-        return context.redirect(canonicalUrl.toString(), 308);
-      }
-
-      if (
-        isProduction &&
-        hostname === "www.illinispots.com"
-      ) {
-        const canonicalUrl = new URL(context.req.url);
-        canonicalUrl.protocol = "https:";
-        canonicalUrl.hostname = "illinispots.com";
-        return context.redirect(canonicalUrl.toString(), 308);
-      }
+    if (
+      !isLocal &&
+      appEnv === "staging" &&
+      hostname === "illinispots-staging.fly.dev"
+    ) {
+      const canonicalUrl = new URL(context.req.url);
+      canonicalUrl.protocol = "https:";
+      canonicalUrl.hostname = "staging.illinispots.com";
+      return context.redirect(canonicalUrl.toString(), 308);
     }
     await next();
 
