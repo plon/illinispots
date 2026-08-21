@@ -5,6 +5,17 @@ import {
 } from "./observability";
 
 describe("resolveClientSentryEnvironment", () => {
+  it("allows an explicit Sentry environment to override platform environments", () => {
+    expect(
+      resolveClientSentryEnvironment({
+        VITE_SENTRY_ENVIRONMENT: "staging",
+        VITE_VERCEL_TARGET_ENV: "preview",
+        VITE_VERCEL_ENV: "preview",
+        MODE: "production",
+      }),
+    ).toBe("staging");
+  });
+
   it("uses the Vercel target so custom environments retain their name", () => {
     expect(
       resolveClientSentryEnvironment({
@@ -50,6 +61,15 @@ describe("CLIENT_TRACE_PROPAGATION_TARGETS", () => {
     expect(
       matchesTraceTarget("https://www.illinispots.com/api/facilities"),
     ).toBe(true);
+    expect(
+      matchesTraceTarget("https://staging.illinispots.com/api/facilities"),
+    ).toBe(true);
+    expect(
+      matchesTraceTarget("https://illinispots.fly.dev/api/facilities"),
+    ).toBe(true);
+    expect(
+      matchesTraceTarget("https://illinispots-staging.fly.dev/api/facilities"),
+    ).toBe(true);
     expect(matchesTraceTarget("https://api.mapbox.com/v4/tiles")).toBe(false);
     expect(
       matchesTraceTarget("https://api.mapbox.com/search?q=localhost"),
@@ -62,6 +82,9 @@ describe("CLIENT_TRACE_PROPAGATION_TARGETS", () => {
     ).toBe(false);
     expect(
       matchesTraceTarget("https://www.illinispots.com.attacker.example/api"),
+    ).toBe(false);
+    expect(
+      matchesTraceTarget("https://fly.dev.attacker.example/api"),
     ).toBe(false);
   });
 });

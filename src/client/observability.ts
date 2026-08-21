@@ -3,6 +3,7 @@ import type { AnyRouter } from "@tanstack/react-router";
 
 type ClientEnvironmentVariables = {
   readonly MODE: string;
+  readonly VITE_SENTRY_ENVIRONMENT?: string;
   readonly VITE_VERCEL_ENV?: string;
   readonly VITE_VERCEL_TARGET_ENV?: string;
 };
@@ -11,6 +12,7 @@ export function resolveClientSentryEnvironment(
   environment: ClientEnvironmentVariables = import.meta.env,
 ): string {
   return (
+    environment.VITE_SENTRY_ENVIRONMENT ||
     environment.VITE_VERCEL_TARGET_ENV ||
     environment.VITE_VERCEL_ENV ||
     environment.MODE
@@ -20,7 +22,8 @@ export function resolveClientSentryEnvironment(
 export const CLIENT_TRACE_PROPAGATION_TARGETS = [
   /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:[/:?#]|$)/,
   /^\//,
-  /^https:\/\/(?:www\.)?illinispots\.com(?:[/:?#]|$)/,
+  /^https:\/\/(?:(?:www|staging)\.)?illinispots\.com(?:[/:?#]|$)/,
+  /^https:\/\/(?:[a-zA-Z0-9-]+\.)*fly\.dev(?:[/:?#]|$)/,
 ];
 
 export function initializeClientObservability(router: AnyRouter): void {
