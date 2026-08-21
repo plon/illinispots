@@ -22,6 +22,7 @@ interface SearchResultsProps {
   onClearFilters: () => void;
   onClearSearch: () => void;
   isLoading?: boolean;
+  isLibraryLoading?: boolean;
 }
 type TabType = "all" | "rooms" | "buildings";
 
@@ -33,6 +34,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
   onClearFilters,
   onClearSearch,
   isLoading = false,
+  isLibraryLoading = false,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>("all");
 
@@ -53,7 +55,9 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
 
   const { buildings, rooms, totalCount } = searchResults;
 
-  if (isLoading && facilitiesList.length === 0) {
+  const isDataIncomplete = isLoading || isLibraryLoading;
+
+  if (isDataIncomplete && (facilitiesList.length === 0 || totalCount === 0)) {
     return (
       <div
         className="px-3 md:px-4 py-3 space-y-3.5"
@@ -104,6 +108,11 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
               <strong className="text-foreground font-semibold">{totalCount}</strong>{" "}
               result{totalCount === 1 ? "" : "s"} for &ldquo;{searchTerm}&rdquo;
             </span>
+            {isLibraryLoading && (
+              <span className="text-[11px] text-muted-foreground/80 pl-1">
+                (loading library spots…)
+              </span>
+            )}
           </div>
 
           <button
@@ -115,7 +124,6 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
             Clear
           </button>
         </div>
-
         {/* Tab Pills */}
         {totalCount > 0 && (
           <div className="flex items-center gap-1.5 p-1 bg-muted/50 rounded-lg border border-border/50 text-xs font-medium">

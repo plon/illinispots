@@ -354,6 +354,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         onClearFilters={clearFilters}
                         onClearSearch={() => setSearchTerm("")}
                         isLoading={isAcademicLoading}
+                        isLibraryLoading={isLibraryFetching}
                     />
                 ) : (
                     <>
@@ -383,7 +384,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                     ))}
                                 </Accordion>
                             </div>
-                        ) : isLibraryFetching && !hasActiveFilters ? (
+                        ) : isLibraryFetching ? (
                             <div
                                 className="mt-2"
                                 role="status"
@@ -439,7 +440,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                     ))}
                                 </Accordion>
                             </div>
-                        ) : isAcademicLoading && !hasActiveFilters ? (
+                        ) : isAcademicLoading ? (
                             <div
                                 className="mt-5"
                                 role="status"
@@ -472,7 +473,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                     ))}
                                 </div>
                             </div>
-                        ) : error && !hasActiveFilters ? (
+                        ) : error ? (
                             <div
                                 className="p-4 mx-4 my-6 rounded-lg border border-destructive/30 bg-destructive/5 text-center space-y-2"
                                 role="alert"
