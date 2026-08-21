@@ -97,13 +97,12 @@ Copy `.env.example` to `.env.local` and provide:
 
 ```env
 SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_key
+SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_publishable_key
 VITE_MAPBOX_ACCESS_TOKEN=your_public_mapbox_token
 VITE_MAPBOX_STYLE_URL=mapbox://styles/<user>/<style-id>
 ```
 
-`SUPABASE_KEY` is server-only. The public Mapbox configuration is supplied directly to the client via Vite environment variables.
-
+`SUPABASE_PUBLISHABLE_KEY` is used by the Hono server for read-only database queries. The public Mapbox configuration is supplied directly to the client via Vite environment variables. Writing pipeline scrapers (`data-pipeline/`) use `SUPABASE_SECRET_KEY` (service role).
 4) Run locally
 
 ```bash

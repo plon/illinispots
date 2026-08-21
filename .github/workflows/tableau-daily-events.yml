@@ -25,7 +25,7 @@ jobs:
 
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
       SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
       SENTRY_ENVIRONMENT: production
       PYTHONPATH: .

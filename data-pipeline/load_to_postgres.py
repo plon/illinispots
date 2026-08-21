@@ -9,7 +9,12 @@ from sentry_monitor import emit_gauges
 
 load_dotenv(find_dotenv(".env.local"))
 
-supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_SECRET_KEY")
+if not supabase_url or not supabase_key:
+    raise ValueError("Supabase URL and SUPABASE_SECRET_KEY must be set in .env.local")
+
+supabase = create_client(supabase_url, supabase_key)
 
 CHUNK_SIZE = 1000
 

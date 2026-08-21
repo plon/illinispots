@@ -12,13 +12,14 @@ export class ServerConfigurationError extends Error {
   }
 }
 
-export function getSupabaseConfig(): SupabaseConfig {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_KEY;
-
+export function getSupabaseConfig(
+  environment: EnvironmentVariables = process.env,
+): SupabaseConfig {
+  const url = environment.SUPABASE_URL;
+  const key = environment.SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) {
     throw new ServerConfigurationError(
-      "Missing Supabase environment variables: SUPABASE_URL and/or SUPABASE_KEY",
+      "Missing Supabase environment variables: SUPABASE_URL and/or SUPABASE_PUBLISHABLE_KEY",
     );
   }
 

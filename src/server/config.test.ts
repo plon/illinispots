@@ -1,5 +1,10 @@
 import { describe, expect, it } from "bun:test";
-import { getServerConfig, resolveSentryEnvironment } from "./config";
+import {
+  getServerConfig,
+  getSupabaseConfig,
+  resolveSentryEnvironment,
+  ServerConfigurationError,
+} from "./config";
 
 describe("resolveSentryEnvironment", () => {
   it("uses the Vercel target so custom environments retain their name", () => {
@@ -49,5 +54,28 @@ describe("getServerConfig", () => {
       port: 3000,
       sentryDsn: undefined,
     });
+  });
+});
+
+describe("getSupabaseConfig", () => {
+  it("returns configured URL and publishable key", () => {
+    expect(
+      getSupabaseConfig({
+        SUPABASE_URL: "https://test.supabase.co",
+        SUPABASE_PUBLISHABLE_KEY: "pub_key_123",
+      }),
+    ).toEqual({
+      url: "https://test.supabase.co",
+      key: "pub_key_123",
+    });
+  });
+  it("throws ServerConfigurationError when URL or key are missing", () => {
+    expect(() => getSupabaseConfig({})).toThrow(ServerConfigurationError);
+    expect(() =>
+      getSupabaseConfig({ SUPABASE_URL: "https://test.supabase.co" }),
+    ).toThrow(ServerConfigurationError);
+    expect(() =>
+      getSupabaseConfig({ SUPABASE_PUBLISHABLE_KEY: "pub_key_123" }),
+    ).toThrow(ServerConfigurationError);
   });
 });
