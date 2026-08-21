@@ -139,7 +139,7 @@ describe("server application", () => {
     expect(capturedSpanName).toBe("GET /api/facilities");
   });
 
-  it("skips span creation for static assets under /assets/", async () => {
+  it("skips span creation for static assets, health checks, and non-api probes", async () => {
     if (!Sentry.isInitialized()) {
       Sentry.init({
         dsn: "https://examplePublicKey@o0.ingest.sentry.io/0",
@@ -154,9 +154,15 @@ describe("server application", () => {
       return context.text("asset");
     });
 
-    const response = await customApp.request("/assets/custom-asset.js");
-    expect(response.status).toBe(200);
+    const assetResponse = await customApp.request("/assets/custom-asset.js");
+    expect(assetResponse.status).toBe(200);
     expect(activeSpanInsideHandler).toBeUndefined();
+
+    const healthResponse = await customApp.request("/api/health");
+    expect(healthResponse.status).toBe(200);
+
+    const probeResponse = await customApp.request("/.env");
+    expect(probeResponse.status).toBe(404);
   });
 
   it("records HTTP status on server span when a route throws", async () => {

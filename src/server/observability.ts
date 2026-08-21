@@ -15,7 +15,11 @@ if (config.sentryDsn) {
 
 export function sentryTracing(): MiddlewareHandler {
   return async (context, next) => {
-    if (context.req.path.startsWith("/assets/")) {
+    const path = context.req.path;
+    if (
+      !path.startsWith("/api/facilities") &&
+      !path.startsWith("/api/room-schedule")
+    ) {
       return await next();
     }
 
