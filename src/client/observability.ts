@@ -20,7 +20,7 @@ export function resolveClientSentryEnvironment(
 export const CLIENT_TRACE_PROPAGATION_TARGETS = [
   "localhost",
   /^\//,
-  /^https:\/\/(?:www\.)?illinispots\.com/,
+  /^https:\/\/(?:www\.)?illinispots\.com(?:[/:?#]|$)/,
 ];
 
 export function initializeClientObservability(router: AnyRouter): void {

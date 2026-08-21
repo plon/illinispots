@@ -108,4 +108,31 @@ describe("server application", () => {
     expect(response.status).toBe(200);
     expect(activeSpanInsideHandler).toBeUndefined();
   });
+
+  it("records HTTP status on server span when a route throws", async () => {
+    if (!Sentry.isInitialized()) {
+      Sentry.init({
+        dsn: "https://examplePublicKey@o0.ingest.sentry.io/0",
+        tracesSampleRate: 1,
+      });
+    }
+
+    let activeSpanJson: ReturnType<typeof Sentry.spanToJSON> | undefined;
+    const testApp = createApp({
+      facilities: {
+        getFacilityStatus: async () => {
+          const activeSpan = Sentry.getActiveSpan();
+          if (activeSpan) {
+            activeSpanJson = Sentry.spanToJSON(activeSpan);
+          }
+          throw new Error("Simulated facility failure");
+        },
+      },
+    });
+
+    const response = await testApp.request("/api/facilities");
+    expect(response.status).toBe(500);
+    expect(activeSpanJson).toBeDefined();
+    expect(activeSpanJson?.op).toBe("http.server");
+  });
 });

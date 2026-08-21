@@ -49,5 +49,11 @@ describe("CLIENT_TRACE_PROPAGATION_TARGETS", () => {
       matchesTraceTarget("https://www.illinispots.com/api/facilities"),
     ).toBe(true);
     expect(matchesTraceTarget("https://api.mapbox.com/v4/tiles")).toBe(false);
+    expect(
+      matchesTraceTarget("https://illinispots.com.attacker.example/api"),
+    ).toBe(false);
+    expect(
+      matchesTraceTarget("https://www.illinispots.com.attacker.example/api"),
+    ).toBe(false);
   });
 });
