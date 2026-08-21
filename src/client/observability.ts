@@ -17,6 +17,12 @@ export function resolveClientSentryEnvironment(
   );
 }
 
+export const CLIENT_TRACE_PROPAGATION_TARGETS = [
+  "localhost",
+  /^\//,
+  /^https:\/\/(?:www\.)?illinispots\.com/,
+];
+
 export function initializeClientObservability(router: AnyRouter): void {
   if (Sentry.isInitialized()) return;
 
@@ -28,6 +34,7 @@ export function initializeClientObservability(router: AnyRouter): void {
     environment: resolveClientSentryEnvironment(),
     integrations: [Sentry.tanstackRouterBrowserTracingIntegration(router)],
     tracesSampleRate: 1,
+    tracePropagationTargets: CLIENT_TRACE_PROPAGATION_TARGETS,
     sendDefaultPii: false,
   });
 }

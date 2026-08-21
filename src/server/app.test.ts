@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { createApp } from "./app";
+import { Sentry } from "./observability";
 
 describe("server application", () => {
   it("reports runtime health", async () => {
@@ -45,5 +46,46 @@ describe("server application", () => {
     expect(response.headers.get("location")).toBe(
       "https://illinispots.com/path?x=1",
     );
+  });
+
+  it("propagates incoming distributed tracing headers into server spans", async () => {
+    if (!Sentry.isInitialized()) {
+      Sentry.init({
+        dsn: "https://examplePublicKey@o0.ingest.sentry.io/0",
+        tracesSampleRate: 1,
+      });
+    }
+
+    let capturedTraceId: string | undefined;
+    let capturedParentSpanId: string | undefined;
+    let capturedSpanName: string | undefined;
+
+    const testApp = createApp({
+      facilities: {
+        getFacilityStatus: async () => {
+          const activeSpan = Sentry.getActiveSpan();
+          if (activeSpan) {
+            const spanJson = Sentry.spanToJSON(activeSpan);
+            capturedTraceId = spanJson.trace_id;
+            capturedParentSpanId = spanJson.parent_span_id;
+            capturedSpanName = spanJson.description;
+          }
+          return { timestamp: "2026-08-21T14:00:00Z", facilities: {} };
+        },
+      },
+    });
+
+    const sentryTrace = "4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-1";
+    const response = await testApp.request("/api/facilities", {
+      headers: {
+        "sentry-trace": sentryTrace,
+        baggage: "sentry-environment=production",
+      },
+    });
+
+    expect(response.status).toBe(200);
+    expect(capturedTraceId).toBe("4bf92f3577b34da6a3ce929d0e0e4736");
+    expect(capturedParentSpanId).toBe("00f067aa0ba902b7");
+    expect(capturedSpanName).toBe("GET /api/facilities");
   });
 });
