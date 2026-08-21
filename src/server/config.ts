@@ -1,12 +1,11 @@
 import type { ClientConfig } from "../types";
 
-const DEFAULT_SENTRY_DSN =
-  "https://b346a7b285d735686ab9ea2fd7f51413@o4511882586292224.ingest.us.sentry.io/4511882595401729";
-
 export interface SupabaseConfig {
   url: string;
   key: string;
 }
+
+type EnvironmentVariables = Readonly<Record<string, string | undefined>>;
 
 export class ServerConfigurationError extends Error {
   constructor(message: string) {
@@ -49,12 +48,26 @@ export function getClientConfig(): ClientConfig {
   };
 }
 
-export function getServerConfig() {
-  const parsedPort = Number.parseInt(process.env.PORT ?? "3000", 10);
+export function resolveSentryEnvironment(
+  environment: EnvironmentVariables = process.env,
+): string {
+  return (
+    environment.SENTRY_ENVIRONMENT ||
+    environment.VERCEL_TARGET_ENV ||
+    environment.VERCEL_ENV ||
+    environment.NODE_ENV ||
+    "development"
+  );
+}
+
+export function getServerConfig(
+  environment: EnvironmentVariables = process.env,
+) {
+  const parsedPort = Number.parseInt(environment.PORT ?? "3000", 10);
 
   return {
-    environment: process.env.SENTRY_ENVIRONMENT ?? process.env.NODE_ENV ?? "development",
+    environment: resolveSentryEnvironment(environment),
     port: Number.isFinite(parsedPort) ? parsedPort : 3000,
-    sentryDsn: process.env.SENTRY_DSN ?? DEFAULT_SENTRY_DSN,
+    sentryDsn: environment.SENTRY_DSN,
   };
 }

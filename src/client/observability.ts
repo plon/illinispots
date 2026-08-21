@@ -1,6 +1,22 @@
 import * as Sentry from "@sentry/react";
 import type { AnyRouter } from "@tanstack/react-router";
 
+type ClientEnvironmentVariables = {
+  readonly MODE: string;
+  readonly VITE_VERCEL_ENV?: string;
+  readonly VITE_VERCEL_TARGET_ENV?: string;
+};
+
+export function resolveClientSentryEnvironment(
+  environment: ClientEnvironmentVariables = import.meta.env,
+): string {
+  return (
+    environment.VITE_VERCEL_TARGET_ENV ||
+    environment.VITE_VERCEL_ENV ||
+    environment.MODE
+  );
+}
+
 export function initializeClientObservability(router: AnyRouter): void {
   if (Sentry.isInitialized()) return;
 
@@ -9,7 +25,7 @@ export function initializeClientObservability(router: AnyRouter): void {
 
   Sentry.init({
     dsn,
-    environment: import.meta.env.MODE,
+    environment: resolveClientSentryEnvironment(),
     integrations: [Sentry.tanstackRouterBrowserTracingIntegration(router)],
     tracesSampleRate: 1,
     sendDefaultPii: false,
