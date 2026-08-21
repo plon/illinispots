@@ -1,16 +1,16 @@
-"use client";
-
 import React, {
   useState,
   useEffect,
   useCallback,
   useMemo,
   useRef,
+  lazy,
+  Suspense,
 } from "react";
+import { createFileRoute } from "@tanstack/react-router";
 import { getUpdatedAccordionItems } from "@/utils/accordion";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import moment from "moment-timezone";
-import dynamic from "next/dynamic";
 import LeftSidebar from "@/components/left";
 import LoadingScreen from "@/components/LoadingScreen";
 import { FacilityStatus, FacilityType } from "@/types";
@@ -20,9 +20,10 @@ import {
   type InitialLoadMilestone,
 } from "@/utils/loadingMetrics";
 
-const FacilityMap = dynamic(() => import("@/components/map"), {
-  ssr: false,
-  loading: () => (
+const FacilityMap = lazy(() => import("@/components/map"));
+
+function MapLoadingFallback() {
+  return (
     <div
       className="flex h-full w-full flex-col items-center justify-center gap-3 bg-background"
       role="status"
@@ -33,8 +34,8 @@ const FacilityMap = dynamic(() => import("@/components/map"), {
       </div>
       <span className="text-sm text-muted-foreground">Loading map…</span>
     </div>
-  ),
-});
+  );
+}
 
 const fetchFacilityData = async (
   selectedDateTime: Date,
@@ -239,11 +240,13 @@ const IlliniSpotsPage: React.FC = () => {
       <div className={mainContentClasses}>
         {showMap && (
           <div className="h-[40vh] md:h-screen md:w-[63%] w-full order-1 md:order-2">
-            <FacilityMap
-              facilityData={isDataReady ? facilityData : null}
-              onMarkerClick={handleMarkerClick}
-              trackInitialLoad={mountLoadingScreen}
-            />
+            <Suspense fallback={<MapLoadingFallback />}>
+              <FacilityMap
+                facilityData={isDataReady ? facilityData : null}
+                onMarkerClick={handleMarkerClick}
+                trackInitialLoad={mountLoadingScreen}
+              />
+            </Suspense>
           </div>
         )}
 
@@ -267,4 +270,6 @@ const IlliniSpotsPage: React.FC = () => {
   );
 };
 
-export default IlliniSpotsPage;
+export const Route = createFileRoute("/")({
+  component: IlliniSpotsPage,
+});

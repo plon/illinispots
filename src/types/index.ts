@@ -174,6 +174,13 @@ export interface LibraryCoordinates {
   };
 }
 
+export interface ClientConfig {
+  mapbox: {
+    accessToken: string;
+    styleUrl: string;
+  };
+}
+
 export interface MapProps {
   facilityData: FacilityStatus | null;
   onMarkerClick: (id: string, facilityType: FacilityType) => void;

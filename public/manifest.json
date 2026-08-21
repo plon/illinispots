@@ -2,8 +2,12 @@
   "name": "illiniSpots",
   "short_name": "illiniSpots",
   "description": "View live availability of UIUC rooms",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "theme_color": "#13294b",
+  "background_color": "#ffffff",
   "icons": [
     {
       "src": "/icon-192.png",

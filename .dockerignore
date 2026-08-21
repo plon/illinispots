@@ -1,0 +1,12 @@
+.git
+.github
+.next
+coverage
+data-pipeline
+database
+dist
+node_modules
+supabase
+.env*
+!.env.example
+npm-debug.log*

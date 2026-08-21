@@ -9,12 +9,8 @@
 # testing
 /coverage
 
-# next.js
-/.next/
-/out/
-
 # production
-/build
+/dist
 
 # misc
 .DS_Store
@@ -33,7 +29,7 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
+routeTree.gen.ts.tmp
 
 # Python
 .mypy_cache
@@ -48,6 +44,7 @@ venv/
 # Cron
 logs/
 .env*
+!.env.example
 
 # Generated data-pipeline artifacts
 /data-pipeline/data/subjects.json

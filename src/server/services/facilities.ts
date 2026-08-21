@@ -1,10 +1,6 @@
-import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import * as Sentry from "@sentry/nextjs";
-import axios from "axios";
 import moment from "moment-timezone";
 import {
-  Libraries,
   StudyRoom,
   TimeSlot,
   RoomReservations,
@@ -17,346 +13,16 @@ import {
   AcademicRoom,
   LibraryRoom,
   RoomReservation,
-} from "@/types";
-import { isLibraryOpen, LIBRARY_HOURS } from "@/utils/libraryHours";
+} from "../../types";
+import { isLibraryOpen, LIBRARY_HOURS } from "../../utils/libraryHours";
+import { getSupabaseConfig } from "../config";
+import { Sentry } from "../observability";
+import {
+  LIBRARIES,
+  STATIC_ROOMS_BY_LIBRARY,
+} from "../data/library-catalog";
 
-export const dynamic = "force-dynamic";
-
-const libraries: Libraries = {
-  "Funk ACES Library": {
-    id: "3604",
-    name: "Funk ACES Library",
-    num_rooms: 6,
-    address: "1101 S Goodwin Ave, Urbana, IL 61801",
-  },
-  "Grainger Engineering Library": {
-    id: "3606",
-    name: "Grainger Engineering Library",
-    num_rooms: 15,
-    address: "1301 W Springfield Ave, Urbana, IL 61801",
-  },
-  "Main Library": {
-    id: "3608",
-    name: "Main Library",
-    num_rooms: 17,
-    address: "1408 W Gregory Dr, Urbana, IL 61801",
-  },
-};
-
-const STATIC_ROOMS_BY_LIBRARY: Record<string, StudyRoom[]> = {
-  "3604": [
-    {
-      id: "eid_23939",
-      title: "301",
-      url: "https://libcal.library.illinois.edu/space/23939",
-      eid: 23939,
-      lid: 3604,
-      grouping: "Group Study Rooms",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/57193/images/sr301.jpg",
-    },
-    {
-      id: "eid_23940",
-      title: "305",
-      url: "https://libcal.library.illinois.edu/space/23940",
-      eid: 23940,
-      lid: 3604,
-      grouping: "Group Study Rooms",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/57193/images/sr305.jpg",
-    },
-    {
-      id: "eid_23941",
-      title: "309",
-      url: "https://libcal.library.illinois.edu/space/23941",
-      eid: 23941,
-      lid: 3604,
-      grouping: "Group Study Rooms",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/57193/images/sr309.jpg",
-    },
-    {
-      id: "eid_23942",
-      title: "401",
-      url: "https://libcal.library.illinois.edu/space/23942",
-      eid: 23942,
-      lid: 3604,
-      grouping: "Group Study Rooms",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/57193/images/sr401.jpg",
-    },
-    {
-      id: "eid_23943",
-      title: "405",
-      url: "https://libcal.library.illinois.edu/space/23943",
-      eid: 23943,
-      lid: 3604,
-      grouping: "Group Study Rooms",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/57193/images/sr405.jpg",
-    },
-    {
-      id: "eid_23944",
-      title: "409",
-      url: "https://libcal.library.illinois.edu/space/23944",
-      eid: 23944,
-      lid: 3604,
-      grouping: "Group Study Rooms",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/57193/images/sr409.jpg",
-    },
-  ],
-  "3606": [
-    {
-      id: "eid_171104",
-      title: "040E",
-      url: "https://libcal.library.illinois.edu/space/171104",
-      eid: 171104,
-      lid: 3606,
-      grouping: "Group Room",
-      thumbnail: "",
-    },
-    {
-      id: "eid_25428",
-      title: "405",
-      url: "https://libcal.library.illinois.edu/space/25428",
-      eid: 25428,
-      lid: 3606,
-      grouping: "Group Room",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_4cap.jpg",
-    },
-    {
-      id: "eid_25436",
-      title: "407",
-      url: "https://libcal.library.illinois.edu/space/25436",
-      eid: 25436,
-      lid: 3606,
-      grouping: "Group Room",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_4cap.jpg",
-    },
-    {
-      id: "eid_25437",
-      title: "408 collaboration",
-      url: "https://libcal.library.illinois.edu/space/25437",
-      eid: 25437,
-      lid: 3606,
-      grouping: "Group Room",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_clb.jpg",
-    },
-    {
-      id: "eid_25438",
-      title: "409",
-      url: "https://libcal.library.illinois.edu/space/25438",
-      eid: 25438,
-      lid: 3606,
-      grouping: "Group Room",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_4cap.jpg",
-    },
-    {
-      id: "eid_25439",
-      title: "410 collaboration",
-      url: "https://libcal.library.illinois.edu/space/25439",
-      eid: 25439,
-      lid: 3606,
-      grouping: "Group Room",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_clb.jpg",
-    },
-    {
-      id: "eid_25440",
-      title: "411",
-      url: "https://libcal.library.illinois.edu/space/25440",
-      eid: 25440,
-      lid: 3606,
-      grouping: "Group Room",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_4cap.jpg",
-    },
-    {
-      id: "eid_25441",
-      title: "412",
-      url: "https://libcal.library.illinois.edu/space/25441",
-      eid: 25441,
-      lid: 3606,
-      grouping: "Group Room",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_8cap.jpg",
-    },
-    {
-      id: "eid_25442",
-      title: "413",
-      url: "https://libcal.library.illinois.edu/space/25442",
-      eid: 25442,
-      lid: 3606,
-      grouping: "Group Room",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_8cap.jpg",
-    },
-    {
-      id: "eid_25443",
-      title: "414",
-      url: "https://libcal.library.illinois.edu/space/25443",
-      eid: 25443,
-      lid: 3606,
-      grouping: "Group Room",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_8cap.jpg",
-    },
-    {
-      id: "eid_25444",
-      title: "415",
-      url: "https://libcal.library.illinois.edu/space/25444",
-      eid: 25444,
-      lid: 3606,
-      grouping: "Group Room",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/171131/images/gsr_4xx_8cap.jpg",
-    },
-  ],
-  "3608": [
-    {
-      id: "eid_25914",
-      title: "Collaboration Room 1, Main Library 220",
-      url: "https://libcal.library.illinois.edu/space/25914",
-      eid: 25914,
-      lid: 3608,
-      grouping: "Media Commons Main Library Room 220 Collaboration Rooms",
-      thumbnail: "",
-    },
-    {
-      id: "eid_23216",
-      title: "Collaboration Room 2, Main Library 220",
-      url: "https://libcal.library.illinois.edu/space/23216",
-      eid: 23216,
-      lid: 3608,
-      grouping: "Media Commons Main Library Room 220 Collaboration Rooms",
-      thumbnail: "",
-    },
-    {
-      id: "eid_142312",
-      title: "Collaboration Room 3, Main Library 220",
-      url: "https://libcal.library.illinois.edu/space/142312",
-      eid: 142312,
-      lid: 3608,
-      grouping: "Media Commons Main Library Room 220 Collaboration Rooms",
-      thumbnail: "",
-    },
-    {
-      id: "eid_170116",
-      title: "Collaboration Room 4, Main Library 220",
-      url: "https://libcal.library.illinois.edu/space/170116",
-      eid: 170116,
-      lid: 3608,
-      grouping: "Media Commons Main Library Room 220 Collaboration Rooms",
-      thumbnail: "",
-    },
-    {
-      id: "eid_19861",
-      title: "Study Room 01",
-      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room1",
-      eid: 19861,
-      lid: 3608,
-      grouping: "The Orange Room Study Rooms",
-      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Rooms1-3.jpg",
-    },
-    {
-      id: "eid_19864",
-      title: "Study Room 02",
-      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room2",
-      eid: 19864,
-      lid: 3608,
-      grouping: "The Orange Room Study Rooms",
-      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Rooms1-3.jpg",
-    },
-    {
-      id: "eid_19865",
-      title: "Study Room 03",
-      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room3",
-      eid: 19865,
-      lid: 3608,
-      grouping: "The Orange Room Study Rooms",
-      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Rooms1-3.jpg",
-    },
-    {
-      id: "eid_19866",
-      title: "Study Room 04 - Zoom Room",
-      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room4",
-      eid: 19866,
-      lid: 3608,
-      grouping: "The Orange Room Study Rooms",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/109534/images/AIR-23_Studio_High_NW.jpg",
-    },
-    {
-      id: "eid_19867",
-      title: "Study Room 05 - Zoom Room",
-      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room5",
-      eid: 19867,
-      lid: 3608,
-      grouping: "The Orange Room Study Rooms",
-      thumbnail: "https://libapps.s3.amazonaws.com/accounts/109534/images/AIR-23_Studio_High_NW.jpg",
-    },
-    {
-      id: "eid_19868",
-      title: "Study Room 06",
-      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room6",
-      eid: 19868,
-      lid: 3608,
-      grouping: "The Orange Room Study Rooms",
-      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Room11.jpg",
-    },
-    {
-      id: "eid_19869",
-      title: "Study Room 07 - Orange Box",
-      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room7",
-      eid: 19869,
-      lid: 3608,
-      grouping: "The Orange Room Study Rooms",
-      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Orange_Box_picture_2.jpeg",
-    },
-    {
-      id: "eid_19870",
-      title: "Study Room 08",
-      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room8",
-      eid: 19870,
-      lid: 3608,
-      grouping: "The Orange Room Study Rooms",
-      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Rooms6-8.jpg",
-    },
-    {
-      id: "eid_19871",
-      title: "Study Room 09",
-      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room9",
-      eid: 19871,
-      lid: 3608,
-      grouping: "The Orange Room Study Rooms",
-      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Rooms9-12.jpg",
-    },
-    {
-      id: "eid_19872",
-      title: "Study Room 10",
-      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room10",
-      eid: 19872,
-      lid: 3608,
-      grouping: "The Orange Room Study Rooms",
-      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Rooms9-12.jpg",
-    },
-    {
-      id: "eid_19873",
-      title: "Study Room 11",
-      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room11",
-      eid: 19873,
-      lid: 3608,
-      grouping: "The Orange Room Study Rooms",
-      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Room11.jpg",
-    },
-    {
-      id: "eid_109178",
-      title: "Study Room 12",
-      url: "https://libcal.library.illinois.edu/reserve/theorangeroom/room12",
-      eid: 109178,
-      lid: 3608,
-      grouping: "The Orange Room Study Rooms",
-      thumbnail: "https://libapps.s3.amazonaws.com/customers/30/images/Rooms9-12.jpg",
-    },
-    {
-      id: "eid_118410",
-      title: "Accessible Study Space (room 109)",
-      url: "https://libcal.library.illinois.edu/space/118410",
-      eid: 118410,
-      lid: 3608,
-      grouping: "Accessible Study Space, Main Library 109",
-      thumbnail: "",
-    },
-  ],
-};
+const LIBCAL_REQUEST_TIMEOUT_MS = 10_000;
 
 /**
  * Retrieves reservation data for a specific library for the relevant date(s)
@@ -408,10 +74,22 @@ async function getReservation(
       op: "app.library.availability",
       attributes: { "library.id": lid },
     },
-    () => axios.post(url, new URLSearchParams(payload), { headers }),
+    () =>
+      fetch(url, {
+        method: "POST",
+        headers,
+        body: new URLSearchParams(payload),
+        signal: AbortSignal.timeout(LIBCAL_REQUEST_TIMEOUT_MS),
+      }),
   );
 
-  return response.data as ReservationResponse;
+  if (!response.ok) {
+    throw new Error(
+      `LibCal availability request failed with status ${response.status}`,
+    );
+  }
+
+  return (await response.json()) as ReservationResponse;
 }
 
 /**
@@ -540,7 +218,7 @@ function linkRoomsReservations(
 ): RoomReservations {
   const roomReservations: RoomReservations = {};
   const libraryIds = new Set(
-    Object.values(libraries).map((lib) => parseInt(lib.id)),
+    Object.values(LIBRARIES).map((lib) => parseInt(lib.id)),
   );
   const timezone = "America/Chicago";
   const targetDateCST = targetMoment.clone().tz(timezone).startOf("day");
@@ -549,7 +227,7 @@ function linkRoomsReservations(
   for (const room of roomsData) {
     if (!libraryIds.has(room.lid)) continue;
 
-    const libraryName = Object.values(libraries).find(
+    const libraryName = Object.values(LIBRARIES).find(
       (l) => l.id === room.lid.toString(),
     )?.name;
     if (!libraryName) continue; // Should not happen
@@ -747,7 +425,7 @@ async function getFormattedLibraryData(
   try {
     // Process only the libraries that are open at targetMoment
     const libraryPromises = openLibraries.map(async (libraryName) => {
-      const libraryInfo = libraries[libraryName];
+      const libraryInfo = LIBRARIES[libraryName];
       if (!libraryInfo) return null; // Should not happen if openLibraries is correct
 
       const lid = libraryInfo.id;
@@ -816,16 +494,8 @@ async function fetchAcademicBuildingData(
   const facilities: Record<string, Facility> = {};
 
   try {
-    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
-      throw new Error(
-        "Missing Supabase environment variables: SUPABASE_URL and/or SUPABASE_KEY",
-      );
-    }
-
-    const supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_KEY!,
-    );
+    const supabaseConfig = getSupabaseConfig();
+    const supabase = createClient(supabaseConfig.url, supabaseConfig.key);
 
     const { data: buildingData, error } = await Sentry.startSpan(
       {
@@ -1092,92 +762,39 @@ async function updateLibraryFacilities(
   return libraryFacilities;
 }
 
+export type FacilityScope = "academic" | "library" | "all";
+
 /**
- * Main API endpoint handler
+ * Builds the response shared by the HTTP route and direct tests. Keeping HTTP
+ * parsing outside this service makes the data orchestration reusable and keeps
+ * framework concerns out of the availability domain.
  */
-export async function GET(request: Request) {
-  try {
-    const url = new URL(request.url);
-    const dateParam = url.searchParams.get("date");
-    const timeParam = url.searchParams.get("time"); // Expect HH:mm:ss
-    const facilityType = url.searchParams.get("type");
+export async function getFacilityStatus(
+  targetMoment: moment.Moment,
+  facilityScope: FacilityScope,
+): Promise<FacilityStatus> {
+  const includeAcademic =
+    facilityScope === "all" || facilityScope === "academic";
+  const includeLibraries =
+    facilityScope === "all" || facilityScope === "library";
 
-    if (
-      facilityType &&
-      !["academic", "library", "all"].includes(facilityType)
-    ) {
-      return NextResponse.json(
-        { error: 'Invalid type. Expected "academic", "library", or "all".' },
-        { status: 400 },
-      );
-    }
+  const fetchPromises: Promise<Record<string, Facility>>[] = [];
 
-    const includeAcademic =
-      !facilityType || facilityType === "all" || facilityType === "academic";
-    const includeLibraries =
-      !facilityType || facilityType === "all" || facilityType === "library";
-
-    let targetMoment: moment.Moment;
-    const timezone = "America/Chicago";
-
-    if (
-      dateParam &&
-      timeParam &&
-      moment(
-        `${dateParam} ${timeParam}`,
-        "YYYY-MM-DD HH:mm:ss",
-        true,
-      ).isValid()
-    ) {
-      targetMoment = moment.tz(
-        `${dateParam} ${timeParam}`,
-        "YYYY-MM-DD HH:mm:ss",
-        timezone,
-      );
-    } else {
-      // Default to current time if params are missing or invalid
-      targetMoment = moment().tz(timezone);
-      if (dateParam || timeParam) {
-        console.warn(
-          `Invalid date/time parameters received (date: ${dateParam}, time: ${timeParam}). Defaulting to current time.`,
-        );
-      }
-    }
-
-    const timestamp = targetMoment.toISOString();
-
-    const facilityStatus: FacilityStatus = {
-      timestamp,
-      facilities: {},
-    };
-
-    const fetchPromises: Promise<Record<string, Facility>>[] = [];
-
-    if (includeAcademic) {
-      fetchPromises.push(fetchAcademicBuildingData(targetMoment));
-    }
-
-    if (includeLibraries) {
-      const libraryFacilities = initializeLibraryFacilities();
-      fetchPromises.push(
-        updateLibraryFacilities(libraryFacilities, targetMoment),
-      );
-    }
-
-    const results = await Promise.all(fetchPromises);
-
-    results.forEach((facilities) => {
-      Object.assign(facilityStatus.facilities, facilities);
-    });
-
-    return NextResponse.json(facilityStatus);
-  } catch (error) {
-    Sentry.captureException(error, {
-      tags: { component: "api", route: "/api/facilities" },
-    });
-    console.error("Error in unified API:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Failed to fetch data";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+  if (includeAcademic) {
+    fetchPromises.push(fetchAcademicBuildingData(targetMoment));
   }
+
+  if (includeLibraries) {
+    fetchPromises.push(
+      updateLibraryFacilities(initializeLibraryFacilities(), targetMoment),
+    );
+  }
+
+  const results = await Promise.all(fetchPromises);
+  const facilities = Object.assign({}, ...results);
+
+  return {
+    timestamp: targetMoment.toISOString(),
+    facilities,
+  };
 }

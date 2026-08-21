@@ -43,15 +43,33 @@ illiniSpots is a web application that helps UIUC students find available study s
 
 ## Tech Stack
 
-- Frontend: Next.js, React, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, Mapbox.
-- Backend: Supabase (PostgreSQL), Next.js API Routes, SQL functions (`database/functions`).
+- Frontend: React 19, Vite 8, TanStack Router, TanStack Query, TypeScript, Tailwind CSS, shadcn/ui, and Mapbox.
+- Backend: Hono on Bun, Supabase (PostgreSQL), and SQL functions (`database/functions`).
+- Observability: Sentry for the React client, Bun server, API dependencies, and scheduled data pipelines.
+
+### Application Architecture
+
+The Vite client and Hono API live in one package and are deployed as one
+same-origin application:
+
+```text
+src/client/          React entrypoint, providers, routes, and browser telemetry
+src/server/routes/   HTTP validation and response contracts
+src/server/services/ availability, Supabase, and LibCal domain services
+src/components/      shared React UI
+src/types/           shared API and UI types
+```
+
+During development Vite runs on port 5173 and proxies `/api/*` to Hono on port
+3000. In production Hono serves the built Vite assets and the API from the same
+port. The two public data endpoints remain `/api/facilities` and
+`/api/room-schedule`.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18.17+
-- npm or yarn
+- Bun 1.4+
 - Supabase project (PostgreSQL)
 
 ### Setup
@@ -61,36 +79,76 @@ illiniSpots is a web application that helps UIUC students find available study s
 ```bash
 git clone https://github.com/plon/illinispots
 cd illinispots
-npm install
+bun install
 ```
 
 2) Supabase database
 
 - Create a database (e.g., via Supabase).
-- Link the project with `npx supabase link --project-ref <project-ref>`.
-- Apply the versioned schema and security policies with `npx supabase db push`.
+- Link the project with `bunx supabase link --project-ref <project-ref>`.
+- Apply the versioned schema and security policies with `bunx supabase db push`.
 - The files under [`database/`](database) remain readable references for the
   current tables and functions; [`supabase/migrations`](supabase/migrations) is
   the deployment source of truth.
 
 3) Environment
 
-Create `.env.local` with:
+Copy `.env.example` to `.env.local` and provide:
 
 ```env
 SUPABASE_URL=your_supabase_url
 SUPABASE_KEY=your_supabase_key
-NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_token
-NEXT_PUBLIC_MAPBOX_STYLE_URL=mapbox://styles/<user>/<style-id>
+MAPBOX_ACCESS_TOKEN=your_public_mapbox_token
+MAPBOX_STYLE_URL=mapbox://styles/<user>/<style-id>
 ```
+
+`SUPABASE_KEY` is server-only. The Hono API exposes only the public Mapbox
+configuration to the browser at runtime, so one built image works in every
+deployment environment.
 
 4) Run locally
 
 ```bash
-npm run dev
+bun run dev
 ```
 
-Open http://localhost:3000.
+Open http://localhost:5173. Hono continues to listen on http://localhost:3000
+for direct API access.
+
+### Verification
+
+```bash
+bun run check
+```
+
+This runs ESLint, Bun's route and service tests, the Vite production build, and
+TypeScript validation.
+
+### Production
+
+The existing Vercel project deploys the Vite build as static assets and the
+Hono API as a Bun 1.4 Vercel Function. This retains Vercel preview deployments,
+CDN delivery, autoscaling, and the existing domain. Vercel requires the same
+environment variables shown above for Production, Preview, and Development
+deployments.
+
+Preview deployments are created from pull requests. The `/api/*` contract stays
+same-origin, so previews and the production domain do not need CORS
+configuration.
+
+For a container deployment, build and run directly:
+
+```bash
+bun run build
+bun run start
+```
+
+Or use the included image:
+
+```bash
+docker build -t illinispots .
+docker run --env-file .env.local -p 3000:3000 illinispots
+```
 
 ### Optional: Data Pipeline
 

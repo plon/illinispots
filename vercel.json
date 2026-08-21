@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "bunVersion": "1.4.x",
+  "buildCommand": "bun run build",
+  "installCommand": "npx --yes bun@1.4.0 install --frozen-lockfile",
+  "outputDirectory": "dist/client",
+  "functions": {
+    "api/[...route].ts": {
+      "maxDuration": 30
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import * as Sentry from "@sentry/nextjs";
+import { Sentry } from "@/client/observability";
 
 export type InitialLoadMilestone =
   | "academic_data_ready"

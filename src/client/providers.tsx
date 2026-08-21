@@ -1,8 +1,7 @@
-"use client";
-
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DateTimeProvider } from "@/contexts/DateTimeContext";
+import { TouchProvider } from "@/components/ui/HybridTooltip";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(
@@ -24,7 +23,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <DateTimeProvider>
-        {children}
+        <TouchProvider>{children}</TouchProvider>
       </DateTimeProvider>
     </QueryClientProvider>
   );
