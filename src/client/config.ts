@@ -1,9 +1,6 @@
-export interface PublicClientConfig {
-  appEnv: string;
-  mapboxAccessToken?: string;
-  mapboxStyleUrl?: string;
-  sentryDsn?: string;
-}
+import type { PublicClientConfig } from "@/types";
+
+export type { PublicClientConfig };
 
 declare global {
   interface Window {

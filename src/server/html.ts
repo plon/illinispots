@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import type { PublicClientConfig } from "./config";
 
+const HEAD_TAG_REGEX = /<head(?:\s+[^>]*)?>/i;
+
 export function injectClientConfig(
   rawHtml: string,
   config: PublicClientConfig,
@@ -8,8 +10,8 @@ export function injectClientConfig(
   const safeJson = JSON.stringify(config).replace(/</g, "\\u003c");
   const scriptTag = `<script>window.__APP_CONFIG__=${safeJson};</script>`;
 
-  if (rawHtml.includes("<head>")) {
-    return rawHtml.replace("<head>", `<head>${scriptTag}`);
+  if (HEAD_TAG_REGEX.test(rawHtml)) {
+    return rawHtml.replace(HEAD_TAG_REGEX, `$&${scriptTag}`);
   }
   return `${scriptTag}${rawHtml}`;
 }

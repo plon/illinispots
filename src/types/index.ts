@@ -257,3 +257,10 @@ export interface HourlyScheduleBlock {
   end: string; // HH:mm:ss
   sections: BlockSection[]; // Sections within this hourly block
 }
+
+export interface PublicClientConfig {
+  appEnv: string;
+  mapboxAccessToken: string;
+  mapboxStyleUrl: string;
+  sentryDsn: string;
+}

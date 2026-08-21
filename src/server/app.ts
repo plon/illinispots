@@ -137,25 +137,29 @@ export function createApp(dependencies: AppDependencies = {}) {
       }),
     );
 
+    if (injectedHtml) {
+      app.get("*", (context, next) => {
+        const path = new URL(context.req.url).pathname;
+        if (
+          path === "/" ||
+          path === "/index.html" ||
+          !path.slice(1).includes(".")
+        ) {
+          context.header("Cache-Control", "no-cache, must-revalidate");
+          return context.html(injectedHtml);
+        }
+        return next();
+      });
+    }
+
     app.use(
       "*",
       serveStatic({
         root: "./dist/client",
         precompressed: true,
-        rewriteRequestPath: (path) => {
-          if (path === "/" || path === "/index.html") {
-            return "/__bypass_static_html__";
-          }
-          return path;
-        },
       }),
     );
-
-    if (injectedHtml) {
-      app.get("*", (context) => context.html(injectedHtml));
-    }
   }
-
   app.notFound((context) =>
     context.json(
       {

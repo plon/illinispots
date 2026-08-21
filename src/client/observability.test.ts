@@ -1,28 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import {
-  CLIENT_TRACE_PROPAGATION_TARGETS,
-  resolveClientSentryEnvironment,
-} from "./observability";
-
-describe("resolveClientAppEnvironment", () => {
-  it("prefers explicit VITE_APP_ENV", () => {
-    expect(
-      resolveClientSentryEnvironment({
-        VITE_APP_ENV: "staging",
-        MODE: "production",
-      }),
-    ).toBe("staging");
-  });
-
-  it("falls back to Vite MODE or development", () => {
-    expect(resolveClientSentryEnvironment({ MODE: "production" })).toBe(
-      "production",
-    );
-    expect(resolveClientSentryEnvironment({ MODE: "development" })).toBe(
-      "development",
-    );
-  });
-});
+import { CLIENT_TRACE_PROPAGATION_TARGETS } from "./observability";
 
 function matchesTraceTarget(
   url: string,

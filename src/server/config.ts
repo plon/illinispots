@@ -1,8 +1,11 @@
+import type { PublicClientConfig } from "../types";
+
+export type { PublicClientConfig };
+
 export interface SupabaseConfig {
   url: string;
   key: string;
 }
-
 type EnvironmentVariables = Readonly<Record<string, string | undefined>>;
 
 export class ServerConfigurationError extends Error {
@@ -55,12 +58,6 @@ export function getServerConfig(
   };
 }
 
-export interface PublicClientConfig {
-  appEnv: string;
-  mapboxAccessToken?: string;
-  mapboxStyleUrl?: string;
-  sentryDsn?: string;
-}
 
 export function getPublicClientConfig(
   environment: EnvironmentVariables = process.env,

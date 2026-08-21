@@ -17,6 +17,21 @@ describe("injectClientConfig", () => {
     );
   });
 
+  it("handles uppercase HEAD and attributes on head tag", () => {
+    const rawHtml = '<!doctype html><html><HEAD lang="en" data-test="1"><title>Test</title></HEAD><body></body></html>';
+    const config = {
+      appEnv: "staging",
+      mapboxAccessToken: "pk.test_token",
+      mapboxStyleUrl: "mapbox://styles/test_style",
+      sentryDsn: "https://test@sentry.io/1",
+    };
+
+    const injected = injectClientConfig(rawHtml, config);
+    expect(injected).toBe(
+      '<!doctype html><html><HEAD lang="en" data-test="1"><script>window.__APP_CONFIG__={"appEnv":"staging","mapboxAccessToken":"pk.test_token","mapboxStyleUrl":"mapbox://styles/test_style","sentryDsn":"https://test@sentry.io/1"};</script><title>Test</title></HEAD><body></body></html>',
+    );
+  });
+
   it("safely escapes < characters to prevent script injection breakouts", () => {
     const rawHtml = "<!doctype html><html><head><title>Test</title></head><body></body></html>";
     const config = {
