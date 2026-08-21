@@ -13,7 +13,7 @@ import {
   createRoomScheduleRoutes,
   type RoomScheduleRouteDependencies,
 } from "./routes/room-schedule";
-import { Sentry } from "./observability";
+import { Sentry, sentryTracing } from "./observability";
 
 export interface AppDependencies {
   clientConfig?: ClientConfig;
@@ -27,6 +27,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   const isTest = process.env.NODE_ENV === "test";
 
   app.use("*", requestId());
+  app.use("*", sentryTracing());
   app.use("*", secureHeaders());
 
   if (!isTest) {
