@@ -28,37 +28,26 @@ describe("resolveClientSentryEnvironment", () => {
   });
 });
 
+function matchesTraceTarget(
+  url: string,
+  targets = CLIENT_TRACE_PROPAGATION_TARGETS,
+): boolean {
+  return targets.some((target) =>
+    typeof target === "string" ? url.includes(target) : target.test(url),
+  );
+}
+
 describe("CLIENT_TRACE_PROPAGATION_TARGETS", () => {
   it("matches same-origin, relative, and production domain requests", () => {
-    const targets = CLIENT_TRACE_PROPAGATION_TARGETS;
-
-    expect(targets).toContain("localhost");
-
-    const relativePattern = targets.find(
-      (target) => target instanceof RegExp && target.source === "^\\/",
+    expect(matchesTraceTarget("http://localhost:5173/api/facilities")).toBe(true);
+    expect(matchesTraceTarget("/api/facilities")).toBe(true);
+    expect(matchesTraceTarget("/api/room-schedule")).toBe(true);
+    expect(matchesTraceTarget("https://illinispots.com/api/facilities")).toBe(
+      true,
     );
-    expect(relativePattern).toBeDefined();
-    expect((relativePattern as RegExp).test("/api/facilities")).toBe(true);
-    expect((relativePattern as RegExp).test("/api/room-schedule")).toBe(true);
-
-    const domainPattern = targets.find(
-      (target) =>
-        target instanceof RegExp &&
-        target.source === "^https:\\/\\/(?:www\\.)?illinispots\\.com",
-    );
-    expect(domainPattern).toBeDefined();
     expect(
-      (domainPattern as RegExp).test(
-        "https://illinispots.com/api/facilities",
-      ),
+      matchesTraceTarget("https://www.illinispots.com/api/facilities"),
     ).toBe(true);
-    expect(
-      (domainPattern as RegExp).test(
-        "https://www.illinispots.com/api/facilities",
-      ),
-    ).toBe(true);
-    expect(
-      (domainPattern as RegExp).test("https://otherdomain.com/api/facilities"),
-    ).toBe(false);
+    expect(matchesTraceTarget("https://api.mapbox.com/v4/tiles")).toBe(false);
   });
 });

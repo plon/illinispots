@@ -13,7 +13,7 @@ import {
   createRoomScheduleRoutes,
   type RoomScheduleRouteDependencies,
 } from "./routes/room-schedule";
-import { Sentry } from "./observability";
+import { Sentry, sentryTracing } from "./observability";
 
 export interface AppDependencies {
   clientConfig?: ClientConfig;
@@ -27,37 +27,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   const isTest = process.env.NODE_ENV === "test";
 
   app.use("*", requestId());
-  app.use("*", async (context, next) => {
-    const sentryTrace = context.req.header("sentry-trace");
-    const baggage = context.req.header("baggage");
-
-    return Sentry.continueTrace({ sentryTrace, baggage }, () => {
-      return Sentry.startSpan(
-        {
-          name: `${context.req.method} ${context.req.path}`,
-          op: "http.server",
-          attributes: {
-            "http.method": context.req.method,
-            "http.url": context.req.url,
-            "http.route": context.req.path,
-          },
-        },
-        async (span) => {
-          const reqId = context.get("requestId");
-          if (reqId && typeof reqId === "string") {
-            span?.setAttribute("http.request_id", reqId);
-            Sentry.setTag("request_id", reqId);
-          }
-
-          await next();
-
-          if (span) {
-            Sentry.setHttpStatus(span, context.res.status);
-          }
-        },
-      );
-    });
-  });
+  app.use("*", sentryTracing());
   app.use("*", secureHeaders());
 
   if (!isTest) {

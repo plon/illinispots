@@ -88,4 +88,24 @@ describe("server application", () => {
     expect(capturedParentSpanId).toBe("00f067aa0ba902b7");
     expect(capturedSpanName).toBe("GET /api/facilities");
   });
+
+  it("skips span creation for static assets under /assets/", async () => {
+    if (!Sentry.isInitialized()) {
+      Sentry.init({
+        dsn: "https://examplePublicKey@o0.ingest.sentry.io/0",
+        tracesSampleRate: 1,
+      });
+    }
+
+    let activeSpanInsideHandler: unknown = "unreached";
+    const customApp = createApp();
+    customApp.get("/assets/custom-asset.js", (context) => {
+      activeSpanInsideHandler = Sentry.getActiveSpan();
+      return context.text("asset");
+    });
+
+    const response = await customApp.request("/assets/custom-asset.js");
+    expect(response.status).toBe(200);
+    expect(activeSpanInsideHandler).toBeUndefined();
+  });
 });
