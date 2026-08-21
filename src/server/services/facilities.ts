@@ -14,27 +14,27 @@ import {
   LibraryRoom,
   RoomReservation,
 } from "../../types";
-import { isLibraryOpen, LIBRARY_HOURS } from "../../utils/libraryHours";
+import {
+  getActiveLibraryHours,
+  isLibraryOpen,
+  LIBRARY_HOURS,
+} from "../../utils/libraryHours";
 import { getSupabaseConfig } from "../config";
 import { Sentry } from "../observability";
 import {
   LIBRARIES,
   STATIC_ROOMS_BY_LIBRARY,
 } from "../data/library-catalog";
+import {
+  parseAcademicAvailabilityPayload,
+  parseReservationResponse,
+  type AcademicAvailabilityPayload,
+} from "./external-contracts";
 
 const LIBCAL_REQUEST_TIMEOUT_MS = 10_000;
 
-export interface AcademicAvailabilityPayload {
-  _cache?: {
-    hit?: boolean;
-    source?: string;
-    reason?: string;
-  };
-  buildings?: Record<string, unknown>;
-}
-
 export interface AcademicAvailabilityRpcResult {
-  data: AcademicAvailabilityPayload | null;
+  data: unknown;
   error: unknown;
 }
 
@@ -132,7 +132,7 @@ async function getReservation(
     );
   }
 
-  return (await response.json()) as ReservationResponse;
+  return parseReservationResponse(await response.json());
 }
 
 /**
@@ -222,36 +222,6 @@ const isOpeningSoon = (
 };
 
 /**
- * Gets the closing time moment object for a library on a specific date.
- * Returns null if hours are not defined or invalid.
- */
-function getLibraryClosingTime(
-  libraryName: string,
-  targetDate: moment.Moment,
-): moment.Moment | null {
-  const timezone = "America/Chicago";
-  const dayOfWeek = targetDate.format("dddd");
-  const hours = LIBRARY_HOURS[libraryName]?.[dayOfWeek];
-
-  if (!hours || !hours.close) {
-    return null;
-  }
-
-  const closingMoment = moment.tz(
-    `${targetDate.format("YYYY-MM-DD")} ${hours.close}`,
-    "YYYY-MM-DD HH:mm", // Assume HH:mm format from LIBRARY_HOURS
-    timezone,
-  );
-
-  // If the closing time is on the next day (e.g., 02:00), add a day
-  if (hours.nextDay) {
-    closingMoment.add(1, "day");
-  }
-
-  return closingMoment.isValid() ? closingMoment : null;
-}
-
-/**
  * Links room data with reservation data to create a complete picture of room availability at a specific time
  */
 function linkRoomsReservations(
@@ -264,7 +234,6 @@ function linkRoomsReservations(
     Object.values(LIBRARIES).map((lib) => parseInt(lib.id)),
   );
   const timezone = "America/Chicago";
-  const targetDateCST = targetMoment.clone().tz(timezone).startOf("day");
   const targetMomentString = targetMoment.format("YYYY-MM-DD HH:mm:ss");
 
   for (const room of roomsData) {
@@ -281,11 +250,10 @@ function linkRoomsReservations(
     let isCurrentlyAvailable = false;
     let roomStatus: RoomStatus = RoomStatus.RESERVED; // Default status
 
-    // Determine the relevant closing time for this library on the target date
-    const libraryClosingTime = getLibraryClosingTime(
+    const libraryClosingTime = getActiveLibraryHours(
       libraryName,
-      targetDateCST,
-    );
+      targetMoment,
+    )?.close ?? null;
 
     // Filter slots relevant to the room and sort them
     const roomSpecificSlots = reservationsData.slots
@@ -469,45 +437,21 @@ async function getFormattedLibraryData(
   // Process only the libraries that are open at targetMoment. Keep failures
   // isolated so one unavailable LibCal calendar does not erase other results.
   const libraryPromises = openLibraries.map(async (libraryName) => {
-    try {
-      const libraryInfo = LIBRARIES[libraryName];
-      if (!libraryInfo) return null; // Should not happen if openLibraries is correct
+    const libraryInfo = LIBRARIES[libraryName];
+    if (!libraryInfo) return null; // Should not happen if openLibraries is correct
 
-      const lid = libraryInfo.id;
-      const libraryRooms = STATIC_ROOMS_BY_LIBRARY[lid] || [];
-      if (libraryRooms.length === 0) {
-        console.warn(
-          `No static room metadata found for library ${libraryName} (lid ${lid})`,
-        );
-        return null;
-      }
-
-      // Get reservation data relevant to the targetMoment
-      const reservationData = await getReservation(lid, targetMoment, fetcher);
-      // Link reservations using targetMoment
-      const roomReservations = linkRoomsReservations(
-        libraryRooms,
-        reservationData,
-        targetMoment,
+    const lid = libraryInfo.id;
+    const libraryRooms = STATIC_ROOMS_BY_LIBRARY[lid] || [];
+    if (libraryRooms.length === 0) {
+      console.warn(
+        `No static room metadata found for library ${libraryName} (lid ${lid})`,
       );
+      return null;
+    }
 
-      // Count available rooms AT targetMoment based on the status set by linkRoomsReservations
-      let availableCount = 0;
-      for (const room of Object.values(roomReservations)) {
-        if (room.status === RoomStatus.AVAILABLE) {
-          availableCount++;
-        }
-      }
-
-      return {
-        libraryName,
-        data: {
-          room_count: Object.keys(roomReservations).length,
-          currently_available: availableCount, // Reflects availability AT targetMoment
-          rooms: roomReservations,
-          address: libraryInfo.address,
-        },
-      };
+    let reservationData: ReservationResponse;
+    try {
+      reservationData = await getReservation(lid, targetMoment, fetcher);
     } catch (error) {
       Sentry.captureException(error, {
         tags: {
@@ -520,6 +464,25 @@ async function getFormattedLibraryData(
       console.error(`Error fetching library data for ${libraryName}:`, error);
       return null;
     }
+
+    const roomReservations = linkRoomsReservations(
+      libraryRooms,
+      reservationData,
+      targetMoment,
+    );
+    const availableCount = Object.values(roomReservations).filter(
+      (room) => room.status === RoomStatus.AVAILABLE,
+    ).length;
+
+    return {
+      libraryName,
+      data: {
+        room_count: Object.keys(roomReservations).length,
+        currently_available: availableCount,
+        rooms: roomReservations,
+        address: libraryInfo.address,
+      },
+    };
   });
 
   const libraryResults = await Promise.all(libraryPromises);
@@ -545,9 +508,10 @@ async function fetchAcademicBuildingData(
   >,
 ): Promise<Record<string, Facility>> {
   const facilities: Record<string, Facility> = {};
+  let buildingData: AcademicAvailabilityPayload;
 
   try {
-    const { data: buildingData, error } = await Sentry.startSpan(
+    const { data, error } = await Sentry.startSpan(
       {
         name: "Supabase RPC get_cached_spots",
         op: "db.rpc",
@@ -559,7 +523,10 @@ async function fetchAcademicBuildingData(
           min_minutes_param: 30,
         });
 
-        const cacheMetadata = response.data?._cache;
+        const parsedData = response.error
+          ? null
+          : parseAcademicAvailabilityPayload(response.data);
+        const cacheMetadata = parsedData?._cache;
         const cacheResult = response.error
           ? "error"
           : cacheMetadata?.hit === true
@@ -592,7 +559,7 @@ async function fetchAcademicBuildingData(
           console.warn("Cache telemetry failed:", telemetryError);
         }
 
-        return response;
+        return { data: parsedData, error: response.error };
       },
     );
 
@@ -604,85 +571,67 @@ async function fetchAcademicBuildingData(
       console.error("Error fetching building data from Supabase:", error);
       return facilities; // Return empty on error
     }
-
-    // Process Supabase response
-    if (buildingData?.buildings) {
-      Object.entries(buildingData.buildings).forEach(([id, buildingInfo]) => {
-        const building = buildingInfo as {
-          name: string;
-          coordinates: { latitude: number; longitude: number };
-          hours: { open: string; close: string };
-          rooms: Record<
-            string,
-            Omit<AcademicRoom, "type" | "status"> & {
-              status: "available" | "occupied";
-              passingPeriod?: boolean;
-              availableAt?: string;
-              availableFor?: number;
-              availableUntil?: string;
-              currentClass?: any;
-              nextClass?: any;
-            }
-          >;
-          isOpen: boolean;
-          roomCounts: { available: number; total: number }; // Counts based on check_time
-        };
-
-        const academicFacility: Facility = {
-          id,
-          name: building.name,
-          type: FacilityType.ACADEMIC,
-          coordinates: building.coordinates,
-          hours: building.hours, // These hours are for the *day*
-          isOpen: building.isOpen, // This reflects if open AT targetMoment
-          roomCounts: building.roomCounts || { available: 0, total: 0 }, // Counts are based on targetMoment
-          rooms: {},
-        };
-
-        Object.entries(building.rooms || {}).forEach(([roomNumber, roomData]) => {
-          let status: RoomStatus;
-          if (roomData.status === "available") {
-            if (roomData.passingPeriod) {
-              status = RoomStatus.PASSING_PERIOD;
-            } else {
-              status = RoomStatus.AVAILABLE;
-            }
-          } else {
-            if (
-              roomData.availableAt &&
-              isOpeningSoon(roomData.availableAt, targetMoment) &&
-              roomData.availableFor &&
-              roomData.availableFor >= 30
-            ) {
-              status = RoomStatus.OPENING_SOON;
-            } else {
-              status = RoomStatus.OCCUPIED;
-            }
-          }
-
-          academicFacility.rooms[roomNumber] = {
-            type: "academic",
-            status: status,
-            currentClass: roomData.currentClass,
-            nextClass: roomData.nextClass,
-            availableAt: roomData.availableAt,
-            availableFor: roomData.availableFor
-              ? Math.max(0, roomData.availableFor)
-              : undefined, // Ensure non-negative
-            availableUntil: roomData.availableUntil,
-          } as AcademicRoom;
-        });
-
-        facilities[id] = academicFacility;
-      });
+    if (!data) {
+      return facilities;
     }
+    buildingData = data;
   } catch (error) {
     Sentry.captureException(error, {
       tags: { component: "supabase", operation: "get_cached_spots" },
     });
     Sentry.getActiveSpan()?.setAttribute("result.partial", true);
-    console.error("Error in fetchAcademicBuildingData:", error);
+    console.error("Error loading academic availability:", error);
+    return facilities;
   }
+
+  Object.entries(buildingData.buildings).forEach(([id, building]) => {
+    const academicFacility: Facility = {
+      id,
+      name: building.name,
+      type: FacilityType.ACADEMIC,
+      coordinates: building.coordinates,
+      hours: building.hours,
+      isOpen: building.isOpen,
+      roomCounts: building.roomCounts,
+      rooms: {},
+    };
+
+    Object.entries(building.rooms).forEach(([roomNumber, roomData]) => {
+      let status: RoomStatus;
+      if (roomData.status === "available") {
+        if (roomData.passingPeriod) {
+          status = RoomStatus.PASSING_PERIOD;
+        } else {
+          status = RoomStatus.AVAILABLE;
+        }
+      } else {
+        if (
+          roomData.availableAt &&
+          isOpeningSoon(roomData.availableAt, targetMoment) &&
+          roomData.availableFor &&
+          roomData.availableFor >= 30
+        ) {
+          status = RoomStatus.OPENING_SOON;
+        } else {
+          status = RoomStatus.OCCUPIED;
+        }
+      }
+
+      academicFacility.rooms[roomNumber] = {
+        type: "academic",
+        status,
+        currentClass: roomData.currentClass,
+        nextClass: roomData.nextClass,
+        availableAt: roomData.availableAt,
+        availableFor: roomData.availableFor
+          ? Math.max(0, roomData.availableFor)
+          : undefined,
+        availableUntil: roomData.availableUntil,
+      } as AcademicRoom;
+    });
+
+    facilities[id] = academicFacility;
+  });
 
   return facilities;
 }
@@ -745,63 +694,56 @@ async function updateLibraryFacilities(
   targetMoment: moment.Moment, // Use targetMoment
   fetcher: FacilitiesFetch,
 ): Promise<Record<string, Facility>> {
-  try {
-    // Update each library's isOpen status based on the targetMoment
-    Object.entries(libraryFacilities).forEach(([libraryName, facility]) => {
-      facility.isOpen = isLibraryOpen(libraryName, targetMoment);
+  Object.entries(libraryFacilities).forEach(([libraryName, facility]) => {
+    facility.isOpen = isLibraryOpen(libraryName, targetMoment);
 
-      // Update facility.hours based on the day of targetMoment
-      const dayOfWeek = targetMoment.format("dddd");
-      const dailyHours = LIBRARY_HOURS[libraryName]?.[dayOfWeek];
-      facility.hours.open = dailyHours?.open ?? "";
-      facility.hours.close = dailyHours?.close ?? "";
-    });
+    const dayOfWeek = targetMoment.format("dddd");
+    const dailyHours = LIBRARY_HOURS[libraryName]?.[dayOfWeek];
+    facility.hours.open = dailyHours?.open ?? "";
+    facility.hours.close = dailyHours?.close ?? "";
+  });
 
-    // Filter libraries that are open AT targetMoment
-    const openLibraryNames = Object.entries(libraryFacilities)
-      .filter(([, facility]) => facility.isOpen)
-      .map(([name]) => name);
+  const openLibraryNames = Object.entries(libraryFacilities)
+    .filter(([, facility]) => facility.isOpen)
+    .map(([name]) => name);
 
-    if (openLibraryNames.length > 0) {
-      // Get library data for open libraries using targetMoment
-      const libraryData = await getFormattedLibraryData(
-        openLibraryNames,
-        targetMoment,
-        fetcher,
-      );
-
-      // Add room data only for libraries that are open AT targetMoment
-      Object.entries(libraryData).forEach(([name, data]) => {
-        const libraryFacility = libraryFacilities[name];
-        if (libraryFacility?.isOpen) {
-          // Update counts based on availability AT targetMoment
-          libraryFacility.roomCounts = {
-            available: data.currently_available,
-            total: data.room_count,
-          };
-
-          // Convert library rooms to FacilityRoom format using data from linkRoomsReservations
-          Object.entries(data.rooms).forEach(([roomName, roomData]) => {
-            libraryFacility.rooms[roomName] = {
-              type: "library",
-              status: roomData.status,
-              url: roomData.url,
-              thumbnail: roomData.thumbnail,
-              slots: roomData.slots,
-              availableAt: roomData.availableAt,
-              availableFor: roomData.availableDuration,
-            } as LibraryRoom;
-          });
-        }
-      });
-    }
-  } catch (error) {
-    Sentry.captureException(error, {
-      tags: { component: "libcal", operation: "update-facilities" },
-    });
-    Sentry.getActiveSpan()?.setAttribute("result.partial", true);
-    console.error("Error in updateLibraryFacilities:", error);
+  if (openLibraryNames.length === 0) {
+    return libraryFacilities;
   }
+
+  const libraryData = await getFormattedLibraryData(
+    openLibraryNames,
+    targetMoment,
+    fetcher,
+  );
+
+  for (const libraryName of openLibraryNames) {
+    if (!libraryData[libraryName]) {
+      delete libraryFacilities[libraryName];
+    }
+  }
+
+  Object.entries(libraryData).forEach(([name, data]) => {
+    const libraryFacility = libraryFacilities[name];
+    if (!libraryFacility?.isOpen) return;
+
+    libraryFacility.roomCounts = {
+      available: data.currently_available,
+      total: data.room_count,
+    };
+
+    Object.entries(data.rooms).forEach(([roomName, roomData]) => {
+      libraryFacility.rooms[roomName] = {
+        type: "library",
+        status: roomData.status,
+        url: roomData.url,
+        thumbnail: roomData.thumbnail,
+        slots: roomData.slots,
+        availableAt: roomData.availableAt,
+        availableFor: roomData.availableDuration,
+      } as LibraryRoom;
+    });
+  });
 
   return libraryFacilities;
 }

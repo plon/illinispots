@@ -3,6 +3,7 @@ import type moment from "moment-timezone";
 import type { RoomScheduleBlock } from "../../types";
 import { getSupabaseConfig } from "../config";
 import { Sentry } from "../observability";
+import { parseRoomSchedule } from "./external-contracts";
 
 export interface RoomScheduleQuery {
   buildingId: string;
@@ -76,7 +77,22 @@ export async function loadRoomSchedule(
     throw new RoomScheduleDatabaseError({ cause: error });
   }
 
-  return Array.isArray(data) ? (data as RoomScheduleBlock[]) : [];
+  try {
+    return parseRoomSchedule(data);
+  } catch (error) {
+    Sentry.captureException(error, {
+      tags: {
+        component: "supabase",
+        operation: "get_room_schedule_cached",
+        failure: "invalid-response",
+      },
+    });
+    console.error(
+      `Invalid Supabase schedule response for ${buildingId} - ${roomNumber}:`,
+      error,
+    );
+    throw new RoomScheduleDatabaseError({ cause: error });
+  }
 }
 
 /**

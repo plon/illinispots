@@ -88,6 +88,24 @@ describe("getFacilityStatus", () => {
     });
   });
 
+  it("rejects malformed academic responses instead of returning invalid facilities", async () => {
+    spyOn(console, "error").mockImplementation(() => {});
+    const target = moment.tz(
+      "2026-08-24 10:00:00",
+      "YYYY-MM-DD HH:mm:ss",
+      CAMPUS_TIMEZONE,
+    );
+
+    const result = await getFacilityStatus(target, "academic", {
+      executeAcademicAvailabilityRpc: async () => ({
+        data: { buildings: { malformed: {} } },
+        error: null,
+      }),
+    });
+
+    expect(result.facilities).toEqual({});
+  });
+
   it("maps LibCal slots into current, upcoming, and unavailable rooms", async () => {
     const target = moment.tz(
       "2026-08-24 08:15:00",
@@ -185,6 +203,36 @@ describe("getFacilityStatus", () => {
     });
   });
 
+  it("caps overnight availability at the active interval's closing time", async () => {
+    const target = moment.tz(
+      "2026-08-25 01:30:00",
+      "YYYY-MM-DD HH:mm:ss",
+      CAMPUS_TIMEZONE,
+    );
+    const fetchLibCal: FacilitiesFetch = async () =>
+      Response.json({
+        slots: [
+          {
+            itemId: 23939,
+            start: "2026-08-25 01:00:00",
+            end: "2026-08-25 03:00:00",
+          },
+        ],
+      });
+
+    const result = await getFacilityStatus(target, "library", {
+      fetch: fetchLibCal,
+    });
+
+    expect(result.facilities["Funk ACES Library"].rooms["301"]).toMatchObject({
+      status: RoomStatus.AVAILABLE,
+      availableFor: 30,
+      slots: [
+        { start: "01:00:00", end: "02:00:00", available: true },
+      ],
+    });
+  });
+
   it("preserves other facility results when one LibCal request times out", async () => {
     spyOn(console, "error").mockImplementation(() => {});
     const target = moment.tz(
@@ -240,9 +288,6 @@ describe("getFacilityStatus", () => {
     expect(result.facilities["Grainger Engineering Library"].roomCounts).toEqual(
       { available: 1, total: 9 },
     );
-    expect(result.facilities["Funk ACES Library"]).toMatchObject({
-      roomCounts: { available: 0, total: 0 },
-      rooms: {},
-    });
+    expect(result.facilities["Funk ACES Library"]).toBeUndefined();
   });
 });

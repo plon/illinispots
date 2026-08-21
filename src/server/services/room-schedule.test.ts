@@ -4,6 +4,7 @@ import {
   loadRoomSchedule,
   RoomScheduleDatabaseError,
 } from "./room-schedule";
+import { ExternalResponseError } from "./external-contracts";
 
 describe("loadRoomSchedule", () => {
   afterEach(() => {
@@ -60,5 +61,23 @@ describe("loadRoomSchedule", () => {
 
     await expect(operation).rejects.toBeInstanceOf(RoomScheduleDatabaseError);
     await expect(operation).rejects.toMatchObject({ cause: databaseError });
+  });
+
+  it("rejects malformed schedules at the RPC boundary", async () => {
+    spyOn(console, "error").mockImplementation(() => {});
+
+    const operation = loadRoomSchedule(
+      { buildingId: "CIF", roomNumber: "1101", date: "2026-08-24" },
+      {
+        executeRoomScheduleRpc: async () => ({
+          data: [{ unexpected: true }],
+          error: null,
+        }),
+      },
+    );
+
+    await expect(operation).rejects.toMatchObject({
+      cause: expect.any(ExternalResponseError),
+    });
   });
 });
