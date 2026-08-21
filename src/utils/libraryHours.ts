@@ -41,6 +41,59 @@ export const LIBRARY_HOURS: LibraryHours = {
   },
 };
 
+export interface ActiveLibraryHours {
+  open: moment.Moment;
+  close: moment.Moment;
+}
+
+/**
+ * Resolves the opening interval containing the requested time. Checking the
+ * previous calendar day is necessary for schedules that close after midnight.
+ */
+export const getActiveLibraryHours = (
+  libraryName: string,
+  dateTimeToCheck?: moment.Moment,
+): ActiveLibraryHours | null => {
+  const timezone = "America/Chicago";
+  const targetMoment = (dateTimeToCheck ?? moment()).clone().tz(timezone);
+
+  for (const dayOffset of [0, -1]) {
+    const scheduleDate = targetMoment
+      .clone()
+      .add(dayOffset, "day")
+      .startOf("day");
+    const dayOfWeek = scheduleDate.format("dddd");
+    const hours = LIBRARY_HOURS[libraryName]?.[dayOfWeek];
+    if (!hours) continue;
+
+    const open = moment.tz(
+      `${scheduleDate.format("YYYY-MM-DD")} ${hours.open}`,
+      "YYYY-MM-DD HH:mm",
+      timezone,
+    );
+    const close = moment.tz(
+      `${scheduleDate.format("YYYY-MM-DD")} ${hours.close}`,
+      "YYYY-MM-DD HH:mm",
+      timezone,
+    );
+
+    if (hours.nextDay) {
+      close.add(1, "day");
+    }
+
+    if (
+      open.isValid() &&
+      close.isValid() &&
+      targetMoment.isSameOrAfter(open) &&
+      targetMoment.isBefore(close)
+    ) {
+      return { open, close };
+    }
+  }
+
+  return null;
+};
+
 /**
  * Checks if a library is considered "open" for reservations at a specific date and time.
  * @param libraryName The name of the library.
@@ -50,51 +103,7 @@ export const LIBRARY_HOURS: LibraryHours = {
 export const isLibraryOpen = (
   libraryName: string,
   dateTimeToCheck?: moment.Moment,
-): boolean => {
-  const targetMoment = (dateTimeToCheck || moment()).tz("America/Chicago");
-  const targetTime = targetMoment.format("HH:mm"); // Compare HH:mm
-  const targetDayOfWeek = targetMoment.format("dddd"); // Monday, Tuesday, etc.
-
-  const hours = LIBRARY_HOURS[libraryName]?.[targetDayOfWeek];
-
-  // If no hours defined for this day, it's closed.
-  if (!hours) return false;
-
-  const { open, close, nextDay } = hours;
-
-  // --- Check against the hours for the targetMoment's day ---
-  if (nextDay) {
-    // Scenario 1: Opens today, closes after midnight tomorrow.
-    // Is the target time between today's open time and midnight?
-    if (targetTime >= open) {
-      return true; // Open from open time until midnight
-    }
-    // Note: The case where targetTime is *after* midnight but *before* the close time
-    // will be handled by checking the *previous* day's hours below.
-  } else {
-    // Scenario 2: Opens today, closes today (before midnight).
-    // Is the target time between open and close? (Exclusive of close time)
-    if (targetTime >= open && targetTime < close) {
-      return true;
-    }
-  }
-
-  // --- Check if we are currently within the hours of the *previous* day that extended past midnight ---
-  const previousDayMoment = targetMoment.clone().subtract(1, "day");
-  const previousDayOfWeek = previousDayMoment.format("dddd");
-  const previousHours = LIBRARY_HOURS[libraryName]?.[previousDayOfWeek];
-
-  if (previousHours?.nextDay) {
-    // Scenario 3: Previous day opened and closed after midnight (on the targetMoment's calendar day).
-    // Is the target time *before* the previous day's closing time? (Exclusive of close time)
-    if (targetTime < previousHours.close) {
-      return true;
-    }
-  }
-
-  // If none of the above conditions met, the library is closed at the target time.
-  return false;
-};
+): boolean => getActiveLibraryHours(libraryName, dateTimeToCheck) !== null;
 
 /**
  * Gets a message describing the library's hours for a given day.
