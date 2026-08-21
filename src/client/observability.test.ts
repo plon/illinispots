@@ -32,6 +32,10 @@ describe("CLIENT_TRACE_PROPAGATION_TARGETS", () => {
     expect(
       matchesTraceTarget("https://illinispots-staging.fly.dev/api/facilities"),
     ).toBe(true);
+    expect(matchesTraceTarget("//attacker.example/api/facilities")).toBe(false);
+    expect(matchesTraceTarget("https://unrelated.fly.dev/api/facilities")).toBe(
+      false,
+    );
     expect(matchesTraceTarget("https://api.mapbox.com/v4/tiles")).toBe(false);
     expect(
       matchesTraceTarget("https://api.mapbox.com/search?q=localhost"),
