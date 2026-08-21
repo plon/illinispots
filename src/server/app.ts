@@ -22,7 +22,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   const app = new Hono();
   const isProduction = process.env.NODE_ENV === "production";
   const isTest = process.env.NODE_ENV === "test";
-
+  const appEnv = process.env.APP_ENV;
   app.use("*", requestId());
   app.use("*", sentryTracing());
   app.use("*", secureHeaders());
@@ -32,17 +32,62 @@ export function createApp(dependencies: AppDependencies = {}) {
   }
 
   app.use("*", async (context, next) => {
-    if (
-      isProduction &&
-      new URL(context.req.url).hostname === "www.illinispots.com"
-    ) {
-      const canonicalUrl = new URL(context.req.url);
-      canonicalUrl.protocol = "https:";
-      canonicalUrl.hostname = "illinispots.com";
-      return context.redirect(canonicalUrl.toString(), 308);
-    }
+    const url = new URL(context.req.url);
+    const hostHeader =
+      context.req.header("x-forwarded-host") ||
+      context.req.header("host") ||
+      url.hostname;
+    const hostname = hostHeader.split(":")[0];
 
+    const isLocal =
+      hostname === "localhost" ||
+      hostname === "127.0.0.1";
+
+    if (!isLocal) {
+      if (
+        appEnv === "staging" &&
+        hostname === "illinispots-staging.fly.dev"
+      ) {
+        const canonicalUrl = new URL(context.req.url);
+        canonicalUrl.protocol = "https:";
+        canonicalUrl.hostname = "staging.illinispots.com";
+        return context.redirect(canonicalUrl.toString(), 308);
+      }
+
+      if (
+        isProduction &&
+        hostname === "www.illinispots.com"
+      ) {
+        const canonicalUrl = new URL(context.req.url);
+        canonicalUrl.protocol = "https:";
+        canonicalUrl.hostname = "illinispots.com";
+        return context.redirect(canonicalUrl.toString(), 308);
+      }
+    }
     await next();
+
+    if (
+      process.env.APP_ENV === "staging" ||
+      url.hostname.startsWith("staging.") ||
+      url.hostname.endsWith(".fly.dev")
+    ) {
+      context.header("X-Robots-Tag", "noindex, nofollow, noarchive");
+    }
+  });
+
+  app.get("/robots.txt", (context) => {
+    const url = new URL(context.req.url);
+    const isStaging =
+      process.env.APP_ENV === "staging" ||
+      url.hostname.startsWith("staging.") ||
+      url.hostname.endsWith(".fly.dev");
+
+    const body = isStaging
+      ? "User-agent: *\nDisallow: /\n"
+      : "User-agent: *\nAllow: /\n";
+
+    context.header("Content-Type", "text/plain; charset=utf-8");
+    return context.text(body);
   });
 
   app.get("/api/health", (context) =>

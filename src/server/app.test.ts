@@ -22,17 +22,77 @@ describe("server application", () => {
   });
 
   it("redirects the www host to the canonical HTTPS origin in production", async () => {
-    const previousEnvironment = process.env.NODE_ENV;
-    process.env.NODE_ENV = "production";
+    const previousNodeEnv = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = "production";
+      const app = createApp();
+      const response = await app.request("http://www.illinispots.com/path?x=1");
+
+      expect(response.status).toBe(308);
+      expect(response.headers.get("location")).toBe(
+        "https://illinispots.com/path?x=1",
+      );
+    } finally {
+      process.env.NODE_ENV = previousNodeEnv;
+    }
+  });
+
+  it("redirects raw fly.dev staging domain to staging.illinispots.com", async () => {
+    const previousNodeEnv = process.env.NODE_ENV;
+    const previousAppEnv = process.env.APP_ENV;
+    try {
+      process.env.NODE_ENV = "production";
+      process.env.APP_ENV = "staging";
+      const app = createApp();
+      const response = await app.request(
+        "http://illinispots-staging.fly.dev/path?tab=schedule",
+      );
+
+      expect(response.status).toBe(308);
+      expect(response.headers.get("location")).toBe(
+        "https://staging.illinispots.com/path?tab=schedule",
+      );
+    } finally {
+      process.env.NODE_ENV = previousNodeEnv;
+      process.env.APP_ENV = previousAppEnv;
+    }
+  });
+
+  it("adds noindex header to responses on staging and fly.dev domains", async () => {
     const app = createApp();
-    process.env.NODE_ENV = previousEnvironment;
 
-    const response = await app.request("http://www.illinispots.com/path?x=1");
-
-    expect(response.status).toBe(308);
-    expect(response.headers.get("location")).toBe(
-      "https://illinispots.com/path?x=1",
+    const stagingDomainResponse = await app.request(
+      "https://staging.illinispots.com/api/health",
     );
+    expect(stagingDomainResponse.headers.get("X-Robots-Tag")).toBe(
+      "noindex, nofollow, noarchive",
+    );
+
+    const flyResponse = await app.request(
+      "https://illinispots-staging.fly.dev/api/health",
+    );
+    expect(flyResponse.headers.get("X-Robots-Tag")).toBe(
+      "noindex, nofollow, noarchive",
+    );
+
+    const prodResponse = await app.request(
+      "https://illinispots.com/api/health",
+    );
+    expect(prodResponse.headers.get("X-Robots-Tag")).toBeNull();
+  });
+
+  it("serves disallow robots.txt on staging and allow on production", async () => {
+    const app = createApp();
+
+    const stagingRobots = await app.request(
+      "https://staging.illinispots.com/robots.txt",
+    );
+    expect(stagingRobots.status).toBe(200);
+    expect(await stagingRobots.text()).toBe("User-agent: *\nDisallow: /\n");
+
+    const prodRobots = await app.request("https://illinispots.com/robots.txt");
+    expect(prodRobots.status).toBe(200);
+    expect(await prodRobots.text()).toBe("User-agent: *\nAllow: /\n");
   });
 
   it("propagates incoming distributed tracing headers into server spans", async () => {
