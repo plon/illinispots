@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { resolveSentryEnvironment } from "./config";
+import { getServerConfig, resolveSentryEnvironment } from "./config";
 
 describe("resolveSentryEnvironment", () => {
   it("uses the Vercel target so custom environments retain their name", () => {
@@ -27,5 +27,27 @@ describe("resolveSentryEnvironment", () => {
     );
     expect(resolveSentryEnvironment({ NODE_ENV: "test" })).toBe("test");
     expect(resolveSentryEnvironment({})).toBe("development");
+  });
+});
+
+describe("getServerConfig", () => {
+  it("enables server telemetry only when a DSN is configured", () => {
+    expect(
+      getServerConfig({
+        PORT: "4000",
+        SENTRY_DSN: "https://public@example.ingest.sentry.io/1",
+        VERCEL_TARGET_ENV: "preview",
+      }),
+    ).toEqual({
+      environment: "preview",
+      port: 4000,
+      sentryDsn: "https://public@example.ingest.sentry.io/1",
+    });
+
+    expect(getServerConfig({})).toEqual({
+      environment: "development",
+      port: 3000,
+      sentryDsn: undefined,
+    });
   });
 });

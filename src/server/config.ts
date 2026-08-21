@@ -1,8 +1,5 @@
 import type { ClientConfig } from "../types";
 
-const DEFAULT_SENTRY_DSN =
-  "https://b346a7b285d735686ab9ea2fd7f51413@o4511882586292224.ingest.us.sentry.io/4511882595401729";
-
 export interface SupabaseConfig {
   url: string;
   key: string;
@@ -63,12 +60,14 @@ export function resolveSentryEnvironment(
   );
 }
 
-export function getServerConfig() {
-  const parsedPort = Number.parseInt(process.env.PORT ?? "3000", 10);
+export function getServerConfig(
+  environment: EnvironmentVariables = process.env,
+) {
+  const parsedPort = Number.parseInt(environment.PORT ?? "3000", 10);
 
   return {
-    environment: resolveSentryEnvironment(),
+    environment: resolveSentryEnvironment(environment),
     port: Number.isFinite(parsedPort) ? parsedPort : 3000,
-    sentryDsn: process.env.SENTRY_DSN ?? DEFAULT_SENTRY_DSN,
+    sentryDsn: environment.SENTRY_DSN,
   };
 }
