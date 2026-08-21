@@ -21,8 +21,8 @@ interface SearchResultsProps {
   hasActiveFilters: boolean;
   onClearFilters: () => void;
   onClearSearch: () => void;
+  isLoading?: boolean;
 }
-
 type TabType = "all" | "rooms" | "buildings";
 
 export const SearchResults: React.FC<SearchResultsProps> = ({
@@ -32,8 +32,10 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
   hasActiveFilters,
   onClearFilters,
   onClearSearch,
+  isLoading = false,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>("all");
+
 
   const facilitiesList = useMemo<Facility[]>(() => {
     if (!facilityData) return [];
@@ -50,6 +52,46 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
   }, [facilitiesList, searchTerm, filterCriteria, hasActiveFilters]);
 
   const { buildings, rooms, totalCount } = searchResults;
+
+  if (isLoading && facilitiesList.length === 0) {
+    return (
+      <div
+        className="px-3 md:px-4 py-3 space-y-3.5"
+        role="status"
+        aria-busy="true"
+        aria-label="Searching facilities"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Search className="w-3.5 h-3.5 text-muted-foreground" />
+            <span>Searching for &ldquo;{searchTerm}&rdquo;…</span>
+          </div>
+          <button
+            type="button"
+            onClick={onClearSearch}
+            className="text-xs text-muted-foreground hover:text-foreground hover:underline flex items-center gap-1 transition-colors"
+          >
+            <XCircle className="w-3.5 h-3.5" />
+            Clear
+          </button>
+        </div>
+        <div className="space-y-2.5" aria-hidden="true">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="rounded-lg border border-border/80 bg-card p-3.5 space-y-2.5"
+            >
+              <div className="flex items-center justify-between">
+                <div className="h-4 w-36 rounded bg-muted animate-pulse" />
+                <div className="h-4 w-16 rounded-full bg-muted animate-pulse" />
+              </div>
+              <div className="h-10 rounded bg-muted/40 animate-pulse" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-3 md:px-4 py-3 space-y-3.5">
