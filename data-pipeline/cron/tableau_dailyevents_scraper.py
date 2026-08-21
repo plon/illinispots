@@ -1,4 +1,5 @@
 import os
+import random
 import time
 from io import StringIO
 from dotenv import load_dotenv, find_dotenv
@@ -10,9 +11,10 @@ from sentry_monitor import emit_gauges
 
 
 TABLEAU_CSV_URL = "https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents.csv"
-TABLEAU_REQUEST_ATTEMPTS = 3
+TABLEAU_REQUEST_ATTEMPTS = 10
 TABLEAU_REQUEST_TIMEOUT = 60
 TABLEAU_RETRY_BACKOFF_SECONDS = 5
+TABLEAU_RETRY_MAX_BACKOFF_SECONDS = 240
 
 
 def get_supabase_client():
@@ -61,13 +63,17 @@ def get_events_df():
                     f"{TABLEAU_REQUEST_ATTEMPTS} attempts"
                 ) from exc
 
-            delay = TABLEAU_RETRY_BACKOFF_SECONDS * (2 ** (attempt - 1))
+            delay = min(
+                TABLEAU_RETRY_BACKOFF_SECONDS * (2 ** (attempt - 1)),
+                TABLEAU_RETRY_MAX_BACKOFF_SECONDS,
+            )
+            sleep_for = random.uniform(delay / 2, delay)
             print(
                 f"Tableau request failed (attempt {attempt}/"
                 f"{TABLEAU_REQUEST_ATTEMPTS}): {exc}. "
-                f"Retrying in {delay} seconds"
+                f"Retrying in {sleep_for:.0f} seconds"
             )
-            time.sleep(delay)
+            time.sleep(sleep_for)
 
     print("Fetched data from Tableau")
 
