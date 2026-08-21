@@ -53,7 +53,7 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
-          fly deploy \
+          flyctl deploy \
             --config fly.staging.toml \
             --build-arg VITE_MAPBOX_ACCESS_TOKEN="${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}" \
             --build-arg VITE_MAPBOX_STYLE_URL="${{ secrets.VITE_MAPBOX_STYLE_URL }}" \
@@ -66,7 +66,7 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
-          fly deploy \
+          flyctl deploy \
             --config fly.toml \
             --build-arg VITE_MAPBOX_ACCESS_TOKEN="${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}" \
             --build-arg VITE_MAPBOX_STYLE_URL="${{ secrets.VITE_MAPBOX_STYLE_URL }}" \
