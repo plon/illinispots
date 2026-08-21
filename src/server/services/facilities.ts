@@ -24,12 +24,55 @@ import {
 
 const LIBCAL_REQUEST_TIMEOUT_MS = 10_000;
 
+export interface AcademicAvailabilityPayload {
+  _cache?: {
+    hit?: boolean;
+    source?: string;
+    reason?: string;
+  };
+  buildings?: Record<string, unknown>;
+}
+
+export interface AcademicAvailabilityRpcResult {
+  data: AcademicAvailabilityPayload | null;
+  error: unknown;
+}
+
+export interface AcademicAvailabilityRpcParameters {
+  check_time_param: string;
+  check_date_param: string;
+  min_minutes_param: number;
+}
+
+export type FacilitiesFetch = (
+  ...arguments_: Parameters<typeof globalThis.fetch>
+) => ReturnType<typeof globalThis.fetch>;
+
+export interface FacilitiesServiceDependencies {
+  fetch?: FacilitiesFetch;
+  executeAcademicAvailabilityRpc?: (
+    procedure: "get_cached_spots",
+    parameters: AcademicAvailabilityRpcParameters,
+  ) => Promise<AcademicAvailabilityRpcResult>;
+}
+
+async function executeAcademicAvailabilityRpc(
+  procedure: "get_cached_spots",
+  parameters: AcademicAvailabilityRpcParameters,
+): Promise<AcademicAvailabilityRpcResult> {
+  const supabaseConfig = getSupabaseConfig();
+  const supabase = createClient(supabaseConfig.url, supabaseConfig.key);
+
+  return await supabase.rpc(procedure, parameters);
+}
+
 /**
  * Retrieves reservation data for a specific library for the relevant date(s)
  */
 async function getReservation(
   lid: string,
   targetMoment: moment.Moment,
+  fetcher: FacilitiesFetch,
 ): Promise<ReservationResponse> {
   const url = "https://libcal.library.illinois.edu/spaces/availability/grid";
   const timezone = "America/Chicago";
@@ -75,7 +118,7 @@ async function getReservation(
       attributes: { "library.id": lid },
     },
     () =>
-      fetch(url, {
+      fetcher(url, {
         method: "POST",
         headers,
         body: new URLSearchParams(payload),
@@ -415,6 +458,7 @@ function linkRoomsReservations(
 async function getFormattedLibraryData(
   openLibraries: string[], // Libraries determined to be open at targetMoment
   targetMoment: moment.Moment, // Use targetMoment
+  fetcher: FacilitiesFetch,
 ): Promise<FormattedLibraryData> {
   const result: FormattedLibraryData = {};
 
@@ -422,21 +466,24 @@ async function getFormattedLibraryData(
     return result; // No open libraries to process
   }
 
-  try {
-    // Process only the libraries that are open at targetMoment
-    const libraryPromises = openLibraries.map(async (libraryName) => {
+  // Process only the libraries that are open at targetMoment. Keep failures
+  // isolated so one unavailable LibCal calendar does not erase other results.
+  const libraryPromises = openLibraries.map(async (libraryName) => {
+    try {
       const libraryInfo = LIBRARIES[libraryName];
       if (!libraryInfo) return null; // Should not happen if openLibraries is correct
 
       const lid = libraryInfo.id;
       const libraryRooms = STATIC_ROOMS_BY_LIBRARY[lid] || [];
       if (libraryRooms.length === 0) {
-        console.warn(`No static room metadata found for library ${libraryName} (lid ${lid})`);
+        console.warn(
+          `No static room metadata found for library ${libraryName} (lid ${lid})`,
+        );
         return null;
       }
 
       // Get reservation data relevant to the targetMoment
-      const reservationData = await getReservation(lid, targetMoment);
+      const reservationData = await getReservation(lid, targetMoment, fetcher);
       // Link reservations using targetMoment
       const roomReservations = linkRoomsReservations(
         libraryRooms,
@@ -461,24 +508,27 @@ async function getFormattedLibraryData(
           address: libraryInfo.address,
         },
       };
-    });
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: {
+          component: "libcal",
+          operation: "fetch-availability",
+          library: libraryName,
+        },
+      });
+      Sentry.getActiveSpan()?.setAttribute("result.partial", true);
+      console.error(`Error fetching library data for ${libraryName}:`, error);
+      return null;
+    }
+  });
 
-    const libraryResults = await Promise.all(libraryPromises);
+  const libraryResults = await Promise.all(libraryPromises);
 
-    // Combine results
-    libraryResults.forEach((libraryResult) => {
-      if (libraryResult) {
-        result[libraryResult.libraryName] = libraryResult.data;
-      }
-    });
-  } catch (error) {
-    Sentry.captureException(error, {
-      tags: { component: "libcal", operation: "fetch-availability" },
-    });
-    Sentry.getActiveSpan()?.setAttribute("result.partial", true);
-    console.error("Error fetching library data:", error);
-    // Consider how to handle partial errors if needed
-  }
+  libraryResults.forEach((libraryResult) => {
+    if (libraryResult) {
+      result[libraryResult.libraryName] = libraryResult.data;
+    }
+  });
 
   return result;
 }
@@ -490,34 +540,26 @@ async function getFormattedLibraryData(
  */
 async function fetchAcademicBuildingData(
   targetMoment: moment.Moment,
+  executeRpc: NonNullable<
+    FacilitiesServiceDependencies["executeAcademicAvailabilityRpc"]
+  >,
 ): Promise<Record<string, Facility>> {
   const facilities: Record<string, Facility> = {};
 
   try {
-    const supabaseConfig = getSupabaseConfig();
-    const supabase = createClient(supabaseConfig.url, supabaseConfig.key);
-
     const { data: buildingData, error } = await Sentry.startSpan(
       {
         name: "Supabase RPC get_cached_spots",
         op: "db.rpc",
       },
       async (span) => {
-        const response = await supabase.rpc("get_cached_spots", {
+        const response = await executeRpc("get_cached_spots", {
           check_time_param: targetMoment.format("HH:mm:ss"),
           check_date_param: targetMoment.format("YYYY-MM-DD"),
           min_minutes_param: 30,
         });
 
-        const cacheMetadata = (
-          response.data as {
-            _cache?: {
-              hit?: boolean;
-              source?: string;
-              reason?: string;
-            };
-          } | null
-        )?._cache;
+        const cacheMetadata = response.data?._cache;
         const cacheResult = response.error
           ? "error"
           : cacheMetadata?.hit === true
@@ -701,6 +743,7 @@ function initializeLibraryFacilities(): Record<string, Facility> {
 async function updateLibraryFacilities(
   libraryFacilities: Record<string, Facility>,
   targetMoment: moment.Moment, // Use targetMoment
+  fetcher: FacilitiesFetch,
 ): Promise<Record<string, Facility>> {
   try {
     // Update each library's isOpen status based on the targetMoment
@@ -724,6 +767,7 @@ async function updateLibraryFacilities(
       const libraryData = await getFormattedLibraryData(
         openLibraryNames,
         targetMoment,
+        fetcher,
       );
 
       // Add room data only for libraries that are open AT targetMoment
@@ -772,6 +816,7 @@ export type FacilityScope = "academic" | "library" | "all";
 export async function getFacilityStatus(
   targetMoment: moment.Moment,
   facilityScope: FacilityScope,
+  dependencies: FacilitiesServiceDependencies = {},
 ): Promise<FacilityStatus> {
   const includeAcademic =
     facilityScope === "all" || facilityScope === "academic";
@@ -779,14 +824,22 @@ export async function getFacilityStatus(
     facilityScope === "all" || facilityScope === "library";
 
   const fetchPromises: Promise<Record<string, Facility>>[] = [];
+  const fetcher = dependencies.fetch ?? globalThis.fetch;
+  const executeRpc =
+    dependencies.executeAcademicAvailabilityRpc ??
+    executeAcademicAvailabilityRpc;
 
   if (includeAcademic) {
-    fetchPromises.push(fetchAcademicBuildingData(targetMoment));
+    fetchPromises.push(fetchAcademicBuildingData(targetMoment, executeRpc));
   }
 
   if (includeLibraries) {
     fetchPromises.push(
-      updateLibraryFacilities(initializeLibraryFacilities(), targetMoment),
+      updateLibraryFacilities(
+        initializeLibraryFacilities(),
+        targetMoment,
+        fetcher,
+      ),
     );
   }
 
