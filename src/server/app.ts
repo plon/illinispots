@@ -3,8 +3,6 @@ import { logger } from "hono/logger";
 import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 import { serveStatic } from "hono/bun";
-import type { ClientConfig } from "../types";
-import { getClientConfig, ServerConfigurationError } from "./config";
 import {
   createFacilitiesRoutes,
   type FacilitiesRouteDependencies,
@@ -16,7 +14,6 @@ import {
 import { Sentry, sentryTracing } from "./observability";
 
 export interface AppDependencies {
-  clientConfig?: ClientConfig;
   facilities?: FacilitiesRouteDependencies;
   roomSchedule?: RoomScheduleRouteDependencies;
 }
@@ -55,20 +52,6 @@ export function createApp(dependencies: AppDependencies = {}) {
       runtimeVersion: process.versions.bun,
     }),
   );
-  app.get("/api/config", (context) => {
-    try {
-      return context.json(dependencies.clientConfig ?? getClientConfig());
-    } catch (error) {
-      if (error instanceof ServerConfigurationError) {
-        Sentry.captureException(error, {
-          tags: { component: "server", route: context.req.path },
-        });
-        return context.json({ error: "Client configuration unavailable" }, 500);
-      }
-
-      throw error;
-    }
-  });
   app.route("/api/facilities", createFacilitiesRoutes(dependencies.facilities));
   app.route(
     "/api/room-schedule",

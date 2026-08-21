@@ -14,19 +14,6 @@ describe("server application", () => {
     });
   });
 
-  it("serves public client configuration at runtime", async () => {
-    const clientConfig = {
-      mapbox: {
-        accessToken: "public-token",
-        styleUrl: "mapbox://styles/example/style",
-      },
-    };
-    const response = await createApp({ clientConfig }).request("/api/config");
-
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual(clientConfig);
-  });
-
   it("keeps unknown API routes as JSON 404s", async () => {
     const response = await createApp().request("/api/unknown");
 

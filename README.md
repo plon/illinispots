@@ -98,13 +98,11 @@ Copy `.env.example` to `.env.local` and provide:
 ```env
 SUPABASE_URL=your_supabase_url
 SUPABASE_KEY=your_supabase_key
-MAPBOX_ACCESS_TOKEN=your_public_mapbox_token
-MAPBOX_STYLE_URL=mapbox://styles/<user>/<style-id>
+VITE_MAPBOX_ACCESS_TOKEN=your_public_mapbox_token
+VITE_MAPBOX_STYLE_URL=mapbox://styles/<user>/<style-id>
 ```
 
-`SUPABASE_KEY` is server-only. The Hono API exposes only the public Mapbox
-configuration to the browser at runtime, so one built image works in every
-deployment environment.
+`SUPABASE_KEY` is server-only. The public Mapbox configuration is supplied directly to the client via Vite environment variables.
 
 4) Run locally
 

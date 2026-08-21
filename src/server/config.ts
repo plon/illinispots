@@ -1,5 +1,3 @@
-import type { ClientConfig } from "../types";
-
 export interface SupabaseConfig {
   url: string;
   key: string;
@@ -25,27 +23,6 @@ export function getSupabaseConfig(): SupabaseConfig {
   }
 
   return { url, key };
-}
-
-export function getClientConfig(): ClientConfig {
-  const accessToken =
-    process.env.MAPBOX_ACCESS_TOKEN ??
-    process.env.VITE_MAPBOX_ACCESS_TOKEN;
-  const styleUrl =
-    process.env.MAPBOX_STYLE_URL ?? process.env.VITE_MAPBOX_STYLE_URL;
-
-  if (!accessToken || !styleUrl) {
-    throw new ServerConfigurationError(
-      "Missing Mapbox environment variables: MAPBOX_ACCESS_TOKEN and/or MAPBOX_STYLE_URL",
-    );
-  }
-
-  return {
-    mapbox: {
-      accessToken,
-      styleUrl,
-    },
-  };
 }
 
 export function resolveSentryEnvironment(

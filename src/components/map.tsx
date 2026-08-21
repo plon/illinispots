@@ -1,10 +1,8 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import type { FeatureCollection, Point } from "geojson";
-import { useQuery } from "@tanstack/react-query";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import {
-  type ClientConfig,
   MarkerData,
   MapProps,
   FacilityType,
@@ -15,16 +13,6 @@ import {
   recordMapLoadDuration,
   type MapLoadResult,
 } from "@/utils/loadingMetrics";
-
-async function loadClientConfig(): Promise<ClientConfig> {
-  const response = await fetch("/api/config");
-
-  if (!response.ok) {
-    throw new Error(`Client configuration request failed (${response.status})`);
-  }
-
-  return response.json() as Promise<ClientConfig>;
-}
 
 export default function FacilityMap({
   facilityData,
@@ -47,23 +35,13 @@ export default function FacilityMap({
   const mapReadyRecorded = useRef(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
-  const {
-    data: clientConfig,
-    error: clientConfigError,
-    isPending: isClientConfigPending,
-  } = useQuery({
-    queryKey: ["client-config"],
-    queryFn: loadClientConfig,
-    retry: 1,
-    staleTime: Infinity,
-  });
 
   useEffect(() => {
     trackInitialLoadRef.current = trackInitialLoad;
   }, [trackInitialLoad]);
 
   useEffect(() => {
-    if (!mapContainer.current || isClientConfigPending) return;
+    if (!mapContainer.current) return;
 
     const mapLoadStartedAt = performance.now();
     const recordMapOutcome = (result: MapLoadResult) => {
@@ -80,13 +58,12 @@ export default function FacilityMap({
     setIsMapLoaded(false);
     setMapError(null);
 
-    const styleUrl = clientConfig?.mapbox.styleUrl;
-    const token = clientConfig?.mapbox.accessToken;
+    const styleUrl = import.meta.env.VITE_MAPBOX_STYLE_URL;
+    const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
     if (!styleUrl || !token) {
       console.error(
         "Mapbox style and access token are not configured.",
-        clientConfigError,
       );
       recordMapOutcome("missing_configuration");
       setMapError("The map is not configured.");
@@ -164,7 +141,7 @@ export default function FacilityMap({
         map.current = null;
       }
     };
-  }, [clientConfig, clientConfigError, isClientConfigPending]);
+  }, []);
 
   useEffect(() => {
     if (!map.current || !isMapLoaded || !facilityData) return;
