@@ -18,7 +18,7 @@ export function resolveClientSentryEnvironment(
 }
 
 export const CLIENT_TRACE_PROPAGATION_TARGETS = [
-  "localhost",
+  /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:[/:?#]|$)/,
   /^\//,
   /^https:\/\/(?:www\.)?illinispots\.com(?:[/:?#]|$)/,
 ];

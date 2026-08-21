@@ -22,33 +22,40 @@ export function sentryTracing(): MiddlewareHandler {
     const sentryTrace = context.req.header("sentry-trace");
     const baggage = context.req.header("baggage");
 
-    return Sentry.continueTrace({ sentryTrace, baggage }, () => {
-      return Sentry.startSpan(
-        {
-          name: `${context.req.method} ${context.req.path}`,
-          op: "http.server",
-          attributes: {
-            "http.method": context.req.method,
-            "http.url": context.req.url,
-            "http.route": context.req.path,
+    return Sentry.withIsolationScope(() => {
+      return Sentry.continueTrace({ sentryTrace, baggage }, () => {
+        return Sentry.startSpan(
+          {
+            name: `${context.req.method} ${context.req.path}`,
+            op: "http.server",
+            attributes: {
+              "http.method": context.req.method,
+              "http.url": context.req.url,
+              "http.route": context.req.path,
+            },
           },
-        },
-        async (span) => {
-          const reqId = context.get("requestId");
-          if (reqId && typeof reqId === "string") {
-            span?.setAttribute("http.request_id", reqId);
-            Sentry.setTag("request_id", reqId);
-          }
-
-          try {
-            await next();
-          } finally {
-            if (span) {
-              Sentry.setHttpStatus(span, context.res.status);
+          async (span) => {
+            const reqId = context.get("requestId");
+            if (reqId && typeof reqId === "string") {
+              span?.setAttribute("http.request_id", reqId);
+              Sentry.setTag("request_id", reqId);
             }
-          }
-        },
-      );
+
+            try {
+              await next();
+            } catch (error) {
+              if (span) {
+                Sentry.setHttpStatus(span, 500);
+              }
+              throw error;
+            } finally {
+              if (span && context.finalized) {
+                Sentry.setHttpStatus(span, context.res.status);
+              }
+            }
+          },
+        );
+      });
     });
   };
 }

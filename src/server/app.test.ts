@@ -135,4 +135,46 @@ describe("server application", () => {
     expect(activeSpanJson).toBeDefined();
     expect(activeSpanJson?.op).toBe("http.server");
   });
+
+  it("isolates request scope tags across concurrent requests", async () => {
+    if (!Sentry.isInitialized()) {
+      Sentry.init({
+        dsn: "https://examplePublicKey@o0.ingest.sentry.io/0",
+        tracesSampleRate: 1,
+      });
+    }
+
+    let tagAlpha: string | undefined;
+    let tagBeta: string | undefined;
+
+    const testApp = createApp({
+      facilities: {
+        getFacilityStatus: async (_target, scope) => {
+          if (scope === "academic") {
+            await new Promise((resolve) => setTimeout(resolve, 20));
+            tagAlpha = Sentry.getIsolationScope().getScopeData().tags
+              .request_id as string;
+          } else {
+            tagBeta = Sentry.getIsolationScope().getScopeData().tags
+              .request_id as string;
+          }
+          return { timestamp: "2026-08-21T14:00:00Z", facilities: {} };
+        },
+      },
+    });
+
+    const [resAlpha, resBeta] = await Promise.all([
+      testApp.request("/api/facilities?type=academic", {
+        headers: { "x-request-id": "req-alpha" },
+      }),
+      testApp.request("/api/facilities?type=library", {
+        headers: { "x-request-id": "req-beta" },
+      }),
+    ]);
+
+    expect(resAlpha.status).toBe(200);
+    expect(resBeta.status).toBe(200);
+    expect(tagAlpha).toBe("req-alpha");
+    expect(tagBeta).toBe("req-beta");
+  });
 });
