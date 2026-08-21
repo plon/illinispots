@@ -43,6 +43,24 @@ describe("server application", () => {
     }
   });
 
+  it("redirects raw fly.dev production domain to illinispots.com", async () => {
+    const previousNodeEnv = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = "production";
+      const app = createApp();
+      const response = await app.request(
+        "http://illinispots.fly.dev/map?building=ECEB",
+      );
+
+      expect(response.status).toBe(308);
+      expect(response.headers.get("location")).toBe(
+        "https://illinispots.com/map?building=ECEB",
+      );
+    } finally {
+      process.env.NODE_ENV = previousNodeEnv;
+    }
+  });
+
   it("adds noindex header to responses on staging and fly.dev domains", async () => {
     const app = createApp();
 
