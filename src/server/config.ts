@@ -26,17 +26,22 @@ export function getSupabaseConfig(
   return { url, key };
 }
 
-export function resolveSentryEnvironment(
+export function resolveAppEnvironment(
   environment: EnvironmentVariables = process.env,
 ): string {
-  return (
-    environment.SENTRY_ENVIRONMENT ||
-    environment.VERCEL_TARGET_ENV ||
-    environment.VERCEL_ENV ||
-    environment.NODE_ENV ||
-    "development"
-  );
+  if (environment.APP_ENV) {
+    return environment.APP_ENV;
+  }
+  if (environment.FLY_APP_NAME === "illinispots-staging") {
+    return "staging";
+  }
+  if (environment.FLY_APP_NAME === "illinispots") {
+    return "production";
+  }
+  return environment.NODE_ENV || "development";
 }
+
+export const resolveSentryEnvironment = resolveAppEnvironment;
 
 export function getServerConfig(
   environment: EnvironmentVariables = process.env,

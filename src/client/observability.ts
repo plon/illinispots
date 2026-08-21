@@ -3,21 +3,16 @@ import type { AnyRouter } from "@tanstack/react-router";
 
 type ClientEnvironmentVariables = {
   readonly MODE: string;
-  readonly VITE_SENTRY_ENVIRONMENT?: string;
-  readonly VITE_VERCEL_ENV?: string;
-  readonly VITE_VERCEL_TARGET_ENV?: string;
+  readonly VITE_APP_ENV?: string;
 };
 
-export function resolveClientSentryEnvironment(
+export function resolveClientAppEnvironment(
   environment: ClientEnvironmentVariables = import.meta.env,
 ): string {
-  return (
-    environment.VITE_SENTRY_ENVIRONMENT ||
-    environment.VITE_VERCEL_TARGET_ENV ||
-    environment.VITE_VERCEL_ENV ||
-    environment.MODE
-  );
+  return environment.VITE_APP_ENV || environment.MODE || "development";
 }
+
+export const resolveClientSentryEnvironment = resolveClientAppEnvironment;
 
 export const CLIENT_TRACE_PROPAGATION_TARGETS = [
   /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:[/:?#]|$)/,

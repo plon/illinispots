@@ -4,35 +4,20 @@ import {
   resolveClientSentryEnvironment,
 } from "./observability";
 
-describe("resolveClientSentryEnvironment", () => {
-  it("allows an explicit Sentry environment to override platform environments", () => {
+describe("resolveClientAppEnvironment", () => {
+  it("prefers explicit VITE_APP_ENV", () => {
     expect(
       resolveClientSentryEnvironment({
-        VITE_SENTRY_ENVIRONMENT: "staging",
-        VITE_VERCEL_TARGET_ENV: "preview",
-        VITE_VERCEL_ENV: "preview",
+        VITE_APP_ENV: "staging",
         MODE: "production",
       }),
     ).toBe("staging");
   });
 
-  it("uses the Vercel target so custom environments retain their name", () => {
-    expect(
-      resolveClientSentryEnvironment({
-        VITE_VERCEL_TARGET_ENV: "staging",
-        VITE_VERCEL_ENV: "preview",
-        MODE: "production",
-      }),
-    ).toBe("staging");
-  });
-
-  it("falls back through the standard Vercel and Vite environments", () => {
-    expect(
-      resolveClientSentryEnvironment({
-        VITE_VERCEL_ENV: "preview",
-        MODE: "production",
-      }),
-    ).toBe("preview");
+  it("falls back to Vite MODE or development", () => {
+    expect(resolveClientSentryEnvironment({ MODE: "production" })).toBe(
+      "production",
+    );
     expect(resolveClientSentryEnvironment({ MODE: "development" })).toBe(
       "development",
     );

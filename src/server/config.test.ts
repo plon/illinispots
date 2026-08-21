@@ -2,36 +2,39 @@ import { describe, expect, it } from "bun:test";
 import {
   getServerConfig,
   getSupabaseConfig,
-  resolveSentryEnvironment,
+  resolveAppEnvironment,
   ServerConfigurationError,
 } from "./config";
 
-describe("resolveSentryEnvironment", () => {
-  it("uses the Vercel target so custom environments retain their name", () => {
+describe("resolveAppEnvironment", () => {
+  it("prefers explicit APP_ENV", () => {
     expect(
-      resolveSentryEnvironment({
-        VERCEL_TARGET_ENV: "staging",
-        VERCEL_ENV: "preview",
+      resolveAppEnvironment({
+        APP_ENV: "staging",
         NODE_ENV: "production",
       }),
     ).toBe("staging");
   });
 
-  it("allows an explicit Sentry environment to override the platform", () => {
+  it("infers environment from FLY_APP_NAME", () => {
     expect(
-      resolveSentryEnvironment({
-        SENTRY_ENVIRONMENT: "testing",
-        VERCEL_TARGET_ENV: "preview",
+      resolveAppEnvironment({
+        FLY_APP_NAME: "illinispots-staging",
+        NODE_ENV: "production",
       }),
-    ).toBe("testing");
+    ).toBe("staging");
+
+    expect(
+      resolveAppEnvironment({
+        FLY_APP_NAME: "illinispots",
+        NODE_ENV: "production",
+      }),
+    ).toBe("production");
   });
 
-  it("falls back through the standard Vercel and runtime environments", () => {
-    expect(resolveSentryEnvironment({ VERCEL_ENV: "preview" })).toBe(
-      "preview",
-    );
-    expect(resolveSentryEnvironment({ NODE_ENV: "test" })).toBe("test");
-    expect(resolveSentryEnvironment({})).toBe("development");
+  it("falls back to NODE_ENV or development", () => {
+    expect(resolveAppEnvironment({ NODE_ENV: "test" })).toBe("test");
+    expect(resolveAppEnvironment({})).toBe("development");
   });
 });
 
@@ -41,10 +44,10 @@ describe("getServerConfig", () => {
       getServerConfig({
         PORT: "4000",
         SENTRY_DSN: "https://public@example.ingest.sentry.io/1",
-        VERCEL_TARGET_ENV: "preview",
+        APP_ENV: "staging",
       }),
     ).toEqual({
-      environment: "preview",
+      environment: "staging",
       port: 4000,
       sentryDsn: "https://public@example.ingest.sentry.io/1",
     });

@@ -26,7 +26,7 @@ def initialize_sentry() -> Any | None:
 
         sentry_sdk.init(
             dsn=dsn,
-            environment=os.getenv("SENTRY_ENVIRONMENT", "production"),
+            environment=os.getenv("APP_ENV", "production"),
             release=os.getenv("GITHUB_SHA"),
             send_default_pii=False,
         )
