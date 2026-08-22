@@ -96,7 +96,7 @@ export default function FacilityMap({
       const mapInstance = new mapboxgl.Map({
         container: mapContainer.current,
         style: styleUrl,
-        // minZoom: 15.2,
+        trackResize: true,
         antialias: true,
       });
       let hasLoaded = false;
@@ -179,6 +179,15 @@ export default function FacilityMap({
       const onMapReady = () => {
         if (hasLoaded) return;
         hasLoaded = true;
+
+        mapInstance.resize();
+        requestAnimationFrame(() => {
+          mapInstance.resize();
+        });
+        setTimeout(() => {
+          mapInstance.resize();
+        }, 100);
+
         recordMapOutcome("success");
         if (trackInitialLoadRef.current && !mapReadyRecorded.current) {
           mapReadyRecorded.current = true;
@@ -222,6 +231,21 @@ export default function FacilityMap({
           trackUserLocation: true,
         }),
       );
+      let resizeObserver: ResizeObserver | null = null;
+      if (typeof ResizeObserver !== "undefined" && mapContainer.current) {
+        resizeObserver = new ResizeObserver(() => {
+          map.current?.resize();
+        });
+        resizeObserver.observe(mapContainer.current);
+      }
+
+      return () => {
+        resizeObserver?.disconnect();
+        if (map.current) {
+          map.current.remove();
+          map.current = null;
+        }
+      };
     } catch (error) {
       console.error("Mapbox initialization failed:", error);
       recordMapOutcome("initialization_error");
@@ -230,16 +254,12 @@ export default function FacilityMap({
       });
       setMapError("The map could not be loaded.");
     }
-    return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
-    };
   }, [retryCount]);
 
   useEffect(() => {
     if (!map.current || !isMapLoaded || !facilityData) return;
+
+    map.current.resize();
 
     if (activePopupRef.current) {
       activePopupRef.current.remove();
