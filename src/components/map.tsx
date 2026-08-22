@@ -14,6 +14,7 @@ import {
   type MapLoadResult,
 } from "@/utils/loadingMetrics";
 import { getClientConfig } from "@/client/config";
+import { Sentry } from "@/client/observability";
 export default function FacilityMap({
   facilityData,
   onMarkerClick,
@@ -82,11 +83,20 @@ export default function FacilityMap({
         antialias: true,
       });
       let hasLoaded = false;
+      let mapLoadError: Error | null = null;
 
       const MAP_LOAD_TIMEOUT_MS = 10000;
       timeoutId = window.setTimeout(() => {
         if (!hasLoaded) {
           console.warn("Mapbox load timed out");
+          if (mapLoadError) {
+            Sentry.captureException(mapLoadError, {
+              tags: {
+                component: "map",
+                phase: "initial_load",
+              },
+            });
+          }
           recordMapOutcome("load_error");
           setMapError("The map could not be loaded.");
         }
@@ -96,6 +106,9 @@ export default function FacilityMap({
 
       mapInstance.on("error", (event) => {
         console.error("Mapbox error:", event.error);
+        if (!hasLoaded) {
+          mapLoadError = event.error;
+        }
       });
 
       mapInstance.on("load", () => {
@@ -138,6 +151,12 @@ export default function FacilityMap({
       );
     } catch (error) {
       console.error("Mapbox initialization failed:", error);
+      Sentry.captureException(error, {
+        tags: {
+          component: "map",
+          phase: "initialization",
+        },
+      });
       recordMapOutcome("initialization_error");
       setMapError("The map could not be loaded.");
     }
