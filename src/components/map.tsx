@@ -84,8 +84,31 @@ export default function FacilityMap({
       map.current = mapInstance;
 
       mapInstance.on("error", (event) => {
-        console.error("Mapbox failed to load:", event.error);
-        if (!hasLoaded) {
+        console.error("Mapbox error:", event.error);
+        if (hasLoaded) return;
+
+        const error = event.error;
+        let status: unknown;
+        if (error && typeof error === "object" && "status" in error) {
+          status = error.status;
+        }
+        const message =
+          error instanceof Error
+            ? error.message
+            : typeof error === "string"
+              ? error
+              : "";
+
+        const isFatalError =
+          status === 401 ||
+          status === 403 ||
+          message.includes("Unauthorized") ||
+          message.includes("Forbidden") ||
+          message.includes("Not Found") ||
+          message.includes("does not exist") ||
+          message.includes("WebGL");
+
+        if (isFatalError) {
           recordMapOutcome("load_error");
           setMapError("The map could not be loaded.");
         }

@@ -20,6 +20,15 @@ describe("server application", () => {
     expect(await response.json()).toEqual({ error: "API route not found" });
   });
 
+  it("sets secure headers with cross-origin referrer policy", async () => {
+    const response = await createApp().request("/api/health");
+
+    expect(response.headers.get("referrer-policy")).toBe(
+      "strict-origin-when-cross-origin",
+    );
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+  });
+
 
   it("redirects raw fly.dev staging domain to staging.illinispots.com", async () => {
     const previousNodeEnv = process.env.NODE_ENV;

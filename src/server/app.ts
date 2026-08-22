@@ -31,7 +31,12 @@ export function createApp(dependencies: AppDependencies = {}) {
   app.use(sentryTracing(app));
   app.use("*", requestId());
   app.use("*", sentryRequestContext());
-  app.use("*", secureHeaders());
+  app.use(
+    "*",
+    secureHeaders({
+      referrerPolicy: "strict-origin-when-cross-origin",
+    }),
+  );
 
   if (!isTest) {
     app.use("*", logger());
