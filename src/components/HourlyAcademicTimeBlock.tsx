@@ -46,12 +46,12 @@ const HourlyAcademicTimeBlock = ({
       {block.sections.length === 1 && (
         <div className="mt-1 border-t border-border pt-1">
           {block.sections[0].status === "available" ? (
-            <p className="text-[12px] leading-tight text-green-600 font-medium">
+            <p className="text-[12px] leading-tight text-green-600 dark:text-green-400 font-medium">
               Available
             </p>
           ) : (
             <>
-              <p className="text-[12px] leading-tight capitalize text-red-600 font-medium">
+              <p className="text-[12px] leading-tight capitalize text-red-600 dark:text-red-400 font-medium">
                 {block.sections[0].details?.type === "class"
                   ? "Class"
                   : "Event"}
@@ -87,9 +87,9 @@ const HourlyAcademicTimeBlock = ({
                   {sectionStart.format("h:mm A")} -{" "}
                   {sectionEnd.format("h:mm A")}:
                   {section.status === "available" ? (
-                    <span className="text-green-600"> Available</span>
+                    <span className="text-green-600 dark:text-green-400"> Available</span>
                   ) : (
-                    <span className="text-red-600">
+                    <span className="text-red-600 dark:text-red-400">
                       {" "}
                       {section.details?.type === "class" ? "Class" : "Event"}
                     </span>
@@ -161,8 +161,8 @@ const BlockSectionComponent = ({ section, parentBlock }: BlockSectionProps) => {
     <div
     className={`h-full ${
         isAvailable
-          ? "bg-green-200 hover:bg-green-300"
-          : "bg-red-200 hover:bg-red-300"
+          ? "bg-green-200 hover:bg-green-300 dark:bg-green-900/80 dark:hover:bg-green-800"
+          : "bg-red-200 hover:bg-red-300 dark:bg-red-900/80 dark:hover:bg-red-800"
       } transition-colors duration-150`}
       style={{ width: `${Math.max(widthPercentage, 1)}%` }} // Ensure minimum width of 1%
     />

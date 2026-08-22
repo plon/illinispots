@@ -56,22 +56,22 @@ const AcademicRoomDetailLoader: React.FC<AcademicRoomDetailLoaderProps> = ({
       <div className="px-2 py-2">
         {/* Skeleton for time blocks */}
         <div className="flex flex-nowrap gap-1 pb-2">
-          <div className="h-14 w-14 bg-gray-200 rounded animate-pulse" />
-          <div className="h-14 w-20 bg-gray-200 rounded animate-pulse" />
-          <div className="h-14 w-24 bg-gray-200 rounded animate-pulse" />
-          <div className="h-14 w-14 bg-gray-200 rounded animate-pulse" />
-          <div className="h-14 w-28 bg-gray-200 rounded animate-pulse" />
+          <div className="h-14 w-14 bg-muted rounded animate-pulse" />
+          <div className="h-14 w-20 bg-muted rounded animate-pulse" />
+          <div className="h-14 w-24 bg-muted rounded animate-pulse" />
+          <div className="h-14 w-14 bg-muted rounded animate-pulse" />
+          <div className="h-14 w-28 bg-muted rounded animate-pulse" />
         </div>
 
         {/* Skeleton for legend */}
         <div className="flex items-center gap-4 mt-2">
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-gray-200 rounded animate-pulse" />
-            <div className="w-16 h-3 bg-gray-200 rounded animate-pulse" />
+            <div className="w-3 h-3 bg-muted rounded animate-pulse" />
+            <div className="w-16 h-3 bg-muted rounded animate-pulse" />
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-gray-200 rounded animate-pulse" />
-            <div className="w-20 h-3 bg-gray-200 rounded animate-pulse" />
+            <div className="w-3 h-3 bg-muted rounded animate-pulse" />
+            <div className="w-20 h-3 bg-muted rounded animate-pulse" />
           </div>
         </div>
       </div>

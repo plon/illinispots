@@ -59,8 +59,8 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
           <div
             className={`h-14 border border-border ${getWidth()} ${
               slot.available
-                ? "bg-green-200 hover:bg-green-300"
-                : "bg-red-200 hover:bg-red-300"
+                ? "bg-green-200 hover:bg-green-300 dark:bg-green-900/80 dark:hover:bg-green-800"
+                : "bg-red-200 hover:bg-red-300 dark:bg-red-900/80 dark:hover:bg-red-800"
             } transition-colors duration-150`}
           />
         </HybridTooltipTrigger>
@@ -193,7 +193,7 @@ export default function FacilityRoomDetails({
               <DialogContent className="p-5">
                 <div className="relative w-full aspect-video">
                   {isImageLoading && (
-                    <div className="absolute inset-0 w-full h-full bg-gray-300 animate-pulse rounded-md" />
+                    <div className="absolute inset-0 w-full h-full bg-muted animate-pulse rounded-md" />
                   )}
                   <img
                     src={libraryRoom.thumbnail}

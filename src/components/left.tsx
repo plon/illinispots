@@ -30,6 +30,9 @@ import {
     LoaderPinwheel,
     MoreHorizontal,
     Star,
+    Sun,
+    Moon,
+    Monitor,
 } from "lucide-react";
 import FacilityAccordion from "@/components/FacilityAccordion";
 import DateTimeButton from "@/components/DateTimeButton";
@@ -40,6 +43,7 @@ import { SearchResults } from "@/components/SearchResults";
 import { useFavorites } from "@/hooks/useFavorites";
 import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import moment from "moment-timezone";
 
 interface LeftSidebarProps {
@@ -72,7 +76,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const [searchTerm, setSearchTerm] = useState("");
     const { favorites, toggleFavorite } = useFavorites();
     const { selectedDateTime } = useDateTimeContext();
-
+    const { theme, resolvedTheme, setTheme } = useTheme();
     // Filter states
     const [minDuration, setMinDuration] = useState<number | undefined>(undefined);
     const [freeUntil, setFreeUntil] = useState<string>("");
@@ -198,7 +202,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             <div className="sidebar-header py-2 px-3 md:py-3 md:px-4 border-b flex select-none items-center gap-2">
                 <h1 className="text-base md:text-lg font-bold shrink-0 leading-none">
                     <span style={{ color: "#FF5F05" }}>illini</span>
-                    <span style={{ color: "#13294B" }}>Spots</span>
+                    <span className="text-[#13294B] dark:text-foreground">Spots</span>
                 </h1>
                 <TooltipProvider delayDuration={50}>
                     <div className="flex-1 min-w-0 flex gap-2 items-center">
@@ -276,6 +280,58 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                         />
                                     </div>
 
+
+                                    {/* Divider */}
+                                    <div className="h-px bg-border"></div>
+
+                                    {/* Appearance / Theme Switcher */}
+                                    <div className="px-3 py-2 space-y-1.5">
+                                        <div className="text-sm font-medium text-foreground flex items-center gap-2">
+                                            {resolvedTheme === "dark" ? <Moon size={16} /> : <Sun size={16} />}
+                                            <span>Appearance</span>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-1 bg-muted p-1 rounded-md text-xs">
+                                            <button
+                                                type="button"
+                                                onClick={() => setTheme("light")}
+                                                className={`flex items-center justify-center gap-1.5 py-1 px-2 rounded-sm transition-all ${
+                                                    theme === "light"
+                                                        ? "bg-background text-foreground shadow-xs font-medium"
+                                                        : "text-muted-foreground hover:text-foreground"
+                                                }`}
+                                                aria-label="Set light mode"
+                                            >
+                                                <Sun size={13} />
+                                                Light
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setTheme("dark")}
+                                                className={`flex items-center justify-center gap-1.5 py-1 px-2 rounded-sm transition-all ${
+                                                    theme === "dark"
+                                                        ? "bg-background text-foreground shadow-xs font-medium"
+                                                        : "text-muted-foreground hover:text-foreground"
+                                                }`}
+                                                aria-label="Set dark mode"
+                                            >
+                                                <Moon size={13} />
+                                                Dark
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setTheme("system")}
+                                                className={`flex items-center justify-center gap-1.5 py-1 px-2 rounded-sm transition-all ${
+                                                    theme === "system"
+                                                        ? "bg-background text-foreground shadow-xs font-medium"
+                                                        : "text-muted-foreground hover:text-foreground"
+                                                }`}
+                                                aria-label="Set system theme"
+                                            >
+                                                <Monitor size={13} />
+                                                Auto
+                                            </button>
+                                        </div>
+                                    </div>
                                     {/* Divider */}
                                     <div className="h-px bg-border"></div>
 

@@ -30,7 +30,9 @@ const AcademicTimeBlock = ({ block, baseWidthPx = 56 }: AcademicTimeBlockProps) 
   };
 
   const isAvailable = block.status === "available";
-  const bgColor = isAvailable ? "bg-green-200" : "bg-red-200";
+  const bgColor = isAvailable
+    ? "bg-green-200 dark:bg-green-900/80"
+    : "bg-red-200 dark:bg-red-900/80";
 
   const academicDetails = !isAvailable ? block.details as AcademicBlockDetails : null;
 

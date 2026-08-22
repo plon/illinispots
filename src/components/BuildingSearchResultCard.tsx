@@ -97,7 +97,7 @@ export const BuildingSearchResultCard: React.FC<BuildingSearchResultCardProps> =
           {!isOpen ? (
             <Badge
               variant="outline"
-              className="bg-gray-50 text-gray-700 border-gray-300 text-xs"
+              className="bg-gray-50 text-gray-700 border-gray-300 dark:bg-muted dark:text-muted-foreground dark:border-border text-xs"
             >
               CLOSED
             </Badge>
@@ -106,8 +106,8 @@ export const BuildingSearchResultCard: React.FC<BuildingSearchResultCardProps> =
               variant="outline"
               className={`text-xs ${
                 availableRoomsCount > 0
-                  ? "bg-green-50 text-green-700 border-green-300"
-                  : "bg-red-50 text-red-700 border-red-300"
+                  ? "bg-green-50 text-green-700 border-green-300 dark:bg-green-950/60 dark:text-green-400 dark:border-green-800"
+                  : "bg-red-50 text-red-700 border-red-300 dark:bg-red-950/60 dark:text-red-400 dark:border-red-800"
               }`}
             >
               {availableRoomsCount}/{totalRoomsCount} Available

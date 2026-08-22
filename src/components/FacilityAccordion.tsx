@@ -107,7 +107,7 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
 
                 <Badge
                   variant="outline"
-                  className="bg-gray-50 text-gray-700 border-gray-300"
+                  className="bg-gray-50 text-gray-700 border-gray-300 dark:bg-muted dark:text-muted-foreground dark:border-border"
                 >
                   CLOSED
                 </Badge>
@@ -115,8 +115,8 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
                 <Badge
                   variant="outline"
                   className={`${filteredAvailableCount > 0
-                    ? "bg-green-50 text-green-700 border-green-300"
-                    : "bg-red-50 text-red-700 border-red-300"
+                    ? "bg-green-50 text-green-700 border-green-300 dark:bg-green-950/60 dark:text-green-400 dark:border-green-800"
+                    : "bg-red-50 text-red-700 border-red-300 dark:bg-red-950/60 dark:text-red-400 dark:border-red-800"
                     }`}
                 >
                   {filteredAvailableCount}/{facility.roomCounts.total}
@@ -286,7 +286,7 @@ const RoomOccupancyDetails: React.FC<{ room: AcademicRoom }> = ({ room }) => (
     {room.currentClass && (
       <p>
         <span className="font-medium text-foreground/70">Current:</span>{" "}
-        <span className="font-normal text-gray-500">
+        <span className="font-normal text-muted-foreground">
           {room.currentClass.course} - {room.currentClass.title}
         </span>
       </p>
@@ -294,7 +294,7 @@ const RoomOccupancyDetails: React.FC<{ room: AcademicRoom }> = ({ room }) => (
     {room.availableAt && (
       <p>
         <span className="font-medium text-foreground/70">Available at:</span>{" "}
-        <span className="font-normal text-gray-500">
+        <span className="font-normal text-muted-foreground">
           {formatTime(room.availableAt)}
           {room.availableFor && ` for ${formatDuration(room.availableFor)}`}
         </span>

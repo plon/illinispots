@@ -26,11 +26,11 @@ const AcademicRoomSchedule: React.FC<AcademicRoomScheduleProps> = ({
       {/* Legend */}
       <div className="flex items-center gap-4 mt-2">
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-green-200" />
+          <div className="w-3 h-3 bg-green-200 dark:bg-green-900/80 rounded-xs" />
           <span className="text-xs text-muted-foreground">Available</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-red-200" />
+          <div className="w-3 h-3 bg-red-200 dark:bg-red-900/80 rounded-xs" />
           <span className="text-xs text-muted-foreground">Class/Event</span>
         </div>
       </div>
