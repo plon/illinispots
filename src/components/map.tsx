@@ -72,6 +72,8 @@ export default function FacilityMap({
 
     mapboxgl.accessToken = token;
 
+    let timeoutId: number | undefined;
+
     try {
       const mapInstance = new mapboxgl.Map({
         container: mapContainer.current,
@@ -81,18 +83,24 @@ export default function FacilityMap({
       });
       let hasLoaded = false;
 
-      map.current = mapInstance;
-
-      mapInstance.on("error", (event) => {
-        console.error("Mapbox failed to load:", event.error);
+      const MAP_LOAD_TIMEOUT_MS = 10000;
+      timeoutId = window.setTimeout(() => {
         if (!hasLoaded) {
+          console.warn("Mapbox load timed out");
           recordMapOutcome("load_error");
           setMapError("The map could not be loaded.");
         }
+      }, MAP_LOAD_TIMEOUT_MS);
+
+      map.current = mapInstance;
+
+      mapInstance.on("error", (event) => {
+        console.error("Mapbox error:", event.error);
       });
 
       mapInstance.on("load", () => {
         hasLoaded = true;
+        window.clearTimeout(timeoutId);
         recordMapOutcome("success");
         if (trackInitialLoadRef.current && !mapReadyRecorded.current) {
           mapReadyRecorded.current = true;
@@ -100,7 +108,6 @@ export default function FacilityMap({
         }
         setMapError(null);
         setIsMapLoaded(true);
-
         // Hide/show POI labels depending on zoom level using Mapbox Standard basemap config
         const POI_MIN_VISIBLE_ZOOM = 17; // Hide POI labels below this zoom
 
@@ -136,6 +143,7 @@ export default function FacilityMap({
     }
 
     return () => {
+      window.clearTimeout(timeoutId);
       if (map.current) {
         map.current.remove();
         map.current = null;
