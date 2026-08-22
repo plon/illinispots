@@ -50,6 +50,9 @@ interface LeftSidebarProps {
     setExpandedItems: Dispatch<SetStateAction<string[]>>;
     isFetching: boolean;
     isLibraryFetching: boolean;
+    isAcademicLoading?: boolean;
+    error?: string | null;
+    onRetry?: () => void;
 }
 
 const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -60,6 +63,9 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     setExpandedItems,
     isFetching,
     isLibraryFetching,
+    isAcademicLoading = false,
+    error = null,
+    onRetry,
 }) => {
     const accordionRefs = useRef<AccordionRefs>({});
     const scrollAreaRef = useRef<HTMLDivElement | null>(null);
@@ -347,6 +353,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         hasActiveFilters={hasActiveFilters}
                         onClearFilters={clearFilters}
                         onClearSearch={() => setSearchTerm("")}
+                        isLoading={isAcademicLoading}
+                        isLibraryLoading={isLibraryFetching}
                     />
                 ) : (
                     <>
@@ -376,7 +384,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                     ))}
                                 </Accordion>
                             </div>
-                        ) : isLibraryFetching && !hasActiveFilters ? (
+                        ) : isLibraryFetching ? (
                             <div
                                 className="mt-2"
                                 role="status"
@@ -412,7 +420,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         ) : null}
 
                         {/* Academic Buildings Section */}
-                        {academicFacilities.length > 0 && (
+                        {academicFacilities.length > 0 ? (
                             <div className="mt-5">
                                 <h2 className="text-sm font-normal text-muted-foreground pl-6">
                                     Academic
@@ -432,10 +440,65 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                     ))}
                                 </Accordion>
                             </div>
-                        )}
+                        ) : isAcademicLoading ? (
+                            <div
+                                className="mt-5"
+                                role="status"
+                                aria-busy="true"
+                                aria-label="Loading academic availability"
+                            >
+                                <h2 className="text-sm font-normal text-muted-foreground pl-6">
+                                    Academic
+                                </h2>
+                                <span className="sr-only">Loading academic availability…</span>
+                                <div aria-hidden="true">
+                                    {[0, 1, 2, 3, 4, 5].map((index) => (
+                                        <div key={index} className="border-b">
+                                            <div className="h-[38px] px-4 flex items-center justify-between">
+                                                <div
+                                                    className={`h-4 rounded bg-muted animate-pulse ${
+                                                        index % 3 === 0
+                                                            ? "w-44"
+                                                            : index % 3 === 1
+                                                              ? "w-36"
+                                                              : "w-52"
+                                                    }`}
+                                                />
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-[22px] w-12 rounded-full bg-muted animate-pulse" />
+                                                    <div className="h-4 w-4 rounded bg-muted animate-pulse" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : error ? (
+                            <div
+                                className="p-4 mx-4 my-6 rounded-lg border border-destructive/30 bg-destructive/5 text-center space-y-2"
+                                role="alert"
+                            >
+                                <p className="text-sm font-medium text-destructive">
+                                    Failed to load spots
+                                </p>
+                                <p className="text-xs text-muted-foreground">{error}</p>
+                                {onRetry && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={onRetry}
+                                        className="mt-2 text-xs"
+                                    >
+                                        Retry
+                                    </Button>
+                                )}
+                            </div>
+                        ) : null}
 
                         {/* No Results Message for active filters */}
                         {hasActiveFilters &&
+                            !isAcademicLoading &&
+                            !isLibraryFetching &&
                             libraryFacilities.length === 0 &&
                             academicFacilities.length === 0 && (
                                 <p className="text-center text-muted-foreground text-sm mt-6 px-4">
