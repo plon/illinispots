@@ -97,7 +97,6 @@ export default function FacilityMap({
         container: mapContainer.current,
         style: styleUrl,
         trackResize: true,
-        antialias: true,
       });
       let hasLoaded = false;
 
