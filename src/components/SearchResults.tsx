@@ -170,7 +170,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
 
         {/* Active Availability Filters Indicator */}
         {hasActiveFilters && (
-          <div className="text-[11px] bg-primary/5 text-primary-foreground border border-primary/20 rounded-md px-2.5 py-1.5 flex items-center justify-between">
+          <div className="text-[11px] bg-primary/5 text-foreground border border-primary/20 rounded-md px-2.5 py-1.5 flex items-center justify-between">
             <span className="text-foreground/80 font-medium">
               Filtered by availability criteria
             </span>

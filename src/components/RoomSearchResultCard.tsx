@@ -78,7 +78,7 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
                 )}
                 {room.availableFor !== undefined && room.availableFor > 0 && (
                   <div className="flex items-center gap-1.5 text-foreground/80">
-                    <Clock className="w-3.5 h-3.5 text-green-600 shrink-0" />
+                    <Clock className="w-3.5 h-3.5 text-green-600 dark:text-green-400 shrink-0" />
                     <span>
                       Available for{" "}
                       <strong className="text-foreground">
@@ -107,7 +107,7 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
                 )}
                 {academicRoom.availableAt && (
                   <div className="flex items-center gap-1.5 text-foreground/80 pt-0.5">
-                    <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
                     <span>
                       Available at {formatTime(academicRoom.availableAt)}
                       {room.availableFor ? ` for ${formatDuration(room.availableFor)}` : ""}
@@ -184,7 +184,7 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
                   <DialogContent className="p-5">
                     <div className="relative w-full aspect-video">
                       {isImageLoading && (
-                        <div className="absolute inset-0 w-full h-full bg-gray-300 animate-pulse rounded-md" />
+                        <div className="absolute inset-0 w-full h-full bg-muted animate-pulse rounded-md" />
                       )}
                       <img
                         src={libraryRoom.thumbnail}

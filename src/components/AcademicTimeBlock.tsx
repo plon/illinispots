@@ -7,6 +7,7 @@ import {
   TooltipProvider,
 } from "@/components/ui/HybridTooltip";
 import { RoomScheduleBlock, AcademicBlockDetails } from '@/types';
+import { SCHEDULE_BLOCK_STYLES } from '@/utils/scheduleUtils';
 
 interface AcademicTimeBlockProps {
   block: RoomScheduleBlock;
@@ -30,7 +31,9 @@ const AcademicTimeBlock = ({ block, baseWidthPx = 56 }: AcademicTimeBlockProps) 
   };
 
   const isAvailable = block.status === "available";
-  const bgColor = isAvailable ? "bg-green-200" : "bg-red-200";
+  const bgColor = isAvailable
+    ? SCHEDULE_BLOCK_STYLES.availableBase
+    : SCHEDULE_BLOCK_STYLES.occupiedBase;
 
   const academicDetails = !isAvailable ? block.details as AcademicBlockDetails : null;
 

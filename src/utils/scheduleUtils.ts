@@ -1,6 +1,15 @@
 import moment from "moment-timezone";
 import { RoomScheduleBlock, HourlyScheduleBlock, BlockSection } from "@/types";
 
+export const SCHEDULE_BLOCK_STYLES = {
+  available:
+    "bg-green-200 hover:bg-green-300 dark:bg-green-900/80 dark:hover:bg-green-800",
+  occupied:
+    "bg-red-200 hover:bg-red-300 dark:bg-red-900/80 dark:hover:bg-red-800",
+  availableBase: "bg-green-200 dark:bg-green-900/80",
+  occupiedBase: "bg-red-200 dark:bg-red-900/80",
+} as const;
+
 /**
  * Processes raw schedule data into hourly blocks with sections
  * @param scheduleData The raw schedule data from the API

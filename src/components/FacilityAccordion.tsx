@@ -16,7 +16,11 @@ import {
   FacilityRoom,
 } from "@/types";
 import { formatTime, formatDuration } from "@/utils/format";
-import { RoomBadge } from "@/components/RoomBadge";
+import {
+  RoomBadge,
+  STATUS_BADGE_STYLES,
+  getFacilityAvailabilityBadgeStyle,
+} from "@/components/RoomBadge";
 import FacilityRoomDetails from "@/components/FacilityRoomDetails";
 import { getLibraryHoursMessage } from "@/utils/libraryHours";
 import AcademicRoomDetailLoader from "@/components/AcademicRoomDetailLoader";
@@ -107,17 +111,17 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
 
                 <Badge
                   variant="outline"
-                  className="bg-gray-50 text-gray-700 border-gray-300"
+                  className={STATUS_BADGE_STYLES.closed}
                 >
                   CLOSED
                 </Badge>
               ) : (
                 <Badge
                   variant="outline"
-                  className={`${filteredAvailableCount > 0
-                    ? "bg-green-50 text-green-700 border-green-300"
-                    : "bg-red-50 text-red-700 border-red-300"
-                    }`}
+                  className={getFacilityAvailabilityBadgeStyle(
+                    true,
+                    filteredAvailableCount,
+                  )}
                 >
                   {filteredAvailableCount}/{facility.roomCounts.total}
                 </Badge>
@@ -286,7 +290,7 @@ const RoomOccupancyDetails: React.FC<{ room: AcademicRoom }> = ({ room }) => (
     {room.currentClass && (
       <p>
         <span className="font-medium text-foreground/70">Current:</span>{" "}
-        <span className="font-normal text-gray-500">
+        <span className="font-normal text-muted-foreground">
           {room.currentClass.course} - {room.currentClass.title}
         </span>
       </p>
@@ -294,7 +298,7 @@ const RoomOccupancyDetails: React.FC<{ room: AcademicRoom }> = ({ room }) => (
     {room.availableAt && (
       <p>
         <span className="font-medium text-foreground/70">Available at:</span>{" "}
-        <span className="font-normal text-gray-500">
+        <span className="font-normal text-muted-foreground">
           {formatTime(room.availableAt)}
           {room.availableFor && ` for ${formatDuration(room.availableFor)}`}
         </span>

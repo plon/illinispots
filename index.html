@@ -19,6 +19,24 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="illiniSpots" />
     <meta name="theme-color" content="#13294b" />
+    <script>
+      (function() {
+        try {
+          var stored = localStorage.getItem("theme");
+          var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var isDark = stored === "dark" || ((!stored || stored === "system") && prefersDark);
+          if (isDark) {
+            document.documentElement.classList.add("dark");
+            document.documentElement.style.colorScheme = "dark";
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute("content", "#09090b");
+          } else {
+            document.documentElement.classList.remove("dark");
+            document.documentElement.style.colorScheme = "light";
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link rel="canonical" href="https://illinispots.com/" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" href="/icon-16.png" sizes="16x16" type="image/png" />

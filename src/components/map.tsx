@@ -508,7 +508,7 @@ export default function FacilityMap({
           role="status"
           aria-live="polite"
         >
-          <div className="h-2 w-48 overflow-hidden rounded-full bg-gray-200">
+          <div className="h-2 w-48 overflow-hidden rounded-full bg-muted">
             <div className="loading-bar h-full" />
           </div>
           <span className="text-sm text-muted-foreground">Loading map…</span>

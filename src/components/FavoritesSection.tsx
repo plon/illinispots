@@ -2,6 +2,10 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { FavoriteItem } from '@/hooks/useFavorites';
 import { Facility, FacilityStatus } from '@/types';
+import {
+  STATUS_BADGE_STYLES,
+  getFacilityAvailabilityBadgeStyle,
+} from '@/components/RoomBadge';
 import { Star } from 'lucide-react';
 
 interface FavoritesSectionProps {
@@ -69,24 +73,27 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
                     !facilityData.isOpen ? (
                       <Badge
                         variant="outline"
-                        className="bg-gray-50 text-gray-700 border-gray-300 text-xs"
+                        className={`${STATUS_BADGE_STYLES.closed} text-xs`}
                       >
                         CLOSED
                       </Badge>
                     ) : (
                       <Badge
                         variant="outline"
-                        className={`text-xs ${
-                          facilityData.roomCounts.available > 0
-                            ? "bg-green-50 text-green-700 border-green-300"
-                            : "bg-red-50 text-red-700 border-red-300"
-                        }`}
+                        className={`${getFacilityAvailabilityBadgeStyle(
+                          true,
+                          facilityData.roomCounts.available,
+                        )} text-xs`}
                       >
-                        {facilityData.roomCounts.available}/{facilityData.roomCounts.total}
+                        {facilityData.roomCounts.available}/
+                        {facilityData.roomCounts.total}
                       </Badge>
                     )
                   ) : (
-                    <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-300 text-xs">
+                    <Badge
+                      variant="outline"
+                      className={`${STATUS_BADGE_STYLES.closed} text-xs`}
+                    >
                       --
                     </Badge>
                   )}

@@ -5,6 +5,7 @@ import {
   RoomScheduleProps,
   LibraryRoom,
 } from "@/types";
+import { SCHEDULE_BLOCK_STYLES } from "@/utils/scheduleUtils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Image as ImageIcon } from "lucide-react";
@@ -59,8 +60,8 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
           <div
             className={`h-14 border border-border ${getWidth()} ${
               slot.available
-                ? "bg-green-200 hover:bg-green-300"
-                : "bg-red-200 hover:bg-red-300"
+                ? SCHEDULE_BLOCK_STYLES.available
+                : SCHEDULE_BLOCK_STYLES.occupied
             } transition-colors duration-150`}
           />
         </HybridTooltipTrigger>
@@ -143,11 +144,11 @@ export const RoomSchedule = ({ slots }: RoomScheduleProps) => {
       {/* Legend */}
       <div className="flex items-center gap-4 mt-2">
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-green-200" />
+          <div className={`w-3 h-3 ${SCHEDULE_BLOCK_STYLES.availableBase} rounded-xs`} />
           <span className="text-xs text-muted-foreground">Available</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-red-200" />
+          <div className={`w-3 h-3 ${SCHEDULE_BLOCK_STYLES.occupiedBase} rounded-xs`} />
           <span className="text-xs text-muted-foreground">Reserved</span>
         </div>
       </div>
@@ -193,7 +194,7 @@ export default function FacilityRoomDetails({
               <DialogContent className="p-5">
                 <div className="relative w-full aspect-video">
                   {isImageLoading && (
-                    <div className="absolute inset-0 w-full h-full bg-gray-300 animate-pulse rounded-md" />
+                    <div className="absolute inset-0 w-full h-full bg-muted animate-pulse rounded-md" />
                   )}
                   <img
                     src={libraryRoom.thumbnail}
