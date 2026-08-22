@@ -4,7 +4,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import {
   ThemeProvider,
   getInitialTheme,
-  getSystemTheme,
+  getSystemThemeSnapshot,
+  subscribeSystemTheme,
   applyThemeToDocument,
   useTheme,
   THEME_STORAGE_KEY,
@@ -16,11 +17,13 @@ describe("ThemeContext production exports", () => {
   let matchMediaMatches = false;
   const classListSet = new Set<string>();
   const metaAttributes: Record<string, string> = {};
+  let mediaQueryListener: (() => void) | null = null;
 
   beforeEach(() => {
     localStorageStore = {};
     matchMediaMatches = false;
     classListSet.clear();
+    mediaQueryListener = null;
 
     // Mock document and documentElement
     const mockMetaElement = {
@@ -38,10 +41,16 @@ describe("ThemeContext production exports", () => {
         remove: (cls: string) => {
           classListSet.delete(cls);
         },
+        toggle: (cls: string, force?: boolean) => {
+          const shouldAdd = force !== undefined ? force : !classListSet.has(cls);
+          if (shouldAdd) {
+            classListSet.add(cls);
+          } else {
+            classListSet.delete(cls);
+          }
+          return classListSet.has(cls);
+        },
         contains: (cls: string) => classListSet.has(cls),
-      },
-      style: {
-        colorScheme: "light",
       },
     };
 
@@ -80,8 +89,12 @@ describe("ThemeContext production exports", () => {
           onchange: null,
           addListener: () => {},
           removeListener: () => {},
-          addEventListener: () => {},
-          removeEventListener: () => {},
+          addEventListener: (_event: string, handler: () => void) => {
+            mediaQueryListener = handler;
+          },
+          removeEventListener: () => {
+            mediaQueryListener = null;
+          },
           dispatchEvent: () => false,
         }) as unknown as MediaQueryList,
     } as unknown as Window & typeof globalThis;
@@ -130,15 +143,29 @@ describe("ThemeContext production exports", () => {
     });
   });
 
-  describe("getSystemTheme", () => {
+  describe("getSystemThemeSnapshot and subscribeSystemTheme", () => {
     it("returns 'dark' when prefers-color-scheme media query matches dark", () => {
       matchMediaMatches = true;
-      expect(getSystemTheme()).toBe("dark");
+      expect(getSystemThemeSnapshot()).toBe("dark");
     });
 
     it("returns 'light' when prefers-color-scheme media query matches light", () => {
       matchMediaMatches = false;
-      expect(getSystemTheme()).toBe("light");
+      expect(getSystemThemeSnapshot()).toBe("light");
+    });
+
+    it("attaches and detaches change listener via subscribeSystemTheme", () => {
+      let listenerCalled = false;
+      const unsubscribe = subscribeSystemTheme(() => {
+        listenerCalled = true;
+      });
+
+      expect(typeof mediaQueryListener).toBe("function");
+      mediaQueryListener?.();
+      expect(listenerCalled).toBe(true);
+
+      unsubscribe();
+      expect(mediaQueryListener).toBeNull();
     });
   });
 
@@ -147,7 +174,6 @@ describe("ThemeContext production exports", () => {
       applyThemeToDocument("dark");
 
       expect(classListSet.has("dark")).toBe(true);
-      expect(document.documentElement.style.colorScheme).toBe("dark");
       expect(metaAttributes["content"]).toBe("#09090b");
     });
 
@@ -156,7 +182,6 @@ describe("ThemeContext production exports", () => {
       applyThemeToDocument("light");
 
       expect(classListSet.has("dark")).toBe(false);
-      expect(document.documentElement.style.colorScheme).toBe("light");
       expect(metaAttributes["content"]).toBe("#13294b");
     });
   });
@@ -193,7 +218,6 @@ describe("ThemeContext production exports", () => {
       expect(capturedContext?.theme).toBe("system");
       expect(capturedContext?.resolvedTheme).toBe("light");
       expect(typeof capturedContext?.setTheme).toBe("function");
-      expect(typeof capturedContext?.toggleTheme).toBe("function");
     });
   });
 });

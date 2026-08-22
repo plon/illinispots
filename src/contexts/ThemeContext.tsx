@@ -3,7 +3,7 @@ import React, {
   useContext,
   useEffect,
   useState,
-  useCallback,
+  useSyncExternalStore,
   useMemo,
 } from "react";
 
@@ -14,18 +14,23 @@ export interface ThemeContextType {
   theme: Theme;
   resolvedTheme: ResolvedTheme;
   setTheme: (theme: Theme) => void;
-  toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const THEME_STORAGE_KEY = "theme";
+const MEDIA_QUERY = "(prefers-color-scheme: dark)";
 
-export function getSystemTheme(): ResolvedTheme {
+export function subscribeSystemTheme(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  const mq = window.matchMedia(MEDIA_QUERY);
+  mq.addEventListener("change", callback);
+  return () => mq.removeEventListener("change", callback);
+}
+
+export function getSystemThemeSnapshot(): ResolvedTheme {
   if (typeof window === "undefined") return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  return window.matchMedia(MEDIA_QUERY).matches ? "dark" : "light";
 }
 
 export function getInitialTheme(): Theme {
@@ -45,15 +50,8 @@ export function applyThemeToDocument(resolved: ResolvedTheme) {
   if (typeof document === "undefined") return;
 
   const root = document.documentElement;
-  if (resolved === "dark") {
-    root.classList.add("dark");
-    root.style.colorScheme = "dark";
-  } else {
-    root.classList.remove("dark");
-    root.style.colorScheme = "light";
-  }
+  root.classList.toggle("dark", resolved === "dark");
 
-  // Update theme-color meta tag for mobile browsers and PWA header
   const metaThemeColor = document.querySelector('meta[name="theme-color"]');
   if (metaThemeColor) {
     metaThemeColor.setAttribute(
@@ -66,25 +64,14 @@ export function applyThemeToDocument(resolved: ResolvedTheme) {
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
-  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme);
-  // Listen to system theme changes only when theme is set to system
-  useEffect(() => {
-    if (typeof window === "undefined" || theme !== "system") return;
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const systemTheme = useSyncExternalStore<ResolvedTheme>(
+    subscribeSystemTheme,
+    getSystemThemeSnapshot,
+    () => "light",
+  );
 
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = (e: MediaQueryListEvent) => {
-      setSystemTheme(e.matches ? "dark" : "light");
-    };
-
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
-  }, [theme]);
-  const resolvedTheme: ResolvedTheme = useMemo(() => {
-    return theme === "system" ? systemTheme : theme;
-  }, [theme, systemTheme]);
-
-  // Apply theme to DOM and save to localStorage
+  const resolvedTheme: ResolvedTheme = theme === "system" ? systemTheme : theme;
   useEffect(() => {
     applyThemeToDocument(resolvedTheme);
 
@@ -95,26 +82,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [theme, resolvedTheme]);
 
-  const setTheme = useCallback((newTheme: Theme) => {
-    setThemeState(newTheme);
-  }, []);
-
-  const toggleTheme = useCallback(() => {
-    setThemeState((current) => {
-      const currentResolved =
-        current === "system" ? getSystemTheme() : current;
-      return currentResolved === "dark" ? "light" : "dark";
-    });
-  }, []);
-
   const value = useMemo(
     () => ({
       theme,
       resolvedTheme,
       setTheme,
-      toggleTheme,
     }),
-    [theme, resolvedTheme, setTheme, toggleTheme],
+    [theme, resolvedTheme],
   );
 
   return (

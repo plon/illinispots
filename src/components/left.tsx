@@ -30,9 +30,6 @@ import {
     LoaderPinwheel,
     MoreHorizontal,
     Star,
-    Sun,
-    Moon,
-    Monitor,
 } from "lucide-react";
 import FacilityAccordion from "@/components/FacilityAccordion";
 import DateTimeButton from "@/components/DateTimeButton";
@@ -43,7 +40,7 @@ import { SearchResults } from "@/components/SearchResults";
 import { useFavorites } from "@/hooks/useFavorites";
 import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
-import { useTheme } from "@/contexts/ThemeContext";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import moment from "moment-timezone";
 
 interface LeftSidebarProps {
@@ -59,11 +56,6 @@ interface LeftSidebarProps {
     onRetry?: () => void;
 }
 
-const THEME_OPTIONS = [
-    { value: "light", label: "Light", icon: Sun },
-    { value: "dark", label: "Dark", icon: Moon },
-    { value: "system", label: "Auto", icon: Monitor },
-] as const;
 
 const LeftSidebar: React.FC<LeftSidebarProps> = ({
     facilityData,
@@ -82,8 +74,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const [searchTerm, setSearchTerm] = useState("");
     const { favorites, toggleFavorite } = useFavorites();
     const { selectedDateTime } = useDateTimeContext();
-    const { theme, resolvedTheme, setTheme } = useTheme();
-    // Filter states
     const [minDuration, setMinDuration] = useState<number | undefined>(undefined);
     const [freeUntil, setFreeUntil] = useState<string>("");
     const [startTime, setStartTime] = useState<string>("");
@@ -291,30 +281,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                     <div className="h-px bg-border"></div>
 
                                     {/* Appearance / Theme Switcher */}
-                                    <div className="px-3 py-2 space-y-1.5">
-                                        <div className="text-sm font-medium text-foreground flex items-center gap-2">
-                                            {resolvedTheme === "dark" ? <Moon size={16} /> : <Sun size={16} />}
-                                            <span>Appearance</span>
-                                        </div>
-                                        <div className="grid grid-cols-3 gap-1 bg-muted p-1 rounded-md text-xs">
-                                            {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
-                                                <button
-                                                    key={value}
-                                                    type="button"
-                                                    onClick={() => setTheme(value)}
-                                                    className={`flex items-center justify-center gap-1.5 py-1 px-2 rounded-sm transition-all ${
-                                                        theme === value
-                                                            ? "bg-background text-foreground shadow-xs font-medium"
-                                                            : "text-muted-foreground hover:text-foreground"
-                                                    }`}
-                                                    aria-label={`Set ${label.toLowerCase()} mode`}
-                                                >
-                                                    <Icon size={13} />
-                                                    {label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
+                                    <ThemeToggle />
                                     {/* Divider */}
                                     <div className="h-px bg-border"></div>
 

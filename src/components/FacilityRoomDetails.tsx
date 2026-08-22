@@ -144,11 +144,11 @@ export const RoomSchedule = ({ slots }: RoomScheduleProps) => {
       {/* Legend */}
       <div className="flex items-center gap-4 mt-2">
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-green-200" />
+          <div className={`w-3 h-3 ${SCHEDULE_BLOCK_STYLES.availableBase} rounded-xs`} />
           <span className="text-xs text-muted-foreground">Available</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-red-200" />
+          <div className={`w-3 h-3 ${SCHEDULE_BLOCK_STYLES.occupiedBase} rounded-xs`} />
           <span className="text-xs text-muted-foreground">Reserved</span>
         </div>
       </div>
