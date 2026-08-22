@@ -11,7 +11,7 @@ import {
   createRoomScheduleRoutes,
   type RoomScheduleRouteDependencies,
 } from "./routes/room-schedule";
-import { sentryRequestContext, sentryTracing } from "./observability";
+import { Sentry, sentryRequestContext, sentryTracing } from "./observability";
 import { getPublicClientConfig } from "./config";
 import { injectClientConfig, loadIndexHtml } from "./html";
 
@@ -174,6 +174,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   );
 
   app.onError((error, context) => {
+    Sentry.captureException(error);
     console.error("Unhandled server error:", error);
     return context.json({ error: "Internal server error" }, 500);
   });
