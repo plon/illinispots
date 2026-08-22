@@ -72,6 +72,8 @@ export default function FacilityMap({
 
     mapboxgl.accessToken = token;
 
+    let timeoutId: number | undefined;
+
     try {
       const mapInstance = new mapboxgl.Map({
         container: mapContainer.current,
@@ -80,35 +82,30 @@ export default function FacilityMap({
         antialias: true,
       });
       let hasLoaded = false;
+      let isStyleLoaded = false;
+
+      const MAP_LOAD_TIMEOUT_MS = 10000;
+      timeoutId = window.setTimeout(() => {
+        if (!hasLoaded) {
+          console.warn("Mapbox load timed out");
+          recordMapOutcome("load_error");
+          setMapError("The map could not be loaded.");
+        }
+      }, MAP_LOAD_TIMEOUT_MS);
 
       map.current = mapInstance;
+
+      mapInstance.on("style.load", () => {
+        isStyleLoaded = true;
+      });
 
       mapInstance.on("error", (event) => {
         console.error("Mapbox error:", event.error);
         if (hasLoaded) return;
 
-        const error = event.error;
-        let status: unknown;
-        if (error && typeof error === "object" && "status" in error) {
-          status = error.status;
-        }
-        const message =
-          error instanceof Error
-            ? error.message
-            : typeof error === "string"
-              ? error
-              : "";
-
-        const isFatalError =
-          status === 401 ||
-          status === 403 ||
-          message.includes("Unauthorized") ||
-          message.includes("Forbidden") ||
-          message.includes("Not Found") ||
-          message.includes("does not exist") ||
-          message.includes("WebGL");
-
-        if (isFatalError) {
+        const styleLoaded = isStyleLoaded || mapInstance.isStyleLoaded();
+        if (!styleLoaded) {
+          window.clearTimeout(timeoutId);
           recordMapOutcome("load_error");
           setMapError("The map could not be loaded.");
         }
@@ -116,6 +113,8 @@ export default function FacilityMap({
 
       mapInstance.on("load", () => {
         hasLoaded = true;
+        isStyleLoaded = true;
+        window.clearTimeout(timeoutId);
         recordMapOutcome("success");
         if (trackInitialLoadRef.current && !mapReadyRecorded.current) {
           mapReadyRecorded.current = true;
@@ -123,7 +122,6 @@ export default function FacilityMap({
         }
         setMapError(null);
         setIsMapLoaded(true);
-
         // Hide/show POI labels depending on zoom level using Mapbox Standard basemap config
         const POI_MIN_VISIBLE_ZOOM = 17; // Hide POI labels below this zoom
 
@@ -159,6 +157,7 @@ export default function FacilityMap({
     }
 
     return () => {
+      window.clearTimeout(timeoutId);
       if (map.current) {
         map.current.remove();
         map.current = null;
