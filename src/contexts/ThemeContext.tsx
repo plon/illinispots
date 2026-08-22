@@ -10,7 +10,7 @@ import React, {
 export type Theme = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
 
-interface ThemeContextType {
+export interface ThemeContextType {
   theme: Theme;
   resolvedTheme: ResolvedTheme;
   setTheme: (theme: Theme) => void;
@@ -19,16 +19,16 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const THEME_STORAGE_KEY = "theme";
+export const THEME_STORAGE_KEY = "theme";
 
-function getSystemTheme(): ResolvedTheme {
+export function getSystemTheme(): ResolvedTheme {
   if (typeof window === "undefined") return "light";
   return window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
 }
 
-function getInitialTheme(): Theme {
+export function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "system";
   try {
     const stored = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
@@ -41,7 +41,7 @@ function getInitialTheme(): Theme {
   return "system";
 }
 
-function applyThemeToDocument(resolved: ResolvedTheme) {
+export function applyThemeToDocument(resolved: ResolvedTheme) {
   if (typeof document === "undefined") return;
 
   const root = document.documentElement;

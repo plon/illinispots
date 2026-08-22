@@ -1,49 +1,199 @@
-import { describe, expect, it } from "bun:test";
-import { type Theme, type ResolvedTheme } from "./ThemeContext";
+import { describe, expect, it, beforeEach, afterEach } from "bun:test";
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import {
+  ThemeProvider,
+  getInitialTheme,
+  getSystemTheme,
+  applyThemeToDocument,
+  useTheme,
+  THEME_STORAGE_KEY,
+  type ThemeContextType,
+} from "./ThemeContext";
 
-// Test the core theme resolution logic and state transitions directly
-describe("Theme logic", () => {
-  it("resolves system preference correctly", () => {
-    const resolveTheme = (
-      theme: Theme,
-      systemPreference: ResolvedTheme,
-    ): ResolvedTheme => {
-      return theme === "system" ? systemPreference : theme;
+describe("ThemeContext production exports", () => {
+  let localStorageStore: Record<string, string> = {};
+  let matchMediaMatches = false;
+  const classListSet = new Set<string>();
+  const metaAttributes: Record<string, string> = {};
+
+  beforeEach(() => {
+    localStorageStore = {};
+    matchMediaMatches = false;
+    classListSet.clear();
+
+    // Mock document and documentElement
+    const mockMetaElement = {
+      setAttribute: (name: string, value: string) => {
+        metaAttributes[name] = value;
+      },
+      getAttribute: (name: string) => metaAttributes[name] ?? null,
     };
 
-    expect(resolveTheme("system", "light")).toBe("light");
-    expect(resolveTheme("system", "dark")).toBe("dark");
-    expect(resolveTheme("light", "dark")).toBe("light");
-    expect(resolveTheme("dark", "light")).toBe("dark");
-  });
-
-  it("handles theme toggle transitions properly", () => {
-    const getNextToggleTheme = (
-      current: Theme,
-      systemTheme: ResolvedTheme,
-    ): Theme => {
-      const currentResolved = current === "system" ? systemTheme : current;
-      return currentResolved === "dark" ? "light" : "dark";
+    const mockDocumentElement = {
+      classList: {
+        add: (cls: string) => {
+          classListSet.add(cls);
+        },
+        remove: (cls: string) => {
+          classListSet.delete(cls);
+        },
+        contains: (cls: string) => classListSet.has(cls),
+      },
+      style: {
+        colorScheme: "light",
+      },
     };
 
-    expect(getNextToggleTheme("light", "light")).toBe("dark");
-    expect(getNextToggleTheme("dark", "light")).toBe("light");
-    expect(getNextToggleTheme("system", "dark")).toBe("light");
-    expect(getNextToggleTheme("system", "light")).toBe("dark");
+    globalThis.document = {
+      documentElement: mockDocumentElement,
+      querySelector: (selector: string) => {
+        if (selector === 'meta[name="theme-color"]') {
+          return mockMetaElement;
+        }
+        return null;
+      },
+    } as unknown as Document;
+
+    // Mock localStorage
+    globalThis.localStorage = {
+      getItem: (key: string) => localStorageStore[key] ?? null,
+      setItem: (key: string, value: string) => {
+        localStorageStore[key] = value;
+      },
+      removeItem: (key: string) => {
+        delete localStorageStore[key];
+      },
+      clear: () => {
+        localStorageStore = {};
+      },
+      length: 0,
+      key: () => null,
+    };
+
+    // Mock window and matchMedia
+    globalThis.window = {
+      matchMedia: (query: string) =>
+        ({
+          matches: matchMediaMatches,
+          media: query,
+          onchange: null,
+          addListener: () => {},
+          removeListener: () => {},
+          addEventListener: () => {},
+          removeEventListener: () => {},
+          dispatchEvent: () => false,
+        }) as unknown as MediaQueryList,
+    } as unknown as Window & typeof globalThis;
   });
 
-  it("validates theme strings from storage", () => {
-    const parseStoredTheme = (stored: string | null): Theme => {
-      if (stored === "light" || stored === "dark" || stored === "system") {
-        return stored;
+  afterEach(() => {
+    classListSet.clear();
+  });
+
+  describe("THEME_STORAGE_KEY", () => {
+    it("uses 'theme' as the persistent storage key", () => {
+      expect(THEME_STORAGE_KEY).toBe("theme");
+    });
+  });
+
+  describe("getInitialTheme", () => {
+    it("returns 'dark' when stored in localStorage", () => {
+      localStorageStore[THEME_STORAGE_KEY] = "dark";
+      expect(getInitialTheme()).toBe("dark");
+    });
+
+    it("returns 'light' when stored in localStorage", () => {
+      localStorageStore[THEME_STORAGE_KEY] = "light";
+      expect(getInitialTheme()).toBe("light");
+    });
+
+    it("returns 'system' when explicitly stored", () => {
+      localStorageStore[THEME_STORAGE_KEY] = "system";
+      expect(getInitialTheme()).toBe("system");
+    });
+
+    it("defaults to 'system' when localStorage is empty or null", () => {
+      expect(getInitialTheme()).toBe("system");
+    });
+
+    it("defaults to 'system' when localStorage contains an invalid value", () => {
+      localStorageStore[THEME_STORAGE_KEY] = "invalid_theme_value";
+      expect(getInitialTheme()).toBe("system");
+    });
+
+    it("falls back to 'system' if localStorage.getItem throws an exception", () => {
+      globalThis.localStorage.getItem = () => {
+        throw new Error("Storage disabled by privacy policy");
+      };
+      expect(getInitialTheme()).toBe("system");
+    });
+  });
+
+  describe("getSystemTheme", () => {
+    it("returns 'dark' when prefers-color-scheme media query matches dark", () => {
+      matchMediaMatches = true;
+      expect(getSystemTheme()).toBe("dark");
+    });
+
+    it("returns 'light' when prefers-color-scheme media query matches light", () => {
+      matchMediaMatches = false;
+      expect(getSystemTheme()).toBe("light");
+    });
+  });
+
+  describe("applyThemeToDocument", () => {
+    it("applies dark mode to documentElement and updates meta theme-color", () => {
+      applyThemeToDocument("dark");
+
+      expect(classListSet.has("dark")).toBe(true);
+      expect(document.documentElement.style.colorScheme).toBe("dark");
+      expect(metaAttributes["content"]).toBe("#09090b");
+    });
+
+    it("applies light mode to documentElement and updates meta theme-color", () => {
+      classListSet.add("dark");
+      applyThemeToDocument("light");
+
+      expect(classListSet.has("dark")).toBe(false);
+      expect(document.documentElement.style.colorScheme).toBe("light");
+      expect(metaAttributes["content"]).toBe("#13294b");
+    });
+  });
+
+  describe("useTheme and ThemeProvider integration", () => {
+    it("throws an error when used outside ThemeProvider", () => {
+      function ConsumerOutsideProvider() {
+        useTheme();
+        return null;
       }
-      return "system";
-    };
 
-    expect(parseStoredTheme("dark")).toBe("dark");
-    expect(parseStoredTheme("light")).toBe("light");
-    expect(parseStoredTheme("system")).toBe("system");
-    expect(parseStoredTheme("invalid-theme")).toBe("system");
-    expect(parseStoredTheme(null)).toBe("system");
+      expect(() => {
+        renderToStaticMarkup(React.createElement(ConsumerOutsideProvider));
+      }).toThrow("useTheme must be used within a ThemeProvider");
+    });
+
+    it("provides theme context when rendered within ThemeProvider", () => {
+      let capturedContext: ThemeContextType | undefined;
+
+      function Consumer() {
+        capturedContext = useTheme();
+        return React.createElement("span", null, capturedContext.theme);
+      }
+
+      renderToStaticMarkup(
+        React.createElement(
+          ThemeProvider,
+          null,
+          React.createElement(Consumer),
+        ),
+      );
+
+      expect(capturedContext).toBeDefined();
+      expect(capturedContext?.theme).toBe("system");
+      expect(capturedContext?.resolvedTheme).toBe("light");
+      expect(typeof capturedContext?.setTheme).toBe("function");
+      expect(typeof capturedContext?.toggleTheme).toBe("function");
+    });
   });
 });
