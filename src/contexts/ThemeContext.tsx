@@ -68,10 +68,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [theme, setThemeState] = useState<Theme>(getInitialTheme);
   const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme);
-
-  // Listen to system theme changes
+  // Listen to system theme changes only when theme is set to system
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || theme !== "system") return;
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handler = (e: MediaQueryListEvent) => {
@@ -80,8 +79,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 
     mediaQuery.addEventListener("change", handler);
     return () => mediaQuery.removeEventListener("change", handler);
-  }, []);
-
+  }, [theme]);
   const resolvedTheme: ResolvedTheme = useMemo(() => {
     return theme === "system" ? systemTheme : theme;
   }, [theme, systemTheme]);

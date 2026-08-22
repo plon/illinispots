@@ -16,7 +16,11 @@ import {
   FacilityRoom,
 } from "@/types";
 import { formatTime, formatDuration } from "@/utils/format";
-import { RoomBadge } from "@/components/RoomBadge";
+import {
+  RoomBadge,
+  STATUS_BADGE_STYLES,
+  getFacilityAvailabilityBadgeStyle,
+} from "@/components/RoomBadge";
 import FacilityRoomDetails from "@/components/FacilityRoomDetails";
 import { getLibraryHoursMessage } from "@/utils/libraryHours";
 import AcademicRoomDetailLoader from "@/components/AcademicRoomDetailLoader";
@@ -107,17 +111,17 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
 
                 <Badge
                   variant="outline"
-                  className="bg-gray-50 text-gray-700 border-gray-300 dark:bg-muted dark:text-muted-foreground dark:border-border"
+                  className={STATUS_BADGE_STYLES.closed}
                 >
                   CLOSED
                 </Badge>
               ) : (
                 <Badge
                   variant="outline"
-                  className={`${filteredAvailableCount > 0
-                    ? "bg-green-50 text-green-700 border-green-300 dark:bg-green-950/60 dark:text-green-400 dark:border-green-800"
-                    : "bg-red-50 text-red-700 border-red-300 dark:bg-red-950/60 dark:text-red-400 dark:border-red-800"
-                    }`}
+                  className={getFacilityAvailabilityBadgeStyle(
+                    true,
+                    filteredAvailableCount,
+                  )}
                 >
                   {filteredAvailableCount}/{facility.roomCounts.total}
                 </Badge>

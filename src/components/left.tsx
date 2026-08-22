@@ -59,6 +59,12 @@ interface LeftSidebarProps {
     onRetry?: () => void;
 }
 
+const THEME_OPTIONS = [
+    { value: "light", label: "Light", icon: Sun },
+    { value: "dark", label: "Dark", icon: Moon },
+    { value: "system", label: "Auto", icon: Monitor },
+] as const;
+
 const LeftSidebar: React.FC<LeftSidebarProps> = ({
     facilityData,
     showMap,
@@ -291,45 +297,22 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                             <span>Appearance</span>
                                         </div>
                                         <div className="grid grid-cols-3 gap-1 bg-muted p-1 rounded-md text-xs">
-                                            <button
-                                                type="button"
-                                                onClick={() => setTheme("light")}
-                                                className={`flex items-center justify-center gap-1.5 py-1 px-2 rounded-sm transition-all ${
-                                                    theme === "light"
-                                                        ? "bg-background text-foreground shadow-xs font-medium"
-                                                        : "text-muted-foreground hover:text-foreground"
-                                                }`}
-                                                aria-label="Set light mode"
-                                            >
-                                                <Sun size={13} />
-                                                Light
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setTheme("dark")}
-                                                className={`flex items-center justify-center gap-1.5 py-1 px-2 rounded-sm transition-all ${
-                                                    theme === "dark"
-                                                        ? "bg-background text-foreground shadow-xs font-medium"
-                                                        : "text-muted-foreground hover:text-foreground"
-                                                }`}
-                                                aria-label="Set dark mode"
-                                            >
-                                                <Moon size={13} />
-                                                Dark
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setTheme("system")}
-                                                className={`flex items-center justify-center gap-1.5 py-1 px-2 rounded-sm transition-all ${
-                                                    theme === "system"
-                                                        ? "bg-background text-foreground shadow-xs font-medium"
-                                                        : "text-muted-foreground hover:text-foreground"
-                                                }`}
-                                                aria-label="Set system theme"
-                                            >
-                                                <Monitor size={13} />
-                                                Auto
-                                            </button>
+                                            {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
+                                                <button
+                                                    key={value}
+                                                    type="button"
+                                                    onClick={() => setTheme(value)}
+                                                    className={`flex items-center justify-center gap-1.5 py-1 px-2 rounded-sm transition-all ${
+                                                        theme === value
+                                                            ? "bg-background text-foreground shadow-xs font-medium"
+                                                            : "text-muted-foreground hover:text-foreground"
+                                                    }`}
+                                                    aria-label={`Set ${label.toLowerCase()} mode`}
+                                                >
+                                                    <Icon size={13} />
+                                                    {label}
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
                                     {/* Divider */}

@@ -7,6 +7,10 @@ import { formatTime } from "@/utils/format";
 import { getLibraryHoursMessage } from "@/utils/libraryHours";
 import { RoomSearchResultCard } from "@/components/RoomSearchResultCard";
 import {
+  STATUS_BADGE_STYLES,
+  getFacilityAvailabilityBadgeStyle,
+} from "@/components/RoomBadge";
+import {
   Building2,
   ChevronDown,
   ChevronUp,
@@ -97,18 +101,14 @@ export const BuildingSearchResultCard: React.FC<BuildingSearchResultCardProps> =
           {!isOpen ? (
             <Badge
               variant="outline"
-              className="bg-gray-50 text-gray-700 border-gray-300 dark:bg-muted dark:text-muted-foreground dark:border-border text-xs"
+              className={`${STATUS_BADGE_STYLES.closed} text-xs`}
             >
               CLOSED
             </Badge>
           ) : (
             <Badge
               variant="outline"
-              className={`text-xs ${
-                availableRoomsCount > 0
-                  ? "bg-green-50 text-green-700 border-green-300 dark:bg-green-950/60 dark:text-green-400 dark:border-green-800"
-                  : "bg-red-50 text-red-700 border-red-300 dark:bg-red-950/60 dark:text-red-400 dark:border-red-800"
-              }`}
+              className={`${getFacilityAvailabilityBadgeStyle(true, availableRoomsCount)} text-xs`}
             >
               {availableRoomsCount}/{totalRoomsCount} Available
             </Badge>

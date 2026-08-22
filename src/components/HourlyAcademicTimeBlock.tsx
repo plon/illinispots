@@ -7,6 +7,7 @@ import {
   TooltipProvider,
 } from "@/components/ui/HybridTooltip";
 import { HourlyScheduleBlock, BlockSection } from "@/types";
+import { SCHEDULE_BLOCK_STYLES } from "@/utils/scheduleUtils";
 
 interface HourlyAcademicTimeBlockProps {
   block: HourlyScheduleBlock;
@@ -161,8 +162,8 @@ const BlockSectionComponent = ({ section, parentBlock }: BlockSectionProps) => {
     <div
     className={`h-full ${
         isAvailable
-          ? "bg-green-200 hover:bg-green-300 dark:bg-green-900/80 dark:hover:bg-green-800"
-          : "bg-red-200 hover:bg-red-300 dark:bg-red-900/80 dark:hover:bg-red-800"
+          ? SCHEDULE_BLOCK_STYLES.available
+          : SCHEDULE_BLOCK_STYLES.occupied
       } transition-colors duration-150`}
       style={{ width: `${Math.max(widthPercentage, 1)}%` }} // Ensure minimum width of 1%
     />
