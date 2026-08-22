@@ -195,16 +195,32 @@ export default function FacilityMap({
         setMapError(null);
         setIsMapLoaded(true);
 
-        // Hide/show POI labels depending on zoom level using Mapbox Standard basemap config
+        // Configure Mapbox Standard basemap lighting and labels
         const POI_MIN_VISIBLE_ZOOM = 17; // Hide POI labels below this zoom
 
-        const applyPoiVisibility = () => {
-          const show = mapInstance.getZoom() >= POI_MIN_VISIBLE_ZOOM;
+        const applyBasemapConfig = () => {
+          const isDark =
+            typeof window !== "undefined" &&
+            (document.documentElement.classList.contains("dark") ||
+              Boolean(window.matchMedia?.("(prefers-color-scheme: dark)")?.matches));
+
+          const showPoi = mapInstance.getZoom() >= POI_MIN_VISIBLE_ZOOM;
+
           try {
             mapInstance.setConfigProperty(
               "basemap",
+              "lightPreset",
+              isDark ? "dusk" : "day",
+            );
+            mapInstance.setConfigProperty(
+              "basemap",
+              "showRoadLabels",
+              true,
+            );
+            mapInstance.setConfigProperty(
+              "basemap",
               "showPointOfInterestLabels",
-              show,
+              showPoi,
             );
           } catch {
             // Non-standard style or config not supported
@@ -212,8 +228,8 @@ export default function FacilityMap({
         };
 
         // Initialize and bind to zoom updates
-        applyPoiVisibility();
-        mapInstance.on("zoom", applyPoiVisibility);
+        applyBasemapConfig();
+        mapInstance.on("zoom", applyBasemapConfig);
       };
 
       mapInstance.on("style.load", onMapReady);
