@@ -403,6 +403,7 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
                       <AcademicRoomDetailLoader
                         buildingId={facility.name} // Use facility name as ID for API call
                         roomNumber={roomNumber}
+                        buildingHours={facility.hours}
                       />
                     </div>
                   ) : (

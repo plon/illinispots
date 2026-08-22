@@ -10,11 +10,7 @@ import {
 import { Clock } from "lucide-react";
 
 const CAMPUS_TIMEZONE = "America/Chicago";
-const DAY_START_HOUR = 8; // 8:00 AM
-const DAY_END_HOUR = 22; // 10:00 PM
-const TOTAL_MINUTES = (DAY_END_HOUR - DAY_START_HOUR) * 60; // 840 minutes
 const HOUR_WIDTH_PX = 72; // 72px per hour = 1.2px per minute
-const TOTAL_WIDTH_PX = (DAY_END_HOUR - DAY_START_HOUR) * HOUR_WIDTH_PX; // 1008px
 
 interface TimelineScheduleProps {
   scheduleData: RoomScheduleBlock[];
@@ -22,15 +18,24 @@ interface TimelineScheduleProps {
   onDateChange: (newDate: string) => void;
   buildingId?: string;
   roomNumber?: string;
+  buildingHours?: { open?: string; close?: string };
 }
 
-// Convert "HH:mm:ss" or "HH:mm" to minutes from 8:00 AM
-function getMinutesFromDayStart(timeStr: string): number {
+// Convert "HH:mm:ss" or "HH:mm" to total minutes from 00:00
+function parseTimeToMinutes(timeStr?: string | null): number | null {
+  if (!timeStr) return null;
+  const parts = timeStr.split(":").map(Number);
+  if (isNaN(parts[0])) return null;
+  return parts[0] * 60 + (parts[1] || 0);
+}
+
+// Convert "HH:mm:ss" or "HH:mm" to minutes from custom startHour
+function getMinutesFromCustomStart(timeStr: string, startHour: number): number {
   const parts = timeStr.split(":").map(Number);
   const hour = parts[0] || 0;
   const min = parts[1] || 0;
   const totalMinutes = hour * 60 + min;
-  return totalMinutes - DAY_START_HOUR * 60;
+  return totalMinutes - startHour * 60;
 }
 
 // Format "HH:mm:ss" to "9:30 AM"
@@ -57,6 +62,7 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
   scheduleData,
   selectedDate,
   onDateChange,
+  buildingHours,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [currentCampusTime, setCurrentCampusTime] = useState(() =>
@@ -78,6 +84,56 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
   const todayStr = currentCampusTime.format("YYYY-MM-DD");
   const isToday = selectedDate === todayStr;
 
+  // Dynamically compute timeline start and end hour bounds:
+  // startHour = min(building open, first event start)
+  // endHour = max(building close, last event end)
+  const { startHour, endHour, totalHours, totalMinutes, totalWidthPx } = useMemo(() => {
+    let startMinutes = 8 * 60; // fallback 8:00 AM
+    let endMinutes = 22 * 60; // fallback 10:00 PM
+
+    const openMin = parseTimeToMinutes(buildingHours?.open);
+    const closeMin = parseTimeToMinutes(buildingHours?.close);
+
+    const blockStartMins = scheduleData
+      .map((b) => parseTimeToMinutes(b.start))
+      .filter((m): m is number => m !== null);
+
+    const blockEndMins = scheduleData
+      .map((b) => parseTimeToMinutes(b.end))
+      .filter((m): m is number => m !== null);
+
+    const candidatesStart: number[] = [];
+    if (openMin !== null) candidatesStart.push(openMin);
+    if (blockStartMins.length > 0) candidatesStart.push(Math.min(...blockStartMins));
+
+    const candidatesEnd: number[] = [];
+    if (closeMin !== null) candidatesEnd.push(closeMin);
+    if (blockEndMins.length > 0) candidatesEnd.push(Math.max(...blockEndMins));
+
+    if (candidatesStart.length > 0) {
+      startMinutes = Math.min(...candidatesStart);
+    }
+    if (candidatesEnd.length > 0) {
+      endMinutes = Math.max(...candidatesEnd);
+    }
+
+    const calculatedStartHour = Math.max(0, Math.floor(startMinutes / 60));
+    const calculatedEndHour = Math.min(24, Math.ceil(endMinutes / 60));
+    const sHour = calculatedStartHour;
+    const eHour = Math.max(sHour + 1, calculatedEndHour);
+    const tHours = eHour - sHour;
+    const tMinutes = tHours * 60;
+    const tWidthPx = tHours * HOUR_WIDTH_PX;
+
+    return {
+      startHour: sHour,
+      endHour: eHour,
+      totalHours: tHours,
+      totalMinutes: tMinutes,
+      totalWidthPx: tWidthPx,
+    };
+  }, [scheduleData, buildingHours]);
+
   // 7-day strip
   const daysList = useMemo(() => {
     const list = [];
@@ -93,22 +149,22 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
     return list;
   }, [todayStr]);
 
-  // Current time position in px along timeline (0 to 1008)
+  // Current time position in px along timeline
   const currentTimePositionPx = useMemo(() => {
     if (!isToday) return null;
     const currentMinutes =
       currentCampusTime.hours() * 60 + currentCampusTime.minutes();
-    const startMinutes = DAY_START_HOUR * 60;
-    const endMinutes = DAY_END_HOUR * 60;
+    const startMinutes = startHour * 60;
+    const endMinutes = endHour * 60;
 
     if (currentMinutes < startMinutes || currentMinutes > endMinutes) {
       return null;
     }
 
     const minutesFromStart = currentMinutes - startMinutes;
-    const ratio = minutesFromStart / TOTAL_MINUTES;
-    return ratio * TOTAL_WIDTH_PX;
-  }, [isToday, currentCampusTime]);
+    const ratio = minutesFromStart / totalMinutes;
+    return ratio * totalWidthPx;
+  }, [isToday, currentCampusTime, startHour, endHour, totalMinutes, totalWidthPx]);
 
   // Auto-scroll to current time on mount / date change
   useEffect(() => {
@@ -159,12 +215,12 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
     isDraggingRef.current = false;
   };
 
-  // 15 hour ticks [8 AM, 9 AM, ..., 10 PM]
+  // Hour ticks spanning startHour to endHour
   const hourTicks = useMemo(() => {
     const ticks = [];
-    for (let h = DAY_START_HOUR; h <= DAY_END_HOUR; h++) {
-      const m = moment().tz(CAMPUS_TIMEZONE).hour(h).minute(0);
-      const positionPx = (h - DAY_START_HOUR) * HOUR_WIDTH_PX;
+    for (let h = startHour; h <= endHour; h++) {
+      const m = moment().tz(CAMPUS_TIMEZONE).hour(h % 24).minute(0);
+      const positionPx = (h - startHour) * HOUR_WIDTH_PX;
       ticks.push({
         hour: h,
         label: m.format("h A"),
@@ -172,7 +228,7 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
       });
     }
     return ticks;
-  }, []);
+  }, [startHour, endHour]);
 
   return (
     <div className="w-full max-w-full min-w-0 space-y-1.5 pt-1 pb-0.5 overflow-hidden">
@@ -214,15 +270,15 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
         >
           <div
             className="relative"
-            style={{ width: `${TOTAL_WIDTH_PX}px`, minWidth: `${TOTAL_WIDTH_PX}px` }}
+            style={{ width: `${totalWidthPx}px`, minWidth: `${totalWidthPx}px` }}
           >
             {/* Top Hour Ruler with Accurate Ticks */}
             <div className="relative h-6 border-b border-border/40 mb-1 w-full">
               {hourTicks.map((tick) => {
                 const alignTransform =
-                  tick.hour === DAY_START_HOUR
+                  tick.hour === startHour
                     ? "translateX(0)"
-                    : tick.hour === DAY_END_HOUR
+                    : tick.hour === endHour
                     ? "translateX(-100%)"
                     : "translateX(-50%)";
 
@@ -244,10 +300,10 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
               })}
             </div>
 
-            {/* Continuous Timeline Track (8 AM to 10 PM) */}
+            {/* Continuous Timeline Track */}
             <div className="relative h-12 rounded bg-muted/30 border border-border/60 overflow-hidden w-full">
               {/* Background Hourly Dividers */}
-              {Array.from({ length: DAY_END_HOUR - DAY_START_HOUR - 1 }).map((_, i) => (
+              {Array.from({ length: totalHours - 1 }).map((_, i) => (
                 <div
                   key={i}
                   className="absolute top-0 bottom-0 border-r border-border/25 pointer-events-none"
@@ -258,14 +314,20 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
               {/* Continuous Blocks */}
               <TooltipProvider delayDuration={50}>
                 {scheduleData.map((block, idx) => {
-                  const startMin = Math.max(0, getMinutesFromDayStart(block.start));
-                  const endMin = Math.min(TOTAL_MINUTES, getMinutesFromDayStart(block.end));
+                  const startMin = Math.max(
+                    0,
+                    getMinutesFromCustomStart(block.start, startHour),
+                  );
+                  const endMin = Math.min(
+                    totalMinutes,
+                    getMinutesFromCustomStart(block.end, startHour),
+                  );
                   const durationMin = Math.max(0, endMin - startMin);
 
                   if (durationMin <= 0) return null;
 
-                  const leftPx = (startMin / TOTAL_MINUTES) * TOTAL_WIDTH_PX;
-                  const widthPx = (durationMin / TOTAL_MINUTES) * TOTAL_WIDTH_PX;
+                  const leftPx = (startMin / totalMinutes) * totalWidthPx;
+                  const widthPx = (durationMin / totalMinutes) * totalWidthPx;
 
                   const isAvailable = block.status === "available";
                   const details = block.details as AcademicBlockDetails | null;

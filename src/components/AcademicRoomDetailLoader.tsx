@@ -10,6 +10,7 @@ const CAMPUS_TIMEZONE = "America/Chicago";
 interface AcademicRoomDetailLoaderProps {
   buildingId: string;
   roomNumber: string;
+  buildingHours?: { open?: string; close?: string };
 }
 
 const fetchScheduleForDate = async (
@@ -34,6 +35,7 @@ const fetchScheduleForDate = async (
 const AcademicRoomDetailLoader: React.FC<AcademicRoomDetailLoaderProps> = ({
   buildingId,
   roomNumber,
+  buildingHours,
 }) => {
   const { formattedDate } = useDateTimeContext();
   const campusToday = moment().tz(CAMPUS_TIMEZONE).format("YYYY-MM-DD");
@@ -85,6 +87,7 @@ const AcademicRoomDetailLoader: React.FC<AcademicRoomDetailLoaderProps> = ({
       onDateChange={setSelectedDate}
       buildingId={buildingId}
       roomNumber={roomNumber}
+      buildingHours={buildingHours}
     />
   );
 };
