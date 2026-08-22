@@ -82,7 +82,6 @@ export default function FacilityMap({
         antialias: true,
       });
       let hasLoaded = false;
-      let isStyleLoaded = false;
 
       const MAP_LOAD_TIMEOUT_MS = 10000;
       timeoutId = window.setTimeout(() => {
@@ -95,25 +94,12 @@ export default function FacilityMap({
 
       map.current = mapInstance;
 
-      mapInstance.on("style.load", () => {
-        isStyleLoaded = true;
-      });
-
       mapInstance.on("error", (event) => {
         console.error("Mapbox error:", event.error);
-        if (hasLoaded) return;
-
-        const styleLoaded = isStyleLoaded || mapInstance.isStyleLoaded();
-        if (!styleLoaded) {
-          window.clearTimeout(timeoutId);
-          recordMapOutcome("load_error");
-          setMapError("The map could not be loaded.");
-        }
       });
 
       mapInstance.on("load", () => {
         hasLoaded = true;
-        isStyleLoaded = true;
         window.clearTimeout(timeoutId);
         recordMapOutcome("success");
         if (trackInitialLoadRef.current && !mapReadyRecorded.current) {
