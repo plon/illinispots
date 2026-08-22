@@ -176,7 +176,8 @@ export default function FacilityMap({
           }
         }
       });
-      mapInstance.on("load", () => {
+      const onMapReady = () => {
+        if (hasLoaded) return;
         hasLoaded = true;
         recordMapOutcome("success");
         if (trackInitialLoadRef.current && !mapReadyRecorded.current) {
@@ -205,8 +206,15 @@ export default function FacilityMap({
         // Initialize and bind to zoom updates
         applyPoiVisibility();
         mapInstance.on("zoom", applyPoiVisibility);
-      });
+      };
 
+      mapInstance.on("style.load", onMapReady);
+      mapInstance.on("load", onMapReady);
+      mapInstance.on("idle", onMapReady);
+
+      if (mapInstance.isStyleLoaded()) {
+        onMapReady();
+      }
       mapInstance.addControl(new mapboxgl.NavigationControl());
       mapInstance.addControl(
         new mapboxgl.GeolocateControl({
