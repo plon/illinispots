@@ -14,6 +14,7 @@ import {
   type MapLoadResult,
 } from "@/utils/loadingMetrics";
 import { getClientConfig } from "@/client/config";
+import { Sentry } from "@/client/observability";
 export default function FacilityMap({
   facilityData,
   onMarkerClick,
@@ -35,6 +36,7 @@ export default function FacilityMap({
   const mapReadyRecorded = useRef(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     trackInitialLoadRef.current = trackInitialLoad;
@@ -43,6 +45,8 @@ export default function FacilityMap({
   useEffect(() => {
     if (!mapContainer.current) return;
 
+    mapLoadOutcomeRecorded.current = false;
+    mapReadyRecorded.current = false;
     const mapLoadStartedAt = performance.now();
     const recordMapOutcome = (result: MapLoadResult) => {
       if (mapLoadOutcomeRecorded.current) return;
@@ -58,6 +62,19 @@ export default function FacilityMap({
     setIsMapLoaded(false);
     setMapError(null);
 
+    if (!mapboxgl.supported()) {
+      console.error("Mapbox GL is not supported by this browser or device.");
+      recordMapOutcome("initialization_error");
+      Sentry.captureMessage("WebGL is not supported on this device or browser", {
+        level: "error",
+        tags: { component: "map", outcome: "initialization_error" },
+      });
+      setMapError(
+        "Your browser or device does not support WebGL, which is required to load the map.",
+      );
+      return;
+    }
+
     const config = getClientConfig();
     const styleUrl = config.mapboxStyleUrl;
     const token = config.mapboxAccessToken;
@@ -66,10 +83,13 @@ export default function FacilityMap({
         "Mapbox style and access token are not configured.",
       );
       recordMapOutcome("missing_configuration");
+      Sentry.captureMessage("Mapbox style or access token is not configured", {
+        level: "error",
+        tags: { component: "map", outcome: "missing_configuration" },
+      });
       setMapError("The map is not configured.");
       return;
     }
-
     mapboxgl.accessToken = token;
 
     try {
@@ -84,13 +104,64 @@ export default function FacilityMap({
       map.current = mapInstance;
 
       mapInstance.on("error", (event) => {
-        console.error("Mapbox failed to load:", event.error);
-        if (!hasLoaded) {
+        const err: unknown = event?.error;
+        console.warn("Mapbox error event:", err);
+
+        // Distinguish fatal style/auth errors from non-fatal resource errors
+        // (e.g. telemetry blocked by Safari Content Blockers, missing glyphs, tile 404s).
+        let status: number | undefined;
+        let message = "";
+        let sourceId: string | undefined;
+
+        if (err && typeof err === "object") {
+          if ("status" in err && typeof err.status === "number") {
+            status = err.status;
+          }
+          if ("message" in err && typeof err.message === "string") {
+            message = err.message.toLowerCase();
+          }
+          if ("sourceId" in err && typeof err.sourceId === "string") {
+            sourceId = err.sourceId;
+          }
+        } else if (typeof err === "string") {
+          message = err.toLowerCase();
+        }
+
+        const isAuthError =
+          status === 401 ||
+          status === 403 ||
+          message.includes("forbidden") ||
+          message.includes("unauthorized") ||
+          message.includes("not allowed to use this token");
+
+        const isFatalStyleError =
+          !hasLoaded &&
+          (status === 404 || message.includes("style")) &&
+          !sourceId;
+
+        if (!hasLoaded && (isAuthError || isFatalStyleError)) {
           recordMapOutcome("load_error");
-          setMapError("The map could not be loaded.");
+          const errMessage =
+            message || (isAuthError ? "Mapbox authorization error" : "Mapbox style load error");
+          const errorObject =
+            err instanceof Error ? err : new Error(errMessage);
+          Sentry.captureException(errorObject, {
+            tags: {
+              component: "map",
+              outcome: "load_error",
+              error_type: isAuthError ? "auth" : "style",
+            },
+            extra: { status, message, isAuthError, isFatalStyleError },
+          });
+          if (isAuthError) {
+            setMapError(
+              "The map could not be loaded due to a Mapbox token authorization error. If accessing from a local network IP on mobile, ensure your token allows this URL/domain in Mapbox settings.",
+            );
+          } else {
+            setMapError("The map could not be loaded.");
+          }
         }
       });
-
       mapInstance.on("load", () => {
         hasLoaded = true;
         recordMapOutcome("success");
@@ -132,16 +203,18 @@ export default function FacilityMap({
     } catch (error) {
       console.error("Mapbox initialization failed:", error);
       recordMapOutcome("initialization_error");
+      Sentry.captureException(error, {
+        tags: { component: "map", outcome: "initialization_error" },
+      });
       setMapError("The map could not be loaded.");
     }
-
     return () => {
       if (map.current) {
         map.current.remove();
         map.current = null;
       }
     };
-  }, []);
+  }, [retryCount]);
 
   useEffect(() => {
     if (!map.current || !isMapLoaded || !facilityData) return;
@@ -493,9 +566,19 @@ export default function FacilityMap({
           className="absolute inset-0 z-10 flex items-center justify-center bg-background p-6 text-center"
           role="alert"
         >
-          <div>
+          <div className="max-w-md space-y-3">
             <p className="font-medium">Map unavailable</p>
-            <p className="mt-1 text-sm text-muted-foreground">{mapError}</p>
+            <p className="text-sm text-muted-foreground">{mapError}</p>
+            <button
+              type="button"
+              onClick={() => {
+                setMapError(null);
+                setRetryCount((c) => c + 1);
+              }}
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              Try again
+            </button>
           </div>
         </div>
       )}
