@@ -115,19 +115,21 @@ const IlliniSpotsPage: React.FC = () => {
   });
 
   const facilityData = useMemo<FacilityStatus | undefined>(() => {
-    if (!academicData) {
+    if (!academicData && !libraryData) {
       return undefined;
     }
 
     const matchingLibraryFacilities =
-      libraryData?.timestamp === academicData.timestamp
-        ? libraryData.facilities
+      !academicData ||
+      !libraryData ||
+      libraryData.timestamp === academicData.timestamp
+        ? libraryData?.facilities || {}
         : {};
 
     return {
-      timestamp: academicData.timestamp,
+      timestamp: academicData?.timestamp || libraryData?.timestamp || "",
       facilities: {
-        ...academicData.facilities,
+        ...(academicData?.facilities || {}),
         ...matchingLibraryFacilities,
       },
     };

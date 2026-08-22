@@ -100,7 +100,7 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
         >
           <div className="flex items-center justify-between flex-1 mr-2">
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <span className="font-medium">{facility.name}</span>
+              <span className="font-medium truncate">{facility.name}</span>
             </div>
             <div className="flex items-center gap-1 ml-2">
               {!facility.isOpen ? (

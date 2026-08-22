@@ -402,13 +402,13 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                                 <div
                                                     className={`h-4 rounded bg-muted animate-pulse ${
                                                         index === 0
-                                                            ? "w-44"
+                                                            ? "w-36"
                                                             : index === 1
-                                                              ? "w-32"
-                                                              : "w-28"
+                                                              ? "w-52"
+                                                              : "w-24"
                                                     }`}
                                                 />
-                                                <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-2">
                                                     <div className="h-[22px] w-12 rounded-full bg-muted animate-pulse" />
                                                     <div className="h-4 w-4 rounded bg-muted animate-pulse" />
                                                 </div>
@@ -452,19 +452,21 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                 </h2>
                                 <span className="sr-only">Loading academic availability…</span>
                                 <div aria-hidden="true">
-                                    {[0, 1, 2, 3, 4, 5].map((index) => (
+                                    {Array.from({ length: 20 }, (_, index) => (
                                         <div key={index} className="border-b">
                                             <div className="h-[38px] px-4 flex items-center justify-between">
                                                 <div
                                                     className={`h-4 rounded bg-muted animate-pulse ${
-                                                        index % 3 === 0
+                                                        index % 4 === 0
                                                             ? "w-44"
-                                                            : index % 3 === 1
+                                                            : index % 4 === 1
                                                               ? "w-36"
-                                                              : "w-52"
+                                                              : index % 4 === 2
+                                                                ? "w-52"
+                                                                : "w-28"
                                                     }`}
                                                 />
-                                                <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-2">
                                                     <div className="h-[22px] w-12 rounded-full bg-muted animate-pulse" />
                                                     <div className="h-4 w-4 rounded bg-muted animate-pulse" />
                                                 </div>
