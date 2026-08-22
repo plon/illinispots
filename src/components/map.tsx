@@ -107,13 +107,18 @@ export default function FacilityMap({
         const err: unknown = event?.error;
         console.warn("Mapbox error event:", err);
 
-        // Distinguish fatal style/auth errors from non-fatal resource errors
-        // (e.g. telemetry blocked by Safari Content Blockers, missing glyphs, tile 404s).
+        // Subresource issues (e.g. telemetry blocked by Safari Content Blockers,
+        // missing font glyphs, sprite icons, individual 3D models, or tile 404s)
+        // are non-fatal. Mapbox GL continues rendering the basemap and markers.
         let status: number | undefined;
         let message = "";
         let sourceId: string | undefined;
+        let url = "";
 
         if (err && typeof err === "object") {
+          if ("url" in err && typeof err.url === "string") {
+            url = err.url;
+          }
           if ("status" in err && typeof err.status === "number") {
             status = err.status;
           }
@@ -127,35 +132,44 @@ export default function FacilityMap({
           message = err.toLowerCase();
         }
 
-        const isAuthError =
-          status === 401 ||
-          status === 403 ||
-          message.includes("forbidden") ||
-          message.includes("unauthorized") ||
-          message.includes("not allowed to use this token");
+        // Telemetry pings or subresource assets (tiles, glyphs, sprites, models)
+        // must never abort the map.
+        const isTelemetryOrSubresource =
+          url.includes("events.mapbox.com") ||
+          url.includes("/fonts/") ||
+          url.includes("/sprites/") ||
+          url.includes("/models/") ||
+          url.includes("/v4/") ||
+          Boolean(sourceId);
 
-        const isFatalStyleError =
-          !hasLoaded &&
-          (status === 404 || message.includes("style")) &&
-          !sourceId;
+        if (isTelemetryOrSubresource) {
+          return;
+        }
 
-        if (!hasLoaded && (isAuthError || isFatalStyleError)) {
+        const isRootStyleAuthError =
+          (status === 401 || status === 403) &&
+          (url.includes("/styles/") || message.includes("forbidden") || message.includes("unauthorized"));
+
+        const isRootStyleNotFound =
+          status === 404 && url.includes("/styles/");
+
+        if (!hasLoaded && (isRootStyleAuthError || isRootStyleNotFound)) {
           recordMapOutcome("load_error");
           const errMessage =
-            message || (isAuthError ? "Mapbox authorization error" : "Mapbox style load error");
+            message || (isRootStyleAuthError ? "Mapbox authorization error" : "Mapbox style load error");
           const errorObject =
             err instanceof Error ? err : new Error(errMessage);
           Sentry.captureException(errorObject, {
             tags: {
               component: "map",
               outcome: "load_error",
-              error_type: isAuthError ? "auth" : "style",
+              error_type: isRootStyleAuthError ? "auth" : "style",
             },
-            extra: { status, message, isAuthError, isFatalStyleError },
+            extra: { status, message, url, isRootStyleAuthError, isRootStyleNotFound },
           });
-          if (isAuthError) {
+          if (isRootStyleAuthError) {
             setMapError(
-              "The map could not be loaded due to a Mapbox token authorization error. If accessing from a local network IP on mobile, ensure your token allows this URL/domain in Mapbox settings.",
+              "The map could not be loaded due to a Mapbox token authorization error. Please check your Mapbox access token and allowed URLs.",
             );
           } else {
             setMapError("The map could not be loaded.");
