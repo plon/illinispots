@@ -396,13 +396,15 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
                     />
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="pt-0 pb-1 pl-1 pr-4">
+                <AccordionContent className="pt-0 pb-1 pl-1 pr-4 min-w-0 max-w-full overflow-hidden">
                   {/* Conditionally render loader only when this specific room is expanded */}
                   {isRoomExpanded ? (
-                    <AcademicRoomDetailLoader
-                      buildingId={facility.name} // Use facility name as ID for API call
-                      roomNumber={roomNumber}
-                    />
+                    <div className="w-full min-w-0 max-w-full overflow-hidden">
+                      <AcademicRoomDetailLoader
+                        buildingId={facility.name} // Use facility name as ID for API call
+                        roomNumber={roomNumber}
+                      />
+                    </div>
                   ) : (
                     // Placeholder so content area doesn't collapse instantly
                     <div className="h-10"></div>

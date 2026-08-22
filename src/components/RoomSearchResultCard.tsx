@@ -205,7 +205,7 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
 
       {/* Collapsible Detailed Schedule */}
       {isScheduleOpen && (
-        <div className="pt-2 border-t border-border/60 mt-2">
+        <div className="pt-2 border-t border-border/60 mt-2 w-full min-w-0 max-w-full overflow-hidden">
           {isAcademic ? (
             <AcademicRoomDetailLoader
               buildingId={facility.name}
