@@ -1,5 +1,6 @@
 import { Facility, FacilityRoom, FacilityType, RoomStatus, AcademicRoom, LibraryRoom } from "@/types";
 import { FilterCriteria, isRoomAvailable } from "@/utils/filterUtils";
+import { compareRoomNumbers } from "@/utils/collation";
 import Fuse from "fuse.js";
 
 export const BUILDING_ALIASES: Record<string, string[]> = {
@@ -502,10 +503,7 @@ export const searchFacilityIndex = (
     if (rankDiff !== 0) return rankDiff;
 
     // Tertiary: Room Number alphanumeric sort
-    return a.roomNumber.localeCompare(b.roomNumber, undefined, {
-      numeric: true,
-      sensitivity: "base",
-    });
+    return compareRoomNumbers(a.roomNumber, b.roomNumber);
   });
 
   // Sort building results

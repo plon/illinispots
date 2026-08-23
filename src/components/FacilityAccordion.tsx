@@ -22,6 +22,7 @@ import {
   getFacilityAvailabilityBadgeStyle,
 } from "@/components/RoomBadge";
 import { getLibraryHoursMessage } from "@/utils/libraryHoursData";
+import { compareRoomNumbers } from "@/utils/collation";
 import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
 
 const FacilityRoomDetails = lazy(
@@ -341,12 +342,7 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
               room.status === RoomStatus.PASSING_PERIOD) &&
             isRoomAvailable(room, filterCriteria)
         )
-        .sort(([numA], [numB]) =>
-          numA.localeCompare(numB, undefined, {
-            numeric: true,
-            sensitivity: "base",
-          }),
-        ),
+        .sort(([numA], [numB]) => compareRoomNumbers(numA, numB)),
     [facility.rooms, filterCriteria],
   );
 
@@ -359,12 +355,7 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
               room.status === RoomStatus.OPENING_SOON) &&
             isRoomAvailable(room, filterCriteria)
         )
-        .sort(([numA], [numB]) =>
-          numA.localeCompare(numB, undefined, {
-            numeric: true,
-            sensitivity: "base",
-          }),
-        ),
+        .sort(([numA], [numB]) => compareRoomNumbers(numA, numB)),
     [facility.rooms, filterCriteria],
   );
 
