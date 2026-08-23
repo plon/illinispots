@@ -14,7 +14,7 @@ import {
   type MapLoadResult,
 } from "@/utils/loadingMetrics";
 import { getClientConfig } from "@/client/config";
-import { Sentry } from "@/client/observability";
+import { captureClientException } from "@/client/observability";
 export default function FacilityMap({
   facilityData,
   onMarkerClick,
@@ -31,6 +31,7 @@ export default function FacilityMap({
     Map<string, { marker: mapboxgl.Marker; data: MarkerData }>
   >(new Map());
   const activePopupRef = useRef<mapboxgl.Popup | null>(null);
+  const labelDataSignatureRef = useRef("");
   const trackInitialLoadRef = useRef(trackInitialLoad);
   const mapLoadOutcomeRecorded = useRef(false);
   const mapReadyRecorded = useRef(false);
@@ -80,7 +81,6 @@ export default function FacilityMap({
         container: mapContainer.current,
         style: styleUrl,
         // minZoom: 15.2,
-        antialias: true,
       });
       let hasLoaded = false;
       let mapLoadError: Error | null = null;
@@ -90,7 +90,7 @@ export default function FacilityMap({
         if (!hasLoaded) {
           console.warn("Mapbox load timed out");
           if (mapLoadError) {
-            Sentry.captureException(mapLoadError, {
+            captureClientException(mapLoadError, {
               tags: {
                 component: "map",
                 phase: "initial_load",
@@ -151,7 +151,7 @@ export default function FacilityMap({
       );
     } catch (error) {
       console.error("Mapbox initialization failed:", error);
-      Sentry.captureException(error, {
+      captureClientException(error, {
         tags: {
           component: "map",
           phase: "initialization",
@@ -343,15 +343,20 @@ export default function FacilityMap({
         type: "FeatureCollection",
         features,
       };
+      const labelDataSignature = JSON.stringify(features);
 
       const existingSource = mapRef.getSource(sourceId) as
         | mapboxgl.GeoJSONSource
         | undefined;
 
       if (existingSource) {
-        existingSource.setData(geojson as any);
+        if (labelDataSignatureRef.current !== labelDataSignature) {
+          existingSource.setData(geojson);
+          labelDataSignatureRef.current = labelDataSignature;
+        }
       } else {
         mapRef.addSource(sourceId, { type: "geojson", data: geojson });
+        labelDataSignatureRef.current = labelDataSignature;
 
         const firstTextLayer = mapRef
           .getStyle()

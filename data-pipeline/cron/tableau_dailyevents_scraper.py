@@ -15,6 +15,7 @@ TABLEAU_REQUEST_ATTEMPTS = 10
 TABLEAU_REQUEST_TIMEOUT = 60
 TABLEAU_RETRY_BACKOFF_SECONDS = 5
 TABLEAU_RETRY_MAX_BACKOFF_SECONDS = 240
+ROOM_QUERY_PAGE_SIZE = 1000
 
 
 def get_supabase_client():
@@ -82,29 +83,39 @@ def get_events_df():
     df["end_time"] = pd.to_datetime(
         df["EndTime"],
         format="%m/%d/%Y %I:%M:%S %p",
-        errors='coerce'  # Convert invalid dates to NaT
-    ).dt.tz_localize("America/Chicago", ambiguous='infer')
-    df = df.drop("EndTime", axis=1)
-    df = df.drop("Measure Values", axis=1)
-    df = df.drop("Open/Close", axis=1)
-    df = df.drop("CustomerContact", axis=1)
-    df = df.drop("Measure Names", axis=1)
-    
+        errors="coerce",  # Convert invalid dates to NaT
+    ).dt.tz_localize("America/Chicago", ambiguous="infer")
+
     # Create the 'start_time' attribute by combining 'StartDate' and 'StartTime'
+    start_clock = df["StartTime"].map(
+        lambda value: value.split(" ", 1)[1]
+        if isinstance(value, str) and " " in value
+        else value
+    )
     df["start_time"] = pd.to_datetime(
-        df["StartDate"].astype(str) + " " + df["StartTime"].map(lambda s: s.split(" ", 1)[1] if isinstance(s, str) and " " in s else s),
+        df["StartDate"].astype(str) + " " + start_clock,
         format="%m/%d/%Y %I:%M:%S %p",
-        errors='coerce'  # Convert invalid dates to NaT
-    ).dt.tz_localize("America/Chicago", ambiguous='infer')
+        errors="coerce",  # Convert invalid dates to NaT
+    ).dt.tz_localize("America/Chicago", ambiguous="infer")
 
     # Remove rows with invalid timestamps
     initial_count = len(df)
-    df = df.dropna(subset=['start_time', 'end_time'])
+    df = df.dropna(subset=["start_time", "end_time"])
     dropped_count = initial_count - len(df)
     if dropped_count > 0:
         print(f"Dropped {dropped_count} rows with invalid timestamps")
 
-    df = df.drop(columns=["StartDate", "StartTime"])
+    df = df.drop(
+        columns=[
+            "EndTime",
+            "Measure Values",
+            "Open/Close",
+            "CustomerContact",
+            "Measure Names",
+            "StartDate",
+            "StartTime",
+        ]
+    )
 
     df = df.rename(
         columns={
@@ -117,7 +128,9 @@ def get_events_df():
     )
 
     # Normalize building names using alias map
-    df["building_name"] = df["building_name"].map(lambda name: alias_map.get(str(name), str(name)))
+    df["building_name"] = df["building_name"].map(
+        lambda name: alias_map.get(str(name), str(name))
+    )
     df.attrs["tableau_rows"] = initial_count
     df.attrs["invalid_timestamp_events"] = dropped_count
 
@@ -138,99 +151,106 @@ def load_to_postgres(df):
     """
     supabase = get_supabase_client()
 
-    # Get valid rooms from the database
-    result = supabase.table('rooms').select('building_name,room_number').execute()
-    valid_rooms = {(room['building_name'], room['room_number']) for room in result.data}
+    # PostgREST caps response pages. Fetch every room so a growing room catalog
+    # cannot silently make otherwise valid events look unloadable.
+    valid_rooms = set()
+    offset = 0
+    while True:
+        result = (
+            supabase.table("rooms")
+            .select("building_name,room_number")
+            .order("building_name")
+            .order("room_number")
+            .range(offset, offset + ROOM_QUERY_PAGE_SIZE - 1)
+            .execute()
+        )
+        valid_rooms.update(
+            (room["building_name"], room["room_number"]) for room in result.data
+        )
+        if len(result.data) < ROOM_QUERY_PAGE_SIZE:
+            break
+        offset += ROOM_QUERY_PAGE_SIZE
 
     events_to_insert = []
-    invalid_events = []
+    invalid_event_count = 0
 
-    # Clear existing events
-    try:
-        supabase.table('daily_events').delete().gte('id', 0).execute()
-        print("Cleared existing events")
-    except Exception as e:
-        print(f"Error clearing existing events: {str(e)}")
-        raise
-
-    for index, row in df.iterrows():
-        building_name = row['building_name']
-        room_number = row['room_number']
-        event_name = row['event_name']
-        start_time = row['start_time']
-        end_time = row['end_time']
-        occupant = row['occupant']
-        
+    event_columns = [
+        "building_name",
+        "room_number",
+        "event_name",
+        "start_time",
+        "end_time",
+        "occupant",
+    ]
+    for (
+        building_name,
+        room_number,
+        event_name,
+        start_time,
+        end_time,
+        occupant,
+    ) in df[event_columns].itertuples(index=False, name=None):
         # Check for missing or invalid data
         if pd.isna(start_time) or pd.isna(end_time):
-            invalid_events.append({
-                'building_name': building_name,
-                'room_number': room_number,
-                'event_name': event_name,
-                'reason': 'Invalid timestamp'
-            })
+            invalid_event_count += 1
             continue
-            
+
         if pd.isna(building_name) or pd.isna(room_number) or pd.isna(event_name):
-            invalid_events.append({
-                'building_name': str(building_name),
-                'room_number': str(room_number),
-                'event_name': str(event_name),
-                'reason': 'Missing required fields'
-            })
+            invalid_event_count += 1
             continue
-        
+
         # Check if room exists in database
         if (building_name, room_number) not in valid_rooms:
             print(f"Skipping room not in database: {building_name} - {room_number}")
-            invalid_events.append({
-                'building_name': building_name,
-                'room_number': room_number,
-                'event_name': event_name,
-                'reason': 'Room not in database'
-            })
+            invalid_event_count += 1
             continue
-        
+
         # Convert pandas timestamps to ISO format strings for Supabase
         try:
             start_time_str = start_time.isoformat()
             end_time_str = end_time.isoformat()
-        except (ValueError, AttributeError) as e:
-            invalid_events.append({
-                'building_name': building_name,
-                'room_number': room_number,
-                'event_name': event_name,
-                'reason': f'Timestamp conversion error: {e}'
-            })
+        except (ValueError, AttributeError):
+            invalid_event_count += 1
             continue
-        
-        events_to_insert.append({
-            'building_name': str(building_name),
-            'room_number': str(room_number),
-            'event_name': str(event_name),
-            'start_time': start_time_str,
-            'end_time': end_time_str,
-            'occupant': str(occupant) if pd.notna(occupant) else ''
-        })
 
-    if invalid_events:
-        print(f"Skipped {len(invalid_events)} invalid events")
+        events_to_insert.append(
+            {
+                "building_name": str(building_name),
+                "room_number": str(room_number),
+                "event_name": str(event_name),
+                "start_time": start_time_str,
+                "end_time": end_time_str,
+                "occupant": str(occupant) if pd.notna(occupant) else "",
+            }
+        )
 
-    # Insert events in batches
-    if events_to_insert:
-        try:
-            supabase.table('daily_events').insert(events_to_insert).execute()
+    if invalid_event_count:
+        print(f"Skipped {invalid_event_count} invalid events")
+
+    # Replace the snapshot atomically in PostgreSQL. The RPC returns a tiny
+    # status value instead of echoing every inserted row over the network. An
+    # empty validated snapshot must still clear yesterday's events.
+    try:
+        response = supabase.rpc(
+            "update_daily_events", {"events_data": events_to_insert}
+        ).execute()
+        expected_status = f"SUCCESS:{len(events_to_insert)}"
+        if response.data != expected_status:
+            raise RuntimeError(f"Database rejected daily events: {response.data}")
+
+        if events_to_insert:
             print(f"Successfully inserted {len(events_to_insert)} events")
             return {
                 "inserted_events": len(events_to_insert),
-                "unloadable_events": len(invalid_events),
+                "unloadable_events": invalid_event_count,
             }
-        except Exception as e:
-            print(f"Error inserting events: {str(e)}")
-            return False
-    else:
+
         print("No valid events to insert")
         return False
+    except Exception as e:
+        print(f"Error inserting events: {str(e)}")
+        return False
+
 
 def main():
     """Main function to scrape daily events and load them to PostgreSQL.

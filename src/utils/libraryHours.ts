@@ -1,45 +1,11 @@
 import moment from "moment-timezone";
-import { formatTime } from "./format";
+import { LIBRARY_HOURS } from "./libraryHoursData";
 
-export interface LibraryHours {
-  [key: string]: {
-    [day: string]: {
-      open: string; // HH:mm
-      close: string; // HH:mm
-      nextDay?: boolean; // Indicates closing time is on the next calendar day
-    };
-  };
-}
-
-export const LIBRARY_HOURS: LibraryHours = {
-  "Grainger Engineering Library": {
-    Monday: { open: "08:00", close: "23:59" },
-    Tuesday: { open: "08:00", close: "23:59" },
-    Wednesday: { open: "08:00", close: "23:59" },
-    Thursday: { open: "08:00", close: "23:59" },
-    Friday: { open: "08:00", close: "23:00" },
-    Saturday: { open: "10:00", close: "23:00" },
-    Sunday: { open: "10:00", close: "23:59" },
-  },
-  "Funk ACES Library": {
-    Monday: { open: "08:30", close: "02:00", nextDay: true },
-    Tuesday: { open: "08:30", close: "02:00", nextDay: true },
-    Wednesday: { open: "08:30", close: "02:00", nextDay: true },
-    Thursday: { open: "08:30", close: "02:00", nextDay: true },
-    Friday: { open: "08:30", close: "19:00" },
-    Saturday: { open: "10:00", close: "21:00" },
-    Sunday: { open: "13:00", close: "02:00", nextDay: true },
-  },
-  "Main Library": {
-    Monday: { open: "09:15", close: "21:30" },
-    Tuesday: { open: "09:15", close: "21:30" },
-    Wednesday: { open: "09:15", close: "21:30" },
-    Thursday: { open: "09:15", close: "21:30" },
-    Friday: { open: "09:15", close: "17:30" },
-    Saturday: { open: "13:15", close: "16:30" },
-    Sunday: { open: "13:15", close: "21:30" },
-  },
-};
+export {
+  getLibraryHoursMessage,
+  LIBRARY_HOURS,
+  type LibraryHours,
+} from "./libraryHoursData";
 
 export interface ActiveLibraryHours {
   open: moment.Moment;
@@ -104,26 +70,3 @@ export const isLibraryOpen = (
   libraryName: string,
   dateTimeToCheck?: moment.Moment,
 ): boolean => getActiveLibraryHours(libraryName, dateTimeToCheck) !== null;
-
-/**
- * Gets a message describing the library's hours for a given day.
- * Note: This shows the hours for the *day* of the week, not whether it's open *now*.
- * @param libraryName The name of the library.
- * @param dateForDay Optional moment object to determine the day of the week. Defaults to today.
- * @returns A string describing the hours or indicating they aren't available.
- */
-export const getLibraryHoursMessage = (
-  libraryName: string,
-  dateForDay?: moment.Moment,
-): string => {
-  const targetMoment = (dateForDay || moment()).tz("America/Chicago");
-  const dayOfWeek = targetMoment.format("dddd");
-  const hours = LIBRARY_HOURS[libraryName]?.[dayOfWeek];
-
-  if (!hours) return "Hours not available for this day";
-
-  const openFormatted = formatTime(hours.open); // formatTime expects HH:mm or HH:mm:ss
-  const closeFormatted = formatTime(hours.close);
-
-  return `Reservable hours for ${dayOfWeek}: ${openFormatted} - ${closeFormatted}${hours.nextDay ? " (next day)" : ""}`;
-};

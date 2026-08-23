@@ -1,4 +1,7 @@
-import { Sentry } from "@/client/observability";
+import {
+  recordClientCount,
+  recordClientDistribution,
+} from "@/client/observability";
 
 export type InitialLoadMilestone =
   | "academic_data_ready"
@@ -20,15 +23,12 @@ export function recordInitialLoadMilestone(
   if (typeof performance === "undefined") return;
 
   try {
-    Sentry.metrics.distribution(
+    recordClientDistribution(
       "ui.initial_load.duration",
       performance.now(),
       {
-        unit: "millisecond",
-        attributes: {
-          milestone,
-          map_enabled: mapEnabled,
-        },
+        milestone,
+        map_enabled: mapEnabled,
       },
     );
   } catch (error) {
@@ -42,20 +42,15 @@ export function recordMapLoadDuration(
   initialLoad: boolean,
 ): void {
   try {
-    Sentry.metrics.distribution("ui.map.load.duration", duration, {
-      unit: "millisecond",
-      attributes: {
-        result,
-        initial_load: initialLoad,
-      },
+    recordClientDistribution("ui.map.load.duration", duration, {
+      result,
+      initial_load: initialLoad,
     });
 
     if (result !== "success") {
-      Sentry.metrics.count("ui.map.load.failure", 1, {
-        attributes: {
-          reason: result,
-          initial_load: initialLoad,
-        },
+      recordClientCount("ui.map.load.failure", 1, {
+        reason: result,
+        initial_load: initialLoad,
       });
     }
   } catch (error) {

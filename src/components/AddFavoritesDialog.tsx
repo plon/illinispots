@@ -38,19 +38,25 @@ export const AddFavoritesDialog: React.FC<AddFavoritesDialogProps> = ({
         );
     }, [facilityData]);
 
-    const filteredFacilities = useMemo(() => {
-        if (!searchTerm) return facilities;
-
-        const fuse = new Fuse(facilities, {
+    const facilitySearch = useMemo(
+        () => new Fuse(facilities, {
             keys: ["name"],
             threshold: 0.3,
             ignoreLocation: true,
-        });
+        }),
+        [facilities],
+    );
 
-        return fuse.search(searchTerm).map(result => result.item);
-    }, [facilities, searchTerm]);
+    const filteredFacilities = useMemo(() => {
+        if (!searchTerm) return facilities;
 
-    const isFavorite = (id: string) => favorites.some(f => f.id === id);
+        return facilitySearch.search(searchTerm).map(result => result.item);
+    }, [facilities, facilitySearch, searchTerm]);
+
+    const favoriteIds = useMemo(
+        () => new Set(favorites.map((favorite) => favorite.id)),
+        [favorites],
+    );
 
     const handleToggle = (facility: Facility) => {
         onToggleFavorite({
@@ -85,7 +91,7 @@ export const AddFavoritesDialog: React.FC<AddFavoritesDialogProps> = ({
                     <div className="divide-y border-t border-b">
                         {filteredFacilities.length > 0 ? (
                             filteredFacilities.map((facility) => {
-                                const active = isFavorite(facility.id);
+                                const active = favoriteIds.has(facility.id);
                                 return (
                                     <div
                                         key={facility.id}

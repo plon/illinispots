@@ -4,11 +4,11 @@ import {
   createRootRoute,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { Sentry } from "@/client/observability";
+import { captureClientException } from "@/client/observability";
 
 function RootError({ error, reset }: ErrorComponentProps) {
   useEffect(() => {
-    Sentry.captureException(error);
+    captureClientException(error);
   }, [error]);
 
   return (

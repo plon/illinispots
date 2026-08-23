@@ -17,11 +17,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-COPY --chown=bun:bun package.json bun.lock tsconfig.json ./
-RUN bun install --frozen-lockfile --production
-
 COPY --from=build --chown=bun:bun /app/dist ./dist
-COPY --chown=bun:bun src ./src
 
 EXPOSE 3000
 USER bun
@@ -29,4 +25,4 @@ USER bun
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD bun -e "const response = await fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + '/api/health'); process.exit(response.ok ? 0 : 1)"
 
-CMD ["bun", "src/server/index.ts"]
+CMD ["bun", "dist/server/index.js"]

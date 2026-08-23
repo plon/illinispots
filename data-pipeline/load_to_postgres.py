@@ -1,7 +1,8 @@
 from pathlib import Path
 from supabase import create_client
+from postgrest import ReturnMethod
 import json
-from typing import List, Dict, Set
+from typing import List, Dict
 from datetime import datetime
 import os
 from dotenv import load_dotenv, find_dotenv
@@ -96,7 +97,6 @@ def prepare_and_validate_data(
     rooms = []
     schedules = []
 
-    building_names = set()
     room_keys = set()
 
     for name, data in json_data["buildings"].items():
@@ -120,7 +120,6 @@ def prepare_and_validate_data(
             "sunday_close": data["hours"]["sunday"]["close"],
         }
         buildings.append(building)
-        building_names.add(name)
 
         for room_number, classes in data["rooms"].items():
             room_key = (name, room_number)
@@ -176,8 +175,22 @@ def verify_data_counts(
         )
 
 
-def bulk_insert(table_name: str, records: List[Dict], upsert: bool = False) -> Set:
-    inserted_ids = set()
+def exact_table_count(table_name: str) -> int:
+    """Count rows without downloading a page of table data."""
+    count = (
+        supabase.table(table_name)
+        .select("*", count="exact", head=True)
+        .execute()
+        .count
+    )
+    if count is None:
+        raise DataValidationError(f"Database did not return a count for {table_name}")
+    return count
+
+
+def bulk_insert(
+    table_name: str, records: List[Dict], upsert: bool = False
+) -> int:
     failed_chunks = []
 
     for i in range(0, len(records), CHUNK_SIZE):
@@ -187,29 +200,17 @@ def bulk_insert(table_name: str, records: List[Dict], upsert: bool = False) -> S
 
         try:
             if upsert:
-                response = supabase.table(table_name).upsert(chunk).execute()
+                supabase.table(table_name).upsert(
+                    chunk, returning=ReturnMethod.minimal
+                ).execute()
                 print(
                     f"Processed (upsert) chunk {chunk_num}/{total_chunks} for {table_name}"
                 )
             else:
-                response = supabase.table(table_name).insert(chunk).execute()
+                supabase.table(table_name).insert(
+                    chunk, returning=ReturnMethod.minimal
+                ).execute()
                 print(f"Inserted chunk {chunk_num}/{total_chunks} into {table_name}")
-
-            current_count = (
-                supabase.table(table_name).select("*", count="exact").execute().count
-            )
-            print(f"Current total count in {table_name} after chunk: {current_count}")
-
-            for record in chunk:
-                if table_name == "buildings":
-                    key = record["name"]
-                elif table_name == "rooms":
-                    key = f"{record['building_name']}_{record['room_number']}"
-                elif table_name == "academic_terms":
-                    key = f"{record['academic_year']}_{record['term']}_{record['start_date']}_{record['end_date']}"
-                else:  # class_schedule
-                    key = f"{record['building_name']}_{record['room_number']}_{record['day_of_week']}_{record['start_time']}_{record['start_date']}_{record['end_date']}"
-                inserted_ids.add(key)
 
         except Exception as e:
             print(
@@ -223,11 +224,14 @@ def bulk_insert(table_name: str, records: List[Dict], upsert: bool = False) -> S
             f"Failed to process {len(failed_chunks)} chunks for {table_name}"
         )
 
-    final_db_count_for_table = (
-        supabase.table(table_name).select("*", count="exact").execute().count
-    )
+    final_db_count_for_table = exact_table_count(table_name)
 
     if upsert:
+        if final_db_count_for_table < len(records):
+            raise DataValidationError(
+                f"Final count mismatch in {table_name}. Expected at least: "
+                f"{len(records)}, Got: {final_db_count_for_table}"
+            )
         print(
             f"Successfully processed (upserted) {len(records)} records from the current batch for {table_name}. Final table count: {final_db_count_for_table}"
         )
@@ -241,56 +245,7 @@ def bulk_insert(table_name: str, records: List[Dict], upsert: bool = False) -> S
             f"Successfully inserted and verified {final_db_count_for_table} records in {table_name}"
         )
 
-    return inserted_ids
-
-
-def verify_database_contents(
-    buildings: List[Dict], rooms: List[Dict], schedules: List[Dict]
-) -> Dict[str, int]:
-    db_buildings_count_response = (
-        supabase.table("buildings").select("*", count="exact").execute()
-    )
-    actual_building_count_in_db = db_buildings_count_response.count
-    # For buildings, we expect AT LEAST the number of buildings from the current dataset to be present,
-    # as buildings are preserved across loads.
-    if actual_building_count_in_db < len(buildings):
-        raise DataValidationError(
-            f"Building count issue in database. Expected at least: {len(buildings)} (from current data), Got: {actual_building_count_in_db}"
-        )
-    print(
-        f"Verified buildings count in DB: {actual_building_count_in_db} (current dataset has {len(buildings)} buildings)"
-    )
-
-    db_rooms_count_response = (
-        supabase.table("rooms").select("*", count="exact").execute()
-    )
-    actual_room_count_in_db = db_rooms_count_response.count
-    # For rooms, we expect AT LEAST the number of rooms from the current dataset to be present,
-    # as rooms are preserved across loads.
-    if actual_room_count_in_db < len(rooms):
-        raise DataValidationError(
-            f"Room count issue in database. Expected at least: {len(rooms)} (from current data), Got: {actual_room_count_in_db}"
-        )
-    print(
-        f"Verified rooms count in DB: {actual_room_count_in_db} (current dataset has {len(rooms)} rooms)"
-    )
-
-    db_schedules_count = (
-        supabase.table("class_schedule").select("*", count="exact").execute()
-    )
-    schedule_count = db_schedules_count.count
-    if schedule_count != len(schedules):
-        raise DataValidationError(
-            f"Schedule count mismatch in database. Expected: {len(schedules)}, Got: {schedule_count}"
-        )
-    print(f"Verified schedules count: {schedule_count}")
-
-    print("All count verifications passed successfully!")
-    return {
-        "buildings": actual_building_count_in_db,
-        "rooms": actual_room_count_in_db,
-        "class_schedule_rows": schedule_count,
-    }
+    return final_db_count_for_table
 
 
 def clear_table(table_name: str) -> None:
@@ -308,7 +263,7 @@ def clear_table(table_name: str) -> None:
         key = primary_keys[table_name]
         supabase.table(table_name).delete().not_.is_(key, "null").execute()
 
-        count = supabase.table(table_name).select("*", count="exact").execute().count
+        count = exact_table_count(table_name)
         if count != 0:
             raise DataValidationError(
                 f"Failed to clear table {table_name}. {count} records remaining."
@@ -368,35 +323,30 @@ def main():
 
         print("\nInserting and verifying data...")
 
-        academic_terms_ids = bulk_insert("academic_terms", academic_terms_data)
-        print(f"Inserted {len(academic_terms_ids)} academic terms")
+        academic_terms_count = bulk_insert("academic_terms", academic_terms_data)
+        print(f"Inserted {len(academic_terms_data)} academic terms")
 
-        building_ids = bulk_insert("buildings", buildings, upsert=True)
-        print(f"Processed {len(building_ids)} buildings from current data (upserted)")
+        buildings_count = bulk_insert("buildings", buildings, upsert=True)
+        print(f"Processed {len(buildings)} buildings from current data (upserted)")
 
-        room_ids = bulk_insert("rooms", rooms, upsert=True)
-        print(f"Processed {len(room_ids)} rooms from current data (upserted)")
+        rooms_count = bulk_insert("rooms", rooms, upsert=True)
+        print(f"Processed {len(rooms)} rooms from current data (upserted)")
 
-        schedule_ids = bulk_insert("class_schedule", schedules)
-        print(f"Inserted {len(schedule_ids)} schedules")
+        schedules_count = bulk_insert("class_schedule", schedules)
+        print(f"Inserted {len(schedules)} schedules")
 
-        print("\nPerforming final database verification...")
-        database_counts = verify_database_contents(buildings, rooms, schedules)
-
-        db_terms_count = (
-            supabase.table("academic_terms").select("*", count="exact").execute()
-        )
-        if db_terms_count.count != len(academic_terms_data):
-            raise DataValidationError(
-                f"Academic terms count mismatch. Expected: {len(academic_terms_data)}, Got: {db_terms_count.count}"
-            )
-        print(f"Verified academic terms count: {db_terms_count.count}")
+        database_counts = {
+            "buildings": buildings_count,
+            "rooms": rooms_count,
+            "class_schedule_rows": schedules_count,
+        }
+        print("\nAll database count verifications passed successfully!")
 
         print("\nFinal Summary:")
-        print(f"Academic terms inserted and verified: {len(academic_terms_ids)}")
-        print(f"Buildings from current data processed (upserted): {len(building_ids)}")
-        print(f"Rooms from current data processed (upserted): {len(room_ids)}")
-        print(f"Class schedules inserted and verified: {len(schedule_ids)}")
+        print(f"Academic terms inserted and verified: {len(academic_terms_data)}")
+        print(f"Buildings from current data processed (upserted): {len(buildings)}")
+        print(f"Rooms from current data processed (upserted): {len(rooms)}")
+        print(f"Class schedules inserted and verified: {len(schedules)}")
         print(
             "\nAll data has been successfully processed and relevant tables verified!"
         )
@@ -412,7 +362,7 @@ def main():
                 "pipeline.database.class_schedule_rows": database_counts[
                     "class_schedule_rows"
                 ],
-                "pipeline.database.academic_terms": db_terms_count.count,
+                "pipeline.database.academic_terms": academic_terms_count,
                 "pipeline.load.buildings": len(buildings),
                 "pipeline.load.rooms": len(rooms),
                 "pipeline.load.class_schedule_rows": len(schedules),

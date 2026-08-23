@@ -60,7 +60,18 @@ describe("ageLiveAvailability", () => {
 
     expect(aged?.facilities.dcl.rooms["1320"].availableFor).toBe(43);
     expect(aged?.facilities.dcl.rooms.future.availableFor).toBe(30);
+    expect(aged?.facilities.dcl.rooms.future).toBe(
+      data.facilities.dcl.rooms.future,
+    );
     expect(data.facilities.dcl.rooms["1320"].availableFor).toBe(50);
+  });
+
+  it("preserves the snapshot when no current availability changes", () => {
+    const data = academicData();
+
+    expect(
+      ageLiveAvailability(data, new Date("2026-08-24T09:07:00-05:00")),
+    ).toBe(data);
   });
 });
 

@@ -4,7 +4,7 @@ import { DayPicker } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
-import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
@@ -59,9 +59,9 @@ function Calendar({
   const defaultComponents = {
     Chevron: (props: any) => {
       if (props.orientation === "left") {
-        return <ChevronLeftIcon size={16} strokeWidth={2} {...props} aria-hidden="true" />;
+        return <ChevronLeft size={16} strokeWidth={2} {...props} aria-hidden="true" />;
       }
-      return <ChevronRightIcon size={16} strokeWidth={2} {...props} aria-hidden="true" />;
+      return <ChevronRight size={16} strokeWidth={2} {...props} aria-hidden="true" />;
     },
   };
 

@@ -24,35 +24,38 @@ export function ageLiveAvailability(
   );
   if (elapsedMinutes === 0) return data;
 
-  return {
-    ...data,
-    facilities: Object.fromEntries(
-      Object.entries(data.facilities).map(([facilityId, facility]) => [
-        facilityId,
-        {
-          ...facility,
-          rooms: Object.fromEntries(
-            Object.entries(facility.rooms).map(([roomId, room]) => {
-              const isCurrentlyAvailable =
-                room.status === RoomStatus.AVAILABLE ||
-                room.status === RoomStatus.PASSING_PERIOD;
+  let agedFacilities = data.facilities;
 
-              return [
-                roomId,
-                isCurrentlyAvailable && room.availableFor !== undefined
-                  ? {
-                      ...room,
-                      availableFor: Math.max(
-                        0,
-                        room.availableFor - elapsedMinutes,
-                      ),
-                    }
-                  : room,
-              ];
-            }),
-          ),
-        },
-      ]),
-    ),
-  };
+  Object.entries(data.facilities).forEach(([facilityId, facility]) => {
+    let agedRooms = facility.rooms;
+
+    Object.entries(facility.rooms).forEach(([roomId, room]) => {
+      const isCurrentlyAvailable =
+        room.status === RoomStatus.AVAILABLE ||
+        room.status === RoomStatus.PASSING_PERIOD;
+      if (!isCurrentlyAvailable || room.availableFor === undefined) return;
+
+      const availableFor = Math.max(
+        0,
+        room.availableFor - elapsedMinutes,
+      );
+      if (availableFor === room.availableFor) return;
+
+      if (agedRooms === facility.rooms) {
+        agedRooms = { ...facility.rooms };
+      }
+      agedRooms[roomId] = { ...room, availableFor };
+    });
+
+    if (agedRooms !== facility.rooms) {
+      if (agedFacilities === data.facilities) {
+        agedFacilities = { ...data.facilities };
+      }
+      agedFacilities[facilityId] = { ...facility, rooms: agedRooms };
+    }
+  });
+
+  return agedFacilities === data.facilities
+    ? data
+    : { ...data, facilities: agedFacilities };
 }

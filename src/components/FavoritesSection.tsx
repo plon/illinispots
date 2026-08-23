@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { FavoriteItem } from '@/hooks/useFavorites';
 import { Facility, FacilityStatus } from '@/types';
@@ -15,21 +15,36 @@ interface FavoritesSectionProps {
   onToggleFavorite: (item: FavoriteItem) => void;
 }
 
-export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
+export function indexFacilitiesById(
+  facilityData: FacilityStatus | null,
+): Map<string, Facility> {
+  return new Map(
+    facilityData
+      ? Object.values(facilityData.facilities).map((facility) => [
+          facility.id,
+          facility,
+        ])
+      : [],
+  );
+}
+
+const FavoritesSectionComponent: React.FC<FavoritesSectionProps> = ({
   favorites,
   facilityData,
   onFavoriteClick,
   onToggleFavorite,
 }) => {
+  const facilitiesById = useMemo(
+    () => indexFacilitiesById(facilityData),
+    [facilityData],
+  );
+
   if (favorites.length === 0) {
     return null;
   }
 
   const getFacilityData = (favoriteId: string): Facility | null => {
-    if (!facilityData) return null;
-    return Object.values(facilityData.facilities).find(
-      facility => facility.id === favoriteId
-    ) || null;
+    return facilitiesById.get(favoriteId) ?? null;
   };
 
   return (
@@ -106,3 +121,6 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
     </div>
   );
 };
+
+export const FavoritesSection = memo(FavoritesSectionComponent);
+FavoritesSection.displayName = "FavoritesSection";

@@ -28,16 +28,18 @@ export function createRoomScheduleRoutes(
   return new Hono().get("/", async (context) => {
     context.header("Cache-Control", "no-store");
 
-    const buildingId = context.req.query("buildingId");
-    const roomNumber = context.req.query("roomNumber");
-    const nowAtCampus = now().tz(CAMPUS_TIMEZONE);
-    const date = context.req.query("date") ?? nowAtCampus.format("YYYY-MM-DD");
+    const query = context.req.query();
+    const buildingId = query.buildingId;
+    const roomNumber = query.roomNumber;
     if (!buildingId || !roomNumber) {
       return context.json(
         { error: "Missing required parameters: buildingId and roomNumber" },
         400,
       );
     }
+
+    const date =
+      query.date ?? now().tz(CAMPUS_TIMEZONE).format("YYYY-MM-DD");
 
     if (!DATE_PATTERN.test(date)) {
       return context.json(

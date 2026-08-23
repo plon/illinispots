@@ -312,7 +312,9 @@ def save_progress(year: int, term: str, completed_subjects: dict):
         "completed_subjects": completed_subjects
     }
     with open(progress_file, "w") as f:
-        json.dump(data, f, indent=2)
+        # This file is machine-owned and rewritten after every subject. Compact
+        # JSON substantially reduces cumulative serialization and disk I/O.
+        json.dump(data, f, separators=(",", ":"))
 
 def clear_progress(year: int, term: str):
     """Remove progress file after successful completion."""
@@ -511,6 +513,10 @@ def scrape_all_data(year: Optional[int] = None,
         if proxy_list:
             rotator = ProxyRotator(proxy_list, rotate_every=rotate_every, max_failures=max_proxy_failures, shuffle=proxy_shuffle)
 
+    # Course Explorer requires thousands of requests for a full term. Reusing a
+    # session preserves HTTP connections and avoids repeating TLS setup.
+    http_session = requests.Session(impersonate="chrome123")
+
     def fetch(url: str):
         last_exc = None
         if rotator:
@@ -527,9 +533,8 @@ def scrape_all_data(year: Optional[int] = None,
                 time.sleep(request_delay + random.uniform(0, request_delay * 0.25))
 
             try:
-                r = requests.get(
+                r = http_session.get(
                     url,
-                    impersonate='chrome123',
                     proxies=use_proxies,
                     timeout=request_timeout,
                     verify=not insecure,
@@ -629,7 +634,6 @@ def scrape_all_data(year: Optional[int] = None,
     
     total_courses = sum(len(s.courses) for s in final_subjects)
     total_sections = sum(sum(len(c.sections) for c in s.courses) for s in final_subjects)
-    skipped_count = len([s for s in subjects if s.code in completed_subjects])
 
     for i, subject in enumerate(subjects, 1):
         # Check for shutdown request
@@ -721,6 +725,8 @@ def scrape_all_data(year: Optional[int] = None,
             print(f"  Completed {subject.code} in {subject_duration.total_seconds():.1f}s")
             print(f"  Running totals: {total_courses} courses, {total_sections} sections")
             print()
+
+    http_session.close()
 
     subjects = [subject for subject in final_subjects if len(subject.courses) > 0]
     parsed_section_count = sum(

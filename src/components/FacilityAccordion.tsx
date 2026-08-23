@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { lazy, memo, Suspense, useMemo } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -21,10 +21,24 @@ import {
   STATUS_BADGE_STYLES,
   getFacilityAvailabilityBadgeStyle,
 } from "@/components/RoomBadge";
-import FacilityRoomDetails from "@/components/FacilityRoomDetails";
-import { getLibraryHoursMessage } from "@/utils/libraryHours";
-import AcademicRoomDetailLoader from "@/components/AcademicRoomDetailLoader";
+import { getLibraryHoursMessage } from "@/utils/libraryHoursData";
 import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
+
+const FacilityRoomDetails = lazy(
+  () => import("@/components/FacilityRoomDetails"),
+);
+const AcademicRoomDetailLoader = lazy(
+  () => import("@/components/AcademicRoomDetailLoader"),
+);
+
+function RoomDetailFallback() {
+  return (
+    <div className="px-2 py-3" role="status">
+      <div className="h-14 w-full animate-pulse rounded bg-muted/40" />
+      <span className="sr-only">Loading room details…</span>
+    </div>
+  );
+}
 
 interface FacilityAccordionProps {
   facility: Facility;
@@ -226,11 +240,13 @@ const LibraryRoomsAccordion: React.FC<LibraryRoomsAccordionProps> = ({
                 </AccordionTrigger>
               </div>
               <AccordionContent>
-                <FacilityRoomDetails
-                  roomName={roomName}
-                  room={libraryRoom}
-                  facilityType={FacilityType.LIBRARY}
-                />
+                <Suspense fallback={<RoomDetailFallback />}>
+                  <FacilityRoomDetails
+                    roomName={roomName}
+                    room={libraryRoom}
+                    facilityType={FacilityType.LIBRARY}
+                  />
+                </Suspense>
               </AccordionContent>
             </AccordionItem>
           );
@@ -399,10 +415,12 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
                 <AccordionContent className="pt-0 pb-1 pl-1 pr-4 min-w-0 max-w-full overflow-hidden">
                   {/* Conditionally render loader only when this specific room is expanded */}
                   {isRoomExpanded ? (
-                    <AcademicRoomDetailLoader
-                      buildingId={facility.name} // Use facility name as ID for API call
-                      roomNumber={roomNumber}
-                    />
+                    <Suspense fallback={<RoomDetailFallback />}>
+                      <AcademicRoomDetailLoader
+                        buildingId={facility.name} // Use facility name as ID for API call
+                        roomNumber={roomNumber}
+                      />
+                    </Suspense>
                   ) : (
                     // Placeholder so content area doesn't collapse instantly
                     <div className="h-10"></div>
@@ -470,4 +488,35 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
   );
 };
 
-export default FacilityAccordion;
+function areFacilityAccordionPropsEqual(
+  previous: FacilityAccordionProps,
+  next: FacilityAccordionProps,
+): boolean {
+  if (
+    previous.facility !== next.facility ||
+    previous.facilityType !== next.facilityType ||
+    previous.toggleItem !== next.toggleItem ||
+    previous.accordionRefs !== next.accordionRefs ||
+    previous.idPrefix !== next.idPrefix ||
+    previous.filterCriteria !== next.filterCriteria
+  ) {
+    return false;
+  }
+
+  const facilityItemId = `${next.idPrefix}-${next.facility.id}`;
+  const belongsToFacility = (itemId: string) =>
+    itemId === facilityItemId || itemId.startsWith(`${facilityItemId}-`);
+  const previousExpandedItems = previous.expandedItems.filter(
+    belongsToFacility,
+  );
+  const nextExpandedItems = next.expandedItems.filter(belongsToFacility);
+
+  return (
+    previousExpandedItems.length === nextExpandedItems.length &&
+    previousExpandedItems.every(
+      (itemId, index) => itemId === nextExpandedItems[index],
+    )
+  );
+}
+
+export default memo(FacilityAccordion, areFacilityAccordionPropsEqual);

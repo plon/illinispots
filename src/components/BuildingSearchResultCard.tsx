@@ -4,7 +4,7 @@ import { FacilityType, RoomStatus } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/utils/format";
-import { getLibraryHoursMessage } from "@/utils/libraryHours";
+import { getLibraryHoursMessage } from "@/utils/libraryHoursData";
 import { RoomSearchResultCard } from "@/components/RoomSearchResultCard";
 import {
   STATUS_BADGE_STYLES,

@@ -7,6 +7,8 @@ import React, {
     useCallback,
     memo,
     useState,
+    lazy,
+    Suspense,
 } from "react";
 import { getUpdatedAccordionItems } from "@/utils/accordion";
 import { Accordion } from "@/components/ui/accordion";
@@ -19,7 +21,6 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import { TooltipProvider } from "@/components/ui/HybridTooltip";
 import { Facility, FacilityStatus, FacilityType, AccordionRefs } from "@/types";
 import {
     Github,
@@ -34,14 +35,40 @@ import {
 import FacilityAccordion from "@/components/FacilityAccordion";
 import DateTimeButton from "@/components/DateTimeButton";
 import { FavoritesSection } from "@/components/FavoritesSection";
-import { AddFavoritesDialog } from "@/components/AddFavoritesDialog";
 import RoomFilter from "@/components/RoomFilter";
-import { SearchResults } from "@/components/SearchResults";
 import { useFavorites } from "@/hooks/useFavorites";
 import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import moment from "moment-timezone";
+
+const EMPTY_FILTER_CRITERIA: FilterCriteria = {};
+
+const AddFavoritesDialog = lazy(() =>
+    import("@/components/AddFavoritesDialog").then((module) => ({
+        default: module.AddFavoritesDialog,
+    })),
+);
+
+const SearchResults = lazy(() =>
+    import("@/components/SearchResults").then((module) => ({
+        default: module.SearchResults,
+    })),
+);
+
+function SearchResultsFallback() {
+    return (
+        <div className="space-y-2.5 px-3 py-3 md:px-4" role="status">
+            <span className="sr-only">Preparing search…</span>
+            {[0, 1, 2].map((index) => (
+                <div
+                    key={index}
+                    className="h-20 animate-pulse rounded-lg border border-border/80 bg-muted/40"
+                    aria-hidden="true"
+                />
+            ))}
+        </div>
+    );
+}
 
 interface LeftSidebarProps {
     facilityData: FacilityStatus | null;
@@ -78,17 +105,26 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const [freeUntil, setFreeUntil] = useState<string>("");
     const [startTime, setStartTime] = useState<string>("");
 
+    const hasActiveFilters = !!minDuration || !!freeUntil || !!startTime;
     const filterCriteria: FilterCriteria = useMemo(
-        () => ({
+        () =>
+            hasActiveFilters
+                ? {
+                    minDuration,
+                    freeUntil: freeUntil || undefined,
+                    startTime: startTime || undefined,
+                    now: selectedDateTime,
+                }
+                : EMPTY_FILTER_CRITERIA,
+        [
+            hasActiveFilters,
             minDuration,
-            freeUntil: freeUntil || undefined,
-            startTime: startTime || undefined,
-            now: moment(selectedDateTime),
-        }),
-        [minDuration, freeUntil, startTime, selectedDateTime],
+            freeUntil,
+            startTime,
+            selectedDateTime,
+        ],
     );
 
-    const hasActiveFilters = !!minDuration || !!freeUntil || !!startTime;
     const isSearching = searchTerm.trim().length > 0;
 
     const scrollToAccordion = useCallback((accordionId: string) => {
@@ -160,20 +196,32 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             const prefix = type === "library" ? "library" : "building";
             const accordionId = `${prefix}-${facilityId}`;
 
-            // Add to expanded items if not already expanded
-            if (!expandedItems.includes(accordionId)) {
-                setExpandedItems((prev) => [...prev, accordionId]);
-            }
+            setExpandedItems((previousItems) =>
+                previousItems.includes(accordionId)
+                    ? previousItems
+                    : [...previousItems, accordionId],
+            );
 
             scrollToAccordion(accordionId);
         },
-        [expandedItems, setExpandedItems, scrollToAccordion],
+        [setExpandedItems, scrollToAccordion],
     );
 
     const matchingRoomsCount = useMemo(() => {
         const allFacilities = facilityData
             ? Object.values(facilityData.facilities)
             : [];
+
+        if (!hasActiveFilters) {
+            return allFacilities.reduce(
+                (count, facility) =>
+                    count +
+                    (facility.roomCounts?.total ??
+                        Object.keys(facility.rooms).length),
+                0,
+            );
+        }
+
         let count = 0;
         allFacilities.forEach((facility) => {
             Object.values(facility.rooms).forEach((room) => {
@@ -183,7 +231,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             });
         });
         return count;
-    }, [facilityData, filterCriteria]);
+    }, [facilityData, filterCriteria, hasActiveFilters]);
 
     const clearFilters = () => {
         setMinDuration(undefined);
@@ -200,8 +248,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     <span style={{ color: "#FF5F05" }}>illini</span>
                     <span className="text-[#13294B] dark:text-foreground">Spots</span>
                 </h1>
-                <TooltipProvider delayDuration={50}>
-                    <div className="flex-1 min-w-0 flex gap-2 items-center">
+                <div className="flex-1 min-w-0 flex gap-2 items-center">
                         <div className="relative flex-1 min-w-[70px]">
                             <Search
                                 className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -343,8 +390,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                 </div>
                             </PopoverContent>
                         </Popover>
-                    </div>
-                </TooltipProvider>
+                </div>
             </div>
 
             <ScrollArea
@@ -353,16 +399,18 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 ref={scrollAreaRef}
             >
                 {isSearching ? (
-                    <SearchResults
-                        facilityData={facilityData}
-                        searchTerm={searchTerm}
-                        filterCriteria={filterCriteria}
-                        hasActiveFilters={hasActiveFilters}
-                        onClearFilters={clearFilters}
-                        onClearSearch={() => setSearchTerm("")}
-                        isLoading={isAcademicLoading}
-                        isLibraryLoading={isLibraryFetching}
-                    />
+                    <Suspense fallback={<SearchResultsFallback />}>
+                        <SearchResults
+                            facilityData={facilityData}
+                            searchTerm={searchTerm}
+                            filterCriteria={filterCriteria}
+                            hasActiveFilters={hasActiveFilters}
+                            onClearFilters={clearFilters}
+                            onClearSearch={() => setSearchTerm("")}
+                            isLoading={isAcademicLoading}
+                            isLibraryLoading={isLibraryFetching}
+                        />
+                    </Suspense>
                 ) : (
                     <>
                         <FavoritesSection
@@ -527,13 +575,17 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 </div>
             )}
 
-            <AddFavoritesDialog
-                isOpen={isFavoritesDialogOpen}
-                onOpenChange={setIsFavoritesDialogOpen}
-                facilityData={facilityData}
-                favorites={favorites}
-                onToggleFavorite={toggleFavorite}
-            />
+            {isFavoritesDialogOpen && (
+                <Suspense fallback={null}>
+                    <AddFavoritesDialog
+                        isOpen={isFavoritesDialogOpen}
+                        onOpenChange={setIsFavoritesDialogOpen}
+                        facilityData={facilityData}
+                        favorites={favorites}
+                        onToggleFavorite={toggleFavorite}
+                    />
+                </Suspense>
+            )}
         </div>
     );
 };

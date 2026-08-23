@@ -2,7 +2,36 @@ import { fileURLToPath, URL } from "node:url";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
+import { getPackedCampusTimezone } from "./scripts/campus-timezone.ts";
+
+const CAMPUS_MOMENT_MODULE_ID = "\0campus-moment-timezone";
+
+/**
+ * moment-timezone's default browser entry includes every IANA zone (~715 kB
+ * minified). The client only evaluates campus time, so load the package's full
+ * historical Chicago rules without shipping unrelated timezone data.
+ */
+function campusTimezonePlugin(): Plugin {
+  const campusZone = getPackedCampusTimezone();
+
+  return {
+    name: "campus-moment-timezone",
+    enforce: "pre",
+    resolveId(source) {
+      return source === "moment-timezone" ? CAMPUS_MOMENT_MODULE_ID : null;
+    },
+    load(id) {
+      if (id !== CAMPUS_MOMENT_MODULE_ID) return null;
+
+      return [
+        'import moment from "moment-timezone/moment-timezone.js";',
+        `moment.tz.add(${JSON.stringify(campusZone)});`,
+        "export default moment;",
+      ].join("\n");
+    },
+  };
+}
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
@@ -15,6 +44,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
+      campusTimezonePlugin(),
       tanstackRouter({
         target: "react",
         routesDirectory: "./src/client/routes",

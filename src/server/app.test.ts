@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { createApp } from "./app";
+import { createApp, publicAssetCacheControl } from "./app";
 
 describe("server application", () => {
   it("reports runtime health", async () => {
@@ -27,6 +27,38 @@ describe("server application", () => {
       "strict-origin-when-cross-origin",
     );
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+  });
+
+  it("compresses large facilities responses when the client accepts gzip", async () => {
+    const app = createApp({
+      facilities: {
+        getFacilityStatus: async () => ({
+          timestamp: "2026-08-24T10:00:00.000-05:00",
+          facilities: {},
+          padding: "availability".repeat(2_000),
+        }),
+      },
+    });
+
+    const response = await app.request(
+      "/api/facilities?date=2026-08-24&time=10%3A00%3A00",
+      { headers: { "accept-encoding": "gzip" } },
+    );
+
+    expect(response.headers.get("content-encoding")).toBe("gzip");
+    expect(response.headers.get("vary")).toContain("Accept-Encoding");
+    const compressed = await response.arrayBuffer();
+    expect(compressed.byteLength).toBeLessThan(1_000);
+  });
+
+  it("assigns revalidation policies to public manifests and icons", () => {
+    expect(publicAssetCacheControl("/manifest.json")).toBe(
+      "public, max-age=3600, stale-while-revalidate=86400",
+    );
+    expect(publicAssetCacheControl("/icon-192.png")).toBe(
+      "public, max-age=604800, stale-while-revalidate=2592000",
+    );
+    expect(publicAssetCacheControl("/unversioned.js")).toBeUndefined();
   });
 
 
@@ -90,6 +122,16 @@ describe("server application", () => {
       "https://illinispots.com/api/health",
     );
     expect(prodResponse.headers.get("X-Robots-Tag")).toBeNull();
+
+    const uppercaseForwardedHostResponse = await app.request(
+      "http://internal/api/health",
+      {
+        headers: { "x-forwarded-host": "STAGING.ILLINISPOTS.COM" },
+      },
+    );
+    expect(uppercaseForwardedHostResponse.headers.get("X-Robots-Tag")).toBe(
+      "noindex, nofollow, noarchive",
+    );
   });
 
   it("serves disallow robots.txt on staging and allow on production", async () => {
@@ -123,6 +165,8 @@ describe("server application", () => {
     expect(rootResponse.headers.get("cache-control")).toBe(
       "no-cache, must-revalidate",
     );
+    const etag = rootResponse.headers.get("etag");
+    expect(etag).toMatch(/^"[A-Za-z0-9_-]+"$/);
     const rootHtml = await rootResponse.text();
     expect(rootHtml).toContain(
       '<script>window.__APP_CONFIG__={"appEnv":"staging","mapboxAccessToken":"pk.test_token_123","mapboxStyleUrl":"mapbox://styles/test/style","sentryDsn":"https://test@sentry.io/456"};</script>',
@@ -137,5 +181,11 @@ describe("server application", () => {
     expect(spaHtml).toContain(
       '<script>window.__APP_CONFIG__={"appEnv":"staging","mapboxAccessToken":"pk.test_token_123","mapboxStyleUrl":"mapbox://styles/test/style","sentryDsn":"https://test@sentry.io/456"};</script>',
     );
+
+    const revalidatedResponse = await app.request("/", {
+      headers: { "if-none-match": `W/${etag}` },
+    });
+    expect(revalidatedResponse.status).toBe(304);
+    expect(await revalidatedResponse.text()).toBe("");
   });
 });

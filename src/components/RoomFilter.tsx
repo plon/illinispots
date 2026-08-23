@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { lazy, Suspense, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -6,13 +6,10 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-    Drawer,
-    DrawerContent,
-    DrawerTrigger,
-} from "@/components/ui/drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { ListFilter, Hourglass, Clock } from "lucide-react";
+
+const MobileDrawer = lazy(() => import("@/components/ui/mobile-drawer"));
 
 const PRESET_DURATIONS = [30, 60, 120, 240] as const;
 const MIN_CUSTOM_DURATION = 1;
@@ -41,6 +38,7 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
     matchingRoomsCount,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const triggerRef = useRef<HTMLButtonElement>(null);
     const isDesktop = useMediaQuery("(min-width: 768px)");
     const [isCustomDurationOpen, setIsCustomDurationOpen] = useState(false);
     const [customDuration, setCustomDuration] = useState(() =>
@@ -102,6 +100,7 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
 
     const TriggerButton = (
         <Button
+            ref={triggerRef}
             variant={hasActiveFilters ? "default" : "outline"}
             size="icon"
             className={`h-9 w-9 rounded-full border transition-all duration-200 ${hasActiveFilters
@@ -109,6 +108,9 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                 : "border-input hover:border-foreground/40"
                 }`}
             aria-label="Filter options"
+            aria-expanded={isOpen}
+            aria-haspopup="dialog"
+            onClick={isDesktop ? undefined : () => setIsOpen(true)}
         >
             <ListFilter size={16} />
         </Button>
@@ -330,16 +332,23 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
     }
 
     return (
-        <Drawer open={isOpen} onOpenChange={setIsOpen}>
-            <DrawerTrigger asChild>
-                {TriggerButton}
-            </DrawerTrigger>
-            <DrawerContent className="max-h-[90vh]">
-                <div className="overflow-y-auto">
-                    {content}
-                </div>
-            </DrawerContent>
-        </Drawer>
+        <>
+            {TriggerButton}
+            {isOpen && (
+                <Suspense fallback={null}>
+                    <MobileDrawer
+                        open={isOpen}
+                        onOpenChange={setIsOpen}
+                        returnFocusRef={triggerRef}
+                        contentClassName="max-h-[90vh]"
+                    >
+                        <div className="overflow-y-auto">
+                            {content}
+                        </div>
+                    </MobileDrawer>
+                </Suspense>
+            )}
+        </>
     );
 };
 

@@ -1,5 +1,13 @@
-import React, { useState, useMemo } from "react";
-import { performSearch } from "@/utils/searchUtils";
+import React, {
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  createFacilitySearchIndex,
+  searchFacilityIndex,
+} from "@/utils/searchUtils";
 import { Facility, FacilityStatus } from "@/types";
 import { FilterCriteria } from "@/utils/filterUtils";
 import { RoomSearchResultCard } from "@/components/RoomSearchResultCard";
@@ -25,6 +33,7 @@ interface SearchResultsProps {
   isLibraryLoading?: boolean;
 }
 type TabType = "all" | "rooms" | "buildings";
+const RESULTS_PAGE_SIZE = 30;
 
 export const SearchResults: React.FC<SearchResultsProps> = ({
   facilityData,
@@ -37,23 +46,42 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
   isLibraryLoading = false,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>("all");
-
+  const [visibleRoomCount, setVisibleRoomCount] = useState(RESULTS_PAGE_SIZE);
+  const [visibleBuildingCount, setVisibleBuildingCount] = useState(
+    RESULTS_PAGE_SIZE,
+  );
+  const deferredSearchTerm = useDeferredValue(searchTerm);
 
   const facilitiesList = useMemo<Facility[]>(() => {
     if (!facilityData) return [];
     return Object.values(facilityData.facilities);
   }, [facilityData]);
 
+  const searchIndex = useMemo(
+    () =>
+      createFacilitySearchIndex(
+        facilitiesList,
+        filterCriteria,
+        hasActiveFilters,
+      ),
+    [facilitiesList, filterCriteria, hasActiveFilters],
+  );
+
   const searchResults = useMemo(() => {
-    return performSearch(
-      facilitiesList,
-      searchTerm,
-      filterCriteria,
-      hasActiveFilters,
+    return searchFacilityIndex(
+      searchIndex,
+      deferredSearchTerm,
     );
-  }, [facilitiesList, searchTerm, filterCriteria, hasActiveFilters]);
+  }, [deferredSearchTerm, searchIndex]);
 
   const { buildings, rooms, totalCount } = searchResults;
+  const visibleBuildings = buildings.slice(0, visibleBuildingCount);
+  const visibleRooms = rooms.slice(0, visibleRoomCount);
+
+  useEffect(() => {
+    setVisibleRoomCount(RESULTS_PAGE_SIZE);
+    setVisibleBuildingCount(RESULTS_PAGE_SIZE);
+  }, [deferredSearchTerm]);
 
   const isDataIncomplete = isLoading || isLibraryLoading;
 
@@ -68,7 +96,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Search className="w-3.5 h-3.5 text-muted-foreground" />
-            <span>Searching for &ldquo;{searchTerm}&rdquo;…</span>
+            <span>Searching for &ldquo;{deferredSearchTerm}&rdquo;…</span>
           </div>
           <button
             type="button"
@@ -106,7 +134,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
             <Search className="w-3.5 h-3.5 text-muted-foreground" />
             <span>
               <strong className="text-foreground font-semibold">{totalCount}</strong>{" "}
-              result{totalCount === 1 ? "" : "s"} for &ldquo;{searchTerm}&rdquo;
+              result{totalCount === 1 ? "" : "s"} for &ldquo;{deferredSearchTerm}&rdquo;
             </span>
             {isLibraryLoading && (
               <span className="text-[11px] text-muted-foreground/80 pl-1">
@@ -194,7 +222,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium text-foreground">
-              No spots found matching &ldquo;{searchTerm}&rdquo;
+              No spots found matching &ldquo;{deferredSearchTerm}&rdquo;
             </p>
             <p className="text-xs text-muted-foreground max-w-xs mx-auto">
               Try searching by room number (e.g. 1404), building name (e.g. Siebel, Grainger, CIF), or course (e.g. CS 225).
@@ -235,12 +263,25 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
                     <span>Buildings ({buildings.length})</span>
                   </div>
                   <div className="space-y-2.5">
-                    {buildings.map((buildingResult) => (
+                    {visibleBuildings.map((buildingResult) => (
                       <BuildingSearchResultCard
                         key={`bldg-${buildingResult.facilityId}`}
                         buildingResult={buildingResult}
                       />
                     ))}
+                    {buildings.length > visibleBuildingCount && (
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() =>
+                          setVisibleBuildingCount((count) =>
+                            count + RESULTS_PAGE_SIZE,
+                          )
+                        }
+                      >
+                        Show more buildings
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
@@ -253,12 +294,25 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
                     <span>Rooms ({rooms.length})</span>
                   </div>
                   <div className="space-y-2.5">
-                    {rooms.map((roomResult) => (
+                    {visibleRooms.map((roomResult) => (
                       <RoomSearchResultCard
                         key={`room-${roomResult.facilityId}-${roomResult.roomNumber}`}
                         roomResult={roomResult}
                       />
                     ))}
+                    {rooms.length > visibleRoomCount && (
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() =>
+                          setVisibleRoomCount((count) =>
+                            count + RESULTS_PAGE_SIZE,
+                          )
+                        }
+                      >
+                        Show more rooms
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
@@ -269,15 +323,30 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
           {activeTab === "rooms" && (
             <div className="space-y-2.5">
               {rooms.length > 0 ? (
-                rooms.map((roomResult) => (
-                  <RoomSearchResultCard
-                    key={`room-tab-${roomResult.facilityId}-${roomResult.roomNumber}`}
-                    roomResult={roomResult}
-                  />
-                ))
+                <>
+                  {visibleRooms.map((roomResult) => (
+                    <RoomSearchResultCard
+                      key={`room-tab-${roomResult.facilityId}-${roomResult.roomNumber}`}
+                      roomResult={roomResult}
+                    />
+                  ))}
+                  {rooms.length > visibleRoomCount && (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() =>
+                        setVisibleRoomCount((count) =>
+                          count + RESULTS_PAGE_SIZE,
+                        )
+                      }
+                    >
+                      Show more rooms
+                    </Button>
+                  )}
+                </>
               ) : (
                 <p className="text-center text-xs text-muted-foreground py-6">
-                  No individual rooms matched &ldquo;{searchTerm}&rdquo;.
+                  No individual rooms matched &ldquo;{deferredSearchTerm}&rdquo;.
                 </p>
               )}
             </div>
@@ -287,15 +356,30 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
           {activeTab === "buildings" && (
             <div className="space-y-2.5">
               {buildings.length > 0 ? (
-                buildings.map((buildingResult) => (
-                  <BuildingSearchResultCard
-                    key={`bldg-tab-${buildingResult.facilityId}`}
-                    buildingResult={buildingResult}
-                  />
-                ))
+                <>
+                  {visibleBuildings.map((buildingResult) => (
+                    <BuildingSearchResultCard
+                      key={`bldg-tab-${buildingResult.facilityId}`}
+                      buildingResult={buildingResult}
+                    />
+                  ))}
+                  {buildings.length > visibleBuildingCount && (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() =>
+                        setVisibleBuildingCount((count) =>
+                          count + RESULTS_PAGE_SIZE,
+                        )
+                      }
+                    >
+                      Show more buildings
+                    </Button>
+                  )}
+                </>
               ) : (
                 <p className="text-center text-xs text-muted-foreground py-6">
-                  No buildings matched &ldquo;{searchTerm}&rdquo;.
+                  No buildings matched &ldquo;{deferredSearchTerm}&rdquo;.
                 </p>
               )}
             </div>

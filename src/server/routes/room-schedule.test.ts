@@ -1,5 +1,4 @@
 import { describe, expect, it } from "bun:test";
-import moment from "moment-timezone";
 import type { RoomScheduleBlock } from "../../types";
 import { createApp } from "../app";
 
@@ -55,7 +54,9 @@ describe("GET /api/room-schedule", () => {
     const queries: unknown[] = [];
     const app = createApp({
       roomSchedule: {
-        now: () => moment.tz("2026-08-20 08:00:00", "America/Chicago"),
+        now: () => {
+          throw new Error("Clock should not be read when a date is provided");
+        },
         loadRoomSchedule: async (query) => {
           queries.push(query);
           return schedule;

@@ -13,12 +13,13 @@ const fetchScheduleForDate = async (
   buildingId: string,
   roomNumber: string,
   date: string,
+  signal?: AbortSignal,
 ): Promise<RoomScheduleBlock[]> => {
   const apiUrl = `/api/room-schedule?buildingId=${encodeURIComponent(
     buildingId,
   )}&roomNumber=${encodeURIComponent(roomNumber)}&date=${date}`;
 
-  const response = await fetch(apiUrl);
+  const response = await fetch(apiUrl, { signal });
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(
@@ -47,7 +48,10 @@ const AcademicRoomDetailLoader: React.FC<AcademicRoomDetailLoaderProps> = ({
     error,
   } = useQuery<RoomScheduleBlock[], Error>({
     queryKey: ["roomSchedule", buildingId, roomNumber, selectedDate],
-    queryFn: () => fetchScheduleForDate(buildingId, roomNumber, selectedDate),
+    queryFn: ({ signal }) =>
+      fetchScheduleForDate(buildingId, roomNumber, selectedDate, signal),
+    staleTime: 30 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   if (isLoading) {
