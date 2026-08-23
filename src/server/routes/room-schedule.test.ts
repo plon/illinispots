@@ -51,7 +51,7 @@ describe("GET /api/room-schedule", () => {
     expect(calls).toBe(0);
   });
 
-  it("returns the current and future blocks and truncates the active block", async () => {
+  it("returns the full day schedule blocks", async () => {
     const queries: unknown[] = [];
     const app = createApp({
       roomSchedule: {
@@ -64,7 +64,7 @@ describe("GET /api/room-schedule", () => {
     });
 
     const response = await app.request(
-      "/api/room-schedule?buildingId=ABC&roomNumber=101&date=2026-08-20&time=09%3A37%3A00",
+      "/api/room-schedule?buildingId=ABC&roomNumber=101&date=2026-08-20",
     );
 
     expect(response.status).toBe(200);
@@ -72,21 +72,6 @@ describe("GET /api/room-schedule", () => {
     expect(queries).toEqual([
       { buildingId: "ABC", roomNumber: "101", date: "2026-08-20" },
     ]);
-    expect(await response.json()).toEqual([
-      { ...schedule[0], start: "09:30:00" },
-      schedule[1],
-    ]);
-  });
-
-  it("returns an empty list after the final block", async () => {
-    const app = createApp({
-      roomSchedule: { loadRoomSchedule: async () => schedule },
-    });
-    const response = await app.request(
-      "/api/room-schedule?buildingId=ABC&roomNumber=101&date=2026-08-20&time=23%3A00%3A00",
-    );
-
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual([]);
+    expect(await response.json()).toEqual(schedule);
   });
 });

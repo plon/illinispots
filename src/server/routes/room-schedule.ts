@@ -5,7 +5,6 @@ import { Sentry } from "../observability";
 import {
   loadRoomSchedule,
   RoomScheduleDatabaseError,
-  selectRelevantSchedule,
   type RoomScheduleQuery,
 } from "../services/room-schedule";
 import type { RoomScheduleBlock } from "../../types";
@@ -33,8 +32,6 @@ export function createRoomScheduleRoutes(
     const roomNumber = context.req.query("roomNumber");
     const nowAtCampus = now().tz(CAMPUS_TIMEZONE);
     const date = context.req.query("date") ?? nowAtCampus.format("YYYY-MM-DD");
-    const time = context.req.query("time");
-
     if (!buildingId || !roomNumber) {
       return context.json(
         { error: "Missing required parameters: buildingId and roomNumber" },
@@ -49,19 +46,9 @@ export function createRoomScheduleRoutes(
       );
     }
 
-    let target = nowAtCampus.clone();
-    if (time) {
-      const requestedTarget = moment.tz(`${date}T${time}`, CAMPUS_TIMEZONE);
-      if (requestedTarget.isValid()) {
-        target = requestedTarget;
-      } else {
-        console.warn("Invalid time parameter, using current time instead");
-      }
-    }
-
     try {
       const schedule = await loadSchedule({ buildingId, roomNumber, date });
-      return context.json(selectRelevantSchedule(schedule, target));
+      return context.json(schedule);
     } catch (error) {
       if (error instanceof ServerConfigurationError) {
         Sentry.captureMessage("Missing Supabase environment variables", {
