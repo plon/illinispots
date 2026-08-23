@@ -164,14 +164,14 @@ describe("getFacilityStatus", () => {
           },
           {
             itemId: 25436,
-            start: "2026-08-24 08:00:00",
-            end: "2026-08-24 08:30:00",
-            className: "s-lc-eq-checkout",
+            start: "2026-08-24 08:30:00",
+            end: "2026-08-24 09:30:00",
           },
           {
             itemId: 25436,
-            start: "2026-08-24 08:30:00",
-            end: "2026-08-24 09:30:00",
+            start: "2026-08-24 08:00:00",
+            end: "2026-08-24 08:30:00",
+            className: "s-lc-eq-checkout",
           },
         ],
       });

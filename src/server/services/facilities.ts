@@ -46,7 +46,6 @@ const LIBCAL_REQUEST_HEADERS = {
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0",
   "x-requested-with": "XMLHttpRequest",
 } as const;
-type ReservationSlot = ReservationResponse["slots"][number];
 
 interface ParsedLocalDateTime {
   timestamp: number;
@@ -55,7 +54,8 @@ interface ParsedLocalDateTime {
 
 const parsedLocalDateTimeCache = new Map<string, ParsedLocalDateTime>();
 
-interface IndexedReservationSlot extends ReservationSlot {
+interface IndexedReservationSlot {
+  className?: string;
   startTime: ParsedLocalDateTime;
   endTime: ParsedLocalDateTime;
 }
@@ -190,22 +190,29 @@ function indexReservationSlots(
   slots: ReservationResponse["slots"],
 ): Map<number, IndexedReservationSlot[]> {
   const slotsByRoom = new Map<number, IndexedReservationSlot[]>();
+  const outOfOrderRoomSlots = new Set<IndexedReservationSlot[]>();
 
   for (const slot of slots) {
     const indexedSlot: IndexedReservationSlot = {
-      ...slot,
+      className: slot.className,
       startTime: parseLocalDateTime(slot.start),
       endTime: parseLocalDateTime(slot.end),
     };
     const roomSlots = slotsByRoom.get(slot.itemId);
     if (roomSlots) {
+      if (
+        roomSlots[roomSlots.length - 1].startTime.timestamp >
+        indexedSlot.startTime.timestamp
+      ) {
+        outOfOrderRoomSlots.add(roomSlots);
+      }
       roomSlots.push(indexedSlot);
     } else {
       slotsByRoom.set(slot.itemId, [indexedSlot]);
     }
   }
 
-  for (const roomSlots of slotsByRoom.values()) {
+  for (const roomSlots of outOfOrderRoomSlots) {
     roomSlots.sort(
       (first, second) =>
         first.startTime.timestamp - second.startTime.timestamp,
