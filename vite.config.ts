@@ -1,5 +1,4 @@
 import { fileURLToPath, URL } from "node:url";
-import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv, type Plugin } from "vite";
@@ -33,6 +32,11 @@ function campusTimezonePlugin(): Plugin {
   };
 }
 
+const sentryVitePlugin =
+  process.env.SENTRY_DISABLE_AUTO_UPLOAD === "true"
+    ? undefined
+    : (await import("@sentry/vite-plugin")).sentryVitePlugin;
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const sentryBuildEnv = loadEnv("sentry-build-plugin", process.cwd(), "");
@@ -41,6 +45,19 @@ export default defineConfig(({ mode }) => {
   const uploadsSourceMaps =
     Boolean(sentryAuthToken) &&
     process.env.SENTRY_DISABLE_AUTO_UPLOAD !== "true";
+  const sentryPlugin =
+    uploadsSourceMaps && sentryVitePlugin
+      ? sentryVitePlugin({
+          org: "evan-2t",
+          project: "illinispots",
+          authToken: sentryAuthToken,
+          silent: !env.CI,
+          sourcemaps: {
+            filesToDeleteAfterUpload: ["./dist/client/**/*.map"],
+          },
+          telemetry: false,
+        })
+      : undefined;
 
   return {
     plugins: [
@@ -52,20 +69,7 @@ export default defineConfig(({ mode }) => {
         autoCodeSplitting: true,
       }),
       react(),
-      ...(uploadsSourceMaps
-        ? [
-            sentryVitePlugin({
-              org: "evan-2t",
-              project: "illinispots",
-              authToken: sentryAuthToken,
-              silent: !env.CI,
-              sourcemaps: {
-                filesToDeleteAfterUpload: ["./dist/client/**/*.map"],
-              },
-              telemetry: false,
-            }),
-          ]
-        : []),
+      ...(sentryPlugin ? [sentryPlugin] : []),
     ],
     resolve: {
       alias: {
