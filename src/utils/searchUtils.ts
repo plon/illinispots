@@ -452,58 +452,54 @@ export const searchFacilityIndex = (
     }
   });
 
-  // 4. Fallback Fuzzy Search with Fuse.js for typos if few direct results
-  if (scoredRoomsMap.size < 5) {
-    const fuseResults = searchIndex.roomFuse.search(query);
-    fuseResults.forEach((res) => {
-      const item = res.item;
-      const key = `${item.facilityId}-${item.roomNumber}`;
-      if (!scoredRoomsMap.has(key)) {
-        const fuzzyScore = Math.max(0.45, 1 - (res.score ?? 0.5) * 0.7);
-        scoredRoomsMap.set(key, {
-          type: "room",
-          roomNumber: item.roomNumber,
-          facilityId: item.facilityId,
-          facilityName: item.facilityName,
-          facilityType: item.facilityType,
-          room: item.room,
-          facility: item.facility,
-          score: fuzzyScore,
+  // 4. Fuzzy Search with Fuse.js for typos and approximate matches
+  const fuseResults = searchIndex.roomFuse.search(query);
+  fuseResults.forEach((res) => {
+    const item = res.item;
+    const key = `${item.facilityId}-${item.roomNumber}`;
+    if (!scoredRoomsMap.has(key)) {
+      const fuzzyScore = Math.max(0.45, 1 - (res.score ?? 0.5) * 0.7);
+      scoredRoomsMap.set(key, {
+        type: "room",
+        roomNumber: item.roomNumber,
+        facilityId: item.facilityId,
+        facilityName: item.facilityName,
+        facilityType: item.facilityType,
+        room: item.room,
+        facility: item.facility,
+        score: fuzzyScore,
+      });
+    }
+  });
+
+  // 5. Fuzzy Search for Buildings
+  const buildingResultIds = new Set(
+    buildingResults.map((building) => building.facilityId),
+  );
+  const fuseBuildingResults = searchIndex.buildingFuse.search(query);
+  fuseBuildingResults.forEach((res) => {
+    const facility = res.item;
+    if (!buildingResultIds.has(facility.id)) {
+      const facilityItem = searchIndex.facilityItemsById.get(facility.id);
+      if (!facilityItem) return;
+      const { availableRoomsCount, totalRoomsCount } = facilityItem;
+
+      if (!searchIndex.hasActiveFilters || availableRoomsCount > 0) {
+        buildingResults.push({
+          type: "building",
+          facilityId: facility.id,
+          facilityName: facility.name,
+          facilityType: facility.type,
+          facility,
+          score: Math.max(0.45, 1 - (res.score ?? 0.5) * 0.7),
+          availableRoomsCount,
+          totalRoomsCount,
+          matchingRooms: [],
         });
+        buildingResultIds.add(facility.id);
       }
-    });
-  }
-
-  // 5. Fallback Fuzzy Search for Buildings if few direct building results
-  if (buildingResults.length < 2) {
-    const buildingResultIds = new Set(
-      buildingResults.map((building) => building.facilityId),
-    );
-    const fuseBuildingResults = searchIndex.buildingFuse.search(query);
-    fuseBuildingResults.forEach((res) => {
-      const facility = res.item;
-      if (!buildingResultIds.has(facility.id)) {
-        const facilityItem = searchIndex.facilityItemsById.get(facility.id);
-        if (!facilityItem) return;
-        const { availableRoomsCount, totalRoomsCount } = facilityItem;
-
-        if (!searchIndex.hasActiveFilters || availableRoomsCount > 0) {
-          buildingResults.push({
-            type: "building",
-            facilityId: facility.id,
-            facilityName: facility.name,
-            facilityType: facility.type,
-            facility,
-            score: Math.max(0.45, 1 - (res.score ?? 0.5) * 0.7),
-            availableRoomsCount,
-            totalRoomsCount,
-            matchingRooms: [],
-          });
-          buildingResultIds.add(facility.id);
-        }
-      }
-    });
-  }
+    }
+  });
 
   // Convert room map to array and sort
   const allRooms = Array.from(scoredRoomsMap.values()).sort((a, b) => {
