@@ -9,10 +9,13 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "concurrently --kill-others --names client,server --prefix-colors cyan,magenta \"vite\" \"bun --hot src/server/index.ts\"",
-    "build": "vite build && concurrently --kill-others-on-fail --names assets,server,types \"bun run build:assets\" \"bun run build:server\" \"bun run typecheck\"",
+    "dev": "bun run --parallel 'dev:*'",
+    "dev:client": "vite",
+    "dev:server": "bun --hot src/server/index.ts",
+    "build": "vite build && bun run --parallel 'build:*'",
     "build:assets": "bun scripts/precompress-assets.ts",
     "build:server": "bun scripts/build-server.ts",
+    "build:types": "tsc --noEmit",
     "start": "NODE_ENV=production bun dist/server/index.js",
     "preview": "bun run build && bun run start",
     "lint": "eslint .",
@@ -61,7 +64,6 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",
-    "concurrently": "^9.2.1",
     "eslint": "^9.39.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.0",
