@@ -215,6 +215,42 @@ describe("getFacilityStatus", () => {
     );
   });
 
+  it("preserves truncated-minute opening-soon boundaries", async () => {
+    const target = moment.tz(
+      "2026-08-24 08:09:01",
+      "YYYY-MM-DD HH:mm:ss",
+      CAMPUS_TIMEZONE,
+    );
+    const fetchLibCal: FacilitiesFetch = async () =>
+      Response.json({
+        slots: [
+          {
+            itemId: 25436,
+            start: "2026-08-24 08:00:00",
+            end: "2026-08-24 08:30:00",
+            className: "s-lc-eq-checkout",
+          },
+          {
+            itemId: 25436,
+            start: "2026-08-24 08:30:00",
+            end: "2026-08-24 09:30:00",
+          },
+        ],
+      });
+
+    const result = await getFacilityStatus(target, "library", {
+      fetch: fetchLibCal,
+    });
+
+    expect(
+      result.facilities["Grainger Engineering Library"].rooms["407"],
+    ).toMatchObject({
+      status: RoomStatus.OPENING_SOON,
+      availableAt: "08:30:00",
+      availableFor: 60,
+    });
+  });
+
   it("coalesces concurrent LibCal requests for the same calendar window", async () => {
     const target = moment.tz(
       "2026-08-24 08:15:00",

@@ -394,10 +394,14 @@ function linkRoomsReservations(
           nextAvailableStart.timestamp,
           libraryClosingTimestamp,
         );
+        const minutesUntilAvailable = Math.trunc(
+          (nextAvailableStart.timestamp - targetTimestamp) /
+            MILLISECONDS_PER_MINUTE,
+        );
 
         if (
-          nextAvailableStart.timestamp - targetTimestamp <=
-            20 * MILLISECONDS_PER_MINUTE &&
+          minutesUntilAvailable >= 0 &&
+          minutesUntilAvailable <= 20 &&
           availableDuration >= 30
         ) {
           roomStatus = RoomStatus.OPENING_SOON;
