@@ -210,7 +210,6 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
             <AcademicRoomDetailLoader
               buildingId={facility.name}
               roomNumber={roomNumber}
-              buildingHours={facility.hours}
             />
           ) : (
             libraryRoom && <RoomSchedule slots={libraryRoom.slots} />

@@ -1,268 +1,159 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import moment from "moment-timezone";
-import { RoomScheduleBlock, AcademicBlockDetails } from "@/types";
+import { Clock } from "lucide-react";
+import type { RoomScheduleBlock } from "@/types";
 import {
   HybridTooltip,
   HybridTooltipContent,
   HybridTooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/HybridTooltip";
-import { Clock } from "lucide-react";
-
-const CAMPUS_TIMEZONE = "America/Chicago";
-const HOUR_WIDTH_PX = 72; // 72px per hour = 1.2px per minute
+import {
+  buildTimelineDayOptions,
+  buildTimelineModel,
+  CAMPUS_TIMEZONE,
+  formatDuration,
+  formatScheduleTime,
+  TIMELINE_HOUR_WIDTH_PX,
+} from "@/utils/timelineSchedule";
 
 interface TimelineScheduleProps {
   scheduleData: RoomScheduleBlock[];
-  selectedDate: string; // YYYY-MM-DD
+  selectedDate: string;
   onDateChange: (newDate: string) => void;
-  buildingId?: string;
-  roomNumber?: string;
-  buildingHours?: { open?: string; close?: string };
 }
 
-// Convert "HH:mm:ss" or "HH:mm" to total minutes from 00:00
-function parseTimeToMinutes(timeStr?: string | null): number | null {
-  if (!timeStr) return null;
-  const parts = timeStr.split(":").map(Number);
-  if (isNaN(parts[0])) return null;
-  return parts[0] * 60 + (parts[1] || 0);
-}
+function DaySelector({
+  selectedDate,
+  today,
+  onDateChange,
+}: {
+  selectedDate: string;
+  today: string;
+  onDateChange: (date: string) => void;
+}) {
+  const days = useMemo(
+    () => buildTimelineDayOptions(selectedDate, today),
+    [selectedDate, today],
+  );
 
-// Convert "HH:mm:ss" or "HH:mm" to minutes from custom startHour
-function getMinutesFromCustomStart(timeStr: string, startHour: number): number {
-  const parts = timeStr.split(":").map(Number);
-  const hour = parts[0] || 0;
-  const min = parts[1] || 0;
-  const totalMinutes = hour * 60 + min;
-  return totalMinutes - startHour * 60;
-}
-
-// Format "HH:mm:ss" to "9:30 AM"
-function formatTimeString(timeStr: string): string {
-  const parts = timeStr.split(":").map(Number);
-  const hour = parts[0] || 0;
-  const min = parts[1] || 0;
-  const period = hour >= 12 ? "PM" : "AM";
-  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
-  const displayMin = min < 10 ? `0${min}` : `${min}`;
-  return `${displayHour}:${displayMin} ${period}`;
-}
-
-// Format duration minutes into "1h 20m" or "50m"
-function formatDurationMinutes(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h > 0 && m > 0) return `${h}h ${m}m`;
-  if (h > 0) return `${h}h`;
-  return `${m}m`;
+  return (
+    <div className="flex w-full min-w-0 items-center gap-1 overflow-x-auto py-0.5 no-scrollbar">
+      {days.map((day) => {
+        const isSelected = day.date === selectedDate;
+        return (
+          <button
+            key={day.date}
+            type="button"
+            onClick={() => onDateChange(day.date)}
+            aria-pressed={isSelected}
+            className={`shrink-0 cursor-pointer rounded-md px-2.5 py-1 text-xs transition-colors ${
+              isSelected
+                ? "bg-secondary font-medium text-foreground"
+                : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+            }`}
+          >
+            {day.label}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
   scheduleData,
   selectedDate,
   onDateChange,
-  buildingHours,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragStartScrollRef = useRef(0);
   const [currentCampusTime, setCurrentCampusTime] = useState(() =>
     moment().tz(CAMPUS_TIMEZONE),
   );
-
-  // Mouse drag-to-scroll state
-  const isDraggingRef = useRef(false);
-  const startXRef = useRef(0);
-  const scrollLeftRef = useRef(0);
+  const timeline = useMemo(
+    () => buildTimelineModel(scheduleData),
+    [scheduleData],
+  );
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const interval = window.setInterval(() => {
       setCurrentCampusTime(moment().tz(CAMPUS_TIMEZONE));
-    }, 30000);
-    return () => clearInterval(interval);
+    }, 30_000);
+    return () => window.clearInterval(interval);
   }, []);
 
-  const todayStr = currentCampusTime.format("YYYY-MM-DD");
-  const isToday = selectedDate === todayStr;
+  const today = currentCampusTime.format("YYYY-MM-DD");
+  const isToday = selectedDate === today;
+  const currentMinutes =
+    currentCampusTime.hours() * 60 + currentCampusTime.minutes();
+  const currentTimePositionPx =
+    isToday &&
+    currentMinutes >= timeline.startMinutes &&
+    currentMinutes <= timeline.endMinutes
+      ? ((currentMinutes - timeline.startMinutes) / 60) *
+        TIMELINE_HOUR_WIDTH_PX
+      : null;
 
-  // Dynamically compute timeline start and end hour bounds:
-  // startHour = min(building open, first event start)
-  // endHour = max(building close, last event end)
-  const { startHour, endHour, totalHours, totalMinutes, totalWidthPx } = useMemo(() => {
-    let startMinutes = 8 * 60; // fallback 8:00 AM
-    let endMinutes = 22 * 60; // fallback 10:00 PM
-
-    const openMin = parseTimeToMinutes(buildingHours?.open);
-    const closeMin = parseTimeToMinutes(buildingHours?.close);
-
-    const blockStartMins = scheduleData
-      .map((b) => parseTimeToMinutes(b.start))
-      .filter((m): m is number => m !== null);
-
-    const blockEndMins = scheduleData
-      .map((b) => parseTimeToMinutes(b.end))
-      .filter((m): m is number => m !== null);
-
-    const candidatesStart: number[] = [];
-    if (openMin !== null) candidatesStart.push(openMin);
-    if (blockStartMins.length > 0) candidatesStart.push(Math.min(...blockStartMins));
-
-    const candidatesEnd: number[] = [];
-    if (closeMin !== null) candidatesEnd.push(closeMin);
-    if (blockEndMins.length > 0) candidatesEnd.push(Math.max(...blockEndMins));
-
-    if (candidatesStart.length > 0) {
-      startMinutes = Math.min(...candidatesStart);
-    }
-    if (candidatesEnd.length > 0) {
-      endMinutes = Math.max(...candidatesEnd);
-    }
-
-    const calculatedStartHour = Math.max(0, Math.floor(startMinutes / 60));
-    const calculatedEndHour = Math.min(24, Math.ceil(endMinutes / 60));
-    const sHour = calculatedStartHour;
-    const eHour = Math.max(sHour + 1, calculatedEndHour);
-    const tHours = eHour - sHour;
-    const tMinutes = tHours * 60;
-    const tWidthPx = tHours * HOUR_WIDTH_PX;
-
-    return {
-      startHour: sHour,
-      endHour: eHour,
-      totalHours: tHours,
-      totalMinutes: tMinutes,
-      totalWidthPx: tWidthPx,
-    };
-  }, [scheduleData, buildingHours]);
-
-  // 7-day strip
-  const daysList = useMemo(() => {
-    const list = [];
-    const base = moment.tz(todayStr, CAMPUS_TIMEZONE);
-    for (let i = 0; i < 7; i++) {
-      const dayMoment = base.clone().add(i, "days");
-      list.push({
-        dateStr: dayMoment.format("YYYY-MM-DD"),
-        label: i === 0 ? "Today" : dayMoment.format("ddd D"),
-        isToday: i === 0,
-      });
-    }
-    return list;
-  }, [todayStr]);
-
-  // Current time position in px along timeline
-  const currentTimePositionPx = useMemo(() => {
-    if (!isToday) return null;
-    const currentMinutes =
-      currentCampusTime.hours() * 60 + currentCampusTime.minutes();
-    const startMinutes = startHour * 60;
-    const endMinutes = endHour * 60;
-
-    if (currentMinutes < startMinutes || currentMinutes > endMinutes) {
-      return null;
-    }
-
-    const minutesFromStart = currentMinutes - startMinutes;
-    const ratio = minutesFromStart / totalMinutes;
-    return ratio * totalWidthPx;
-  }, [isToday, currentCampusTime, startHour, endHour, totalMinutes, totalWidthPx]);
-
-  // Auto-scroll to current time on mount / date change
   useEffect(() => {
-    if (scrollContainerRef.current) {
-      if (currentTimePositionPx !== null) {
-        const containerWidth = scrollContainerRef.current.clientWidth;
-        const targetScroll = Math.max(
-          0,
-          currentTimePositionPx - containerWidth * 0.35,
-        );
-        scrollContainerRef.current.scrollTo({
-          left: targetScroll,
-          behavior: "smooth",
-        });
-      } else {
-        scrollContainerRef.current.scrollTo({
-          left: 0,
-          behavior: "smooth",
-        });
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    let targetScroll = 0;
+    if (isToday) {
+      const now = moment().tz(CAMPUS_TIMEZONE);
+      const minutes = now.hours() * 60 + now.minutes();
+      if (minutes >= timeline.startMinutes && minutes <= timeline.endMinutes) {
+        const position =
+          ((minutes - timeline.startMinutes) / 60) * TIMELINE_HOUR_WIDTH_PX;
+        targetScroll = Math.max(0, position - container.clientWidth * 0.35);
       }
     }
-  }, [selectedDate, currentTimePositionPx]);
 
-  // Mouse wheel scroll conversion
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    if (e.deltaY !== 0 && e.deltaX === 0 && scrollContainerRef.current) {
-      scrollContainerRef.current.scrollLeft += e.deltaY;
-    }
-  };
+    container.scrollTo({ left: targetScroll, behavior: "smooth" });
+  }, [isToday, selectedDate, timeline.endMinutes, timeline.startMinutes]);
 
-  // Mouse drag handlers
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!scrollContainerRef.current) return;
+  const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
     isDraggingRef.current = true;
-    startXRef.current = e.pageX - scrollContainerRef.current.offsetLeft;
-    scrollLeftRef.current = scrollContainerRef.current.scrollLeft;
+    dragStartXRef.current = event.pageX - container.offsetLeft;
+    dragStartScrollRef.current = container.scrollLeft;
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDraggingRef.current || !scrollContainerRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - scrollContainerRef.current.offsetLeft;
-    const walk = (x - startXRef.current) * 1.2;
-    scrollContainerRef.current.scrollLeft = scrollLeftRef.current - walk;
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const container = scrollContainerRef.current;
+    if (!isDraggingRef.current || !container) return;
+
+    event.preventDefault();
+    const currentX = event.pageX - container.offsetLeft;
+    container.scrollLeft =
+      dragStartScrollRef.current - (currentX - dragStartXRef.current) * 1.2;
   };
 
-  const handleMouseUpOrLeave = () => {
+  const stopDragging = () => {
     isDraggingRef.current = false;
   };
 
-  // Hour ticks spanning startHour to endHour
-  const hourTicks = useMemo(() => {
-    const ticks = [];
-    for (let h = startHour; h <= endHour; h++) {
-      const m = moment().tz(CAMPUS_TIMEZONE).hour(h % 24).minute(0);
-      const positionPx = (h - startHour) * HOUR_WIDTH_PX;
-      ticks.push({
-        hour: h,
-        label: m.format("h A"),
-        positionPx,
-      });
-    }
-    return ticks;
-  }, [startHour, endHour]);
-
   return (
-    <div className="w-full max-w-full min-w-0 space-y-1.5 pt-1 pb-0.5 overflow-hidden">
-      {/* 1. Minimal Day Selector Strip */}
-      <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 w-full min-w-0">
-        {daysList.map((day) => {
-          const isSelected = day.dateStr === selectedDate;
-          return (
-            <button
-              key={day.dateStr}
-              type="button"
-              onClick={() => onDateChange(day.dateStr)}
-              className={`px-2.5 py-1 rounded-md text-xs transition-colors shrink-0 cursor-pointer ${
-                isSelected
-                  ? "bg-secondary text-foreground font-medium"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
-              }`}
-            >
-              {day.label}
-            </button>
-          );
-        })}
-      </div>
+    <div className="w-full min-w-0 max-w-full space-y-1.5 overflow-hidden pb-0.5 pt-1">
+      <DaySelector
+        selectedDate={selectedDate}
+        today={today}
+        onDateChange={onDateChange}
+      />
 
-      {/* 2. Timeline Track & Ruler */}
-      <div className="w-full max-w-full min-w-0 rounded-md bg-muted/20 border border-border/50 overflow-hidden">
+      <div className="w-full min-w-0 max-w-full overflow-hidden rounded-md border border-border/50 bg-muted/20">
         <div
           ref={scrollContainerRef}
-          onWheel={handleWheel}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUpOrLeave}
-          onMouseLeave={handleMouseUpOrLeave}
-          className="w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden select-none px-3 pt-2 pb-3 cursor-grab active:cursor-grabbing"
+          onMouseUp={stopDragging}
+          onMouseLeave={stopDragging}
+          className="w-full min-w-0 max-w-full cursor-grab select-none overflow-x-auto overflow-y-hidden px-3 pb-3 pt-2 active:cursor-grabbing"
           style={{
             scrollbarWidth: "thin",
             WebkitOverflowScrolling: "touch",
@@ -270,151 +161,127 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
         >
           <div
             className="relative"
-            style={{ width: `${totalWidthPx}px`, minWidth: `${totalWidthPx}px` }}
+            style={{
+              width: `${timeline.totalWidthPx}px`,
+              minWidth: `${timeline.totalWidthPx}px`,
+            }}
           >
-            {/* Top Hour Ruler with Accurate Ticks */}
-            <div className="relative h-6 border-b border-border/40 mb-1 w-full">
-              {hourTicks.map((tick) => {
-                const alignTransform =
-                  tick.hour === startHour
+            <div className="relative mb-1 h-6 w-full border-b border-border/40">
+              {timeline.ticks.map((tick) => {
+                const transform =
+                  tick.hour === timeline.startHour
                     ? "translateX(0)"
-                    : tick.hour === endHour
-                    ? "translateX(-100%)"
-                    : "translateX(-50%)";
+                    : tick.hour === timeline.endHour
+                      ? "translateX(-100%)"
+                      : "translateX(-50%)";
 
                 return (
                   <div
                     key={tick.hour}
-                    className="absolute top-0 bottom-0 flex flex-col items-center pointer-events-none"
-                    style={{
-                      left: `${tick.positionPx}px`,
-                      transform: alignTransform,
-                    }}
+                    className="pointer-events-none absolute bottom-0 top-0 flex flex-col items-center"
+                    style={{ left: `${tick.positionPx}px`, transform }}
                   >
-                    <span className="text-[10px] text-muted-foreground/80 font-normal leading-none whitespace-nowrap">
+                    <span className="whitespace-nowrap text-[10px] font-normal leading-none text-muted-foreground/80">
                       {tick.label}
                     </span>
-                    <div className="w-[1px] h-2 bg-border/80 mt-1" />
+                    <div className="mt-1 h-2 w-px bg-border/80" />
                   </div>
                 );
               })}
             </div>
 
-            {/* Continuous Timeline Track */}
-            <div className="relative h-12 rounded bg-muted/30 border border-border/60 overflow-hidden w-full">
-              {/* Background Hourly Dividers */}
-              {Array.from({ length: totalHours - 1 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute top-0 bottom-0 border-r border-border/25 pointer-events-none"
-                  style={{ left: `${(i + 1) * HOUR_WIDTH_PX}px` }}
-                />
-              ))}
+            <div className="relative h-12 w-full overflow-hidden rounded border border-border/60 bg-muted/30">
+              {Array.from({ length: timeline.totalHours - 1 }).map(
+                (_, index) => (
+                  <div
+                    key={index}
+                    className="pointer-events-none absolute bottom-0 top-0 border-r border-border/25"
+                    style={{
+                      left: `${(index + 1) * TIMELINE_HOUR_WIDTH_PX}px`,
+                    }}
+                  />
+                ),
+              )}
 
-              {/* Continuous Blocks */}
               <TooltipProvider delayDuration={50}>
-                {scheduleData.map((block, idx) => {
-                  const startMin = Math.max(
-                    0,
-                    getMinutesFromCustomStart(block.start, startHour),
-                  );
-                  const endMin = Math.min(
-                    totalMinutes,
-                    getMinutesFromCustomStart(block.end, startHour),
-                  );
-                  const durationMin = Math.max(0, endMin - startMin);
+                {timeline.blocks.map(
+                  ({ block, durationMinutes, leftPx, widthPx }) => {
+                    const isAvailable = block.status === "available";
+                    const isPast =
+                      isToday && block.end <= currentCampusTime.format("HH:mm:ss");
+                    const details = block.details;
+                    const eventLabel =
+                      details?.course ||
+                      details?.identifier ||
+                      details?.title ||
+                      (block.status === "event" ? "Event" : "Class");
 
-                  if (durationMin <= 0) return null;
-
-                  const leftPx = (startMin / totalMinutes) * totalWidthPx;
-                  const widthPx = (durationMin / totalMinutes) * totalWidthPx;
-
-                  const isAvailable = block.status === "available";
-                  const details = block.details as AcademicBlockDetails | null;
-
-                  const endMoment = moment.tz(
-                    `${selectedDate} ${block.end}`,
-                    CAMPUS_TIMEZONE,
-                  );
-                  const isPast =
-                    isToday &&
-                    endMoment.isBefore(currentCampusTime);
-
-                  const startTimeStr = formatTimeString(block.start);
-                  const endTimeStr = formatTimeString(block.end);
-
-                  return (
-                    <HybridTooltip key={idx}>
-                      <HybridTooltipTrigger asChild>
-                        <div
-                          className={`absolute top-0 bottom-0 border-r border-background/50 transition-colors cursor-pointer flex items-center justify-center px-1.5 overflow-hidden ${
-                            isAvailable
-                              ? "bg-emerald-500/25 dark:bg-emerald-950/70 border-emerald-600/30 text-emerald-900 dark:text-emerald-300 hover:bg-emerald-500/35 dark:hover:bg-emerald-900/80"
-                              : "bg-rose-500/30 dark:bg-rose-950/80 border-rose-600/40 text-rose-950 dark:text-rose-200 hover:bg-rose-500/40 dark:hover:bg-rose-900/90"
-                          } ${isPast ? "opacity-45" : ""}`}
-                          style={{
-                            left: `${leftPx}px`,
-                            width: `${widthPx}px`,
-                          }}
-                        >
-                          {/* Course / Event Name only (Clean & Minimal) */}
-                          {!isAvailable && widthPx >= 30 && (
-                            <span className="truncate text-[10.5px] font-semibold text-foreground/90 leading-none">
-                              {details?.course || details?.title || "Class"}
-                            </span>
-                          )}
-                        </div>
-                      </HybridTooltipTrigger>
-
-                      <HybridTooltipContent className="w-56 p-2.5 bg-popover text-popover-foreground border border-border shadow-md text-xs">
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between font-medium">
-                            <span
-                              className={
-                                isAvailable
-                                  ? "text-emerald-600 dark:text-emerald-400 font-semibold"
-                                  : "text-rose-600 dark:text-rose-400 font-semibold"
-                              }
-                            >
-                              {isAvailable
-                                ? "Available"
-                                : details?.course || "Class"}
-                            </span>
-                            <span className="text-[11px] text-muted-foreground">
-                              {formatDurationMinutes(durationMin)}
-                            </span>
+                    return (
+                      <HybridTooltip
+                        key={`${block.start}-${block.end}-${block.status}`}
+                      >
+                        <HybridTooltipTrigger asChild>
+                          <div
+                            className={`absolute bottom-0 top-0 flex cursor-pointer items-center justify-center overflow-hidden border-r border-background/50 px-1.5 transition-colors ${
+                              isAvailable
+                                ? "border-emerald-600/30 bg-emerald-500/25 text-emerald-900 hover:bg-emerald-500/35 dark:bg-emerald-950/70 dark:text-emerald-300 dark:hover:bg-emerald-900/80"
+                                : "border-rose-600/40 bg-rose-500/30 text-rose-950 hover:bg-rose-500/40 dark:bg-rose-950/80 dark:text-rose-200 dark:hover:bg-rose-900/90"
+                            } ${isPast ? "opacity-45" : ""}`}
+                            style={{ left: `${leftPx}px`, width: `${widthPx}px` }}
+                          >
+                            {!isAvailable && widthPx >= 30 && (
+                              <span className="truncate text-[10.5px] font-semibold leading-none text-foreground/90">
+                                {eventLabel}
+                              </span>
+                            )}
                           </div>
+                        </HybridTooltipTrigger>
 
-                          {!isAvailable && details?.title && (
-                            <p className="text-xs text-popover-foreground font-medium leading-tight">
-                              {details.title}
-                            </p>
-                          )}
+                        <HybridTooltipContent className="w-56 border border-border bg-popover p-2.5 text-xs text-popover-foreground shadow-md">
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between font-medium">
+                              <span
+                                className={`font-semibold ${
+                                  isAvailable
+                                    ? "text-emerald-600 dark:text-emerald-400"
+                                    : "text-rose-600 dark:text-rose-400"
+                                }`}
+                              >
+                                {isAvailable ? "Available" : eventLabel}
+                              </span>
+                              <span className="text-[11px] text-muted-foreground">
+                                {formatDuration(durationMinutes)}
+                              </span>
+                            </div>
 
-                          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-1 border-t border-border/60">
-                            <Clock className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" />
-                            <span>
-                              {startTimeStr} – {endTimeStr}
-                            </span>
+                            {!isAvailable && details?.title && (
+                              <p className="text-xs font-medium leading-tight text-popover-foreground">
+                                {details.title}
+                              </p>
+                            )}
+
+                            <div className="flex items-center gap-1.5 border-t border-border/60 pt-1 text-[11px] text-muted-foreground">
+                              <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
+                              <span>
+                                {formatScheduleTime(block.start)} -{" "}
+                                {formatScheduleTime(block.end)}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      </HybridTooltipContent>
-                    </HybridTooltip>
-                  );
-                })}
+                        </HybridTooltipContent>
+                      </HybridTooltip>
+                    );
+                  },
+                )}
               </TooltipProvider>
 
-              {/* Minimal Current Time Line */}
               {currentTimePositionPx !== null && (
                 <div
-                  className="absolute top-0 bottom-0 z-20 pointer-events-none flex flex-col items-center"
-                  style={{
-                    left: `${currentTimePositionPx}px`,
-                    transform: "translateX(-50%)",
-                  }}
+                  className="pointer-events-none absolute bottom-0 top-0 z-20 flex -translate-x-1/2 flex-col items-center"
+                  style={{ left: `${currentTimePositionPx}px` }}
                 >
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 -mt-0.5" />
-                  <div className="w-[1.5px] h-full bg-red-500 shadow-xs" />
+                  <div className="-mt-0.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+                  <div className="h-full w-[1.5px] bg-red-500 shadow-xs" />
                 </div>
               )}
             </div>

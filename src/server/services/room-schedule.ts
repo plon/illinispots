@@ -93,4 +93,3 @@ export async function loadRoomSchedule(
     throw new RoomScheduleDatabaseError({ cause: error });
   }
 }
-

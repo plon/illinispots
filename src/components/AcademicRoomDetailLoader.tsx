@@ -1,16 +1,12 @@
-import React, { useState, useEffect } from "react";
-import moment from "moment-timezone";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { TimelineSchedule } from "@/components/TimelineSchedule";
 import { RoomScheduleBlock } from "@/types";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
 
-const CAMPUS_TIMEZONE = "America/Chicago";
-
 interface AcademicRoomDetailLoaderProps {
   buildingId: string;
   roomNumber: string;
-  buildingHours?: { open?: string; close?: string };
 }
 
 const fetchScheduleForDate = async (
@@ -35,17 +31,13 @@ const fetchScheduleForDate = async (
 const AcademicRoomDetailLoader: React.FC<AcademicRoomDetailLoaderProps> = ({
   buildingId,
   roomNumber,
-  buildingHours,
 }) => {
   const { formattedDate } = useDateTimeContext();
-  const campusToday = moment().tz(CAMPUS_TIMEZONE).format("YYYY-MM-DD");
-  const [selectedDate, setSelectedDate] = useState<string>(campusToday);
+  const [selectedDate, setSelectedDate] = useState(formattedDate);
 
   // Sync if global context date changes
   useEffect(() => {
-    if (formattedDate) {
-      setSelectedDate(formattedDate);
-    }
+    setSelectedDate(formattedDate);
   }, [formattedDate]);
 
   const {
@@ -85,9 +77,6 @@ const AcademicRoomDetailLoader: React.FC<AcademicRoomDetailLoaderProps> = ({
       scheduleData={scheduleData || []}
       selectedDate={selectedDate}
       onDateChange={setSelectedDate}
-      buildingId={buildingId}
-      roomNumber={roomNumber}
-      buildingHours={buildingHours}
     />
   );
 };
