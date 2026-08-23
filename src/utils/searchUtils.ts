@@ -1,5 +1,8 @@
 import { Facility, FacilityRoom, FacilityType, RoomStatus, AcademicRoom, LibraryRoom } from "@/types";
-import { FilterCriteria, isRoomAvailable } from "@/utils/filterUtils";
+import {
+  createRoomAvailabilityPredicate,
+  FilterCriteria,
+} from "@/utils/filterUtils";
 import { compareRoomNumbers } from "@/utils/collation";
 import Fuse from "fuse.js";
 
@@ -183,15 +186,17 @@ export const createFacilitySearchIndex = (
   const facilityItemsById = new Map<string, FacilitySearchItem>();
   const roomItems: RoomSearchItem[] = [];
   const eligibleRoomsByFacility = new Map<string, SearchResultRoom[]>();
+  const roomMatchesFilters = createRoomAvailabilityPredicate(filterCriteria);
 
   facilities.forEach((facility) => {
     const aliases = getBuildingAliases(facility.name);
     const facilityNameLower = facility.name.toLowerCase();
+    const eligibleRooms: SearchResultRoom[] = [];
     let availableRoomsCount = 0;
 
     Object.entries(facility.rooms).forEach(([roomNumber, room]) => {
       const matchesFilters =
-        !hasActiveFilters || isRoomAvailable(room, filterCriteria);
+        !hasActiveFilters || roomMatchesFilters(room);
       const isAvailable =
         room.status === RoomStatus.AVAILABLE ||
         room.status === RoomStatus.PASSING_PERIOD;
@@ -233,11 +238,10 @@ export const createFacilitySearchIndex = (
         groupingInfo: groupingInfo.toLowerCase(),
       };
       roomItems.push(roomItem);
-
-      const eligibleRooms = eligibleRoomsByFacility.get(facility.id) ?? [];
       eligibleRooms.push(toSearchResultRoom(roomItem));
-      eligibleRoomsByFacility.set(facility.id, eligibleRooms);
     });
+
+    eligibleRoomsByFacility.set(facility.id, eligibleRooms);
 
     const facilityItem: FacilitySearchItem = {
       facility,

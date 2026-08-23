@@ -23,7 +23,10 @@ import {
 } from "@/components/RoomBadge";
 import { getLibraryHoursMessage } from "@/utils/libraryHoursData";
 import { compareRoomNumbers } from "@/utils/collation";
-import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
+import {
+  createRoomAvailabilityPredicate,
+  FilterCriteria,
+} from "@/utils/filterUtils";
 
 const FacilityRoomDetails = lazy(
   () => import("@/components/FacilityRoomDetails"),
@@ -49,6 +52,7 @@ interface FacilityAccordionProps {
   accordionRefs: React.MutableRefObject<AccordionRefs>;
   idPrefix: string;
   filterCriteria?: FilterCriteria;
+  filteredAvailableCount: number;
 }
 
 export const getRoomAvailabilityMessage = (room: LibraryRoom): React.ReactNode => {
@@ -91,18 +95,9 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
   accordionRefs,
   idPrefix,
   filterCriteria = {},
+  filteredAvailableCount,
 }) => {
   const facilityId = `${idPrefix}-${facility.id}`;
-
-  const filteredAvailableCount = useMemo(() => {
-    return Object.values(facility.rooms).filter((room) => {
-      const isAvailableOrPassing =
-        room.status === RoomStatus.AVAILABLE ||
-        room.status === RoomStatus.PASSING_PERIOD;
-
-      return isAvailableOrPassing && isRoomAvailable(room, filterCriteria);
-    }).length;
-  }, [facility.rooms, filterCriteria]);
 
   return (
     <AccordionItem
@@ -203,11 +198,16 @@ const LibraryRoomsAccordion: React.FC<LibraryRoomsAccordionProps> = ({
   idPrefix,
   filterCriteria = {},
 }) => {
+  const roomMatchesFilters = useMemo(
+    () => createRoomAvailabilityPredicate(filterCriteria),
+    [filterCriteria],
+  );
+
   return (
     <Accordion type="multiple" value={expandedItems} className="w-full">
       {Object.entries(facility.rooms)
         .sort(([nameA], [nameB]) => nameA.localeCompare(nameB)) // Sort library rooms by name
-        .filter(([, room]) => isRoomAvailable(room, filterCriteria))
+        .filter(([, room]) => roomMatchesFilters(room))
         .map(([roomName, room]) => {
           // We know these are library rooms since facility.type is LIBRARY
           const libraryRoom = room as LibraryRoom;
@@ -332,6 +332,11 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
   idPrefix,
   filterCriteria = {},
 }) => {
+  const roomMatchesFilters = useMemo(
+    () => createRoomAvailabilityPredicate(filterCriteria),
+    [filterCriteria],
+  );
+
   // Filter available and occupied rooms
   const availableRooms = useMemo(
     () =>
@@ -340,10 +345,10 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
           ([, room]) =>
             (room.status === RoomStatus.AVAILABLE ||
               room.status === RoomStatus.PASSING_PERIOD) &&
-            isRoomAvailable(room, filterCriteria)
+            roomMatchesFilters(room)
         )
         .sort(([numA], [numB]) => compareRoomNumbers(numA, numB)),
-    [facility.rooms, filterCriteria],
+    [facility.rooms, roomMatchesFilters],
   );
 
   const occupiedRooms = useMemo(
@@ -353,10 +358,10 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
           ([, room]) =>
             (room.status === RoomStatus.OCCUPIED ||
               room.status === RoomStatus.OPENING_SOON) &&
-            isRoomAvailable(room, filterCriteria)
+            roomMatchesFilters(room)
         )
         .sort(([numA], [numB]) => compareRoomNumbers(numA, numB)),
-    [facility.rooms, filterCriteria],
+    [facility.rooms, roomMatchesFilters],
   );
 
   // Function to render the list of rooms within a status group
@@ -489,7 +494,8 @@ function areFacilityAccordionPropsEqual(
     previous.toggleItem !== next.toggleItem ||
     previous.accordionRefs !== next.accordionRefs ||
     previous.idPrefix !== next.idPrefix ||
-    previous.filterCriteria !== next.filterCriteria
+    previous.filterCriteria !== next.filterCriteria ||
+    previous.filteredAvailableCount !== next.filteredAvailableCount
   ) {
     return false;
   }

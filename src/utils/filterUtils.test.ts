@@ -1,7 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import type { FacilityRoom } from "@/types";
 import { RoomStatus } from "@/types";
-import { isRoomAvailable } from "./filterUtils";
+import {
+  createRoomAvailabilityPredicate,
+  isRoomAvailable,
+} from "./filterUtils";
 
 function academicRoom(
   status: RoomStatus,
@@ -66,5 +69,22 @@ describe("isRoomAvailable", () => {
         startTime: "11:00",
       }),
     ).toBe(true);
+  });
+
+  it("compiles criteria once without changing room matching semantics", () => {
+    const criteria = {
+      minDuration: 45,
+      startTime: "10:30",
+      freeUntil: "11:15",
+      now,
+    };
+    const matches = createRoomAvailabilityPredicate(criteria);
+
+    for (const status of Object.values(RoomStatus)) {
+      for (const duration of [undefined, 0, 44, 45, 74, 75, 120]) {
+        const room = academicRoom(status, duration);
+        expect(matches(room)).toBe(isRoomAvailable(room, criteria));
+      }
+    }
   });
 });

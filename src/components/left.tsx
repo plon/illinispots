@@ -21,7 +21,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import { Facility, FacilityStatus, FacilityType, AccordionRefs } from "@/types";
+import { FacilityStatus, FacilityType, AccordionRefs } from "@/types";
 import {
     Github,
     Map as MapIcon,
@@ -37,9 +37,13 @@ import DateTimeButton from "@/components/DateTimeButton";
 import { FavoritesSection } from "@/components/FavoritesSection";
 import RoomFilter from "@/components/RoomFilter";
 import { useFavorites } from "@/hooks/useFavorites";
-import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
+import {
+    createRoomAvailabilityPredicate,
+    FilterCriteria,
+} from "@/utils/filterUtils";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { summarizeFacilitiesForSidebar } from "@/utils/facilitySummary";
 
 const EMPTY_FILTER_CRITERIA: FilterCriteria = {};
 
@@ -126,6 +130,10 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     );
 
     const isSearching = searchTerm.trim().length > 0;
+    const roomMatchesFilters = useMemo(
+        () => createRoomAvailabilityPredicate(filterCriteria),
+        [filterCriteria],
+    );
 
     const scrollToAccordion = useCallback((accordionId: string) => {
         const element = accordionRefs.current[accordionId];
@@ -158,37 +166,18 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         prevExpandedItemsRef.current = expandedItems;
     }, [expandedItems, scrollToAccordion]);
 
-    const filterFacilitiesByAvailability = useCallback(
-        (facilities: Facility[]) => {
-            if (!hasActiveFilters) {
-                return facilities;
-            }
-            return facilities.filter((facility) => {
-                return Object.values(facility.rooms).some((room) =>
-                    isRoomAvailable(room, filterCriteria),
-                );
-            });
-        },
-        [hasActiveFilters, filterCriteria],
-    );
-
-    const libraryFacilities = useMemo(() => {
-        const allLibraries = facilityData
-            ? Object.values(facilityData.facilities)
-                .filter((facility) => facility.type === FacilityType.LIBRARY)
-                .sort((a, b) => a.name.localeCompare(b.name))
-            : [];
-        return filterFacilitiesByAvailability(allLibraries);
-    }, [facilityData, filterFacilitiesByAvailability]);
-
-    const academicFacilities = useMemo(() => {
-        const allAcademic = facilityData
-            ? Object.values(facilityData.facilities)
-                .filter((facility) => facility.type === FacilityType.ACADEMIC)
-                .sort((a, b) => a.name.localeCompare(b.name))
-            : [];
-        return filterFacilitiesByAvailability(allAcademic);
-    }, [facilityData, filterFacilitiesByAvailability]);
+    const {
+        libraryFacilities,
+        academicFacilities,
+        matchingRoomsCount,
+        filteredAvailableCountByFacility,
+    } = useMemo(() => {
+        return summarizeFacilitiesForSidebar(
+            facilityData,
+            hasActiveFilters,
+            roomMatchesFilters,
+        );
+    }, [facilityData, hasActiveFilters, roomMatchesFilters]);
 
     const handleFavoriteClick = useCallback(
         (facilityId: string, type: "library" | "academic") => {
@@ -206,32 +195,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         },
         [setExpandedItems, scrollToAccordion],
     );
-
-    const matchingRoomsCount = useMemo(() => {
-        const allFacilities = facilityData
-            ? Object.values(facilityData.facilities)
-            : [];
-
-        if (!hasActiveFilters) {
-            return allFacilities.reduce(
-                (count, facility) =>
-                    count +
-                    (facility.roomCounts?.total ??
-                        Object.keys(facility.rooms).length),
-                0,
-            );
-        }
-
-        let count = 0;
-        allFacilities.forEach((facility) => {
-            Object.values(facility.rooms).forEach((room) => {
-                if (isRoomAvailable(room, filterCriteria)) {
-                    count++;
-                }
-            });
-        });
-        return count;
-    }, [facilityData, filterCriteria, hasActiveFilters]);
 
     const clearFilters = () => {
         setMinDuration(undefined);
@@ -435,6 +398,9 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                             accordionRefs={accordionRefs}
                                             idPrefix="library"
                                             filterCriteria={filterCriteria}
+                                            filteredAvailableCount={
+                                                filteredAvailableCountByFacility.get(facility) ?? 0
+                                            }
                                         />
                                     ))}
                                 </Accordion>
@@ -491,6 +457,9 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                             accordionRefs={accordionRefs}
                                             idPrefix="building"
                                             filterCriteria={filterCriteria}
+                                            filteredAvailableCount={
+                                                filteredAvailableCountByFacility.get(facility) ?? 0
+                                            }
                                         />
                                     ))}
                                 </Accordion>
