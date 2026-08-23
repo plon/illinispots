@@ -83,9 +83,15 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             minDuration,
             freeUntil: freeUntil || undefined,
             startTime: startTime || undefined,
-            now: moment(selectedDateTime),
+            now: moment(facilityData?.timestamp ?? selectedDateTime),
         }),
-        [minDuration, freeUntil, startTime, selectedDateTime],
+        [
+            minDuration,
+            freeUntil,
+            startTime,
+            facilityData?.timestamp,
+            selectedDateTime,
+        ],
     );
 
     const hasActiveFilters = !!minDuration || !!freeUntil || !!startTime;

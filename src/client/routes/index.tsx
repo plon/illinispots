@@ -14,6 +14,7 @@ import moment from "moment-timezone";
 import LeftSidebar from "@/components/left";
 import { FacilityStatus, FacilityType } from "@/types";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
+import { projectFacilityStatus } from "@/utils/liveAvailability";
 import {
   recordInitialLoadMilestone,
   type InitialLoadMilestone,
@@ -59,7 +60,8 @@ const fetchFacilityData = async (
 };
 
 const IlliniSpotsPage: React.FC = () => {
-  const { selectedDateTime } = useDateTimeContext();
+  const { selectedDateTime, isCurrentDateTime } = useDateTimeContext();
+  const [currentTime, setCurrentTime] = useState(() => new Date());
   const [showMapPreference, setShowMapPreference] = useState<boolean | null>(
     null,
   );
@@ -135,6 +137,23 @@ const IlliniSpotsPage: React.FC = () => {
     };
   }, [academicData, libraryData]);
 
+  useEffect(() => {
+    if (!isCurrentDateTime) return;
+
+    const updateCurrentTime = () => setCurrentTime(new Date());
+    updateCurrentTime();
+    const intervalId = window.setInterval(updateCurrentTime, 30_000);
+    return () => window.clearInterval(intervalId);
+  }, [isCurrentDateTime]);
+
+  const displayedFacilityData = useMemo(
+    () =>
+      facilityData && isCurrentDateTime
+        ? projectFacilityStatus(facilityData, currentTime)
+        : facilityData,
+    [currentTime, facilityData, isCurrentDateTime],
+  );
+
   const error = academicQueryError ? academicQueryError.message : null;
 
   useEffect(() => {
@@ -209,7 +228,7 @@ const IlliniSpotsPage: React.FC = () => {
         <div className="h-[40vh] md:h-screen md:w-[63%] w-full order-1 md:order-2">
           <Suspense fallback={<MapLoadingFallback />}>
             <FacilityMap
-              facilityData={facilityData || null}
+              facilityData={displayedFacilityData || null}
               onMarkerClick={handleMarkerClick}
               trackInitialLoad={true}
             />
@@ -223,7 +242,7 @@ const IlliniSpotsPage: React.FC = () => {
         } w-full flex-1 overflow-hidden order-2 md:order-1 relative`}
       >
         <LeftSidebar
-          facilityData={facilityData || null}
+          facilityData={displayedFacilityData || null}
           expandedItems={expandedItems}
           setExpandedItems={setExpandedItems}
           showMap={showMap}
