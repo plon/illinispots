@@ -8,21 +8,23 @@ export interface FavoriteItem {
   type: 'library' | 'academic';
 }
 
-export const useFavorites = () => {
-  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+export const loadFavorites = (): FavoriteItem[] => {
+  try {
+    if (typeof localStorage === 'undefined') return [];
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setFavorites(Array.isArray(parsed) ? parsed : []);
-      }
-    } catch (error) {
-      console.error('Error loading favorites from localStorage:', error);
-      setFavorites([]);
-    }
-  }, []);
+    const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
+    if (!stored) return [];
+
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error('Error loading favorites from localStorage:', error);
+    return [];
+  }
+};
+
+export const useFavorites = () => {
+  const [favorites, setFavorites] = useState<FavoriteItem[]>(loadFavorites);
 
   useEffect(() => {
     try {

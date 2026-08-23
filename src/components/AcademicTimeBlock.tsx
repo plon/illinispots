@@ -1,5 +1,4 @@
 import React from 'react';
-import moment from "moment-timezone";
 import {
   HybridTooltip,
   HybridTooltipContent,
@@ -8,6 +7,10 @@ import {
 } from "@/components/ui/HybridTooltip";
 import { RoomScheduleBlock, AcademicBlockDetails } from '@/types';
 import { SCHEDULE_BLOCK_STYLES } from '@/utils/scheduleUtils';
+import {
+  formatScheduleTime,
+  getScheduleDurationMinutes,
+} from '@/utils/timelineSchedule';
 
 interface AcademicTimeBlockProps {
   block: RoomScheduleBlock;
@@ -15,13 +18,7 @@ interface AcademicTimeBlockProps {
 }
 
 const AcademicTimeBlock = ({ block, baseWidthPx = 56 }: AcademicTimeBlockProps) => {
-  const startTime = moment.tz(`1970-01-01T${block.start}`, "America/Chicago");
-  const endTime = moment.tz(`1970-01-01T${block.end}`, "America/Chicago");
-
-  let durationMinutes = endTime.diff(startTime, "minutes");
-  if (durationMinutes < 0) {
-     durationMinutes = 0;
-  }
+  const durationMinutes = getScheduleDurationMinutes(block.start, block.end);
 
   const widthRatio = durationMinutes > 0 ? durationMinutes / 60 : 0;
   const calculatedWidthPx = Math.max(widthRatio * baseWidthPx, 4);
@@ -40,7 +37,7 @@ const AcademicTimeBlock = ({ block, baseWidthPx = 56 }: AcademicTimeBlockProps) 
   const tooltipContent = isAvailable ? (
     <>
       <p className="font-medium text-[13px] leading-tight">
-        {startTime.format("h:mm A")} - {endTime.format("h:mm A")}
+        {formatScheduleTime(block.start)} - {formatScheduleTime(block.end)}
       </p>
       <p className="text-[12px] leading-tight mt-0.5">Available</p>
       <p className="text-[12px] leading-tight">{durationMinutes} minutes</p>
@@ -48,7 +45,7 @@ const AcademicTimeBlock = ({ block, baseWidthPx = 56 }: AcademicTimeBlockProps) 
   ) : (
     <>
       <p className="font-medium text-[13px] leading-tight">
-        {startTime.format("h:mm A")} - {endTime.format("h:mm A")}
+        {formatScheduleTime(block.start)} - {formatScheduleTime(block.end)}
       </p>
       <p className="text-[12px] leading-tight mt-0.5 capitalize">
         {academicDetails?.type}: {academicDetails?.course || academicDetails?.identifier}

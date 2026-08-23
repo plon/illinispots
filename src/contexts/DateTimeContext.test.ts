@@ -1,5 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import {
+  formatLocalDate,
+  formatLocalDateTimePreview,
+  formatLocalTime,
   millisecondsUntilNextMinute,
   startOfMinute,
 } from "./DateTimeContext";
@@ -18,5 +21,13 @@ describe("live date/time helpers", () => {
     expect(
       millisecondsUntilNextMinute(new Date("2026-08-23T12:35:00.000Z")),
     ).toBe(60_000);
+  });
+
+  it("formats local API date and time parameters without a date library", () => {
+    const date = new Date(2026, 7, 3, 4, 5, 6, 789);
+
+    expect(formatLocalDate(date)).toBe("2026-08-03");
+    expect(formatLocalTime(date)).toBe("04:05:06");
+    expect(formatLocalDateTimePreview(date)).toBe("8/3/26 4:05 AM");
   });
 });

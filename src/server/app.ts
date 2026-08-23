@@ -1,4 +1,7 @@
+import { createHash } from "node:crypto";
 import { Hono } from "hono";
+import type { Context } from "hono";
+import { compress } from "hono/compress";
 import { logger } from "hono/logger";
 import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
@@ -23,6 +26,50 @@ export interface AppDependencies {
   environment?: Record<string, string | undefined>;
 }
 
+function requestHostname(context: Context): string {
+  const hostHeader =
+    context.req.header("x-forwarded-host") || context.req.header("host");
+
+  if (!hostHeader) {
+    return new URL(context.req.url).hostname;
+  }
+
+  const normalizedHost = hostHeader.toLowerCase();
+
+  if (normalizedHost.startsWith("[")) {
+    const closingBracket = normalizedHost.indexOf("]");
+    return closingBracket === -1
+      ? normalizedHost
+      : normalizedHost.slice(1, closingBracket);
+  }
+
+  const portSeparator = normalizedHost.indexOf(":");
+  return portSeparator === -1
+    ? normalizedHost
+    : normalizedHost.slice(0, portSeparator);
+}
+
+export function publicAssetCacheControl(path: string): string | undefined {
+  if (path.endsWith("/manifest.json") || path === "manifest.json") {
+    return "public, max-age=3600, stale-while-revalidate=86400";
+  }
+
+  if (/(?:^|\/)(?:apple-touch-icon|icon-\d+)\.png$/.test(path)) {
+    return "public, max-age=604800, stale-while-revalidate=2592000";
+  }
+
+  return undefined;
+}
+
+function etagMatches(header: string | undefined, etag: string): boolean {
+  if (!header) return false;
+
+  return header.split(",").some((candidate) => {
+    const value = candidate.trim();
+    return value === "*" || value === etag || value === `W/${etag}`;
+  });
+}
+
 export function createApp(dependencies: AppDependencies = {}) {
   const app = new Hono();
   const isProduction = process.env.NODE_ENV === "production";
@@ -42,13 +89,14 @@ export function createApp(dependencies: AppDependencies = {}) {
     app.use("*", logger());
   }
 
+  // These two endpoints return the application's largest dynamic payloads.
+  // Compression is response-negotiated and leaves clients without gzip support
+  // untouched.
+  app.use("/api/facilities", compress({ encoding: "gzip" }));
+  app.use("/api/room-schedule", compress({ encoding: "gzip" }));
+
   app.use("*", async (context, next) => {
-    const url = new URL(context.req.url);
-    const hostHeader =
-      context.req.header("x-forwarded-host") ||
-      context.req.header("host") ||
-      url.hostname;
-    const hostname = hostHeader.split(":")[0];
+    const hostname = requestHostname(context);
 
     const isLocal =
       hostname === "localhost" ||
@@ -78,20 +126,20 @@ export function createApp(dependencies: AppDependencies = {}) {
     await next();
 
     if (
-      process.env.APP_ENV === "staging" ||
-      url.hostname.startsWith("staging.") ||
-      url.hostname.endsWith(".fly.dev")
+      appEnv === "staging" ||
+      hostname.startsWith("staging.") ||
+      hostname.endsWith(".fly.dev")
     ) {
       context.header("X-Robots-Tag", "noindex, nofollow, noarchive");
     }
   });
 
   app.get("/robots.txt", (context) => {
-    const url = new URL(context.req.url);
+    const hostname = requestHostname(context);
     const isStaging =
-      process.env.APP_ENV === "staging" ||
-      url.hostname.startsWith("staging.") ||
-      url.hostname.endsWith(".fly.dev");
+      appEnv === "staging" ||
+      hostname.startsWith("staging.") ||
+      hostname.endsWith(".fly.dev");
 
     const body = isStaging
       ? "User-agent: *\nDisallow: /\n"
@@ -128,6 +176,9 @@ export function createApp(dependencies: AppDependencies = {}) {
     const injectedHtml = rawHtml
       ? injectClientConfig(rawHtml, clientConfig)
       : "";
+    const injectedHtmlEtag = injectedHtml
+      ? `"${createHash("sha256").update(injectedHtml).digest("base64url")}"`
+      : "";
 
     app.use(
       "/assets/*",
@@ -145,13 +196,22 @@ export function createApp(dependencies: AppDependencies = {}) {
 
     if (injectedHtml) {
       app.get("*", (context, next) => {
-        const path = new URL(context.req.url).pathname;
+        const path = context.req.path;
         if (
           path === "/" ||
           path === "/index.html" ||
           !path.slice(1).includes(".")
         ) {
           context.header("Cache-Control", "no-cache, must-revalidate");
+          context.header("ETag", injectedHtmlEtag);
+          if (
+            etagMatches(
+              context.req.header("if-none-match"),
+              injectedHtmlEtag,
+            )
+          ) {
+            return context.body(null, 304);
+          }
           return context.html(injectedHtml);
         }
         return next();
@@ -163,6 +223,12 @@ export function createApp(dependencies: AppDependencies = {}) {
       serveStatic({
         root: "./dist/client",
         precompressed: true,
+        onFound: (path, context) => {
+          const cacheControl = publicAssetCacheControl(path);
+          if (cacheControl) {
+            context.header("Cache-Control", cacheControl);
+          }
+        },
       }),
     );
   }

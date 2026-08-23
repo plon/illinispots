@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import HourlyAcademicTimeBlock from "@/components/HourlyAcademicTimeBlock";
 import { RoomScheduleBlock } from "@/types";
@@ -14,8 +14,10 @@ interface AcademicRoomScheduleProps {
 const AcademicRoomSchedule: React.FC<AcademicRoomScheduleProps> = ({
   scheduleData,
 }) => {
-  // Process the schedule data into hourly blocks
-  const hourlyBlocks = processScheduleIntoHourlyBlocks(scheduleData);
+  const hourlyBlocks = useMemo(
+    () => processScheduleIntoHourlyBlocks(scheduleData),
+    [scheduleData],
+  );
 
   return (
     <div className="px-1 py-2">

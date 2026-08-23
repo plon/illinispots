@@ -6,7 +6,6 @@ import React, {
   useState,
   ReactNode,
 } from "react";
-import moment from "moment-timezone";
 
 const MINUTE_MS = 60_000;
 
@@ -18,6 +17,23 @@ export function startOfMinute(date: Date): Date {
 
 export function millisecondsUntilNextMinute(date: Date): number {
   return MINUTE_MS - (date.getTime() % MINUTE_MS);
+}
+
+const padTwoDigits = (value: number): string => String(value).padStart(2, "0");
+
+export function formatLocalDate(date: Date): string {
+  return `${date.getFullYear()}-${padTwoDigits(date.getMonth() + 1)}-${padTwoDigits(date.getDate())}`;
+}
+
+export function formatLocalTime(date: Date): string {
+  return `${padTwoDigits(date.getHours())}:${padTwoDigits(date.getMinutes())}:${padTwoDigits(date.getSeconds())}`;
+}
+
+export function formatLocalDateTimePreview(date: Date): string {
+  const hour = date.getHours();
+  const displayHour = hour % 12 || 12;
+  const period = hour >= 12 ? "PM" : "AM";
+  return `${date.getMonth() + 1}/${date.getDate()}/${String(date.getFullYear()).slice(-2)} ${displayHour}:${padTwoDigits(date.getMinutes())} ${period}`;
 }
 
 interface DateTimeContextType {
@@ -94,10 +110,10 @@ export function DateTimeProvider({ children }: { children: ReactNode }) {
   }, [isLive]);
 
   // Format the date as YYYY-MM-DD for API calls
-  const formattedDate = moment(selectedDateTime).format("YYYY-MM-DD");
+  const formattedDate = formatLocalDate(selectedDateTime);
   
   // Format the time as HH:mm:ss for API calls
-  const formattedTime = moment(selectedDateTime).format("HH:mm:ss");
+  const formattedTime = formatLocalTime(selectedDateTime);
 
   return (
     <DateTimeContext.Provider

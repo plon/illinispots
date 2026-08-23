@@ -4,7 +4,8 @@ import { FacilityType, RoomStatus } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/utils/format";
-import { getLibraryHoursMessage } from "@/utils/libraryHours";
+import { getLibraryHoursMessage } from "@/utils/libraryHoursData";
+import { compareRoomNumbers } from "@/utils/collation";
 import { RoomSearchResultCard } from "@/components/RoomSearchResultCard";
 import {
   STATUS_BADGE_STYLES,
@@ -63,10 +64,7 @@ export const BuildingSearchResultCard: React.FC<BuildingSearchResultCardProps> =
           b.room.status === RoomStatus.AVAILABLE ||
           b.room.status === RoomStatus.PASSING_PERIOD;
         if (isAvailA !== isAvailB) return isAvailA ? -1 : 1;
-        return a.roomNumber.localeCompare(b.roomNumber, undefined, {
-          numeric: true,
-          sensitivity: "base",
-        });
+        return compareRoomNumbers(a.roomNumber, b.roomNumber);
       });
   }, [matchingRooms, facility]);
 

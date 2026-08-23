@@ -27,8 +27,14 @@ function resolveTargetMoment(
 ): moment.Moment {
   const value = date && time ? `${date} ${time}` : undefined;
 
-  if (value && moment(value, "YYYY-MM-DD HH:mm:ss", true).isValid()) {
-    return moment.tz(value, "YYYY-MM-DD HH:mm:ss", CAMPUS_TIMEZONE);
+  if (value) {
+    const parsed = moment.tz(
+      value,
+      "YYYY-MM-DD HH:mm:ss",
+      true,
+      CAMPUS_TIMEZONE,
+    );
+    if (parsed.isValid()) return parsed;
   }
 
   if (date || time) {
@@ -49,7 +55,8 @@ export function createFacilitiesRoutes(
   return new Hono().get("/", async (context) => {
     context.header("Cache-Control", "no-store");
 
-    const facilityType = context.req.query("type");
+    const query = context.req.query();
+    const facilityType = query.type;
     if (facilityType && !FACILITY_SCOPES.has(facilityType as FacilityScope)) {
       return context.json(
         { error: 'Invalid type. Expected "academic", "library", or "all".' },
@@ -58,8 +65,8 @@ export function createFacilitiesRoutes(
     }
 
     const targetMoment = resolveTargetMoment(
-      context.req.query("date"),
-      context.req.query("time"),
+      query.date,
+      query.time,
       now,
     );
 

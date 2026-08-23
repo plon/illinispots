@@ -88,6 +88,42 @@ describe("getFacilityStatus", () => {
     });
   });
 
+  it("coalesces concurrent academic requests for the same timestamp", async () => {
+    const target = moment.tz(
+      "2026-08-24 10:00:00",
+      "YYYY-MM-DD HH:mm:ss",
+      CAMPUS_TIMEZONE,
+    );
+    let calls = 0;
+    let releaseRpc:
+      | ((value: { data: { buildings: object }; error: null }) => void)
+      | undefined;
+    const executeRpc = async () => {
+      calls += 1;
+      return await new Promise<{
+        data: { buildings: object };
+        error: null;
+      }>((resolve) => {
+        releaseRpc = resolve;
+      });
+    };
+
+    const first = getFacilityStatus(target, "academic", {
+      executeAcademicAvailabilityRpc: executeRpc,
+    });
+    const second = getFacilityStatus(target, "academic", {
+      executeAcademicAvailabilityRpc: executeRpc,
+    });
+
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(calls).toBe(1);
+    releaseRpc?.({ data: { buildings: {} }, error: null });
+
+    const results = await Promise.all([first, second]);
+    expect(results[0]).toEqual(results[1]);
+  });
+
   it("rejects malformed academic responses instead of returning invalid facilities", async () => {
     spyOn(console, "error").mockImplementation(() => {});
     const target = moment.tz(
@@ -128,14 +164,14 @@ describe("getFacilityStatus", () => {
           },
           {
             itemId: 25436,
-            start: "2026-08-24 08:00:00",
-            end: "2026-08-24 08:30:00",
-            className: "s-lc-eq-checkout",
+            start: "2026-08-24 08:30:00",
+            end: "2026-08-24 09:30:00",
           },
           {
             itemId: 25436,
-            start: "2026-08-24 08:30:00",
-            end: "2026-08-24 09:30:00",
+            start: "2026-08-24 08:00:00",
+            end: "2026-08-24 08:30:00",
+            className: "s-lc-eq-checkout",
           },
         ],
       });
@@ -177,6 +213,73 @@ describe("getFacilityStatus", () => {
     expect(grainger.rooms["408 collaboration"].status).toBe(
       RoomStatus.UNAVAILABLE,
     );
+  });
+
+  it("preserves truncated-minute opening-soon boundaries", async () => {
+    const target = moment.tz(
+      "2026-08-24 08:09:01",
+      "YYYY-MM-DD HH:mm:ss",
+      CAMPUS_TIMEZONE,
+    );
+    const fetchLibCal: FacilitiesFetch = async () =>
+      Response.json({
+        slots: [
+          {
+            itemId: 25436,
+            start: "2026-08-24 08:00:00",
+            end: "2026-08-24 08:30:00",
+            className: "s-lc-eq-checkout",
+          },
+          {
+            itemId: 25436,
+            start: "2026-08-24 08:30:00",
+            end: "2026-08-24 09:30:00",
+          },
+        ],
+      });
+
+    const result = await getFacilityStatus(target, "library", {
+      fetch: fetchLibCal,
+    });
+
+    expect(
+      result.facilities["Grainger Engineering Library"].rooms["407"],
+    ).toMatchObject({
+      status: RoomStatus.OPENING_SOON,
+      availableAt: "08:30:00",
+      availableFor: 60,
+    });
+  });
+
+  it("coalesces concurrent LibCal requests for the same calendar window", async () => {
+    const target = moment.tz(
+      "2026-08-24 08:15:00",
+      "YYYY-MM-DD HH:mm:ss",
+      CAMPUS_TIMEZONE,
+    );
+    let calls = 0;
+    let releaseFetch: ((response: Response) => void) | undefined;
+    const fetchLibCal: FacilitiesFetch = async () => {
+      calls += 1;
+      return await new Promise<Response>((resolve) => {
+        releaseFetch = resolve;
+      });
+    };
+
+    const first = getFacilityStatus(target, "library", {
+      fetch: fetchLibCal,
+    });
+    const second = getFacilityStatus(target, "library", {
+      fetch: fetchLibCal,
+    });
+
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(calls).toBe(1);
+    releaseFetch?.(Response.json({ slots: [] }));
+
+    const results = await Promise.all([first, second]);
+    expect(results[0]).toEqual(results[1]);
   });
 
   it("requests the additional calendar day needed for Funk's overnight hours", async () => {

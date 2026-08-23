@@ -1,73 +1,109 @@
-import { FacilityRoom, RoomStatus } from "@/types";
-import moment, { Moment } from "moment-timezone";
+import type { FacilityRoom } from "@/types";
+import { RoomStatus } from "@/types";
+
+const CAMPUS_CLOCK_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Chicago",
+  hourCycle: "h23",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+});
 
 export interface FilterCriteria {
-    minDuration?: number; // in minutes
-    freeUntil?: string; // HH:mm
-    startTime?: string; // HH:mm - room must be free by this time
-    now?: Moment; // Reference time for filtering
+  minDuration?: number; // in minutes
+  freeUntil?: string; // HH:mm
+  startTime?: string; // HH:mm - room must be free by this time
+  now?: Date; // Reference time for filtering
 }
 
-export const isRoomAvailable = (
-    room: FacilityRoom,
-    criteria: FilterCriteria,
-): boolean => {
-    if (
-        !criteria.minDuration &&
-        !criteria.freeUntil &&
-        !criteria.startTime
-    ) {
-        return true;
-    }
+function campusMinutesNow(): number {
+  let hour = 0;
+  let minute = 0;
+  let second = 0;
+  for (const part of CAMPUS_CLOCK_FORMATTER.formatToParts(new Date())) {
+    if (part.type === "hour") hour = Number(part.value);
+    if (part.type === "minute") minute = Number(part.value);
+    if (part.type === "second") second = Number(part.value);
+  }
+  return hour * 60 + minute + second / 60;
+}
 
+function referenceMinutes(now: Date | undefined): number {
+  return now
+    ? now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60
+    : campusMinutesNow();
+}
+
+function targetMinutes(time: string): number {
+  const separator = time.indexOf(":");
+  return Number(time.slice(0, separator)) * 60 + Number(time.slice(separator + 1));
+}
+
+function minutesUntil(currentMinutes: number, time: string): number {
+  const target = targetMinutes(time);
+
+  // Moment's integer-unit diff truncates toward zero. Milliseconds cancel
+  // because its target was cloned from the reference time before setting
+  // seconds to zero, so intentionally do not include them here.
+  return Math.trunc(target - currentMinutes);
+}
+
+export type RoomAvailabilityPredicate = (room: FacilityRoom) => boolean;
+
+/**
+ * Compiles stable filter criteria once for callers that test many rooms.
+ * Interactive lists routinely apply one criteria object to every room, so
+ * parsing the same clock values inside the room loop is avoidable work.
+ */
+export const createRoomAvailabilityPredicate = (
+  criteria: FilterCriteria,
+): RoomAvailabilityPredicate => {
+  if (!criteria.minDuration && !criteria.freeUntil && !criteria.startTime) {
+    return () => true;
+  }
+
+  const currentMinutes = referenceMinutes(criteria.now);
+  const minutesUntilStart = criteria.startTime
+    ? minutesUntil(currentMinutes, criteria.startTime)
+    : undefined;
+  const minutesUntilFree = criteria.freeUntil
+    ? minutesUntil(currentMinutes, criteria.freeUntil)
+    : undefined;
+  const minimumDuration = criteria.minDuration;
+
+  return (room: FacilityRoom): boolean => {
     if (
-        room.status !== RoomStatus.AVAILABLE &&
-        room.status !== RoomStatus.PASSING_PERIOD
+      room.status !== RoomStatus.AVAILABLE &&
+      room.status !== RoomStatus.PASSING_PERIOD
     ) {
-        return false;
+      return false;
     }
 
     const availableFor = room.availableFor || 0;
-    const now = criteria.now ? criteria.now.clone() : moment().tz("America/Chicago");
 
-    // Check Start Time (room must be free by this time)
-    if (criteria.startTime) {
-        const [hours, minutes] = criteria.startTime.split(':').map(Number);
-        const startTargetTime = now.clone().hour(hours).minute(minutes).second(0);
-
-        // If start time is before now, it has passed
-        const minutesUntilStart = startTargetTime.diff(now, 'minutes');
-
-        if (minutesUntilStart < 0) {
-            return false;
-        }
-
-        // Room must be available by the start time
-        if (availableFor < minutesUntilStart) {
-            return false;
-        }
+    if (
+      minutesUntilStart !== undefined &&
+      (minutesUntilStart < 0 || availableFor < minutesUntilStart)
+    ) {
+      return false;
     }
 
-    // Check Minimum Duration
-    if (criteria.minDuration && availableFor < criteria.minDuration) {
-        return false;
+    if (minimumDuration && availableFor < minimumDuration) {
+      return false;
     }
 
-    // Check Free Until
-    if (criteria.freeUntil) {
-        const [hours, minutes] = criteria.freeUntil.split(':').map(Number);
-        const targetTime = now.clone().hour(hours).minute(minutes).second(0);
-
-        const diffMinutes = targetTime.diff(now, 'minutes');
-
-        if (diffMinutes < 0) {
-            return false;
-        }
-
-        if (availableFor < diffMinutes) {
-            return false;
-        }
+    if (
+      minutesUntilFree !== undefined &&
+      (minutesUntilFree < 0 || availableFor < minutesUntilFree)
+    ) {
+      return false;
     }
 
     return true;
+  };
 };
+
+export const isRoomAvailable = (
+  room: FacilityRoom,
+  criteria: FilterCriteria,
+): boolean => createRoomAvailabilityPredicate(criteria)(room);

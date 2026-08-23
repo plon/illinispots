@@ -16,16 +16,11 @@ import {
   TooltipProvider,
 } from "@/components/ui/HybridTooltip";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import moment from "moment-timezone";
+import { clockDurationMinutes } from "@/utils/clockTime";
+import { formatTime } from "@/utils/format";
 
 const TimeBlock = ({ slot }: TimeBlockProps) => {
-  const startTime = moment.tz(`1970-01-01T${slot.start}`, "America/Chicago");
-  const endTime = moment.tz(`1970-01-01T${slot.end}`, "America/Chicago");
-
-  let durationMinutes = endTime.diff(startTime, "minutes");
-  if (durationMinutes < 0) {
-    durationMinutes = endTime.add(1, "day").diff(startTime, "minutes");
-  }
+  const durationMinutes = clockDurationMinutes(slot.start, slot.end);
 
   const getWidth = () => {
     // Base width for 60 minutes is w-14 (equal to height)
@@ -67,7 +62,7 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
         </HybridTooltipTrigger>
         <HybridTooltipContent className="w-fit p-1.5">
           <p className="font-medium text-[13px] leading-tight">
-            {startTime.format("h:mm A")} - {endTime.format("h:mm A")}
+            {formatTime(slot.start)} - {formatTime(slot.end)}
           </p>
           <p className="text-[12px] leading-tight mt-0.5">
             {slot.available ? "Available" : "Reserved"}
@@ -83,21 +78,9 @@ export const RoomSchedule = ({ slots }: RoomScheduleProps) => {
   const slotDurations = useMemo(() => {
     if (slots.length === 0) return { common: 0, all: [] };
 
-    // Calculate durations for all slots
-    const durations = slots.map((slot) => {
-      const startTime = moment.tz(
-        `1970-01-01T${slot.start}`,
-        "America/Chicago",
-      );
-      const endTime = moment.tz(`1970-01-01T${slot.end}`, "America/Chicago");
-
-      let duration = endTime.diff(startTime, "minutes");
-      if (duration < 0) {
-        duration = endTime.add(1, "day").diff(startTime, "minutes");
-      }
-
-      return duration;
-    });
+    const durations = slots.map((slot) =>
+      clockDurationMinutes(slot.start, slot.end),
+    );
 
     // Find the most common duration
     const durationCounts = durations.reduce(

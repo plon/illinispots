@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import moment from "moment-timezone";
 import { Clock } from "lucide-react";
 import type { RoomScheduleBlock } from "@/types";
 import {
@@ -11,11 +10,11 @@ import {
 import {
   buildTimelineDayOptions,
   buildTimelineModel,
-  CAMPUS_TIMEZONE,
   formatDuration,
   formatScheduleTime,
   TIMELINE_HOUR_WIDTH_PX,
 } from "@/utils/timelineSchedule";
+import { getCampusClock } from "@/utils/campusTime";
 
 interface TimelineScheduleProps {
   scheduleData: RoomScheduleBlock[];
@@ -70,9 +69,8 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
   const isDraggingRef = useRef(false);
   const dragStartXRef = useRef(0);
   const dragStartScrollRef = useRef(0);
-  const [currentCampusTime, setCurrentCampusTime] = useState(() =>
-    moment().tz(CAMPUS_TIMEZONE),
-  );
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+  const currentCampusTime = getCampusClock(currentTime);
   const timeline = useMemo(
     () => buildTimelineModel(scheduleData),
     [scheduleData],
@@ -80,15 +78,15 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      setCurrentCampusTime(moment().tz(CAMPUS_TIMEZONE));
+      setCurrentTime(new Date());
     }, 30_000);
     return () => window.clearInterval(interval);
   }, []);
 
-  const today = currentCampusTime.format("YYYY-MM-DD");
+  const today = currentCampusTime.date;
   const isToday = selectedDate === today;
   const currentMinutes =
-    currentCampusTime.hours() * 60 + currentCampusTime.minutes();
+    currentCampusTime.hour * 60 + currentCampusTime.minute;
   const currentTimePositionPx =
     isToday &&
     currentMinutes >= timeline.startMinutes &&
@@ -103,8 +101,8 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
 
     let targetScroll = 0;
     if (isToday) {
-      const now = moment().tz(CAMPUS_TIMEZONE);
-      const minutes = now.hours() * 60 + now.minutes();
+      const now = getCampusClock();
+      const minutes = now.hour * 60 + now.minute;
       if (minutes >= timeline.startMinutes && minutes <= timeline.endMinutes) {
         const position =
           ((minutes - timeline.startMinutes) / 60) * TIMELINE_HOUR_WIDTH_PX;
@@ -208,7 +206,7 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
                   ({ block, durationMinutes, leftPx, widthPx }) => {
                     const isAvailable = block.status === "available";
                     const isPast =
-                      isToday && block.end <= currentCampusTime.format("HH:mm:ss");
+                      isToday && block.end <= currentCampusTime.time;
                     const details = block.details;
                     const eventLabel =
                       details?.course ||

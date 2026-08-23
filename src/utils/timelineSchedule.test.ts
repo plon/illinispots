@@ -1,10 +1,12 @@
 import { describe, expect, it } from "bun:test";
+import moment from "moment-timezone";
 import type { RoomScheduleBlock } from "@/types";
 import {
   buildTimelineDayOptions,
   buildTimelineModel,
   formatDuration,
   formatScheduleTime,
+  getScheduleDurationMinutes,
   parseScheduleTime,
   TIMELINE_HOUR_WIDTH_PX,
 } from "./timelineSchedule";
@@ -49,6 +51,27 @@ describe("buildTimelineDayOptions", () => {
     expect(nextWindow[0].date).toBe("2026-08-27");
     expect(previousWindow.at(-1)?.date).toBe("2026-08-19");
     expect(firstWindow[0].label).toBe("Today");
+  });
+
+  it("matches Moment calendar windows across Chicago DST boundaries", () => {
+    for (const [today, selectedDate] of [
+      ["2026-03-07", "2026-03-12"],
+      ["2026-03-08", "2026-03-01"],
+      ["2026-10-31", "2026-11-03"],
+      ["2026-11-01", "2026-11-09"],
+    ]) {
+      const todayMoment = moment.tz(today, "America/Chicago");
+      const selectedMoment = moment.tz(selectedDate, "America/Chicago");
+      const offset = Math.floor(selectedMoment.diff(todayMoment, "days") / 7) * 7;
+      const firstDay = todayMoment.clone().add(offset, "days");
+      const expected = Array.from({ length: 7 }, (_, index) => {
+        const day = firstDay.clone().add(index, "days");
+        const date = day.format("YYYY-MM-DD");
+        return { date, label: date === today ? "Today" : day.format("ddd D") };
+      });
+
+      expect(buildTimelineDayOptions(selectedDate, today)).toEqual(expected);
+    }
   });
 });
 
@@ -107,5 +130,7 @@ describe("timeline time formatting", () => {
     expect(formatScheduleTime("00:05:00")).toBe("12:05 AM");
     expect(formatScheduleTime("13:30:00")).toBe("1:30 PM");
     expect(formatDuration(80)).toBe("1h 20m");
+    expect(getScheduleDurationMinutes("09:00:30", "10:00:00")).toBe(59);
+    expect(getScheduleDurationMinutes("10:00:00", "09:00:00")).toBe(0);
   });
 });

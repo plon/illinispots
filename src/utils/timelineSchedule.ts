@@ -1,13 +1,18 @@
-import moment from "moment-timezone";
 import type { RoomScheduleBlock } from "@/types";
 
-export const CAMPUS_TIMEZONE = "America/Chicago";
 export const TIMELINE_HOUR_WIDTH_PX = 72;
 
 const DEFAULT_START_MINUTES = 8 * 60;
 const DEFAULT_END_MINUTES = 22 * 60;
 const MINUTES_PER_HOUR = 60;
 const TIME_PATTERN = /^(\d{2}):(\d{2})(?::(\d{2}))?$/;
+const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+const DAY_MS = 86_400_000;
+const DAY_LABEL_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  timeZone: "UTC",
+  weekday: "short",
+  day: "numeric",
+});
 
 export interface TimelineDayOption {
   date: string;
@@ -42,20 +47,52 @@ export function buildTimelineDayOptions(
   selectedDate: string,
   today: string,
 ): TimelineDayOption[] {
-  const todayMoment = moment.tz(today, CAMPUS_TIMEZONE);
-  const selectedMoment = moment.tz(selectedDate, CAMPUS_TIMEZONE);
-  const daysFromToday = selectedMoment.diff(todayMoment, "days");
+  const todayTime = parseCalendarDate(today);
+  const selectedTime = parseCalendarDate(selectedDate);
+  if (todayTime === null || selectedTime === null) return [];
+
+  const daysFromToday = (selectedTime - todayTime) / DAY_MS;
   const windowOffset = Math.floor(daysFromToday / 7) * 7;
-  const firstDay = todayMoment.clone().add(windowOffset, "days");
+  const firstDay = todayTime + windowOffset * DAY_MS;
 
   return Array.from({ length: 7 }, (_, index) => {
-    const day = firstDay.clone().add(index, "days");
-    const date = day.format("YYYY-MM-DD");
+    const day = new Date(firstDay + index * DAY_MS);
+    const date = formatCalendarDate(day);
     return {
       date,
-      label: date === today ? "Today" : day.format("ddd D"),
+      label: date === today ? "Today" : formatCalendarDayLabel(day),
     };
   });
+}
+
+function parseCalendarDate(date: string): number | null {
+  const match = DATE_PATTERN.exec(date);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const time = Date.UTC(year, month - 1, day);
+  const parsed = new Date(time);
+  return parsed.getUTCFullYear() === year &&
+    parsed.getUTCMonth() === month - 1 &&
+    parsed.getUTCDate() === day
+    ? time
+    : null;
+}
+
+function formatCalendarDate(date: Date): string {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+}
+
+function formatCalendarDayLabel(date: Date): string {
+  let weekday = "";
+  let day = "";
+  for (const part of DAY_LABEL_FORMATTER.formatToParts(date)) {
+    if (part.type === "weekday") weekday = part.value;
+    if (part.type === "day") day = part.value;
+  }
+  return `${weekday} ${day}`;
 }
 
 export function parseScheduleTime(time: string): number | null {
@@ -79,6 +116,13 @@ export function formatScheduleTime(time: string): string {
   const period = hour >= 12 ? "PM" : "AM";
   const displayHour = hour % 12 || 12;
   return `${displayHour}:${minute.toString().padStart(2, "0")} ${period}`;
+}
+
+export function getScheduleDurationMinutes(start: string, end: string): number {
+  const startMinutes = parseScheduleTime(start);
+  const endMinutes = parseScheduleTime(end);
+  if (startMinutes === null || endMinutes === null) return 0;
+  return Math.max(0, Math.trunc(endMinutes - startMinutes));
 }
 
 export function formatDuration(minutes: number): string {

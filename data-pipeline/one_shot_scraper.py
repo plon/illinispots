@@ -1,17 +1,24 @@
-from bs4 import BeautifulSoup
-from pathlib import Path
-import re
-from curl_cffi import requests
-from dataclasses import dataclass, field, asdict
-from datetime import date, datetime
 import json
 import random
+import re
 import signal
 import time
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import asdict, dataclass, field
+from datetime import date, datetime
+from pathlib import Path
+from threading import Lock, local
 from typing import List, Optional
 from zoneinfo import ZoneInfo
 
+from bs4 import BeautifulSoup, SoupStrainer
+from curl_cffi import requests
+from pipeline_io import write_json_snapshot
+
 VALID_TERMS = {'spring', 'summer', 'fall', 'winter'}
+TERM_TABLE_ONLY = SoupStrainer(id="schedule-term-table")
+SUBJECT_TABLE_ONLY = SoupStrainer(id="schedule-subject-table")
+COURSE_TABLE_ONLY = SoupStrainer(id="schedule-course-table")
 
 # Global flag for graceful shutdown
 _shutdown_requested = False
@@ -54,7 +61,9 @@ class Subject:
     courses: List[Course] = field(default_factory=list)
 
 def scrape_subjects(html_content) -> List[Subject]:
-    soup = BeautifulSoup(html_content, 'html.parser')
+    soup = BeautifulSoup(
+        html_content, "html.parser", parse_only=TERM_TABLE_ONLY
+    )
     subjects = []
 
     rows = soup.find_all('tr')
@@ -120,7 +129,9 @@ def resolve_active_schedule(
     raise ValueError(f"No active or upcoming term found for {current_date}")
 
 def scrape_courses(html_content) -> List[Course]:
-    soup = BeautifulSoup(html_content, 'html.parser')
+    soup = BeautifulSoup(
+        html_content, "html.parser", parse_only=SUBJECT_TABLE_ONLY
+    )
     courses = []
 
     rows = soup.find_all('tr')
@@ -209,7 +220,9 @@ def _section_date_range(details_cell) -> Optional[tuple[str, str]]:
 
 def scrape_sections(html_content: str) -> List[Section]:
     """Scrape meeting details from Course Explorer's section table."""
-    soup = BeautifulSoup(html_content, "html.parser")
+    soup = BeautifulSoup(
+        html_content, "html.parser", parse_only=COURSE_TABLE_ONLY
+    )
     table = soup.select_one("#schedule-course-table")
     if table is None:
         return []
@@ -311,8 +324,7 @@ def save_progress(year: int, term: str, completed_subjects: dict):
         "term": term,
         "completed_subjects": completed_subjects
     }
-    with open(progress_file, "w") as f:
-        json.dump(data, f, indent=2)
+    write_json_snapshot(progress_file, data)
 
 def clear_progress(year: int, term: str):
     """Remove progress file after successful completion."""
@@ -333,8 +345,7 @@ def save_subject_data(subjects: List[Subject], year: int, term: str):
 
     output_file = data_dir / "subjects.json"
 
-    with open(output_file, "w") as f:
-        json.dump(data, f, indent=2)
+    write_json_snapshot(output_file, data)
 
 def _normalize_proxy_url(url: str) -> str:
     """Ensure proxy URL has a scheme. Defaults to http:// if missing."""
@@ -499,7 +510,8 @@ def scrape_all_data(year: Optional[int] = None,
                     proxy_shuffle: bool = False,
                     skip_errors: bool = True,
                     resume: bool = True,
-                    fresh: bool = False) -> List[Subject]:
+                    fresh: bool = False,
+                    request_workers: int = 4) -> List[Subject]:
     start_time = datetime.now()
 
     # Build proxies: if a list is provided, use rotator; otherwise static proxies
@@ -510,6 +522,46 @@ def scrape_all_data(year: Optional[int] = None,
         proxy_list = _load_proxy_list(proxy_file, allowed_schemes=proxy_schemes)
         if proxy_list:
             rotator = ProxyRotator(proxy_list, rotate_every=rotate_every, max_failures=max_proxy_failures, shuffle=proxy_shuffle)
+
+    worker_count = max(1, int(request_workers))
+    if rotator and worker_count > 1:
+        # Rotation and failure culling are intentionally sequential so one
+        # request cannot remove the proxy another in-flight request is using.
+        print("Proxy rotation enabled; using one request worker")
+        worker_count = 1
+
+    # Course Explorer requires thousands of requests for a full term. Reusing a
+    # session per worker preserves connections without sharing curl handles
+    # across threads.
+    session_local = local()
+    session_lock = Lock()
+    http_sessions = []
+
+    def get_http_session():
+        session = getattr(session_local, "session", None)
+        if session is None:
+            session = requests.Session(impersonate="chrome123")
+            session_local.session = session
+            with session_lock:
+                http_sessions.append(session)
+        return session
+
+    # Keep --request-delay as an aggregate request-start limit. Workers overlap
+    # network latency and parsing, but never increase the configured crawl rate.
+    request_slot_lock = Lock()
+    next_request_at = 0.0
+
+    def wait_for_request_slot():
+        nonlocal next_request_at
+        if request_delay <= 0:
+            return
+        with request_slot_lock:
+            now = time.monotonic()
+            if next_request_at > now:
+                time.sleep(next_request_at - now)
+            next_request_at = time.monotonic() + request_delay + random.uniform(
+                0, request_delay * 0.25
+            )
 
     def fetch(url: str):
         last_exc = None
@@ -523,13 +575,11 @@ def scrape_all_data(year: Optional[int] = None,
             # Peek current proxy; only advance on success or explicit failure handling
             use_proxies = rotator.peek() if rotator else proxies
 
-            if request_delay > 0:
-                time.sleep(request_delay + random.uniform(0, request_delay * 0.25))
+            wait_for_request_slot()
 
             try:
-                r = requests.get(
+                r = get_http_session().get(
                     url,
-                    impersonate='chrome123',
                     proxies=use_proxies,
                     timeout=request_timeout,
                     verify=not insecure,
@@ -565,6 +615,11 @@ def scrape_all_data(year: Optional[int] = None,
                 continue
         # Exhausted attempts
         raise last_exc if last_exc else RuntimeError("Unknown error during request")
+
+    course_executor = ThreadPoolExecutor(max_workers=worker_count)
+
+    def fetch_course_sections(course_url: str) -> List[Section]:
+        return scrape_sections(fetch(course_url).text)
 
     active_year, active_term = resolve_active_schedule()
 
@@ -629,7 +684,6 @@ def scrape_all_data(year: Optional[int] = None,
     
     total_courses = sum(len(s.courses) for s in final_subjects)
     total_sections = sum(sum(len(c.sections) for c in s.courses) for s in final_subjects)
-    skipped_count = len([s for s in subjects if s.code in completed_subjects])
 
     for i, subject in enumerate(subjects, 1):
         # Check for shutdown request
@@ -648,7 +702,6 @@ def scrape_all_data(year: Optional[int] = None,
 
         try:
             r = fetch(f"https://courses.illinois.edu/schedule/{year}/{term}/{subject.code}")
-            r.raise_for_status()
         except Exception as e:
             msg = f"  Failed to fetch subject page for {subject.code}: {e}"
             if skip_errors:
@@ -663,42 +716,58 @@ def scrape_all_data(year: Optional[int] = None,
             print(f"  Found {len(courses)} courses in {subject.code}")
 
         failed_courses = 0
-        for j, course in enumerate(courses, 1):
+        for batch_start in range(0, len(courses), worker_count):
             # Check for shutdown request
             if _shutdown_requested:
                 print("\n  Shutdown requested mid-subject, will retry this subject next run...")
                 failed_courses = len(courses)  # Force subject to not be marked complete
                 break
-                
-            course_start = datetime.now()
-            course_number = course.number.split()[1]
-            course_url = f"https://courses.illinois.edu/schedule/{year}/{term}/{subject.code}/{course_number}"
 
-            if verbose:
-                print(f"    Processing course {j}/{len(courses)}: {course.number}")
+            batch = courses[batch_start : batch_start + worker_count]
+            pending_courses = []
+            for offset, course in enumerate(batch):
+                course_number = course.number.split()[1]
+                course_url = (
+                    f"https://courses.illinois.edu/schedule/{year}/{term}/"
+                    f"{subject.code}/{course_number}"
+                )
+                course_number_in_subject = batch_start + offset + 1
+                if verbose:
+                    print(
+                        f"    Processing course {course_number_in_subject}/"
+                        f"{len(courses)}: {course.number}"
+                    )
+                pending_courses.append(
+                    (
+                        course,
+                        datetime.now(),
+                        course_executor.submit(fetch_course_sections, course_url),
+                    )
+                )
 
-            try:
-                course_response = fetch(course_url)
-                course_response.raise_for_status()
-            except Exception as e:
-                msg = f"    Skipping course {course.number}: {e}"
-                if skip_errors:
-                    print(msg)
-                    failed_courses += 1
-                    continue
-                else:
+            # Consume futures in source order so output JSON remains stable.
+            for course, course_start, pending_course in pending_courses:
+                try:
+                    sections = pending_course.result()
+                except Exception as e:
+                    msg = f"    Skipping course {course.number}: {e}"
+                    if skip_errors:
+                        print(msg)
+                        failed_courses += 1
+                        continue
                     raise
 
-            sections = scrape_sections(course_response.text)
+                if sections:
+                    course.sections = sections
+                    subject.courses.append(course)
+                    total_sections += len(sections)
 
-            if len(sections) > 0:
-                course.sections = sections
-                subject.courses.append(course)
-                total_sections += len(sections)
-
-                if verbose:
-                    course_duration = datetime.now() - course_start
-                    print(f"      Found {len(sections)} sections ({course_duration.total_seconds():.1f}s)")
+                    if verbose:
+                        course_duration = datetime.now() - course_start
+                        print(
+                            f"      Found {len(sections)} sections "
+                            f"({course_duration.total_seconds():.1f}s)"
+                        )
 
         total_courses += len(subject.courses)
         
@@ -721,6 +790,10 @@ def scrape_all_data(year: Optional[int] = None,
             print(f"  Completed {subject.code} in {subject_duration.total_seconds():.1f}s")
             print(f"  Running totals: {total_courses} courses, {total_sections} sections")
             print()
+
+    course_executor.shutdown(wait=True)
+    for http_session in http_sessions:
+        http_session.close()
 
     subjects = [subject for subject in final_subjects if len(subject.courses) > 0]
     parsed_section_count = sum(
@@ -781,6 +854,12 @@ if __name__ == "__main__":
         default=0,
         help='Minimum delay between requests in seconds (default: 0)',
     )
+    parser.add_argument(
+        '--workers',
+        type=int,
+        default=4,
+        help='Concurrent course request workers (default: 4)',
+    )
     parser.add_argument('--proxy-schemes', type=str, default='http,socks5,socks5h,socks4',
                         help='Comma-separated list of allowed proxy schemes to load from --proxy-file (default: http,socks5,socks5h,socks4)')
     parser.add_argument('--insecure', action='store_true',
@@ -815,6 +894,7 @@ if __name__ == "__main__":
         proxy_retries=args.proxy_retries,
         request_timeout=args.timeout,
         request_delay=args.request_delay,
+        request_workers=args.workers,
         proxy_schemes=[s.strip() for s in args.proxy_schemes.split(',') if s.strip()],
         insecure=args.insecure,
         proxy_try_all=args.proxy_try_all,

@@ -10,10 +10,13 @@ import React, {
 import { createFileRoute } from "@tanstack/react-router";
 import { getUpdatedAccordionItems } from "@/utils/accordion";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import moment from "moment-timezone";
 import LeftSidebar from "@/components/left";
 import { FacilityStatus, FacilityType } from "@/types";
-import { useDateTimeContext } from "@/contexts/DateTimeContext";
+import {
+  formatLocalDate,
+  formatLocalTime,
+  useDateTimeContext,
+} from "@/contexts/DateTimeContext";
 import {
   recordInitialLoadMilestone,
   type InitialLoadMilestone,
@@ -44,12 +47,13 @@ function MapLoadingFallback() {
 const fetchFacilityData = async (
   selectedDateTime: Date,
   type: "academic" | "library",
+  signal?: AbortSignal,
 ): Promise<FacilityStatus> => {
-  const dateParam = moment(selectedDateTime).format("YYYY-MM-DD");
-  const timeParam = moment(selectedDateTime).format("HH:mm:ss");
+  const dateParam = formatLocalDate(selectedDateTime);
+  const timeParam = formatLocalTime(selectedDateTime);
   const apiUrl = `/api/facilities?date=${dateParam}&time=${timeParam}&type=${type}`;
 
-  const res = await fetch(apiUrl);
+  const res = await fetch(apiUrl, { signal });
   if (!res.ok) {
     const errorBody = await res.text();
     console.error("API Error Response:", errorBody);
@@ -99,10 +103,11 @@ const IlliniSpotsPage: React.FC = () => {
       "academic",
       isCurrentDateTime ? "live" : selectedDateTime.toISOString(),
     ],
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       fetchFacilityData(
         isCurrentDateTime ? new Date() : selectedDateTime,
         "academic",
+        signal,
       ),
     staleTime: isCurrentDateTime ? 0 : 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -124,10 +129,11 @@ const IlliniSpotsPage: React.FC = () => {
       "library",
       isCurrentDateTime ? "live" : selectedDateTime.toISOString(),
     ],
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       fetchFacilityData(
         isCurrentDateTime ? new Date() : selectedDateTime,
         "library",
+        signal,
       ),
     staleTime: isCurrentDateTime ? 0 : 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,

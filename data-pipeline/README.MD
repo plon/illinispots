@@ -9,6 +9,7 @@ This directory contains scripts for collecting and processing UIUC course and bu
    - Scrapes all course data from courses.illinois.edu
    - Output: `subjects.json`
    - Proxy support: pass `--proxy`, `--proxy-http`, or `--proxy-https`
+   - Uses four connection-reusing course workers by default; override with `--workers N`. `--request-delay` remains a global request-start limit.
      - Example (single proxy for both): `python3 one_shot_scraper.py --proxy http://127.0.0.1:8080`
      - Example (SOCKS): `python3 one_shot_scraper.py --proxy socks5h://127.0.0.1:1080`
      - Example (per-scheme): `python3 one_shot_scraper.py --proxy-http http://proxy:8080 --proxy-https http://secure-proxy:8443`
@@ -67,7 +68,7 @@ This directory contains scripts for collecting and processing UIUC course and bu
    - Scrapes daily event data from [Tableau](https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents) and loads it into PostgreSQL
    - Updates the `daily_events` table with current day's events
    - Runs daily through [the GitHub Actions workflow](../.github/workflows/tableau-daily-events.yml), and can also be started manually from the Actions tab
-   - The repository must define `SUPABASE_URL` and `SUPABASE_SECRET_KEY` as GitHub Actions repository secrets; the key must be allowed to read `rooms`, replace `daily_events`, and invoke `refresh_room_availability_cache`
+   - The repository must define `SUPABASE_URL` and `SUPABASE_SECRET_KEY` as GitHub Actions repository secrets; the key must be allowed to invoke `replace_daily_events` and `refresh_room_availability_cache`
 
 ## Data Flow Diagram
 
@@ -89,7 +90,7 @@ Web Data → subjects.json → buildings_derived.json → buildings_filtered.jso
 
 - Python 3.11+
 - Install dependencies: `pip install -r requirements.txt`
-- `.env.local` with `SUPABASE_URL` and `SUPABASE_SECRET_KEY` (needed for `load_to_postgres.py` and the Tableau cache refresh)
+- `.env.local` with `SUPABASE_URL` and `SUPABASE_SECRET_KEY` (needed for `load_to_postgres.py` and the Tableau cache refresh); the key must be allowed to invoke `replace_course_data` and `refresh_room_availability_cache`
 
 ## Scheduled-run observability
 

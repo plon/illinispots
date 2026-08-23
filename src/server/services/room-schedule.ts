@@ -1,8 +1,8 @@
-import { createClient } from "@supabase/supabase-js";
 import type { RoomScheduleBlock } from "../../types";
-import { getSupabaseConfig } from "../config";
 import { Sentry } from "../observability";
 import { parseRoomSchedule } from "./external-contracts";
+import { SingleFlight } from "./single-flight";
+import { getSupabaseClient } from "./supabase";
 
 export interface RoomScheduleQuery {
   buildingId: string;
@@ -28,6 +28,15 @@ export interface RoomScheduleServiceDependencies {
   ) => Promise<RoomScheduleRpcResult>;
 }
 
+type RoomScheduleExecutor = NonNullable<
+  RoomScheduleServiceDependencies["executeRoomScheduleRpc"]
+>;
+
+const roomScheduleSingleFlight = new SingleFlight<
+  RoomScheduleExecutor,
+  RoomScheduleRpcResult
+>();
+
 export class RoomScheduleDatabaseError extends Error {
   constructor(options?: ErrorOptions) {
     super("Database error fetching schedule", options);
@@ -39,10 +48,7 @@ async function executeRoomScheduleRpc(
   procedure: "get_room_schedule_cached",
   parameters: RoomScheduleRpcParameters,
 ): Promise<RoomScheduleRpcResult> {
-  const config = getSupabaseConfig();
-  const supabase = createClient(config.url, config.key);
-
-  return await supabase.rpc(procedure, parameters);
+  return await getSupabaseClient().rpc(procedure, parameters);
 }
 
 export async function loadRoomSchedule(
@@ -51,6 +57,11 @@ export async function loadRoomSchedule(
 ): Promise<RoomScheduleBlock[]> {
   const executeRpc =
     dependencies.executeRoomScheduleRpc ?? executeRoomScheduleRpc;
+  const parameters = {
+    building_id_param: buildingId,
+    room_number_param: roomNumber,
+    check_date_param: date,
+  };
 
   const { data, error } = await Sentry.startSpan(
     {
@@ -58,11 +69,11 @@ export async function loadRoomSchedule(
       op: "db.rpc",
     },
     () =>
-      executeRpc("get_room_schedule_cached", {
-        building_id_param: buildingId,
-        room_number_param: roomNumber,
-        check_date_param: date,
-      }),
+      roomScheduleSingleFlight.run(
+        executeRpc,
+        JSON.stringify([buildingId, roomNumber, date]),
+        () => executeRpc("get_room_schedule_cached", parameters),
+      ),
   );
 
   if (error) {

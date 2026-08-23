@@ -4,7 +4,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Clock, RotateCcw } from "lucide-react";
 import { useId, useState, useEffect } from "react";
-import moment from "moment-timezone";
+import {
+  formatLocalDateTimePreview,
+  formatLocalTime,
+} from "@/contexts/DateTimeContext";
 
 interface DateTimePickerProps {
   initialDateTime?: Date;
@@ -29,12 +32,12 @@ function DateTimePicker({
   const [localSelectedDate, setLocalSelectedDate] = useState<Date | undefined>(
     initialDateTime,
   );
-  const initialTimeValue = moment(initialDateTime).format("HH:mm");
+  const initialTimeValue = formatLocalTime(initialDateTime).slice(0, 5);
   const [localTimeValue, setLocalTimeValue] = useState(initialTimeValue);
 
   useEffect(() => {
     setLocalSelectedDate(initialDateTime);
-    setLocalTimeValue(moment(initialDateTime).format("HH:mm"));
+    setLocalTimeValue(formatLocalTime(initialDateTime).slice(0, 5));
   }, [initialDateTime]);
 
   const getCombinedDateTime = (date: Date, time: string): Date | undefined => {
@@ -84,7 +87,7 @@ function DateTimePicker({
     const now = new Date();
     now.setSeconds(0, 0);
     setLocalSelectedDate(now);
-    setLocalTimeValue(moment(now).format("HH:mm"));
+    setLocalTimeValue(formatLocalTime(now).slice(0, 5));
     if (onResetToNow) {
       onResetToNow();
       if (closeContainer) closeContainer();
@@ -99,7 +102,7 @@ function DateTimePicker({
     : undefined;
 
   const previewText = currentLocalFullDateTime
-    ? moment(currentLocalFullDateTime).format("M/D/YY h:mm A")
+    ? formatLocalDateTimePreview(currentLocalFullDateTime)
     : "Invalid date/time";
 
   return (
