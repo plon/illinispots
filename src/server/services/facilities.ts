@@ -27,7 +27,6 @@ import {
   parseReservationResponse,
   type AcademicAvailabilityPayload,
 } from "./external-contracts";
-import { SingleFlight } from "./single-flight";
 import { getSupabaseClient } from "./supabase";
 
 const LIBCAL_REQUEST_TIMEOUT_MS = 10_000;
@@ -82,19 +81,9 @@ export interface FacilitiesServiceDependencies {
     parameters: AcademicAvailabilityRpcParameters,
   ) => Promise<AcademicAvailabilityRpcResult>;
 }
-
 type AcademicAvailabilityExecutor = NonNullable<
   FacilitiesServiceDependencies["executeAcademicAvailabilityRpc"]
 >;
-
-const reservationSingleFlight = new SingleFlight<
-  FacilitiesFetch,
-  ReservationResponse
->();
-const academicAvailabilitySingleFlight = new SingleFlight<
-  AcademicAvailabilityExecutor,
-  AcademicAvailabilityRpcResult
->();
 
 async function executeAcademicAvailabilityRpc(
   procedure: "get_cached_spots",
@@ -143,27 +132,22 @@ async function getReservation(
       op: "app.library.availability",
       attributes: { "library.id": lid },
     },
-    () =>
-      reservationSingleFlight.run(
-        fetcher,
-        `${lid}\0${startDate}\0${endDate}`,
-        async () => {
-          const response = await fetcher(LIBCAL_AVAILABILITY_URL, {
-            method: "POST",
-            headers: LIBCAL_REQUEST_HEADERS,
-            body: new URLSearchParams(payload),
-            signal: AbortSignal.timeout(LIBCAL_REQUEST_TIMEOUT_MS),
-          });
+    async () => {
+      const response = await fetcher(LIBCAL_AVAILABILITY_URL, {
+        method: "POST",
+        headers: LIBCAL_REQUEST_HEADERS,
+        body: new URLSearchParams(payload),
+        signal: AbortSignal.timeout(LIBCAL_REQUEST_TIMEOUT_MS),
+      });
 
-          if (!response.ok) {
-            throw new Error(
-              `LibCal availability request failed with status ${response.status}`,
-            );
-          }
+      if (!response.ok) {
+        throw new Error(
+          `LibCal availability request failed with status ${response.status}`,
+        );
+      }
 
-          return parseReservationResponse(await response.json());
-        },
-      ),
+      return parseReservationResponse(await response.json());
+    },
   );
 }
 
@@ -574,16 +558,11 @@ async function fetchAcademicBuildingData(
         op: "db.rpc",
       },
       async (span) => {
-        const response = await academicAvailabilitySingleFlight.run(
-          executeRpc,
-          `${checkDate}\0${checkTime}`,
-          () =>
-            executeRpc("get_cached_spots", {
-              check_time_param: checkTime,
-              check_date_param: checkDate,
-              min_minutes_param: 30,
-            }),
-        );
+        const response = await executeRpc("get_cached_spots", {
+          check_time_param: checkTime,
+          check_date_param: checkDate,
+          min_minutes_param: 30,
+        });
 
         const parsedData = response.error
           ? null

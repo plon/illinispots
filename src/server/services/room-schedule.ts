@@ -1,7 +1,6 @@
 import type { RoomScheduleBlock } from "../../types";
 import { Sentry } from "../observability";
 import { parseRoomSchedule } from "./external-contracts";
-import { SingleFlight } from "./single-flight";
 import { getSupabaseClient } from "./supabase";
 
 export interface RoomScheduleQuery {
@@ -28,14 +27,6 @@ export interface RoomScheduleServiceDependencies {
   ) => Promise<RoomScheduleRpcResult>;
 }
 
-type RoomScheduleExecutor = NonNullable<
-  RoomScheduleServiceDependencies["executeRoomScheduleRpc"]
->;
-
-const roomScheduleSingleFlight = new SingleFlight<
-  RoomScheduleExecutor,
-  RoomScheduleRpcResult
->();
 
 export class RoomScheduleDatabaseError extends Error {
   constructor(options?: ErrorOptions) {
@@ -68,12 +59,7 @@ export async function loadRoomSchedule(
       name: "Supabase RPC get_room_schedule_cached",
       op: "db.rpc",
     },
-    () =>
-      roomScheduleSingleFlight.run(
-        executeRpc,
-        JSON.stringify([buildingId, roomNumber, date]),
-        () => executeRpc("get_room_schedule_cached", parameters),
-      ),
+    () => executeRpc("get_room_schedule_cached", parameters),
   );
 
   if (error) {
