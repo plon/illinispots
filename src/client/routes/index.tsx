@@ -18,6 +18,10 @@ import {
   recordInitialLoadMilestone,
   type InitialLoadMilestone,
 } from "@/utils/loadingMetrics";
+import {
+  ageLiveAvailability,
+  LIVE_REFRESH_INTERVAL_MS,
+} from "@/utils/liveUpdates";
 
 const FacilityMap = lazy(() => import("@/components/map"));
 
@@ -59,7 +63,7 @@ const fetchFacilityData = async (
 };
 
 const IlliniSpotsPage: React.FC = () => {
-  const { selectedDateTime } = useDateTimeContext();
+  const { selectedDateTime, isCurrentDateTime } = useDateTimeContext();
   const [showMapPreference, setShowMapPreference] = useState<boolean | null>(
     null,
   );
@@ -89,9 +93,17 @@ const IlliniSpotsPage: React.FC = () => {
     isSuccess: isAcademicSuccess,
     refetch: refetchAcademic,
   } = useQuery<FacilityStatus, Error>({
-    queryKey: ["facilities", "academic", selectedDateTime.toISOString()],
-    queryFn: () => fetchFacilityData(selectedDateTime, "academic"),
-    staleTime: 5 * 60 * 1000,
+    queryKey: [
+      "facilities",
+      "academic",
+      isCurrentDateTime ? "live" : selectedDateTime.toISOString(),
+    ],
+    queryFn: () =>
+      fetchFacilityData(
+        isCurrentDateTime ? new Date() : selectedDateTime,
+        "academic",
+      ),
+    staleTime: isCurrentDateTime ? 0 : 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
@@ -103,10 +115,19 @@ const IlliniSpotsPage: React.FC = () => {
     data: libraryData,
     isFetching: isLibraryFetching,
     isSuccess: isLibrarySuccess,
+    refetch: refetchLibrary,
   } = useQuery<FacilityStatus, Error>({
-    queryKey: ["facilities", "library", selectedDateTime.toISOString()],
-    queryFn: () => fetchFacilityData(selectedDateTime, "library"),
-    staleTime: 5 * 60 * 1000,
+    queryKey: [
+      "facilities",
+      "library",
+      isCurrentDateTime ? "live" : selectedDateTime.toISOString(),
+    ],
+    queryFn: () =>
+      fetchFacilityData(
+        isCurrentDateTime ? new Date() : selectedDateTime,
+        "library",
+      ),
+    staleTime: isCurrentDateTime ? 0 : 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
@@ -115,25 +136,76 @@ const IlliniSpotsPage: React.FC = () => {
   });
 
   const facilityData = useMemo<FacilityStatus | undefined>(() => {
-    if (!academicData && !libraryData) {
+    const currentAcademicData = isCurrentDateTime
+      ? ageLiveAvailability(academicData, selectedDateTime)
+      : academicData;
+    const currentLibraryData = isCurrentDateTime
+      ? ageLiveAvailability(libraryData, selectedDateTime)
+      : libraryData;
+
+    if (!currentAcademicData && !currentLibraryData) {
       return undefined;
     }
 
     const matchingLibraryFacilities =
-      !academicData ||
-      !libraryData ||
-      libraryData.timestamp === academicData.timestamp
-        ? libraryData?.facilities || {}
+      isCurrentDateTime ||
+      !currentAcademicData ||
+      !currentLibraryData ||
+      currentLibraryData.timestamp === currentAcademicData.timestamp
+        ? currentLibraryData?.facilities || {}
         : {};
 
     return {
-      timestamp: academicData?.timestamp || libraryData?.timestamp || "",
+      timestamp:
+        currentAcademicData?.timestamp || currentLibraryData?.timestamp || "",
       facilities: {
-        ...(academicData?.facilities || {}),
+        ...(currentAcademicData?.facilities || {}),
         ...matchingLibraryFacilities,
       },
     };
-  }, [academicData, libraryData]);
+  }, [academicData, isCurrentDateTime, libraryData, selectedDateTime]);
+
+  useEffect(() => {
+    if (!isCurrentDateTime) return;
+
+    let timeoutId: number | undefined;
+    let cancelled = false;
+
+    const stopTimer = () => {
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+        timeoutId = undefined;
+      }
+    };
+    const scheduleNextRefresh = () => {
+      stopTimer();
+      if (cancelled || document.visibilityState !== "visible") return;
+
+      timeoutId = window.setTimeout(() => {
+        timeoutId = undefined;
+        void Promise.all([refetchAcademic(), refetchLibrary()]).finally(
+          scheduleNextRefresh,
+        );
+      }, LIVE_REFRESH_INTERVAL_MS);
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void Promise.all([refetchAcademic(), refetchLibrary()]).finally(
+          scheduleNextRefresh,
+        );
+      } else {
+        stopTimer();
+      }
+    };
+
+    scheduleNextRefresh();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      cancelled = true;
+      stopTimer();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isCurrentDateTime, refetchAcademic, refetchLibrary]);
 
   const error = academicQueryError ? academicQueryError.message : null;
 
