@@ -21,6 +21,7 @@ import {
 import {
   ageLiveAvailability,
   LIVE_REFRESH_INTERVAL_MS,
+  shouldRefetchFacilitiesOnReconnect,
 } from "@/utils/liveUpdates";
 
 const FacilityMap = lazy(() => import("@/components/map"));
@@ -107,7 +108,8 @@ const IlliniSpotsPage: React.FC = () => {
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
-    refetchOnReconnect: true,
+    refetchOnReconnect: () =>
+      shouldRefetchFacilitiesOnReconnect(isCurrentDateTime),
     placeholderData: keepPreviousData,
   });
 
@@ -131,7 +133,8 @@ const IlliniSpotsPage: React.FC = () => {
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
-    refetchOnReconnect: true,
+    refetchOnReconnect: () =>
+      shouldRefetchFacilitiesOnReconnect(isCurrentDateTime),
     placeholderData: keepPreviousData,
   });
 

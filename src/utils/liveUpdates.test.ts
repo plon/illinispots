@@ -1,6 +1,9 @@
 import { describe, expect, it } from "bun:test";
 import { FacilityStatus, FacilityType, RoomStatus } from "@/types";
-import { ageLiveAvailability } from "./liveUpdates";
+import {
+  ageLiveAvailability,
+  shouldRefetchFacilitiesOnReconnect,
+} from "./liveUpdates";
 
 function academicData(overrides: Partial<FacilityStatus> = {}): FacilityStatus {
   return {
@@ -58,5 +61,16 @@ describe("ageLiveAvailability", () => {
     expect(aged?.facilities.dcl.rooms["1320"].availableFor).toBe(43);
     expect(aged?.facilities.dcl.rooms.future.availableFor).toBe(30);
     expect(data.facilities.dcl.rooms["1320"].availableFor).toBe(50);
+  });
+});
+
+describe("shouldRefetchFacilitiesOnReconnect", () => {
+  it("does not refetch stale live data when a hidden tab comes online", () => {
+    expect(shouldRefetchFacilitiesOnReconnect(true, "hidden")).toBe(false);
+  });
+
+  it("allows visible live data and fixed-time data to refetch", () => {
+    expect(shouldRefetchFacilitiesOnReconnect(true, "visible")).toBe(true);
+    expect(shouldRefetchFacilitiesOnReconnect(false, "hidden")).toBe(true);
   });
 });

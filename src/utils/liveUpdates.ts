@@ -2,6 +2,13 @@ import { FacilityStatus, RoomStatus } from "@/types";
 
 export const LIVE_REFRESH_INTERVAL_MS = 5 * 60_000;
 
+export function shouldRefetchFacilitiesOnReconnect(
+  isLive: boolean,
+  visibilityState: DocumentVisibilityState = document.visibilityState,
+): boolean {
+  return !isLive || visibilityState === "visible";
+}
+
 export function ageLiveAvailability(
   data: FacilityStatus | undefined,
   now: Date,
