@@ -47,7 +47,7 @@ function DaySelector({
             type="button"
             onClick={() => onDateChange(day.date)}
             aria-pressed={isSelected}
-            className={`shrink-0 cursor-pointer rounded-md px-2.5 py-1 text-xs transition-colors ${
+            className={`shrink-0 cursor-pointer rounded-md px-2.5 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
               isSelected
                 ? "bg-secondary font-medium text-foreground"
                 : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
@@ -215,14 +215,19 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
                       details?.identifier ||
                       details?.title ||
                       (block.status === "event" ? "Event" : "Class");
+                    const blockDescription = isAvailable
+                      ? `Available, ${formatDuration(durationMinutes)}, ${formatScheduleTime(block.start)} to ${formatScheduleTime(block.end)}`
+                      : `${eventLabel}${details?.title && details.title !== eventLabel ? `: ${details.title}` : ""}, ${formatDuration(durationMinutes)}, ${formatScheduleTime(block.start)} to ${formatScheduleTime(block.end)}`;
 
                     return (
                       <HybridTooltip
                         key={`${block.start}-${block.end}-${block.status}`}
                       >
                         <HybridTooltipTrigger asChild>
-                          <div
-                            className={`absolute bottom-0 top-0 flex cursor-pointer items-center justify-center overflow-hidden border-r border-background/50 px-1.5 transition-colors ${
+                          <button
+                            type="button"
+                            aria-label={blockDescription}
+                            className={`absolute bottom-0 top-0 flex cursor-pointer items-center justify-center overflow-hidden border-r border-background/50 px-1.5 transition-colors focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${
                               isAvailable
                                 ? "border-emerald-600/30 bg-emerald-500/25 text-emerald-900 hover:bg-emerald-500/35 dark:bg-emerald-950/70 dark:text-emerald-300 dark:hover:bg-emerald-900/80"
                                 : "border-rose-600/40 bg-rose-500/30 text-rose-950 hover:bg-rose-500/40 dark:bg-rose-950/80 dark:text-rose-200 dark:hover:bg-rose-900/90"
@@ -234,7 +239,7 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
                                 {eventLabel}
                               </span>
                             )}
-                          </div>
+                          </button>
                         </HybridTooltipTrigger>
 
                         <HybridTooltipContent className="w-56 border border-border bg-popover p-2.5 text-xs text-popover-foreground shadow-md">
