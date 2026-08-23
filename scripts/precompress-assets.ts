@@ -50,7 +50,7 @@ async function precompress(path: string): Promise<void> {
         [constants.BROTLI_PARAM_QUALITY]: 10,
       },
     }),
-    gzipAsync(source, { level: 9 }),
+    gzipAsync(source, { level: 8 }),
   ]);
 
   await Promise.all([
