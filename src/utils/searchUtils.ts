@@ -251,30 +251,39 @@ export const createFacilitySearchIndex = (
     facilityItemsById.set(facility.id, facilityItem);
   });
 
+  let roomFuse: Fuse<RoomSearchItem> | undefined;
+  let buildingFuse: Fuse<Facility> | undefined;
+
   return {
     facilityItems,
     facilityItemsById,
     roomItems,
-    roomFuse: new Fuse(roomItems, {
-      keys: [
-        { name: "roomNumber", weight: 0.6 },
-        { name: "facilityName", weight: 0.25 },
-        { name: "aliases", weight: 0.2 },
-        { name: "courseInfo", weight: 0.2 },
-      ],
-      threshold: 0.4,
-      ignoreLocation: true,
-      minMatchCharLength: 2,
-    }),
-    buildingFuse: new Fuse(facilities, {
-      keys: [
-        { name: "name", weight: 0.7 },
-        { name: "id", weight: 0.3 },
-      ],
-      threshold: 0.4,
-      ignoreLocation: true,
-      minMatchCharLength: 2,
-    }),
+    get roomFuse() {
+      roomFuse ??= new Fuse(roomItems, {
+        keys: [
+          { name: "roomNumber", weight: 0.6 },
+          { name: "facilityName", weight: 0.25 },
+          { name: "aliases", weight: 0.2 },
+          { name: "courseInfo", weight: 0.2 },
+        ],
+        threshold: 0.4,
+        ignoreLocation: true,
+        minMatchCharLength: 2,
+      });
+      return roomFuse;
+    },
+    get buildingFuse() {
+      buildingFuse ??= new Fuse(facilities, {
+        keys: [
+          { name: "name", weight: 0.7 },
+          { name: "id", weight: 0.3 },
+        ],
+        threshold: 0.4,
+        ignoreLocation: true,
+        minMatchCharLength: 2,
+      });
+      return buildingFuse;
+    },
     eligibleRoomsByFacility,
     hasActiveFilters,
   };
