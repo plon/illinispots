@@ -26,26 +26,30 @@ export function ageLiveAvailability(
 
   let agedFacilities = data.facilities;
 
-  Object.entries(data.facilities).forEach(([facilityId, facility]) => {
+  for (const facilityId in data.facilities) {
+    if (!Object.hasOwn(data.facilities, facilityId)) continue;
+    const facility = data.facilities[facilityId];
     let agedRooms = facility.rooms;
 
-    Object.entries(facility.rooms).forEach(([roomId, room]) => {
+    for (const roomId in facility.rooms) {
+      if (!Object.hasOwn(facility.rooms, roomId)) continue;
+      const room = facility.rooms[roomId];
       const isCurrentlyAvailable =
         room.status === RoomStatus.AVAILABLE ||
         room.status === RoomStatus.PASSING_PERIOD;
-      if (!isCurrentlyAvailable || room.availableFor === undefined) return;
+      if (!isCurrentlyAvailable || room.availableFor === undefined) continue;
 
       const availableFor = Math.max(
         0,
         room.availableFor - elapsedMinutes,
       );
-      if (availableFor === room.availableFor) return;
+      if (availableFor === room.availableFor) continue;
 
       if (agedRooms === facility.rooms) {
         agedRooms = { ...facility.rooms };
       }
       agedRooms[roomId] = { ...room, availableFor };
-    });
+    }
 
     if (agedRooms !== facility.rooms) {
       if (agedFacilities === data.facilities) {
@@ -53,7 +57,7 @@ export function ageLiveAvailability(
       }
       agedFacilities[facilityId] = { ...facility, rooms: agedRooms };
     }
-  });
+  }
 
   return agedFacilities === data.facilities
     ? data

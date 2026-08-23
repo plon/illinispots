@@ -73,6 +73,34 @@ describe("ageLiveAvailability", () => {
       ageLiveAvailability(data, new Date("2026-08-24T09:07:00-05:00")),
     ).toBe(data);
   });
+
+  it("only traverses own facility and room records", () => {
+    const data = academicData();
+    const room = data.facilities.dcl.rooms["1320"];
+    room.status = RoomStatus.AVAILABLE;
+    room.availableFor = 50;
+
+    data.facilities.dcl.rooms = Object.assign(
+      Object.create({
+        inherited: {
+          type: "academic",
+          status: RoomStatus.AVAILABLE,
+          availableFor: 50,
+        },
+      }),
+      data.facilities.dcl.rooms,
+    );
+
+    const aged = ageLiveAvailability(
+      data,
+      new Date("2026-08-24T09:07:00-05:00"),
+    );
+
+    expect(aged?.facilities.dcl.rooms["1320"].availableFor).toBe(43);
+    expect(Object.hasOwn(aged?.facilities.dcl.rooms ?? {}, "inherited")).toBe(
+      false,
+    );
+  });
 });
 
 describe("shouldRefetchFacilitiesOnReconnect", () => {
