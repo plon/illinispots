@@ -8,10 +8,10 @@ export interface FavoriteItem {
   type: 'library' | 'academic';
 }
 
-const loadFavorites = (): FavoriteItem[] => {
-  if (typeof localStorage === 'undefined') return [];
-
+export const loadFavorites = (): FavoriteItem[] => {
   try {
+    if (typeof localStorage === 'undefined') return [];
+
     const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
     if (!stored) return [];
 
