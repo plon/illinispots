@@ -1,5 +1,24 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 import moment from "moment-timezone";
+
+const MINUTE_MS = 60_000;
+
+export function startOfMinute(date: Date): Date {
+  const minute = new Date(date);
+  minute.setSeconds(0, 0);
+  return minute;
+}
+
+export function millisecondsUntilNextMinute(date: Date): number {
+  return MINUTE_MS - (date.getTime() % MINUTE_MS);
+}
 
 interface DateTimeContextType {
   selectedDateTime: Date;
@@ -13,26 +32,72 @@ interface DateTimeContextType {
 const DateTimeContext = createContext<DateTimeContextType | undefined>(undefined);
 
 export function DateTimeProvider({ children }: { children: ReactNode }) {
-  const [selectedDateTime, setSelectedDateTime] = useState<Date>(new Date());
+  const [selectedDateTime, setSelectedDateTimeState] = useState<Date>(() =>
+    startOfMinute(new Date()),
+  );
+  const [isLive, setIsLive] = useState(true);
+
+  const setSelectedDateTime = useCallback((date: Date) => {
+    setIsLive(false);
+    setSelectedDateTimeState(startOfMinute(date));
+  }, []);
+
+  const resetToCurrentDateTime = useCallback(() => {
+    setIsLive(true);
+    setSelectedDateTimeState(startOfMinute(new Date()));
+  }, []);
+
+  useEffect(() => {
+    if (!isLive) return;
+
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    const stopTimer = () => {
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+        timeoutId = undefined;
+      }
+    };
+
+    const scheduleNextMinute = () => {
+      stopTimer();
+      if (document.visibilityState !== "visible") return;
+
+      const now = new Date();
+      timeoutId = setTimeout(() => {
+        timeoutId = undefined;
+        setSelectedDateTimeState(startOfMinute(new Date()));
+        scheduleNextMinute();
+      }, millisecondsUntilNextMinute(now));
+    };
+
+    const catchUpToNow = () => {
+      if (document.visibilityState === "visible") {
+        setSelectedDateTimeState(startOfMinute(new Date()));
+        scheduleNextMinute();
+      } else {
+        stopTimer();
+      }
+    };
+
+    if (document.visibilityState === "visible") {
+      scheduleNextMinute();
+    }
+    document.addEventListener("visibilitychange", catchUpToNow);
+    window.addEventListener("focus", catchUpToNow);
+
+    return () => {
+      stopTimer();
+      document.removeEventListener("visibilitychange", catchUpToNow);
+      window.removeEventListener("focus", catchUpToNow);
+    };
+  }, [isLive]);
 
   // Format the date as YYYY-MM-DD for API calls
   const formattedDate = moment(selectedDateTime).format("YYYY-MM-DD");
   
   // Format the time as HH:mm:ss for API calls
   const formattedTime = moment(selectedDateTime).format("HH:mm:ss");
-
-  // Check if the selected date/time is the current date/time (within 1 minute)
-  const isCurrentDateTime = () => {
-    const now = new Date();
-    const diffMs = Math.abs(selectedDateTime.getTime() - now.getTime());
-    const diffMinutes = diffMs / (1000 * 60);
-    return diffMinutes < 1;
-  };
-
-  // Reset to current date/time
-  const resetToCurrentDateTime = () => {
-    setSelectedDateTime(new Date());
-  };
 
   return (
     <DateTimeContext.Provider
@@ -41,7 +106,7 @@ export function DateTimeProvider({ children }: { children: ReactNode }) {
         setSelectedDateTime,
         formattedDate,
         formattedTime,
-        isCurrentDateTime: isCurrentDateTime(),
+        isCurrentDateTime: isLive,
         resetToCurrentDateTime,
       }}
     >

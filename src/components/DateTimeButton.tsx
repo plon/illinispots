@@ -25,13 +25,22 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
     className,
     isFetching,
 }) => {
-    const { selectedDateTime, setSelectedDateTime, isCurrentDateTime } =
-        useDateTimeContext();
+    const {
+        selectedDateTime,
+        setSelectedDateTime,
+        isCurrentDateTime,
+        resetToCurrentDateTime,
+    } = useDateTimeContext();
     const [open, setOpen] = useState(false);
     const isDesktop = useMediaQuery("(min-width: 768px)");
 
     const handleDateTimeChange = (dateTime: Date) => {
         setSelectedDateTime(dateTime);
+        setOpen(false);
+    };
+
+    const handleResetToNow = () => {
+        resetToCurrentDateTime();
         setOpen(false);
     };
 
@@ -67,6 +76,7 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
         <DateTimePicker
             initialDateTime={selectedDateTime}
             onDateTimeChange={handleDateTimeChange}
+            onResetToNow={handleResetToNow}
             compact={true}
             isFetching={isFetching}
             closeContainer={closeContainer}

@@ -9,6 +9,7 @@ import moment from "moment-timezone";
 interface DateTimePickerProps {
   initialDateTime?: Date;
   onDateTimeChange?: (dateTime: Date) => void;
+  onResetToNow?: () => void;
   showResetButton?: boolean;
   compact?: boolean;
   isFetching?: boolean;
@@ -18,6 +19,7 @@ interface DateTimePickerProps {
 function DateTimePicker({
   initialDateTime = new Date(),
   onDateTimeChange,
+  onResetToNow,
   showResetButton = true,
   compact = false,
   isFetching = false,
@@ -83,7 +85,10 @@ function DateTimePicker({
     now.setSeconds(0, 0);
     setLocalSelectedDate(now);
     setLocalTimeValue(moment(now).format("HH:mm"));
-    if (onDateTimeChange) {
+    if (onResetToNow) {
+      onResetToNow();
+      if (closeContainer) closeContainer();
+    } else if (onDateTimeChange) {
       onDateTimeChange(now);
       if (closeContainer) closeContainer();
     }
