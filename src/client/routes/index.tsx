@@ -15,6 +15,7 @@ import LeftSidebar from "@/components/left";
 import { FacilityStatus, FacilityType } from "@/types";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
 import { projectFacilityStatus } from "@/utils/liveAvailability";
+import { useCurrentMinute } from "@/hooks/useCurrentMinute";
 import {
   recordInitialLoadMilestone,
   type InitialLoadMilestone,
@@ -61,7 +62,7 @@ const fetchFacilityData = async (
 
 const IlliniSpotsPage: React.FC = () => {
   const { selectedDateTime, isCurrentDateTime } = useDateTimeContext();
-  const [currentTime, setCurrentTime] = useState(() => new Date());
+  const currentTime = useCurrentMinute(isCurrentDateTime);
   const [showMapPreference, setShowMapPreference] = useState<boolean | null>(
     null,
   );
@@ -136,15 +137,6 @@ const IlliniSpotsPage: React.FC = () => {
       },
     };
   }, [academicData, libraryData]);
-
-  useEffect(() => {
-    if (!isCurrentDateTime) return;
-
-    const updateCurrentTime = () => setCurrentTime(new Date());
-    updateCurrentTime();
-    const intervalId = window.setInterval(updateCurrentTime, 30_000);
-    return () => window.clearInterval(intervalId);
-  }, [isCurrentDateTime]);
 
   const displayedFacilityData = useMemo(
     () =>
