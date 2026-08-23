@@ -1,4 +1,4 @@
-import React, { lazy, memo, Suspense, useMemo } from "react";
+import React, { memo, useMemo } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -27,23 +27,8 @@ import {
   createRoomAvailabilityPredicate,
   FilterCriteria,
 } from "@/utils/filterUtils";
-
-const FacilityRoomDetails = lazy(
-  () => import("@/components/FacilityRoomDetails"),
-);
-const AcademicRoomDetailLoader = lazy(
-  () => import("@/components/AcademicRoomDetailLoader"),
-);
-
-function RoomDetailFallback() {
-  return (
-    <div className="px-2 py-3" role="status">
-      <div className="h-14 w-full animate-pulse rounded bg-muted/40" />
-      <span className="sr-only">Loading room details…</span>
-    </div>
-  );
-}
-
+import FacilityRoomDetails from "@/components/FacilityRoomDetails";
+import AcademicRoomDetailLoader from "@/components/AcademicRoomDetailLoader";
 interface FacilityAccordionProps {
   facility: Facility;
   facilityType: FacilityType;
@@ -241,13 +226,11 @@ const LibraryRoomsAccordion: React.FC<LibraryRoomsAccordionProps> = ({
                 </AccordionTrigger>
               </div>
               <AccordionContent>
-                <Suspense fallback={<RoomDetailFallback />}>
-                  <FacilityRoomDetails
-                    roomName={roomName}
-                    room={libraryRoom}
-                    facilityType={FacilityType.LIBRARY}
-                  />
-                </Suspense>
+                <FacilityRoomDetails
+                  roomName={roomName}
+                  room={libraryRoom}
+                  facilityType={FacilityType.LIBRARY}
+                />
               </AccordionContent>
             </AccordionItem>
           );
@@ -411,12 +394,10 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
                 <AccordionContent className="pt-0 pb-1 pl-1 pr-4 min-w-0 max-w-full overflow-hidden">
                   {/* Conditionally render loader only when this specific room is expanded */}
                   {isRoomExpanded ? (
-                    <Suspense fallback={<RoomDetailFallback />}>
                       <AcademicRoomDetailLoader
                         buildingId={facility.name} // Use facility name as ID for API call
                         roomNumber={roomNumber}
                       />
-                    </Suspense>
                   ) : (
                     // Placeholder so content area doesn't collapse instantly
                     <div className="h-10"></div>

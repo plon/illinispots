@@ -7,8 +7,6 @@ import React, {
     useCallback,
     memo,
     useState,
-    lazy,
-    Suspense,
 } from "react";
 import { getUpdatedAccordionItems } from "@/utils/accordion";
 import { Accordion } from "@/components/ui/accordion";
@@ -47,32 +45,8 @@ import { summarizeFacilitiesForSidebar } from "@/utils/facilitySummary";
 
 const EMPTY_FILTER_CRITERIA: FilterCriteria = {};
 
-const AddFavoritesDialog = lazy(() =>
-    import("@/components/AddFavoritesDialog").then((module) => ({
-        default: module.AddFavoritesDialog,
-    })),
-);
-
-const SearchResults = lazy(() =>
-    import("@/components/SearchResults").then((module) => ({
-        default: module.SearchResults,
-    })),
-);
-
-function SearchResultsFallback() {
-    return (
-        <div className="space-y-2.5 px-3 py-3 md:px-4" role="status">
-            <span className="sr-only">Preparing search…</span>
-            {[0, 1, 2].map((index) => (
-                <div
-                    key={index}
-                    className="h-20 animate-pulse rounded-lg border border-border/80 bg-muted/40"
-                    aria-hidden="true"
-                />
-            ))}
-        </div>
-    );
-}
+import { AddFavoritesDialog } from "@/components/AddFavoritesDialog";
+import { SearchResults } from "@/components/SearchResults";
 
 interface LeftSidebarProps {
     facilityData: FacilityStatus | null;
@@ -362,18 +336,16 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 ref={scrollAreaRef}
             >
                 {isSearching ? (
-                    <Suspense fallback={<SearchResultsFallback />}>
-                        <SearchResults
-                            facilityData={facilityData}
-                            searchTerm={searchTerm}
-                            filterCriteria={filterCriteria}
-                            hasActiveFilters={hasActiveFilters}
-                            onClearFilters={clearFilters}
-                            onClearSearch={() => setSearchTerm("")}
-                            isLoading={isAcademicLoading}
-                            isLibraryLoading={isLibraryFetching}
-                        />
-                    </Suspense>
+                    <SearchResults
+                        facilityData={facilityData}
+                        searchTerm={searchTerm}
+                        filterCriteria={filterCriteria}
+                        hasActiveFilters={hasActiveFilters}
+                        onClearFilters={clearFilters}
+                        onClearSearch={() => setSearchTerm("")}
+                        isLoading={isAcademicLoading}
+                        isLibraryLoading={isLibraryFetching}
+                    />
                 ) : (
                     <>
                         <FavoritesSection
@@ -545,15 +517,13 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             )}
 
             {isFavoritesDialogOpen && (
-                <Suspense fallback={null}>
-                    <AddFavoritesDialog
-                        isOpen={isFavoritesDialogOpen}
-                        onOpenChange={setIsFavoritesDialogOpen}
-                        facilityData={facilityData}
-                        favorites={favorites}
-                        onToggleFavorite={toggleFavorite}
-                    />
-                </Suspense>
+                <AddFavoritesDialog
+                    isOpen={isFavoritesDialogOpen}
+                    onOpenChange={setIsFavoritesDialogOpen}
+                    facilityData={facilityData}
+                    favorites={favorites}
+                    onToggleFavorite={toggleFavorite}
+                />
             )}
         </div>
     );

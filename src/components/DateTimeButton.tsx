@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CalendarClock } from "lucide-react";
 import {
@@ -15,25 +15,9 @@ const DISPLAY_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
     year: "numeric",
 });
 
-const DateTimePicker = lazy(() =>
-    import("@/components/ui/date-time-picker").then((module) => ({
-        default: module.DateTimePicker,
-    })),
-);
-
-const MobileDrawer = lazy(() => import("@/components/ui/mobile-drawer"));
-const DesktopDialog = lazy(() => import("@/components/ui/desktop-dialog"));
-
-function DateTimePickerFallback() {
-    return (
-        <div
-            className="flex h-[360px] w-[280px] items-center justify-center text-sm text-muted-foreground"
-            role="status"
-        >
-            Loading calendar…
-        </div>
-    );
-}
+import { DateTimePicker } from "@/components/ui/date-time-picker";
+import DesktopDialog from "@/components/ui/desktop-dialog";
+import MobileDrawer from "@/components/ui/mobile-drawer";
 
 interface DateTimeButtonProps {
     className?: string;
@@ -99,16 +83,14 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
     );
 
     const dateTimePickerComponent = open ? (
-        <Suspense fallback={<DateTimePickerFallback />}>
-            <DateTimePicker
-                initialDateTime={selectedDateTime}
-                onDateTimeChange={handleDateTimeChange}
-                onResetToNow={handleResetToNow}
-                compact={true}
-                isFetching={isFetching}
-                closeContainer={closeContainer}
-            />
-        </Suspense>
+        <DateTimePicker
+            initialDateTime={selectedDateTime}
+            onDateTimeChange={handleDateTimeChange}
+            onResetToNow={handleResetToNow}
+            compact={true}
+            isFetching={isFetching}
+            closeContainer={closeContainer}
+        />
     ) : null;
 
     if (isDesktop) {
@@ -116,19 +98,17 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
             <>
                 {triggerButton}
                 {open && (
-                    <Suspense fallback={null}>
-                        <DesktopDialog
-                            open={open}
-                            onOpenChange={setOpen}
-                            returnFocusRef={triggerRef}
-                            title="Select Date and Time"
-                            contentClassName="sm:max-w-xs p-0 [&>button:last-child]:hidden"
-                        >
-                            <div className="p-4 flex justify-center">
-                                {dateTimePickerComponent}
-                            </div>
-                        </DesktopDialog>
-                    </Suspense>
+                    <DesktopDialog
+                        open={open}
+                        onOpenChange={setOpen}
+                        returnFocusRef={triggerRef}
+                        title="Select Date and Time"
+                        contentClassName="sm:max-w-xs p-0 [&>button:last-child]:hidden"
+                    >
+                        <div className="p-4 flex justify-center">
+                            {dateTimePickerComponent}
+                        </div>
+                    </DesktopDialog>
                 )}
             </>
         );
@@ -138,18 +118,16 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
         <>
             {triggerButton}
             {open && (
-                <Suspense fallback={null}>
-                    <MobileDrawer
-                        open={open}
-                        onOpenChange={setOpen}
-                        returnFocusRef={triggerRef}
-                        contentClassName="flex flex-col items-center"
-                    >
-                        <div className="p-4 pt-2 flex justify-center w-full">
-                            {dateTimePickerComponent}
-                        </div>
-                    </MobileDrawer>
-                </Suspense>
+                <MobileDrawer
+                    open={open}
+                    onOpenChange={setOpen}
+                    returnFocusRef={triggerRef}
+                    contentClassName="flex flex-col items-center"
+                >
+                    <div className="p-4 pt-2 flex justify-center w-full">
+                        {dateTimePickerComponent}
+                    </div>
+                </MobileDrawer>
             )}
         </>
     );
