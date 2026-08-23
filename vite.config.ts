@@ -60,6 +60,9 @@ export default defineConfig(({ mode }) => {
       : undefined;
 
   return {
+    define: {
+      __SENTRY_DEBUG__: false,
+    },
     plugins: [
       campusTimezonePlugin(),
       tanstackRouter({
