@@ -5,7 +5,7 @@ import {
 } from "./DateTimeContext";
 
 describe("live date/time helpers", () => {
-  it("normalizes live timestamps to the start of a minute", () => {
+  it("normalizes selected timestamps to the start of a minute", () => {
     expect(startOfMinute(new Date("2026-08-23T12:34:56.789Z")).toISOString()).toBe(
       "2026-08-23T12:34:00.000Z",
     );

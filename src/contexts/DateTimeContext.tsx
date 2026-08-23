@@ -39,7 +39,7 @@ export function DateTimeProvider({ children }: { children: ReactNode }) {
 
   const setSelectedDateTime = useCallback((date: Date) => {
     setIsLive(false);
-    setSelectedDateTimeState(date);
+    setSelectedDateTimeState(startOfMinute(date));
   }, []);
 
   const resetToCurrentDateTime = useCallback(() => {
