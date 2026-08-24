@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { compress } from "hono/compress";
 import { logger } from "hono/logger";
 import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
@@ -37,6 +38,7 @@ export function createApp(dependencies: AppDependencies = {}) {
       referrerPolicy: "strict-origin-when-cross-origin",
     }),
   );
+  app.use("*", compress());
 
   if (!isTest) {
     app.use("*", logger());

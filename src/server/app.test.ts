@@ -138,4 +138,20 @@ describe("server application", () => {
       '<script>window.__APP_CONFIG__={"appEnv":"staging","mapboxAccessToken":"pk.test_token_123","mapboxStyleUrl":"mapbox://styles/test/style","sentryDsn":"https://test@sentry.io/456"};</script>',
     );
   });
+
+  it("compresses API responses when requested via Accept-Encoding", async () => {
+    const app = createApp({
+      facilities: {
+        getFacilityStatus: async () => [{ id: "bld-1", name: "CIF", rooms: [] }] as never,
+      },
+    });
+
+    const response = await app.request("/api/facilities", {
+      headers: { "Accept-Encoding": "gzip" },
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-encoding")).toBe("gzip");
+    expect(response.headers.get("vary")).toContain("Accept-Encoding");
+  });
 });
