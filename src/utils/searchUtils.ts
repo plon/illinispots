@@ -1,6 +1,6 @@
-import { Facility, FacilityRoom, FacilityType, RoomStatus, AcademicRoom, LibraryRoom } from "@/types";
+import { Facility, FacilityRoom, RoomStatus } from "@/types";
 import { FilterCriteria, isRoomAvailable } from "@/utils/filterUtils";
-import Fuse from "fuse.js";
+import uFuzzy from "@leeoniya/ufuzzy";
 
 export const BUILDING_ALIASES: Record<string, string[]> = {
   "Campus Instructional Facility": ["cif", "campus instructional", "instructional facility"],
@@ -23,10 +23,10 @@ export const BUILDING_ALIASES: Record<string, string[]> = {
   "Noyes Laboratory": ["noyes", "chemistry", "chem"],
   "Materials Science & Eng Bld": ["mseb", "matse", "materials science"],
   "Material Science and Engineering Building": ["mseb", "matse", "materials science"],
-  "Agricultural Engr Sciences Bld": ["aesb", "agricultural", "aces bldg"],
+  "Agricultural Engr Sciences Bld": ["aces bldg", "agricultural engineering"],
   "Grainger Engineering Library": ["grainger", "gel", "grainger library", "engineering library"],
   "Funk ACES Library": ["aces", "funk", "funk library", "aces library", "funk aces"],
-  "Main Library": ["main", "main library", "orange room", "media commons", "the orange room"],
+  "Main Library": ["main", "main library", "library"],
   "Chemistry Annex": ["chem annex", "chemistry annex"],
   "Henry Administration Bldg": ["hab", "henry"],
   "Wohlers Hall": ["wohlers"],
@@ -39,7 +39,7 @@ export const BUILDING_ALIASES: Record<string, string[]> = {
   "Burrill Hall": ["burrill"],
   "Bevier Hall": ["bevier"],
   "Armory": ["armory"],
-  "Art and Design Building": ["art & design", "art and design", "art"],
+  "Art and Design Building": ["art & design", "art and design"],
   "Architecture Building": ["arch", "architecture"],
   "Psychology Building": ["psych", "psychology"],
   "Newmark Civil Engineering Bldg": ["newmark", "cee", "civil"],
@@ -49,33 +49,9 @@ export const BUILDING_ALIASES: Record<string, string[]> = {
 };
 
 export interface SearchResultRoom {
-  type: "room";
   roomNumber: string;
-  facilityId: string;
-  facilityName: string;
-  facilityType: FacilityType;
   room: FacilityRoom;
   facility: Facility;
-  score: number;
-  matchHighlight?: string;
-}
-
-export interface SearchResultBuilding {
-  type: "building";
-  facilityId: string;
-  facilityName: string;
-  facilityType: FacilityType;
-  facility: Facility;
-  score: number;
-  availableRoomsCount: number;
-  totalRoomsCount: number;
-  matchingRooms: SearchResultRoom[];
-}
-
-export interface SearchResultsData {
-  buildings: SearchResultBuilding[];
-  rooms: SearchResultRoom[];
-  totalCount: number;
 }
 
 /**
@@ -107,6 +83,20 @@ export const getBuildingAliases = (buildingName: string): string[] => {
   return Array.from(aliases);
 };
 
+const uf = new uFuzzy({ intraMode: 1, intraIns: 1 });
+
+const findRankedMatches = (haystack: string[], query: string): number[] => {
+  const [idxs, info, order] = uf.search(
+    haystack,
+    query,
+    2,
+    Number.POSITIVE_INFINITY,
+  );
+
+  if (!idxs || idxs.length === 0) return [];
+  return info && order ? order.map((index) => info.idx[index]) : idxs;
+};
+
 const getStatusRank = (status: RoomStatus): number => {
   switch (status) {
     case RoomStatus.AVAILABLE:
@@ -126,366 +116,119 @@ const getStatusRank = (status: RoomStatus): number => {
 };
 
 /**
- * Searches across facilities (buildings) and rooms.
+ * Filters and searches facilities (e.g. for building favorites dialog).
+ */
+export const searchFacilities = (facilities: Facility[], searchTerm: string): Facility[] => {
+  const query = searchTerm.trim();
+  if (!query) return facilities;
+
+  const haystack = facilities.map(
+    (facility) => `${facility.name} ${getBuildingAliases(facility.name).join(" ")}`
+  );
+  return findRankedMatches(haystack, query).map((index) => facilities[index]);
+};
+
+/**
+ * Searches across rooms in facilities using uFuzzy.
  */
 export const performSearch = (
   facilities: Facility[],
   searchTerm: string,
   filterCriteria: FilterCriteria = {},
   hasActiveFilters: boolean = false,
-): SearchResultsData => {
+): SearchResultRoom[] => {
   const query = searchTerm.trim().toLowerCase();
-  if (!query) {
-    return { buildings: [], rooms: [], totalCount: 0 };
-  }
+  if (!query) return [];
 
   const queryTokens = query.split(/\s+/).filter(Boolean);
-  const cleanTokens = queryTokens.filter(
-    (t) => !["room", "rm", "bldg", "building"].includes(t),
-  );
-  const effectiveTokens = cleanTokens.length > 0 ? cleanTokens : queryTokens;
 
-  const buildingResults: SearchResultBuilding[] = [];
-
-  // Prepare searchable items
-  interface RoomSearchItem {
+  interface RoomIndexItem {
     roomNumber: string;
-    facilityId: string;
-    facilityName: string;
-    facilityType: FacilityType;
     room: FacilityRoom;
     facility: Facility;
     aliases: string[];
-    courseInfo: string;
-    groupingInfo: string;
     searchableString: string;
   }
 
-  const roomItems: RoomSearchItem[] = [];
-  const toSearchResultRoom = (item: RoomSearchItem): SearchResultRoom => ({
-    type: "room",
-    roomNumber: item.roomNumber,
-    facilityId: item.facilityId,
-    facilityName: item.facilityName,
-    facilityType: item.facilityType,
-    room: item.room,
-    facility: item.facility,
-    score: 0.5,
-  });
+  const roomIndexItems: RoomIndexItem[] = [];
 
   facilities.forEach((facility) => {
     const aliases = getBuildingAliases(facility.name);
-    const facilityNameLower = facility.name.toLowerCase();
 
-    // 1. Evaluate Building Match
-    let buildingScore = 0;
-
-    // Check exact or substring matches in building name or aliases
-    if (facilityNameLower === query || aliases.includes(query)) {
-      buildingScore = 1.0;
-    } else if (
-      facilityNameLower.startsWith(query) ||
-      aliases.some((a) => a.startsWith(query))
-    ) {
-      buildingScore = 0.92;
-    } else if (
-      facilityNameLower.includes(query) ||
-      aliases.some((a) => a.includes(query))
-    ) {
-      buildingScore = 0.85;
-    } else {
-      // Check token-level matches
-      const matchedTokens = effectiveTokens.filter(
-        (token) =>
-          facilityNameLower.includes(token) ||
-          aliases.some((a) => a.includes(token) || token.includes(a)),
-      );
-      if (matchedTokens.length === effectiveTokens.length) {
-        buildingScore = 0.8;
-      } else if (matchedTokens.length > 0) {
-        buildingScore = 0.4 + 0.35 * (matchedTokens.length / effectiveTokens.length);
-      }
-    }
-
-    // Calculate room counts with filters
-    const availableRoomsCount = Object.values(facility.rooms).filter((room) => {
-      const isAvail =
-        room.status === RoomStatus.AVAILABLE ||
-        room.status === RoomStatus.PASSING_PERIOD;
-      return hasActiveFilters ? isAvail && isRoomAvailable(room, filterCriteria) : isAvail;
-    }).length;
-
-    const totalRoomsCount = facility.roomCounts?.total ?? Object.keys(facility.rooms).length;
-
-    // 2. Prepare Room Items
     Object.entries(facility.rooms).forEach(([roomNumber, room]) => {
-      // If active filters are set, skip rooms that don't match availability criteria
       if (hasActiveFilters && !isRoomAvailable(room, filterCriteria)) {
         return;
       }
 
-      let courseInfo = "";
-      let groupingInfo = "";
-
-      if (room.type === "academic") {
-        const acad = room as AcademicRoom;
-        if (acad.currentClass) {
-          courseInfo += ` ${acad.currentClass.course} ${acad.currentClass.title}`;
-        }
-        if (acad.nextClass) {
-          courseInfo += ` ${acad.nextClass.course} ${acad.nextClass.title}`;
-        }
-      } else if (room.type === "library") {
-        const lib = room as LibraryRoom;
-        if ((lib as any).grouping) {
-          groupingInfo += ` ${(lib as any).grouping}`;
-        }
-      }
-
       const searchableString = `${facility.name} ${aliases.join(
         " ",
-      )} ${roomNumber} room ${roomNumber} ${courseInfo} ${groupingInfo}`.toLowerCase();
+      )} ${roomNumber} room ${roomNumber}`.toLowerCase();
 
-      roomItems.push({
+      roomIndexItems.push({
         roomNumber,
-        facilityId: facility.id,
-        facilityName: facility.name,
-        facilityType: facility.type,
         room,
         facility,
         aliases,
-        courseInfo: courseInfo.toLowerCase(),
-        groupingInfo: groupingInfo.toLowerCase(),
         searchableString,
       });
     });
-
-    // Do not return a building that has no rooms matching the active
-    // availability filters. Otherwise its card falls back to rendering all
-    // facility rooms, including rooms that were filtered out.
-    if (buildingScore >= 0.4 && (!hasActiveFilters || availableRoomsCount > 0)) {
-      buildingResults.push({
-        type: "building",
-        facilityId: facility.id,
-        facilityName: facility.name,
-        facilityType: facility.type,
-        facility,
-        score: buildingScore,
-        availableRoomsCount,
-        totalRoomsCount,
-        matchingRooms: [],
-      });
-    }
   });
 
-  // 3. Score Rooms
-  const scoredRoomsMap = new Map<string, SearchResultRoom>();
+  if (roomIndexItems.length === 0) return [];
 
-  roomItems.forEach((item) => {
-    const roomNumLower = item.roomNumber.toLowerCase();
-    const facilityNameLower = item.facilityName.toLowerCase();
-    let score = 0;
-    let highlight = "";
+  const haystack = roomIndexItems.map((item) => item.searchableString);
+  const matchedIndices = findRankedMatches(haystack, query);
+  if (matchedIndices.length === 0) return [];
 
-    // A. Direct room number exact match (e.g., query "1404" -> room "1404")
-    if (roomNumLower === query || `room ${roomNumLower}` === query) {
-      score = 1.0;
-      highlight = `Room ${item.roomNumber}`;
-    }
-    // B. Multi-token room + building combined query (e.g., "siebel 1404", "cif 0027", "grainger 405")
-    else if (effectiveTokens.length >= 2) {
-      const roomNumMatched = effectiveTokens.some(
-        (t) => t === roomNumLower || roomNumLower.includes(t) || t.includes(roomNumLower),
-      );
-      const buildingMatched = effectiveTokens.some(
+  const getMatchPriority = (item: RoomIndexItem): number => {
+    const r = item.roomNumber.toLowerCase();
+    const facilityNameLower = item.facility.name.toLowerCase();
+
+    // 1. Compound building + room match (e.g. "siebel 1404")
+    if (queryTokens.length >= 2) {
+      const roomMatched = queryTokens.includes(r);
+      const buildingMatched = queryTokens.some(
         (t) =>
           facilityNameLower.includes(t) ||
           item.aliases.some((a) => a.includes(t) || t.includes(a)),
       );
-
-      if (roomNumMatched && buildingMatched) {
-        score = 0.98;
-        highlight = `${item.facilityName} - Room ${item.roomNumber}`;
-      } else if (roomNumMatched) {
-        score = 0.85;
-      } else if (buildingMatched) {
-        score = 0.6;
+      if (roomMatched && buildingMatched) {
+        return 2;
       }
     }
-    // C. Room number starts with query or contains query (e.g., "140" -> "1404")
-    else if (roomNumLower.startsWith(query)) {
-      score = 0.92;
-    } else if (roomNumLower.includes(query)) {
-      score = 0.82;
-    }
-    // D. Building name match (e.g., user searched "siebel" -> include rooms in Siebel)
-    else if (
-      facilityNameLower.includes(query) ||
-      item.aliases.some((a) => a.includes(query))
-    ) {
-      score = 0.65;
-    }
-    // E. Course info or grouping info match (e.g., "cs 225", "orange room")
-    else if (item.courseInfo.includes(query)) {
-      score = 0.9;
-      highlight = "Course match";
-    } else if (item.groupingInfo.includes(query)) {
-      score = 0.88;
-      highlight = "Location match";
+
+    // 2. Direct room match (e.g. "1404" or "room 1404")
+    if (r === query || `room ${r}` === query || queryTokens.includes(r)) {
+      return 1;
     }
 
-    // Boost score slightly if room is available
-    if (
-      item.room.status === RoomStatus.AVAILABLE ||
-      item.room.status === RoomStatus.PASSING_PERIOD
-    ) {
-      score += 0.03;
-    }
+    return 0;
+  };
 
-    if (score >= 0.5) {
-      const key = `${item.facilityId}-${item.roomNumber}`;
-      scoredRoomsMap.set(key, {
-        type: "room",
-        roomNumber: item.roomNumber,
-        facilityId: item.facilityId,
-        facilityName: item.facilityName,
-        facilityType: item.facilityType,
-        room: item.room,
-        facility: item.facility,
-        score,
-        matchHighlight: highlight,
-      });
-    }
+  const matchedRooms = matchedIndices.map((idx, rank) => {
+    const item = roomIndexItems[idx];
+    return {
+      item,
+      uFuzzyRank: rank,
+      priority: getMatchPriority(item),
+    };
   });
 
-  // 4. Fallback Fuzzy Search with Fuse.js for typos if few direct results
-  if (scoredRoomsMap.size < 5) {
-    const fuse = new Fuse(roomItems, {
-      keys: [
-        { name: "roomNumber", weight: 0.6 },
-        { name: "facilityName", weight: 0.25 },
-        { name: "aliases", weight: 0.2 },
-        { name: "courseInfo", weight: 0.2 },
-      ],
-      threshold: 0.4,
-      ignoreLocation: true,
-      minMatchCharLength: 2,
-    });
+  matchedRooms.sort((a, b) => {
+    // 1. Query specificity priority (compound match > exact room match > broad match)
+    if (a.priority !== b.priority) return b.priority - a.priority;
 
-    const fuseResults = fuse.search(query);
-    fuseResults.forEach((res) => {
-      const item = res.item;
-      const key = `${item.facilityId}-${item.roomNumber}`;
-      if (!scoredRoomsMap.has(key)) {
-        const fuzzyScore = Math.max(0.45, 1 - (res.score ?? 0.5) * 0.7);
-        scoredRoomsMap.set(key, {
-          type: "room",
-          roomNumber: item.roomNumber,
-          facilityId: item.facilityId,
-          facilityName: item.facilityName,
-          facilityType: item.facilityType,
-          room: item.room,
-          facility: item.facility,
-          score: fuzzyScore,
-        });
-      }
-    });
-  }
-
-  // 5. Fallback Fuzzy Search for Buildings if few direct building results
-  if (buildingResults.length < 2) {
-    const fuseBuildings = new Fuse(facilities, {
-      keys: [
-        { name: "name", weight: 0.7 },
-        { name: "id", weight: 0.3 },
-      ],
-      threshold: 0.4,
-      ignoreLocation: true,
-      minMatchCharLength: 2,
-    });
-
-    const fuseBuildingResults = fuseBuildings.search(query);
-    fuseBuildingResults.forEach((res) => {
-      const facility = res.item;
-      if (!buildingResults.some((b) => b.facilityId === facility.id)) {
-        const availableRoomsCount = Object.values(facility.rooms).filter((room) => {
-          const isAvail =
-            room.status === RoomStatus.AVAILABLE ||
-            room.status === RoomStatus.PASSING_PERIOD;
-          return hasActiveFilters ? isAvail && isRoomAvailable(room, filterCriteria) : isAvail;
-        }).length;
-        const totalRoomsCount = facility.roomCounts?.total ?? Object.keys(facility.rooms).length;
-
-        if (!hasActiveFilters || availableRoomsCount > 0) {
-          buildingResults.push({
-            type: "building",
-            facilityId: facility.id,
-            facilityName: facility.name,
-            facilityType: facility.type,
-            facility,
-            score: Math.max(0.45, 1 - (res.score ?? 0.5) * 0.7),
-            availableRoomsCount,
-            totalRoomsCount,
-            matchingRooms: [],
-          });
-        }
-      }
-    });
-  }
-
-  // Convert room map to array and sort
-  const allRooms = Array.from(scoredRoomsMap.values()).sort((a, b) => {
-    // Primary: Score
-    if (Math.abs(b.score - a.score) > 0.08) {
-      return b.score - a.score;
-    }
-    // Secondary: Status Rank (Available first)
-    const rankDiff = getStatusRank(b.room.status) - getStatusRank(a.room.status);
+    // 2. Room availability status (Available / Passing Period > Opening Soon > Occupied > Closed)
+    const rankDiff = getStatusRank(b.item.room.status) - getStatusRank(a.item.room.status);
     if (rankDiff !== 0) return rankDiff;
 
-    // Tertiary: Room Number alphanumeric sort
-    return a.roomNumber.localeCompare(b.roomNumber, undefined, {
-      numeric: true,
-      sensitivity: "base",
-    });
+    // 3. uFuzzy relevance rank
+    return a.uFuzzyRank - b.uFuzzyRank;
   });
 
-  // Sort building results
-  buildingResults.sort((a, b) => {
-    if (Math.abs(b.score - a.score) > 0.1) {
-      return b.score - a.score;
-    }
-    if (a.facility.isOpen !== b.facility.isOpen) {
-      return a.facility.isOpen ? -1 : 1;
-    }
-    if (b.availableRoomsCount !== a.availableRoomsCount) {
-      return b.availableRoomsCount - a.availableRoomsCount;
-    }
-    return a.facilityName.localeCompare(b.facilityName);
-  });
-
-  // Keep a filtered room fallback for building cards. The room fuzzy search
-  // can be skipped once enough direct room matches exist, but a fuzzy building
-  // result still needs rooms that satisfy the active availability filters.
-  const eligibleRoomsByFacility = new Map<string, SearchResultRoom[]>();
-  roomItems.forEach((item) => {
-    const rooms = eligibleRoomsByFacility.get(item.facilityId) ?? [];
-    rooms.push(toSearchResultRoom(item));
-    eligibleRoomsByFacility.set(item.facilityId, rooms);
-  });
-
-  // Attach matching rooms to building results for rich preview
-  buildingResults.forEach((b) => {
-    const matchingRooms = allRooms.filter((r) => r.facilityId === b.facilityId);
-    b.matchingRooms =
-      matchingRooms.length > 0 || !hasActiveFilters
-        ? matchingRooms
-        : eligibleRoomsByFacility.get(b.facilityId) ?? [];
-  });
-
-  return {
-    buildings: buildingResults,
-    rooms: allRooms,
-    totalCount: buildingResults.length + allRooms.length,
-  };
+  return matchedRooms.map(({ item }) => ({
+    roomNumber: item.roomNumber,
+    room: item.room,
+    facility: item.facility,
+  }));
 };
