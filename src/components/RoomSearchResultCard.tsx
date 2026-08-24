@@ -28,7 +28,8 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
 
-  const { room, facility, roomNumber, facilityType } = roomResult;
+  const { room, facility, roomNumber } = roomResult;
+  const facilityType = facility.type;
   const isAcademic = facilityType === FacilityType.ACADEMIC;
   const academicRoom = isAcademic ? (room as AcademicRoom) : null;
   const libraryRoom = !isAcademic ? (room as LibraryRoom) : null;

@@ -36,7 +36,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
     return Object.values(facilityData.facilities);
   }, [facilityData]);
 
-  const searchResults = useMemo(() => {
+  const rooms = useMemo(() => {
     return performSearch(
       facilitiesList,
       searchTerm,
@@ -45,11 +45,9 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
     );
   }, [facilitiesList, searchTerm, filterCriteria, hasActiveFilters]);
 
-  const { rooms, totalCount } = searchResults;
-
   const isDataIncomplete = isLoading || isLibraryLoading;
 
-  if (isDataIncomplete && (facilitiesList.length === 0 || totalCount === 0)) {
+  if (isDataIncomplete && (facilitiesList.length === 0 || rooms.length === 0)) {
     return (
       <div
         className="px-3 md:px-4 py-3 space-y-3.5"
@@ -97,8 +95,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Search className="w-3.5 h-3.5 text-muted-foreground" />
             <span>
-              <strong className="text-foreground font-semibold">{totalCount}</strong>{" "}
-              {totalCount === 1 ? "spot" : "spots"} found for &ldquo;{searchTerm}&rdquo;
+              <strong className="text-foreground font-semibold">{rooms.length}</strong>{" "}
+              {rooms.length === 1 ? "spot" : "spots"} found for &ldquo;{searchTerm}&rdquo;
             </span>
             {isLibraryLoading && (
               <span className="text-[11px] text-muted-foreground/80 pl-1">
@@ -136,7 +134,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
       </div>
 
       {/* Results List */}
-      {totalCount === 0 ? (
+      {rooms.length === 0 ? (
         <div className="py-8 text-center space-y-3">
           <div className="w-10 h-10 rounded-full bg-muted/60 flex items-center justify-center mx-auto text-muted-foreground">
             <Search className="w-5 h-5" />
@@ -175,7 +173,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
         <div className="space-y-2.5">
           {rooms.map((roomResult) => (
             <RoomSearchResultCard
-              key={`room-${roomResult.facilityId}-${roomResult.roomNumber}`}
+              key={`room-${roomResult.facility.id}-${roomResult.roomNumber}`}
               roomResult={roomResult}
             />
           ))}

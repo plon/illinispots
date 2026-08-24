@@ -68,7 +68,6 @@ export interface LibraryRoom extends BaseFacilityRoom {
   url: string;
   thumbnail: string;
   slots: TimeSlot[];
-  grouping?: string;
 }
 
 // Discriminated union for FacilityRoom

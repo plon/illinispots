@@ -69,7 +69,6 @@ const mockFacilities: Facility[] = [
         url: "",
         thumbnail: "",
         slots: [],
-        grouping: "Orange Room",
       },
       "Media Commons": {
         type: "library",
@@ -77,7 +76,6 @@ const mockFacilities: Facility[] = [
         url: "",
         thumbnail: "",
         slots: [],
-        grouping: "Media Commons",
       },
     },
   },
@@ -85,72 +83,81 @@ const mockFacilities: Facility[] = [
 
 describe("searchUtils performSearch with uFuzzy", () => {
   test("returns empty list for empty query or whitespace", () => {
-    expect(performSearch(mockFacilities, "").rooms).toHaveLength(0);
-    expect(performSearch(mockFacilities, "   ").rooms).toHaveLength(0);
+    expect(performSearch(mockFacilities, "")).toHaveLength(0);
+    expect(performSearch(mockFacilities, "   ")).toHaveLength(0);
   });
 
   test("finds all rooms in a building when searching by building alias", () => {
-    const result = performSearch(mockFacilities, "siebel");
-    expect(result.rooms.length).toBe(3);
-    expect(result.totalCount).toBe(3);
+    const rooms = performSearch(mockFacilities, "siebel");
+    expect(rooms).toHaveLength(3);
     // Available rooms should be prioritized before occupied rooms
-    expect(result.rooms[0].roomNumber).toBe("0216");
-    expect(result.rooms[1].roomNumber).toBe("2405");
-    expect(result.rooms[2].roomNumber).toBe("1404");
+    expect(rooms[0].roomNumber).toBe("0216");
+    expect(rooms[1].roomNumber).toBe("2405");
+    expect(rooms[2].roomNumber).toBe("1404");
   });
 
   test("matches building acronyms like CIF", () => {
-    const result = performSearch(mockFacilities, "cif");
-    expect(result.rooms.length).toBe(2);
-    expect(result.rooms.map((r) => r.roomNumber)).toContain("0027");
-    expect(result.rooms.map((r) => r.roomNumber)).toContain("1404");
+    const rooms = performSearch(mockFacilities, "cif");
+    expect(rooms).toHaveLength(2);
+    expect(rooms.map((room) => room.roomNumber)).toContain("0027");
+    expect(rooms.map((room) => room.roomNumber)).toContain("1404");
   });
 
   test("handles compound query of building and room number", () => {
-    const result = performSearch(mockFacilities, "siebel 1404");
-    expect(result.rooms.length).toBe(1);
-    expect(result.rooms[0].facilityId).toBe("siebel-cs");
-    expect(result.rooms[0].roomNumber).toBe("1404");
-    expect(result.rooms[0].matchHighlight).toBe("Siebel Center for Comp Sci - Room 1404");
+    const rooms = performSearch(mockFacilities, "siebel 1404");
+    expect(rooms).toHaveLength(1);
+    expect(rooms[0].facility.id).toBe("siebel-cs");
+    expect(rooms[0].roomNumber).toBe("1404");
+    expect(rooms[0].matchHighlight).toBe("Siebel Center for Comp Sci - Room 1404");
   });
 
   test("handles out of order compound query", () => {
-    const result = performSearch(mockFacilities, "0027 cif");
-    expect(result.rooms.length).toBe(1);
-    expect(result.rooms[0].facilityId).toBe("cif");
-    expect(result.rooms[0].roomNumber).toBe("0027");
+    const rooms = performSearch(mockFacilities, "0027 cif");
+    expect(rooms).toHaveLength(1);
+    expect(rooms[0].facility.id).toBe("cif");
+    expect(rooms[0].roomNumber).toBe("0027");
   });
 
   test("matches exact room number across buildings", () => {
-    const result = performSearch(mockFacilities, "1404");
-    expect(result.rooms.length).toBe(2);
-    const facilityIds = result.rooms.map((r) => r.facilityId);
+    const rooms = performSearch(mockFacilities, "1404");
+    expect(rooms).toHaveLength(2);
+    const facilityIds = rooms.map((room) => room.facility.id);
     expect(facilityIds).toContain("cif");
     expect(facilityIds).toContain("siebel-cs");
   });
 
   test("tolerates minor typos in building name", () => {
-    const result = performSearch(mockFacilities, "sibel");
-    expect(result.rooms.length).toBe(3);
-    expect(result.rooms.every((r) => r.facilityId === "siebel-cs")).toBe(true);
+    const rooms = performSearch(mockFacilities, "sibel");
+    expect(rooms).toHaveLength(3);
+    expect(rooms.every((room) => room.facility.id === "siebel-cs")).toBe(true);
   });
 
-  test("matches library space groupings like Orange Room", () => {
-    const result = performSearch(mockFacilities, "orange room");
-    expect(result.rooms.length).toBe(1);
-    expect(result.rooms[0].roomNumber).toBe("Orange Room");
+  test("ranks more than 1,000 matches by relevance", () => {
+    const rooms = Object.fromEntries(
+      Array.from({ length: 1_001 }, (_, index) => [
+        index === 1_000 ? "Hall West" : `West Hall ${index}`,
+        {
+          type: "academic" as const,
+          status: RoomStatus.AVAILABLE,
+          passingPeriod: false,
+        },
+      ]),
+    );
+    const facility = { ...mockFacilities[0], rooms };
+
+    expect(performSearch([facility], "hall west")[0].roomNumber).toBe("Hall West");
   });
 
   test("respects active availability filter", () => {
-    const result = performSearch(
+    const rooms = performSearch(
       mockFacilities,
       "siebel",
       { minDuration: 90 },
       true
     );
     // Only 0216 has availableFor >= 90
-    expect(result.rooms.length).toBe(1);
-    expect(result.rooms[0].roomNumber).toBe("0216");
+    expect(rooms).toHaveLength(1);
+    expect(rooms[0].roomNumber).toBe("0216");
   });
 });
 

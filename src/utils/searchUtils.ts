@@ -1,4 +1,4 @@
-import { Facility, FacilityRoom, FacilityType, RoomStatus } from "@/types";
+import { Facility, FacilityRoom, RoomStatus } from "@/types";
 import { FilterCriteria, isRoomAvailable } from "@/utils/filterUtils";
 import uFuzzy from "@leeoniya/ufuzzy";
 
@@ -50,17 +50,9 @@ export const BUILDING_ALIASES: Record<string, string[]> = {
 
 export interface SearchResultRoom {
   roomNumber: string;
-  facilityId: string;
-  facilityName: string;
-  facilityType: FacilityType;
   room: FacilityRoom;
   facility: Facility;
   matchHighlight?: string;
-}
-
-export interface SearchResultsData {
-  rooms: SearchResultRoom[];
-  totalCount: number;
 }
 
 /**
@@ -94,6 +86,18 @@ export const getBuildingAliases = (buildingName: string): string[] => {
 
 const uf = new uFuzzy({ intraMode: 1, intraIns: 1 });
 
+const findRankedMatches = (haystack: string[], query: string): number[] => {
+  const [idxs, info, order] = uf.search(
+    haystack,
+    query,
+    2,
+    Number.POSITIVE_INFINITY,
+  );
+
+  if (!idxs || idxs.length === 0) return [];
+  return info && order ? order.map((index) => info.idx[index]) : idxs;
+};
+
 const getStatusRank = (status: RoomStatus): number => {
   switch (status) {
     case RoomStatus.AVAILABLE:
@@ -122,12 +126,7 @@ export const searchFacilities = (facilities: Facility[], searchTerm: string): Fa
   const haystack = facilities.map(
     (facility) => `${facility.name} ${getBuildingAliases(facility.name).join(" ")}`
   );
-  const [idxs, info, order] = uf.search(haystack, query, 2);
-  if (!idxs || idxs.length === 0) return [];
-  if (order && info) {
-    return order.map((i) => facilities[info.idx[i]]);
-  }
-  return idxs.map((i) => facilities[i]);
+  return findRankedMatches(haystack, query).map((index) => facilities[index]);
 };
 
 /**
@@ -138,19 +137,14 @@ export const performSearch = (
   searchTerm: string,
   filterCriteria: FilterCriteria = {},
   hasActiveFilters: boolean = false,
-): SearchResultsData => {
+): SearchResultRoom[] => {
   const query = searchTerm.trim().toLowerCase();
-  if (!query) {
-    return { rooms: [], totalCount: 0 };
-  }
+  if (!query) return [];
 
   const queryTokens = query.split(/\s+/).filter(Boolean);
 
   interface RoomIndexItem {
     roomNumber: string;
-    facilityId: string;
-    facilityName: string;
-    facilityType: FacilityType;
     room: FacilityRoom;
     facility: Facility;
     aliases: string[];
@@ -167,16 +161,12 @@ export const performSearch = (
         return;
       }
 
-      const groupingInfo = room.type === "library" && room.grouping ? ` ${room.grouping}` : "";
       const searchableString = `${facility.name} ${aliases.join(
         " ",
-      )} ${roomNumber} room ${roomNumber}${groupingInfo}`.toLowerCase();
+      )} ${roomNumber} room ${roomNumber}`.toLowerCase();
 
       roomIndexItems.push({
         roomNumber,
-        facilityId: facility.id,
-        facilityName: facility.name,
-        facilityType: facility.type,
         room,
         facility,
         aliases,
@@ -185,26 +175,19 @@ export const performSearch = (
     });
   });
 
-  if (roomIndexItems.length === 0) {
-    return { rooms: [], totalCount: 0 };
-  }
+  if (roomIndexItems.length === 0) return [];
 
   const haystack = roomIndexItems.map((item) => item.searchableString);
-  const [idxs, info, order] = uf.search(haystack, query, 2);
-
-  if (!idxs || idxs.length === 0) {
-    return { rooms: [], totalCount: 0 };
-  }
-
-  const matchedIndices = order && info ? order.map((i) => info.idx[i]) : idxs;
+  const matchedIndices = findRankedMatches(haystack, query);
+  if (matchedIndices.length === 0) return [];
 
   const getMatchPriority = (item: RoomIndexItem): { priority: number; highlight?: string } => {
     const r = item.roomNumber.toLowerCase();
-    const facilityNameLower = item.facilityName.toLowerCase();
+    const facilityNameLower = item.facility.name.toLowerCase();
 
     // 1. Compound building + room match (e.g. "siebel 1404")
     if (queryTokens.length >= 2) {
-      const roomMatched = queryTokens.includes(r) || query.includes(r);
+      const roomMatched = queryTokens.includes(r);
       const buildingMatched = queryTokens.some(
         (t) =>
           facilityNameLower.includes(t) ||
@@ -213,7 +196,7 @@ export const performSearch = (
       if (roomMatched && buildingMatched) {
         return {
           priority: 2,
-          highlight: `${item.facilityName} - Room ${item.roomNumber}`,
+          highlight: `${item.facility.name} - Room ${item.roomNumber}`,
         };
       }
     }
@@ -249,27 +232,13 @@ export const performSearch = (
     if (rankDiff !== 0) return rankDiff;
 
     // 3. uFuzzy relevance rank
-    if (a.uFuzzyRank !== b.uFuzzyRank) return a.uFuzzyRank - b.uFuzzyRank;
-
-    // 4. Alphanumeric room number sort
-    return a.item.roomNumber.localeCompare(b.item.roomNumber, undefined, {
-      numeric: true,
-      sensitivity: "base",
-    });
+    return a.uFuzzyRank - b.uFuzzyRank;
   });
 
-  const rooms: SearchResultRoom[] = matchedRooms.map(({ item, highlight }) => ({
+  return matchedRooms.map(({ item, highlight }) => ({
     roomNumber: item.roomNumber,
-    facilityId: item.facilityId,
-    facilityName: item.facilityName,
-    facilityType: item.facilityType,
     room: item.room,
     facility: item.facility,
     matchHighlight: highlight,
   }));
-
-  return {
-    rooms,
-    totalCount: rooms.length,
-  };
 };
