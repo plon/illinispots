@@ -1,7 +1,8 @@
 const SECONDS_PER_DAY = 24 * 60 * 60;
 const CLOCK_TIME_PATTERN = /^(\d{2}):(\d{2})(?::(\d{2}))?$/;
 
-function parseClockTimeSeconds(time: string): number | null {
+/** Parse a wall-clock value, including 24:00 as an explicit end-of-day boundary. */
+export function parseClockTimeSeconds(time: string): number | null {
   const match = CLOCK_TIME_PATTERN.exec(time);
   if (!match) return null;
 
@@ -12,6 +13,25 @@ function parseClockTimeSeconds(time: string): number | null {
   if ((!isEndOfDay && hour > 23) || minute > 59 || second > 59) return null;
 
   return hour * 60 * 60 + minute * 60 + second;
+}
+
+/** Format a parsed clock value without losing the explicit 24:00 boundary. */
+export function formatClockTimeSeconds(totalSeconds: number): string {
+  if (
+    !Number.isInteger(totalSeconds) ||
+    totalSeconds < 0 ||
+    totalSeconds > SECONDS_PER_DAY
+  ) {
+    return "";
+  }
+
+  const hour = Math.floor(totalSeconds / 3600);
+  const minute = Math.floor((totalSeconds % 3600) / 60);
+  const second = totalSeconds % 60;
+
+  return [hour, minute, second]
+    .map((part) => part.toString().padStart(2, "0"))
+    .join(":");
 }
 
 /** Calculate an integer clock duration, wrapping an end before start at midnight. */

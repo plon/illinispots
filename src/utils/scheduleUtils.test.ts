@@ -101,7 +101,7 @@ describe("processScheduleIntoHourlyBlocks", () => {
       },
       {
         start: "23:00:00",
-        end: "00:00:00",
+        end: "24:00:00",
         sections: [
           {
             start: "23:00:00",
@@ -111,7 +111,7 @@ describe("processScheduleIntoHourlyBlocks", () => {
           },
           {
             start: "23:30:00",
-            end: "00:00:00",
+            end: "24:00:00",
             status: "class",
             details: null,
           },

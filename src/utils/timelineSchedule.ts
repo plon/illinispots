@@ -1,11 +1,11 @@
 import type { RoomScheduleBlock } from "@/types";
+import { parseClockTimeSeconds } from "@/utils/clockTime";
 
 export const TIMELINE_HOUR_WIDTH_PX = 72;
 
 const DEFAULT_START_MINUTES = 8 * 60;
 const DEFAULT_END_MINUTES = 22 * 60;
 const MINUTES_PER_HOUR = 60;
-const TIME_PATTERN = /^(\d{2}):(\d{2})(?::(\d{2}))?$/;
 const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const DAY_MS = 86_400_000;
 const DAY_LABEL_FORMATTER = new Intl.DateTimeFormat("en-US", {
@@ -96,22 +96,15 @@ function formatCalendarDayLabel(date: Date): string {
 }
 
 export function parseScheduleTime(time: string): number | null {
-  const match = TIME_PATTERN.exec(time);
-  if (!match) return null;
-
-  const hour = Number(match[1]);
-  const minute = Number(match[2]);
-  const second = match[3] === undefined ? 0 : Number(match[3]);
-
-  if (hour > 23 || minute > 59 || second > 59) return null;
-  return hour * MINUTES_PER_HOUR + minute + second / 60;
+  const seconds = parseClockTimeSeconds(time);
+  return seconds === null ? null : seconds / 60;
 }
 
 export function formatScheduleTime(time: string): string {
   const minutes = parseScheduleTime(time);
   if (minutes === null) return time;
 
-  const hour = Math.floor(minutes / MINUTES_PER_HOUR);
+  const hour = Math.floor(minutes / MINUTES_PER_HOUR) % 24;
   const minute = Math.floor(minutes % MINUTES_PER_HOUR);
   const period = hour >= 12 ? "PM" : "AM";
   const displayHour = hour % 12 || 12;

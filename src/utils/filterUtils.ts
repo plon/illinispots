@@ -1,5 +1,6 @@
 import type { FacilityRoom } from "@/types";
 import { RoomStatus } from "@/types";
+import { parseClockTimeSeconds } from "@/utils/clockTime";
 
 const CAMPUS_CLOCK_FORMATTER = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/Chicago",
@@ -34,18 +35,14 @@ function referenceMinutes(now: Date | undefined): number {
     : campusMinutesNow();
 }
 
-function targetMinutes(time: string): number {
-  const separator = time.indexOf(":");
-  return Number(time.slice(0, separator)) * 60 + Number(time.slice(separator + 1));
-}
-
-function minutesUntil(currentMinutes: number, time: string): number {
-  const target = targetMinutes(time);
+function minutesUntil(currentMinutes: number, time: string): number | null {
+  const targetSeconds = parseClockTimeSeconds(time);
+  if (targetSeconds === null) return null;
 
   // Moment's integer-unit diff truncates toward zero. Milliseconds cancel
   // because its target was cloned from the reference time before setting
   // seconds to zero, so intentionally do not include them here.
-  return Math.trunc(target - currentMinutes);
+  return Math.trunc(targetSeconds / 60 - currentMinutes);
 }
 
 export type RoomAvailabilityPredicate = (room: FacilityRoom) => boolean;
@@ -70,6 +67,10 @@ export const createRoomAvailabilityPredicate = (
     ? minutesUntil(currentMinutes, criteria.freeUntil)
     : undefined;
   const minimumDuration = criteria.minDuration;
+
+  if (minutesUntilStart === null || minutesUntilFree === null) {
+    return () => false;
+  }
 
   return (room: FacilityRoom): boolean => {
     if (

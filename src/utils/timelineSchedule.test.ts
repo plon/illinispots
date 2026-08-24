@@ -121,7 +121,7 @@ describe("buildTimelineModel", () => {
 describe("timeline time formatting", () => {
   it("validates schedule times", () => {
     expect(parseScheduleTime("09:30:30")).toBe(570.5);
-    expect(parseScheduleTime("24:00:00")).toBeNull();
+    expect(parseScheduleTime("24:00:00")).toBe(24 * 60);
     expect(parseScheduleTime("09:90:00")).toBeNull();
     expect(parseScheduleTime("n/a")).toBeNull();
   });
@@ -129,8 +129,10 @@ describe("timeline time formatting", () => {
   it("formats times and durations", () => {
     expect(formatScheduleTime("00:05:00")).toBe("12:05 AM");
     expect(formatScheduleTime("13:30:00")).toBe("1:30 PM");
+    expect(formatScheduleTime("24:00:00")).toBe("12:00 AM");
     expect(formatDuration(80)).toBe("1h 20m");
     expect(getScheduleDurationMinutes("09:00:30", "10:00:00")).toBe(59);
+    expect(getScheduleDurationMinutes("23:00:00", "24:00:00")).toBe(60);
     expect(getScheduleDurationMinutes("10:00:00", "09:00:00")).toBe(0);
   });
 });

@@ -3,40 +3,17 @@ import type {
   HourlyScheduleBlock,
   RoomScheduleBlock,
 } from "@/types";
+import {
+  formatClockTimeSeconds,
+  parseClockTimeSeconds,
+} from "@/utils/clockTime";
 
 const SECONDS_PER_HOUR = 60 * 60;
-const SECONDS_PER_DAY = 24 * SECONDS_PER_HOUR;
-const CLOCK_TIME_PATTERN = /^(\d{2}):(\d{2})(?::(\d{2}))?$/;
 
 interface ParsedScheduleBlock {
   block: RoomScheduleBlock;
   startSeconds: number;
   endSeconds: number;
-}
-
-function parseClockTime(time: string): number | null {
-  const match = CLOCK_TIME_PATTERN.exec(time);
-  if (!match) return null;
-
-  const hour = Number(match[1]);
-  const minute = Number(match[2]);
-  const second = match[3] === undefined ? 0 : Number(match[3]);
-  const isEndOfDay = hour === 24 && minute === 0 && second === 0;
-  if ((!isEndOfDay && hour > 23) || minute > 59 || second > 59) return null;
-
-  return hour * SECONDS_PER_HOUR + minute * 60 + second;
-}
-
-function formatClockTime(totalSeconds: number): string {
-  const normalizedSeconds =
-    ((totalSeconds % SECONDS_PER_DAY) + SECONDS_PER_DAY) % SECONDS_PER_DAY;
-  const hour = Math.floor(normalizedSeconds / SECONDS_PER_HOUR);
-  const minute = Math.floor((normalizedSeconds % SECONDS_PER_HOUR) / 60);
-  const second = normalizedSeconds % 60;
-
-  return [hour, minute, second]
-    .map((part) => part.toString().padStart(2, "0"))
-    .join(":");
 }
 
 export const SCHEDULE_BLOCK_STYLES = {
@@ -62,16 +39,16 @@ export function processScheduleIntoHourlyBlocks(
 
   const firstBlock = scheduleData[0];
   const lastBlock = scheduleData[scheduleData.length - 1];
-  const firstStartSeconds = parseClockTime(firstBlock.start);
-  const lastEndSeconds = parseClockTime(lastBlock.end);
+  const firstStartSeconds = parseClockTimeSeconds(firstBlock.start);
+  const lastEndSeconds = parseClockTimeSeconds(lastBlock.end);
   if (firstStartSeconds === null || lastEndSeconds === null) return [];
 
   // Parse and sort once. The previous implementation rebuilt timezone-aware
   // Moment instances for every schedule block in every displayed hour.
   const parsedSchedule = scheduleData
     .flatMap((block): ParsedScheduleBlock[] => {
-      const startSeconds = parseClockTime(block.start);
-      const endSeconds = parseClockTime(block.end);
+      const startSeconds = parseClockTimeSeconds(block.start);
+      const endSeconds = parseClockTimeSeconds(block.end);
       return startSeconds === null || endSeconds === null
         ? []
         : [{ block, startSeconds, endSeconds }];
@@ -115,8 +92,8 @@ function createHourlyBlock(
   scheduleData: ParsedScheduleBlock[],
 ): HourlyScheduleBlock {
   const sections: BlockSection[] = [];
-  const blockStartStr = formatClockTime(startSeconds);
-  const blockEndStr = formatClockTime(endSeconds);
+  const blockStartStr = formatClockTimeSeconds(startSeconds);
+  const blockEndStr = formatClockTimeSeconds(endSeconds);
 
   // Find all schedule blocks that overlap with this hourly block
   const overlappingBlocks = scheduleData.filter(
@@ -147,8 +124,8 @@ function createHourlyBlock(
       // If there's a gap before this block, add an available section
       if (adjustedStart > currentSectionStart) {
         sections.push({
-          start: formatClockTime(currentSectionStart),
-          end: formatClockTime(adjustedStart),
+          start: formatClockTimeSeconds(currentSectionStart),
+          end: formatClockTimeSeconds(adjustedStart),
           status: "available",
           details: null,
         });
@@ -156,8 +133,8 @@ function createHourlyBlock(
 
       // Add the current block as a section
       sections.push({
-        start: formatClockTime(adjustedStart),
-        end: formatClockTime(adjustedEnd),
+        start: formatClockTimeSeconds(adjustedStart),
+        end: formatClockTimeSeconds(adjustedEnd),
         status: block.status,
         details: block.details,
       });
@@ -169,7 +146,7 @@ function createHourlyBlock(
     // If there's remaining time after the last block, add an available section
     if (currentSectionStart < endSeconds) {
       sections.push({
-        start: formatClockTime(currentSectionStart),
+        start: formatClockTimeSeconds(currentSectionStart),
         end: blockEndStr,
         status: "available",
         details: null,

@@ -134,7 +134,7 @@ describe("external response contracts", () => {
     expect(schedule[0]).toHaveProperty("ignored", true);
   });
 
-  it("retains detailed Zod failures for malformed fast-path candidates", () => {
+  it("retains detailed Zod failures for malformed responses", () => {
     expect(() =>
       parseAcademicAvailabilityPayload({
         buildings: {

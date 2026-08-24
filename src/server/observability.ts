@@ -3,6 +3,11 @@ import { getServerConfig } from "./config";
 
 type SentrySdk = typeof import("@sentry/hono/bun");
 type SentrySpan = NonNullable<ReturnType<SentrySdk["getActiveSpan"]>>;
+interface AppSpan {
+  addEvent(...args: Parameters<SentrySpan["addEvent"]>): AppSpan;
+  setAttribute(...args: Parameters<SentrySpan["setAttribute"]>): AppSpan;
+  setAttributes(...args: Parameters<SentrySpan["setAttributes"]>): AppSpan;
+}
 type StartSpanOptions = Parameters<SentrySdk["startSpan"]>[0];
 type CaptureExceptionHint = Parameters<SentrySdk["captureException"]>[1];
 type CaptureMessageContext = Parameters<SentrySdk["captureMessage"]>[1];
@@ -18,23 +23,11 @@ const sentrySdk: SentrySdk | undefined = initialConfig.sentryDsn
   ? await import("@sentry/hono/bun")
   : undefined;
 
-const NOOP_SPAN = {
-  spanContext: () => ({
-    traceId: "00000000000000000000000000000000",
-    spanId: "0000000000000000",
-    traceFlags: 0,
-  }),
-  end: () => {},
+const NOOP_SPAN: AppSpan = {
   setAttribute: () => NOOP_SPAN,
   setAttributes: () => NOOP_SPAN,
-  setStatus: () => NOOP_SPAN,
-  updateName: () => NOOP_SPAN,
-  isRecording: () => false,
   addEvent: () => NOOP_SPAN,
-  addLink: () => NOOP_SPAN,
-  addLinks: () => NOOP_SPAN,
-  recordException: () => {},
-} as SentrySpan;
+};
 
 /**
  * Small facade which keeps the SDK out of the no-DSN startup path while
@@ -43,7 +36,7 @@ const NOOP_SPAN = {
 export const Sentry = {
   startSpan<T>(
     options: StartSpanOptions,
-    callback: (span: SentrySpan) => T,
+    callback: (span: AppSpan) => T,
   ): T {
     return sentrySdk
       ? sentrySdk.startSpan(options, callback)
@@ -64,7 +57,7 @@ export const Sentry = {
     return sentrySdk?.captureMessage(message, captureContext) ?? "";
   },
 
-  getActiveSpan(): SentrySpan | undefined {
+  getActiveSpan(): AppSpan | undefined {
     return sentrySdk?.getActiveSpan();
   },
 
