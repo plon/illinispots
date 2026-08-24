@@ -52,7 +52,6 @@ export interface SearchResultRoom {
   roomNumber: string;
   room: FacilityRoom;
   facility: Facility;
-  matchHighlight?: string;
 }
 
 /**
@@ -181,7 +180,7 @@ export const performSearch = (
   const matchedIndices = findRankedMatches(haystack, query);
   if (matchedIndices.length === 0) return [];
 
-  const getMatchPriority = (item: RoomIndexItem): { priority: number; highlight?: string } => {
+  const getMatchPriority = (item: RoomIndexItem): number => {
     const r = item.roomNumber.toLowerCase();
     const facilityNameLower = item.facility.name.toLowerCase();
 
@@ -194,32 +193,24 @@ export const performSearch = (
           item.aliases.some((a) => a.includes(t) || t.includes(a)),
       );
       if (roomMatched && buildingMatched) {
-        return {
-          priority: 2,
-          highlight: `${item.facility.name} - Room ${item.roomNumber}`,
-        };
+        return 2;
       }
     }
 
     // 2. Direct room match (e.g. "1404" or "room 1404")
     if (r === query || `room ${r}` === query || queryTokens.includes(r)) {
-      return {
-        priority: 1,
-        highlight: `Room ${item.roomNumber}`,
-      };
+      return 1;
     }
 
-    return { priority: 0 };
+    return 0;
   };
 
   const matchedRooms = matchedIndices.map((idx, rank) => {
     const item = roomIndexItems[idx];
-    const { priority, highlight } = getMatchPriority(item);
     return {
       item,
       uFuzzyRank: rank,
-      priority,
-      highlight,
+      priority: getMatchPriority(item),
     };
   });
 
@@ -235,10 +226,9 @@ export const performSearch = (
     return a.uFuzzyRank - b.uFuzzyRank;
   });
 
-  return matchedRooms.map(({ item, highlight }) => ({
+  return matchedRooms.map(({ item }) => ({
     roomNumber: item.roomNumber,
     room: item.room,
     facility: item.facility,
-    matchHighlight: highlight,
   }));
 };

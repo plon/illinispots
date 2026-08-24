@@ -108,7 +108,6 @@ describe("searchUtils performSearch with uFuzzy", () => {
     expect(rooms).toHaveLength(1);
     expect(rooms[0].facility.id).toBe("siebel-cs");
     expect(rooms[0].roomNumber).toBe("1404");
-    expect(rooms[0].matchHighlight).toBe("Siebel Center for Comp Sci - Room 1404");
   });
 
   test("handles out of order compound query", () => {
