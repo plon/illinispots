@@ -1,0 +1,80 @@
+name: Deploy Staging
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: fly-deploy-staging-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Fly.io
+    if: (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'deploy:staging')) || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: staging
+      url: https://staging.illinispots.com
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Create GitHub Deployment
+        id: deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TARGET_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          LOG_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          DEPLOY_ID=$(gh api repos/${{ github.repository }}/deployments --input - --jq '.id' <<EOF
+          {
+            "ref": "$TARGET_SHA",
+            "environment": "staging",
+            "description": "Deploying commit ${TARGET_SHA:0:7} to staging",
+            "auto_merge": false,
+            "required_contexts": []
+          }
+          EOF
+          )
+          echo "deployment_id=$DEPLOY_ID" >> "$GITHUB_OUTPUT"
+
+          gh api repos/${{ github.repository }}/deployments/$DEPLOY_ID/statuses \
+            -f state="in_progress" \
+            -f log_url="$LOG_URL" \
+            -f description="Deployment in progress via ${{ github.workflow }} #${{ github.run_number }}" \
+            -f environment_url="https://staging.illinispots.com"
+
+      - name: Set up Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+        with:
+          version: "latest"
+
+      - name: Deploy to Staging
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          flyctl deploy \
+            --config fly.staging.toml \
+            --build-arg SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}"
+
+      - name: Update Deployment Status
+        if: always() && steps.deployment.outputs.deployment_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          STATUS="${{ job.status == 'success' && 'success' || 'failure' }}"
+          LOG_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          gh api repos/${{ github.repository }}/deployments/${{ steps.deployment.outputs.deployment_id }}/statuses \
+            -f state="$STATUS" \
+            -f log_url="$LOG_URL" \
+            -f description="Deployed via ${{ github.workflow }} #${{ github.run_number }}" \
+            -f environment_url="https://staging.illinispots.com" \
+            -f auto_inactive=true
