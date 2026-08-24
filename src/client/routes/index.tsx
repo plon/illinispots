@@ -174,15 +174,8 @@ const IlliniSpotsPage: React.FC = () => {
     let timeoutId: number | undefined;
     let cancelled = false;
 
-    const stopTimer = () => {
-      if (timeoutId !== undefined) {
-        window.clearTimeout(timeoutId);
-        timeoutId = undefined;
-      }
-    };
     const scheduleNextRefresh = () => {
-      stopTimer();
-      if (cancelled || document.visibilityState !== "visible") return;
+      if (cancelled) return;
 
       timeoutId = window.setTimeout(() => {
         timeoutId = undefined;
@@ -191,22 +184,11 @@ const IlliniSpotsPage: React.FC = () => {
         );
       }, LIVE_REFRESH_INTERVAL_MS);
     };
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        void Promise.all([refetchAcademic(), refetchLibrary()]).finally(
-          scheduleNextRefresh,
-        );
-      } else {
-        stopTimer();
-      }
-    };
 
     scheduleNextRefresh();
-    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
       cancelled = true;
-      stopTimer();
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
     };
   }, [isCurrentDateTime, refetchAcademic, refetchLibrary]);
 
