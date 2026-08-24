@@ -10,7 +10,7 @@ export const formatTime = (time: string | undefined): string => {
   const timeWithoutSeconds = time.split(":").slice(0, 2).join(":");
 
   // Validate time format (HH:mm)
-  const timeRegex = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
+  const timeRegex = /^(?:(?:[0-1]?[0-9]|2[0-3]):[0-5][0-9]|24:00)$/;
   if (!timeRegex.test(timeWithoutSeconds)) {
     console.warn(
       `Invalid time format: ${time}. Expected format: HH:mm or HH:mm:ss`,
@@ -19,7 +19,8 @@ export const formatTime = (time: string | undefined): string => {
   }
 
   const [hours, minutes] = timeWithoutSeconds.split(":");
-  const hour = parseInt(hours, 10);
+  const parsedHour = parseInt(hours, 10);
+  const hour = parsedHour === 24 ? 0 : parsedHour;
   const minute = parseInt(minutes, 10);
 
   // Additional validation (though regex should catch most issues)

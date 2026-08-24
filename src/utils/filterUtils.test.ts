@@ -82,7 +82,11 @@ describe("isRoomAvailable", () => {
 
     for (const status of Object.values(RoomStatus)) {
       for (const duration of [undefined, 0, 44, 45, 74, 75, 120]) {
-        const room = academicRoom(status, duration);
+        const room: FacilityRoom = {
+          type: "academic",
+          status,
+          availableFor: duration,
+        };
         expect(matches(room)).toBe(isRoomAvailable(room, criteria));
       }
     }

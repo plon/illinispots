@@ -35,6 +35,28 @@ interface SearchResultsProps {
 type TabType = "all" | "rooms" | "buildings";
 const RESULTS_PAGE_SIZE = 30;
 
+interface ShowMoreButtonProps {
+  label: string;
+  total: number;
+  visibleCount: number;
+  onShowMore: () => void;
+}
+
+function ShowMoreButton({
+  label,
+  total,
+  visibleCount,
+  onShowMore,
+}: ShowMoreButtonProps) {
+  if (total <= visibleCount) return null;
+
+  return (
+    <Button variant="outline" className="w-full" onClick={onShowMore}>
+      Show more {label}
+    </Button>
+  );
+}
+
 export const SearchResults: React.FC<SearchResultsProps> = ({
   facilityData,
   searchTerm,
@@ -269,19 +291,16 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
                         buildingResult={buildingResult}
                       />
                     ))}
-                    {buildings.length > visibleBuildingCount && (
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() =>
-                          setVisibleBuildingCount((count) =>
-                            count + RESULTS_PAGE_SIZE,
-                          )
-                        }
-                      >
-                        Show more buildings
-                      </Button>
-                    )}
+                    <ShowMoreButton
+                      label="buildings"
+                      total={buildings.length}
+                      visibleCount={visibleBuildingCount}
+                      onShowMore={() =>
+                        setVisibleBuildingCount(
+                          (count) => count + RESULTS_PAGE_SIZE,
+                        )
+                      }
+                    />
                   </div>
                 </div>
               )}
@@ -300,19 +319,16 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
                         roomResult={roomResult}
                       />
                     ))}
-                    {rooms.length > visibleRoomCount && (
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() =>
-                          setVisibleRoomCount((count) =>
-                            count + RESULTS_PAGE_SIZE,
-                          )
-                        }
-                      >
-                        Show more rooms
-                      </Button>
-                    )}
+                    <ShowMoreButton
+                      label="rooms"
+                      total={rooms.length}
+                      visibleCount={visibleRoomCount}
+                      onShowMore={() =>
+                        setVisibleRoomCount(
+                          (count) => count + RESULTS_PAGE_SIZE,
+                        )
+                      }
+                    />
                   </div>
                 </div>
               )}
@@ -330,19 +346,16 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
                       roomResult={roomResult}
                     />
                   ))}
-                  {rooms.length > visibleRoomCount && (
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() =>
-                        setVisibleRoomCount((count) =>
-                          count + RESULTS_PAGE_SIZE,
-                        )
-                      }
-                    >
-                      Show more rooms
-                    </Button>
-                  )}
+                  <ShowMoreButton
+                    label="rooms"
+                    total={rooms.length}
+                    visibleCount={visibleRoomCount}
+                    onShowMore={() =>
+                      setVisibleRoomCount(
+                        (count) => count + RESULTS_PAGE_SIZE,
+                      )
+                    }
+                  />
                 </>
               ) : (
                 <p className="text-center text-xs text-muted-foreground py-6">
@@ -363,19 +376,16 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
                       buildingResult={buildingResult}
                     />
                   ))}
-                  {buildings.length > visibleBuildingCount && (
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() =>
-                        setVisibleBuildingCount((count) =>
-                          count + RESULTS_PAGE_SIZE,
-                        )
-                      }
-                    >
-                      Show more buildings
-                    </Button>
-                  )}
+                  <ShowMoreButton
+                    label="buildings"
+                    total={buildings.length}
+                    visibleCount={visibleBuildingCount}
+                    onShowMore={() =>
+                      setVisibleBuildingCount(
+                        (count) => count + RESULTS_PAGE_SIZE,
+                      )
+                    }
+                  />
                 </>
               ) : (
                 <p className="text-center text-xs text-muted-foreground py-6">

@@ -37,12 +37,6 @@ export function processScheduleIntoHourlyBlocks(
     return [];
   }
 
-  const firstBlock = scheduleData[0];
-  const lastBlock = scheduleData[scheduleData.length - 1];
-  const firstStartSeconds = parseClockTimeSeconds(firstBlock.start);
-  const lastEndSeconds = parseClockTimeSeconds(lastBlock.end);
-  if (firstStartSeconds === null || lastEndSeconds === null) return [];
-
   // Parse and sort once. The previous implementation rebuilt timezone-aware
   // Moment instances for every schedule block in every displayed hour.
   const parsedSchedule = scheduleData
@@ -54,6 +48,13 @@ export function processScheduleIntoHourlyBlocks(
         : [{ block, startSeconds, endSeconds }];
     })
     .sort((a, b) => a.startSeconds - b.startSeconds);
+  if (parsedSchedule.length === 0) return [];
+
+  const firstStartSeconds = parsedSchedule[0].startSeconds;
+  let lastEndSeconds = parsedSchedule[0].endSeconds;
+  for (const block of parsedSchedule) {
+    lastEndSeconds = Math.max(lastEndSeconds, block.endSeconds);
+  }
 
   const hourlyBlocks: HourlyScheduleBlock[] = [];
   let currentSeconds = firstStartSeconds;

@@ -78,7 +78,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const scrollAreaRef = useRef<HTMLDivElement | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const { favorites, toggleFavorite } = useFavorites();
-    const { selectedDateTime } = useDateTimeContext();
+    const { isCurrentDateTime, selectedDateTime } = useDateTimeContext();
     const [minDuration, setMinDuration] = useState<number | undefined>(undefined);
     const [freeUntil, setFreeUntil] = useState<string>("");
     const [startTime, setStartTime] = useState<string>("");
@@ -91,7 +91,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     minDuration,
                     freeUntil: freeUntil || undefined,
                     startTime: startTime || undefined,
-                    now: selectedDateTime,
+                    now: isCurrentDateTime ? undefined : selectedDateTime,
                 }
                 : EMPTY_FILTER_CRITERIA,
         [
@@ -99,6 +99,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             minDuration,
             freeUntil,
             startTime,
+            isCurrentDateTime,
             selectedDateTime,
         ],
     );

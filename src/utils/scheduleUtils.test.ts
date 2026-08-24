@@ -120,7 +120,44 @@ describe("processScheduleIntoHourlyBlocks", () => {
     ]);
   });
 
-  it("returns no blocks for an empty schedule", () => {
+  it("derives bounds from valid blocks regardless of input order", () => {
+    const schedule: RoomScheduleBlock[] = [
+      {
+        start: "invalid",
+        end: "invalid",
+        status: "available",
+        details: null,
+      },
+      {
+        start: "10:00:00",
+        end: "11:00:00",
+        status: "available",
+        details: null,
+      },
+      {
+        start: "08:00:00",
+        end: "09:00:00",
+        status: "available",
+        details: null,
+      },
+    ];
+
+    const result = processScheduleIntoHourlyBlocks(schedule);
+    expect(result[0]?.start).toBe("08:00:00");
+    expect(result.at(-1)?.end).toBe("11:00:00");
+  });
+
+  it("returns no blocks for an empty or entirely invalid schedule", () => {
     expect(processScheduleIntoHourlyBlocks([])).toEqual([]);
+    expect(
+      processScheduleIntoHourlyBlocks([
+        {
+          start: "invalid",
+          end: "invalid",
+          status: "available",
+          details: null,
+        },
+      ]),
+    ).toEqual([]);
   });
 });
