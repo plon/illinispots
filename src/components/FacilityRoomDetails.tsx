@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import {
   FacilityRoomProps,
   TimeBlockProps,
@@ -80,57 +80,6 @@ const TimeBlock = ({ slot }: TimeBlockProps) => {
 };
 
 export const RoomSchedule = ({ slots }: RoomScheduleProps) => {
-  const slotDurations = useMemo(() => {
-    if (slots.length === 0) return { common: 0, all: [] };
-
-    // Calculate durations for all slots
-    const durations = slots.map((slot) => {
-      const startTime = moment.tz(
-        `1970-01-01T${slot.start}`,
-        "America/Chicago",
-      );
-      const endTime = moment.tz(`1970-01-01T${slot.end}`, "America/Chicago");
-
-      let duration = endTime.diff(startTime, "minutes");
-      if (duration < 0) {
-        duration = endTime.add(1, "day").diff(startTime, "minutes");
-      }
-
-      return duration;
-    });
-
-    // Find the most common duration
-    const durationCounts = durations.reduce(
-      (acc, duration) => {
-        acc[duration] = (acc[duration] || 0) + 1;
-        return acc;
-      },
-      {} as Record<number, number>,
-    );
-
-    let maxCount = 0;
-    let commonDuration = 0;
-
-    Object.entries(durationCounts).forEach(([duration, count]) => {
-      if (count > maxCount) {
-        maxCount = count;
-        commonDuration = parseInt(duration);
-      }
-    });
-
-    // Get unique durations sorted
-    const uniqueDurations = Array.from(new Set(durations)).sort(
-      (a, b) => a - b,
-    );
-
-    return {
-      common: commonDuration,
-      all: uniqueDurations,
-    };
-  }, [slots]);
-
-  const hasMixedDurations = slotDurations.all.length > 1;
-
   return (
     <div className="mt-2">
       <ScrollArea className="w-full">
@@ -140,27 +89,6 @@ export const RoomSchedule = ({ slots }: RoomScheduleProps) => {
           ))}
         </div>
       </ScrollArea>
-
-      {/* Legend */}
-      <div className="flex items-center gap-4 mt-2">
-        <div className="flex items-center gap-1">
-          <div className={`w-3 h-3 ${SCHEDULE_BLOCK_STYLES.availableBase} rounded-xs`} />
-          <span className="text-xs text-muted-foreground">Available</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className={`w-3 h-3 ${SCHEDULE_BLOCK_STYLES.occupiedBase} rounded-xs`} />
-          <span className="text-xs text-muted-foreground">Reserved</span>
-        </div>
-      </div>
-
-      {/* Duration information */}
-      <p className="text-xs text-muted-foreground mt-1">
-        {hasMixedDurations ? (
-          <>Mixed durations: {slotDurations.all.join(", ")} minutes</>
-        ) : (
-          <>{slotDurations.common}-minute reservations</>
-        )}
-      </p>
     </div>
   );
 };
