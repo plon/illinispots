@@ -171,6 +171,11 @@ BEGIN
     );
     GET DIAGNOSTICS schedule_count = ROW_COUNT;
 
+    -- Every cached date depends on class_schedule. Drop stale snapshots and
+    -- warm today before committing the new source data.
+    DELETE FROM room_availability_cache;
+    PERFORM refresh_room_availability_cache();
+
     RETURN jsonb_build_object(
         'buildings', (SELECT count(*) FROM buildings),
         'rooms', (SELECT count(*) FROM rooms),

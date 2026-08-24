@@ -224,15 +224,11 @@ def load_to_postgres(df, supabase=None):
         if unknown_room_count:
             print(f"Skipped {unknown_room_count} events for rooms not in database")
 
-        if inserted_event_count:
-            print(f"Successfully inserted {inserted_event_count} events")
-            return {
-                "inserted_events": inserted_event_count,
-                "unloadable_events": unloadable_event_count,
-            }
-
-        print("No valid events to insert")
-        return False
+        print(f"Successfully replaced snapshot with {inserted_event_count} events")
+        return {
+            "inserted_events": inserted_event_count,
+            "unloadable_events": unloadable_event_count,
+        }
     except Exception as e:
         print(f"Error inserting events: {str(e)}")
         return False
@@ -255,17 +251,9 @@ def main():
     supabase = get_supabase_client()
     load_counts = load_to_postgres(events, supabase)
     if not load_counts:
-        raise RuntimeError("Failed Step 2: No valid events were inserted")
+        raise RuntimeError("Failed Step 2: Daily snapshot replacement failed")
 
-    print("Finished Step 2")
-    
-    print("Step 3: Refresh Room Availability Cache")
-    try:
-        supabase.rpc('refresh_room_availability_cache', {}).execute()
-        print("Finished Step 3: Cache refreshed")
-    except Exception as e:
-        print(f"Failed Step 3: Cache refresh error: {e}")
-        raise
+    print("Finished Step 2: Events and affected cache dates replaced atomically")
 
     invalid_timestamp_events = events.attrs.get("invalid_timestamp_events", 0)
     unloadable_events = load_counts["unloadable_events"]

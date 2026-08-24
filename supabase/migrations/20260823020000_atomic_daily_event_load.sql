@@ -8,12 +8,29 @@ AS $$
 DECLARE
     input_count BIGINT;
     inserted_count BIGINT;
+    affected_dates DATE[];
+    affected_date DATE;
 BEGIN
     IF jsonb_typeof(events_data) IS DISTINCT FROM 'array' THEN
         RAISE EXCEPTION 'Daily events data must be a JSON array';
     END IF;
 
     input_count := jsonb_array_length(events_data);
+
+    -- Capture both sides of the replacement before deleting the old snapshot.
+    -- Invalid input timestamps fail here, before any source or cache mutation.
+    SELECT array_agg(DISTINCT event_date)
+    INTO affected_dates
+    FROM (
+        SELECT (start_time AT TIME ZONE 'America/Chicago')::DATE AS event_date
+        FROM daily_events
+        UNION
+        SELECT (
+            event.start_time AT TIME ZONE 'America/Chicago'
+        )::DATE AS event_date
+        FROM jsonb_to_recordset(events_data) AS event(start_time TIMESTAMPTZ)
+    ) affected;
+
     DELETE FROM daily_events;
 
     INSERT INTO daily_events (
@@ -43,6 +60,12 @@ BEGIN
       ON room.building_name = event.building_name
      AND room.room_number = event.room_number;
     GET DIAGNOSTICS inserted_count = ROW_COUNT;
+
+    -- Keep source replacement and every affected cache entry in one commit.
+    FOREACH affected_date IN ARRAY COALESCE(affected_dates, ARRAY[]::DATE[])
+    LOOP
+        PERFORM refresh_room_availability_cache(affected_date);
+    END LOOP;
 
     RETURN jsonb_build_object(
         'inserted_events', inserted_count,

@@ -253,10 +253,6 @@ def main():
             "\nAll data has been successfully processed and relevant tables verified!"
         )
 
-        print("\nRefreshing room availability cache...")
-        supabase.rpc("refresh_room_availability_cache", {}).execute()
-        print("Room availability cache refreshed successfully")
-
         emit_gauges(
             {
                 "pipeline.database.buildings": database_counts["buildings"],
