@@ -434,7 +434,15 @@ def scrape_subject(
         batch = courses[batch_start : batch_start + client.worker_count]
         pending_courses = []
         for offset, course in enumerate(batch):
-            course_number = course.number.split()[1]
+            number_parts = course.number.split()
+            if len(number_parts) < 2:
+                message = f"Unparsable course number: {course.number}"
+                if not options.skip_errors:
+                    raise ValueError(message)
+                print(f"    Skipping course: {message}")
+                failed_courses += 1
+                continue
+            course_number = number_parts[1]
             course_url = (
                 f"https://courses.illinois.edu/schedule/{year}/{term}/"
                 f"{subject.code}/{course_number}"

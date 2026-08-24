@@ -1,33 +1,93 @@
--- Replace the weekly course snapshot in one transaction and one PostgREST
--- request. Readers continue seeing the old schedule until the replacement is
--- complete, and any malformed row rolls the entire update back.
+-- Stage the large schedule payload in bounded requests, then replace the weekly
+-- course snapshot and its cache in one transaction. Staging never changes the
+-- reader-visible source tables.
+CREATE TABLE public.course_schedule_load_staging (
+    load_id UUID NOT NULL,
+    row_data JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX course_schedule_load_staging_load_id_idx
+ON public.course_schedule_load_staging (load_id);
+
+ALTER TABLE public.course_schedule_load_staging ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.course_schedule_load_staging
+FROM PUBLIC, anon, authenticated;
+GRANT SELECT, INSERT, DELETE ON TABLE public.course_schedule_load_staging
+TO service_role;
+
+CREATE OR REPLACE FUNCTION public.stage_course_schedules(
+    schedule_load_id UUID,
+    schedules_data JSONB
+)
+RETURNS BIGINT
+LANGUAGE plpgsql
+SET search_path = pg_catalog, public
+SET statement_timeout = '120s'
+AS $$
+DECLARE
+    staged_count BIGINT;
+BEGIN
+    IF schedule_load_id IS NULL THEN
+        RAISE EXCEPTION 'Course schedule load ID is required';
+    END IF;
+    IF jsonb_typeof(schedules_data) IS DISTINCT FROM 'array' THEN
+        RAISE EXCEPTION 'Course schedule staging data must be a JSON array';
+    END IF;
+
+    DELETE FROM course_schedule_load_staging
+    WHERE created_at < NOW() - INTERVAL '1 day';
+
+    INSERT INTO course_schedule_load_staging (load_id, row_data)
+    SELECT schedule_load_id, schedule
+    FROM jsonb_array_elements(schedules_data) AS schedule;
+
+    SELECT count(*)
+    INTO staged_count
+    FROM course_schedule_load_staging
+    WHERE course_schedule_load_staging.load_id = schedule_load_id;
+
+    RETURN staged_count;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION public.replace_course_data(
     buildings_data JSONB,
     rooms_data JSONB,
-    schedules_data JSONB,
-    academic_terms_data JSONB
+    academic_terms_data JSONB,
+    schedule_load_id UUID,
+    expected_schedule_count BIGINT
 )
 RETURNS JSONB
 LANGUAGE plpgsql
 SET search_path = pg_catalog, public
+SET statement_timeout = '120s'
 AS $$
 DECLARE
     schedule_count BIGINT;
+    staged_schedule_count BIGINT;
     term_count BIGINT;
 BEGIN
     IF jsonb_typeof(buildings_data) IS DISTINCT FROM 'array'
        OR jsonb_typeof(rooms_data) IS DISTINCT FROM 'array'
-       OR jsonb_typeof(schedules_data) IS DISTINCT FROM 'array'
        OR jsonb_typeof(academic_terms_data) IS DISTINCT FROM 'array' THEN
         RAISE EXCEPTION 'Course data arguments must be JSON arrays';
     END IF;
 
-    -- Match the loader's guard: a failed transform must never erase a valid
-    -- schedule. An empty academic calendar remains a valid explicit clear.
+    SELECT count(*)
+    INTO staged_schedule_count
+    FROM course_schedule_load_staging
+    WHERE load_id = schedule_load_id;
+
+    -- A partial staging upload must never erase a valid schedule.
     IF jsonb_array_length(buildings_data) = 0
        OR jsonb_array_length(rooms_data) = 0
-       OR jsonb_array_length(schedules_data) = 0 THEN
-        RAISE EXCEPTION 'Refusing to replace course data with an empty dataset';
+       OR expected_schedule_count <= 0
+       OR staged_schedule_count <> expected_schedule_count THEN
+        RAISE EXCEPTION
+            'Refusing incomplete course load: expected % schedules, staged %',
+            expected_schedule_count,
+            staged_schedule_count;
     END IF;
 
     INSERT INTO buildings (
@@ -158,7 +218,8 @@ BEGIN
         schedule.day_of_week,
         schedule.start_date,
         schedule.end_date
-    FROM jsonb_to_recordset(schedules_data) AS schedule(
+    FROM course_schedule_load_staging AS staged
+    CROSS JOIN LATERAL jsonb_to_record(staged.row_data) AS schedule(
         building_name TEXT,
         room_number TEXT,
         course_code TEXT,
@@ -168,13 +229,19 @@ BEGIN
         day_of_week CHAR(1),
         start_date DATE,
         end_date DATE
-    );
+    )
+    WHERE staged.load_id = schedule_load_id;
     GET DIAGNOSTICS schedule_count = ROW_COUNT;
+
+    DELETE FROM course_schedule_load_staging
+    WHERE load_id = schedule_load_id;
 
     -- Every cached date depends on class_schedule. Drop stale snapshots and
     -- warm today before committing the new source data.
     DELETE FROM room_availability_cache;
-    PERFORM refresh_room_availability_cache();
+    PERFORM refresh_room_availability_cache(
+        (NOW() AT TIME ZONE 'America/Chicago')::DATE
+    );
 
     RETURN jsonb_build_object(
         'buildings', (SELECT count(*) FROM buildings),
@@ -185,7 +252,24 @@ BEGIN
 END;
 $$;
 
-REVOKE EXECUTE ON FUNCTION public.replace_course_data(JSONB, JSONB, JSONB, JSONB)
+REVOKE EXECUTE ON FUNCTION public.stage_course_schedules(UUID, JSONB)
 FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.replace_course_data(JSONB, JSONB, JSONB, JSONB)
+GRANT EXECUTE ON FUNCTION public.stage_course_schedules(UUID, JSONB)
+TO service_role;
+
+REVOKE EXECUTE ON FUNCTION public.replace_course_data(
+    JSONB,
+    JSONB,
+    JSONB,
+    UUID,
+    BIGINT
+)
+FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.replace_course_data(
+    JSONB,
+    JSONB,
+    JSONB,
+    UUID,
+    BIGINT
+)
 TO service_role;

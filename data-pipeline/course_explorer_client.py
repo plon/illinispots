@@ -236,7 +236,7 @@ class CourseExplorerClient:
                         "Retry-After"
                     )
                     try:
-                        backoff = float(retry_after)
+                        backoff = min(60.0, max(0.0, float(retry_after)))
                     except (TypeError, ValueError):
                         backoff = min(60, 2**attempt)
                     time.sleep(backoff + random.uniform(0, 1))

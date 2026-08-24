@@ -1,10 +1,12 @@
 import json
 import os
 from datetime import datetime
+from uuid import uuid4
 from pathlib import Path
 from typing import Dict, List
 
 from dotenv import find_dotenv, load_dotenv
+from pipeline_io import iter_json_chunks
 from sentry_monitor import emit_gauges
 
 from supabase import create_client
@@ -21,6 +23,9 @@ supabase = create_client(supabase_url, supabase_key)
 
 class DataValidationError(Exception):
     pass
+
+
+MAX_SCHEDULE_STAGE_BYTES = 1_000_000
 
 
 def validate_json_structure(json_data: Dict) -> None:
@@ -212,14 +217,36 @@ def main():
         verify_data_counts(json_data, buildings, rooms, schedules)
         print("Data preparation validated successfully")
 
-        print("\nAtomically replacing course data...")
+        print("\nStaging course schedules in bounded requests...")
+        schedule_load_id = str(uuid4())
+        staged_count = 0
+        for schedule_chunk in iter_json_chunks(
+            schedules,
+            MAX_SCHEDULE_STAGE_BYTES,
+        ):
+            stage_response = supabase.rpc(
+                "stage_course_schedules",
+                {
+                    "schedule_load_id": schedule_load_id,
+                    "schedules_data": schedule_chunk,
+                },
+            ).execute()
+            staged_count += len(schedule_chunk)
+            if stage_response.data != staged_count:
+                raise DataValidationError(
+                    "Database schedule staging count mismatch. "
+                    f"Expected: {staged_count}, Got: {stage_response.data}"
+                )
+
+        print("Atomically replacing course data from the staged schedule...")
         response = supabase.rpc(
             "replace_course_data",
             {
                 "buildings_data": buildings,
                 "rooms_data": rooms,
-                "schedules_data": schedules,
                 "academic_terms_data": academic_terms_data,
+                "schedule_load_id": schedule_load_id,
+                "expected_schedule_count": len(schedules),
             },
         ).execute()
         database_counts = response.data

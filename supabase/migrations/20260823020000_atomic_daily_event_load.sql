@@ -25,10 +25,18 @@ BEGIN
         SELECT (start_time AT TIME ZONE 'America/Chicago')::DATE AS event_date
         FROM daily_events
         UNION
+        SELECT (end_time AT TIME ZONE 'America/Chicago')::DATE AS event_date
+        FROM daily_events
+        UNION
         SELECT (
             event.start_time AT TIME ZONE 'America/Chicago'
         )::DATE AS event_date
         FROM jsonb_to_recordset(events_data) AS event(start_time TIMESTAMPTZ)
+        UNION
+        SELECT (
+            event.end_time AT TIME ZONE 'America/Chicago'
+        )::DATE AS event_date
+        FROM jsonb_to_recordset(events_data) AS event(end_time TIMESTAMPTZ)
     ) affected;
 
     DELETE FROM daily_events;

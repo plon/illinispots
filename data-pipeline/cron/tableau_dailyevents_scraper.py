@@ -36,6 +36,65 @@ def get_supabase_client():
     return create_client(supabase_url, supabase_key)
 
 
+def parse_events_df(df):
+    """Normalize Tableau columns and reject unusable source snapshots."""
+    df = df.copy()
+
+    df["end_time"] = pd.to_datetime(
+        df["EndTime"],
+        format="%m/%d/%Y %I:%M:%S %p",
+        errors="coerce",
+    ).dt.tz_localize("America/Chicago", ambiguous="infer")
+
+    # StartTime may be either a clock or a date-prefixed timestamp. Extract the
+    # trailing clock explicitly so both source shapes parse the same way.
+    start_clock = df["StartTime"].astype(str).str.extract(
+        r"(\d{1,2}:\d{2}:\d{2}\s*[AaPp][Mm])\s*$",
+        expand=False,
+    )
+    df["start_time"] = pd.to_datetime(
+        df["StartDate"].astype(str) + " " + start_clock,
+        format="%m/%d/%Y %I:%M:%S %p",
+        errors="coerce",
+    ).dt.tz_localize("America/Chicago", ambiguous="infer")
+
+    initial_count = len(df)
+    df = df.dropna(subset=["start_time", "end_time"])
+    dropped_count = initial_count - len(df)
+    if dropped_count > 0:
+        print(f"Dropped {dropped_count} rows with invalid timestamps")
+    if initial_count > 0 and df.empty:
+        raise RuntimeError(
+            "All Tableau rows had invalid timestamps; refusing to clear daily events"
+        )
+
+    df = df.drop(
+        columns=[
+            "EndTime",
+            "Measure Values",
+            "Open/Close",
+            "CustomerContact",
+            "Measure Names",
+            "StartDate",
+            "StartTime",
+        ]
+    )
+    df = df.rename(
+        columns={
+            "Building": "building_name",
+            "Customer": "occupant",
+            "EventName": "event_name",
+            "Room": "room_number",
+        }
+    )
+    df["building_name"] = df["building_name"].map(
+        lambda name: alias_map.get(str(name), str(name))
+    )
+    df.attrs["tableau_rows"] = initial_count
+    df.attrs["invalid_timestamp_events"] = dropped_count
+    return df
+
+
 def get_events_df():
     """Fetch events data from a Tableau dashboard and processes it into a pandas DataFrame.
 
@@ -75,67 +134,9 @@ def get_events_df():
             time.sleep(sleep_for)
 
     print("Fetched data from Tableau")
-
-    df = pd.read_csv(StringIO(csv_data))
-
-    # Fix EndTime column, delete old one
-    df["end_time"] = pd.to_datetime(
-        df["EndTime"],
-        format="%m/%d/%Y %I:%M:%S %p",
-        errors="coerce",  # Convert invalid dates to NaT
-    ).dt.tz_localize("America/Chicago", ambiguous="infer")
-
-    # Create the 'start_time' attribute by combining 'StartDate' and 'StartTime'
-    start_clock = df["StartTime"].map(
-        lambda value: value.split(" ", 1)[1]
-        if isinstance(value, str) and " " in value
-        else value
-    )
-    df["start_time"] = pd.to_datetime(
-        df["StartDate"].astype(str) + " " + start_clock,
-        format="%m/%d/%Y %I:%M:%S %p",
-        errors="coerce",  # Convert invalid dates to NaT
-    ).dt.tz_localize("America/Chicago", ambiguous="infer")
-
-    # Remove rows with invalid timestamps
-    initial_count = len(df)
-    df = df.dropna(subset=["start_time", "end_time"])
-    dropped_count = initial_count - len(df)
-    if dropped_count > 0:
-        print(f"Dropped {dropped_count} rows with invalid timestamps")
-
-    df = df.drop(
-        columns=[
-            "EndTime",
-            "Measure Values",
-            "Open/Close",
-            "CustomerContact",
-            "Measure Names",
-            "StartDate",
-            "StartTime",
-        ]
-    )
-
-    df = df.rename(
-        columns={
-            "Building": "building_name",
-            "Customer": "occupant",
-            # "CustomerContact": "customer_contact",
-            "EventName": "event_name",
-            "Room": "room_number",
-        }
-    )
-
-    # Normalize building names using alias map
-    df["building_name"] = df["building_name"].map(
-        lambda name: alias_map.get(str(name), str(name))
-    )
-    df.attrs["tableau_rows"] = initial_count
-    df.attrs["invalid_timestamp_events"] = dropped_count
-
+    events = parse_events_df(pd.read_csv(StringIO(csv_data)))
     print("Finished processing data")
-
-    return df
+    return events
 
 
 def load_to_postgres(df, supabase=None):

@@ -9,7 +9,7 @@ This directory contains scripts for collecting and processing UIUC course and bu
    - Scrapes all course data from courses.illinois.edu
    - Output: `subjects.json`
    - Proxy support: pass `--proxy`, `--proxy-http`, or `--proxy-https`
-   - Uses four connection-reusing course workers by default; override with `--workers N`. `--request-delay` remains a global request-start limit.
+   - Uses four connection-reusing course workers by default; override with `--workers N`. `--request-delay` remains a global request-start limit. A usable `--proxy-file` forces one worker so proxy rotation stays deterministic.
      - Example (single proxy for both): `python3 one_shot_scraper.py --proxy http://127.0.0.1:8080`
      - Example (SOCKS): `python3 one_shot_scraper.py --proxy socks5h://127.0.0.1:1080`
      - Example (per-scheme): `python3 one_shot_scraper.py --proxy-http http://proxy:8080 --proxy-https http://secure-proxy:8443`
@@ -60,7 +60,7 @@ This directory contains scripts for collecting and processing UIUC course and bu
 
    - Loads the final data into PostgreSQL database
    - Input: `buildings_enriched.json`
-   - Creates and populates database tables
+   - Stages schedule rows in bounded requests, then replaces source tables and availability caches in one database transaction
    - Runs weekly through [the Course Explorer GitHub Actions workflow](../.github/workflows/course-explorer-weekly.yml), which selects the active term from `academic_calendar.json` in the America/Chicago timezone and supports manual year/term overrides
    - The workflow paces Course Explorer requests and retries transient failures with exponential backoff
 
@@ -90,7 +90,7 @@ Web Data → subjects.json → buildings_derived.json → buildings_filtered.jso
 
 - Python 3.11+
 - Install dependencies: `pip install -r requirements.txt`
-- `.env.local` with `SUPABASE_URL` and `SUPABASE_SECRET_KEY`; the key must be allowed to invoke `replace_course_data` and `replace_daily_events`
+- `.env.local` with `SUPABASE_URL` and `SUPABASE_SECRET_KEY`; the key must be allowed to invoke `stage_course_schedules`, `replace_course_data`, and `replace_daily_events`
 
 ## Scheduled-run observability
 
