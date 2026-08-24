@@ -99,14 +99,47 @@ body {
 }
 
 .building-tooltip {
-    background: white;
+    background: hsl(var(--popover));
+    color: hsl(var(--popover-foreground));
+    border: 1px solid hsl(var(--border));
     border-radius: 4px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 4px 8px;
 }
 
 .mapboxgl-popup-content {
-    padding: 8px !important;
+    background-color: hsl(var(--popover)) !important;
+    color: hsl(var(--popover-foreground)) !important;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1) !important;
+    padding: 8px 12px !important;
+}
+
+.mapboxgl-popup-tip {
+    display: none !important;
+}
+
+.mapboxgl-ctrl-group {
+    background-color: hsl(var(--card)) !important;
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+}
+
+.mapboxgl-ctrl-group button {
+    background-color: transparent !important;
+}
+
+.mapboxgl-ctrl-group button:hover {
+    background-color: hsl(var(--muted)) !important;
+}
+
+.dark .mapboxgl-ctrl-group button {
+    filter: invert(1) hue-rotate(180deg);
+}
+
+.dark .mapboxgl-ctrl-group button:hover {
+    filter: invert(1) hue-rotate(180deg);
 }
 
 .facility-marker {

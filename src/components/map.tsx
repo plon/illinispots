@@ -197,15 +197,17 @@ export default function FacilityMap({
     };
 
     const createPopupContent = (data: MarkerData) => `
-      <div style="padding: 4px 8px;">
-        <strong>${data.name}</strong><br/>
-        ${data.isOpen
-        ? `${data.available}/${data.total} available`
-        : `CLOSED<br/><span style="font-size: 0.9em; color: #666;">${data.hours.open
-          ? `Opens ${formatTime(data.hours.open)}`
-          : "Not open today"
-        }</span>`
-      }
+      <div class="text-xs leading-tight">
+        <strong class="font-semibold text-popover-foreground">${data.name}</strong>
+        <div class="mt-1 text-muted-foreground">${
+          data.isOpen
+            ? `${data.available}/${data.total} available`
+            : `CLOSED${
+                data.hours.open
+                  ? `<br/><span class="text-[11px] text-muted-foreground/80">Opens ${formatTime(data.hours.open)}</span>`
+                  : `<br/><span class="text-[11px] text-muted-foreground/80">Not open today</span>`
+              }`
+        }</div>
       </div>
     `;
 
