@@ -12,7 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Search } from 'lucide-react';
 import { Facility, FacilityStatus, FacilityType } from '@/types';
 import { FavoriteItem } from '@/hooks/useFavorites';
-import Fuse from 'fuse.js';
+import { searchFacilities } from '@/utils/searchUtils';
 
 interface AddFavoritesDialogProps {
     isOpen: boolean;
@@ -39,15 +39,7 @@ export const AddFavoritesDialog: React.FC<AddFavoritesDialogProps> = ({
     }, [facilityData]);
 
     const filteredFacilities = useMemo(() => {
-        if (!searchTerm) return facilities;
-
-        const fuse = new Fuse(facilities, {
-            keys: ["name"],
-            threshold: 0.3,
-            ignoreLocation: true,
-        });
-
-        return fuse.search(searchTerm).map(result => result.item);
+        return searchFacilities(facilities, searchTerm);
     }, [facilities, searchTerm]);
 
     const isFavorite = (id: string) => favorites.some(f => f.id === id);
