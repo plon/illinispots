@@ -1,18 +1,15 @@
 import json
-import random
 import re
 import signal
-import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime
 from pathlib import Path
-from threading import Lock, local
 from typing import List, Optional
 from zoneinfo import ZoneInfo
 
 from bs4 import BeautifulSoup, SoupStrainer
-from curl_cffi import requests
+from course_explorer_client import CourseExplorerClient
 from pipeline_io import write_json_snapshot
 
 VALID_TERMS = {'spring', 'summer', 'fall', 'winter'}
@@ -347,151 +344,6 @@ def save_subject_data(subjects: List[Subject], year: int, term: str):
 
     write_json_snapshot(output_file, data)
 
-def _normalize_proxy_url(url: str) -> str:
-    """Ensure proxy URL has a scheme. Defaults to http:// if missing."""
-    if not url:
-        return url
-    # If user passes host:port, default to http://
-    if '://' not in url:
-        return f"http://{url}"
-    return url
-
-
-def _build_proxies(proxy: Optional[str] = None,
-                   proxy_http: Optional[str] = None,
-                   proxy_https: Optional[str] = None) -> Optional[dict]:
-    """Create a requests-compatible proxies dict from CLI args.
-
-    - If `proxy` is provided, use it for both http and https.
-    - Otherwise, use `proxy_http` and `proxy_https` individually when provided.
-    - Returns None if no proxies were specified.
-    """
-    if proxy:
-        p = _normalize_proxy_url(proxy)
-        return {"http": p, "https": p}
-
-    proxies = {}
-    if proxy_http:
-        proxies["http"] = _normalize_proxy_url(proxy_http)
-    if proxy_https:
-        proxies["https"] = _normalize_proxy_url(proxy_https)
-
-    return proxies or None
-
-
-def _load_proxy_list(path: str, allowed_schemes: Optional[List[str]] = None) -> List[dict]:
-    """Load a newline-delimited proxy list file.
-
-    - Lines may be formats like:
-        host:port
-        http://host:port
-        http://user:pass@host:port
-        socks5h://host:port
-    - Blank lines and lines starting with '#' are ignored.
-    - Each entry is turned into {"http": url, "https": url} using `_normalize_proxy_url`.
-    """
-    proxies: List[dict] = []
-    try:
-        if path.startswith('http://') or path.startswith('https://'):
-            try:
-                r = requests.get(path, impersonate='chrome123', timeout=30)
-                r.raise_for_status()
-                lines = r.text.splitlines()
-            except Exception as e:
-                print(f"Warning: failed to fetch proxy list from URL '{path}': {e}")
-                lines = []
-        else:
-            with open(path, 'r') as f:
-                lines = f.readlines()
-
-        for raw in lines:
-            line = raw.strip()
-            if not line or line.startswith('#'):
-                continue
-            if ',' in line:
-                line = line.split(',', 1)[0].strip()
-            if ' ' in line:
-                line = line.split()[0].strip()
-            if not line:
-                continue
-            url = _normalize_proxy_url(line)
-            if url.startswith('socks5://'):
-                url = 'socks5h://' + url[len('socks5://'):]
-            if allowed_schemes is not None:
-                scheme = url.split('://', 1)[0] if '://' in url else 'http'
-                if scheme not in allowed_schemes:
-                    continue
-            proxies.append({"http": url, "https": url})
-    except FileNotFoundError:
-        print(f"Warning: proxy list file not found: {path}")
-    except Exception as e:
-        print(f"Warning: error loading proxy list '{path}': {e}")
-    return proxies
-
-
-class ProxyRotator:
-    """Round-robin proxy rotator with stickiness and failure culling."""
-    def __init__(self, proxies: List[dict], rotate_every: int = 1, max_failures: int = 2, shuffle: bool = False):
-        if shuffle:
-            try:
-                import random
-                random.shuffle(proxies)
-            except Exception:
-                pass
-        self.proxies = proxies
-        self.failures = [0] * len(proxies)
-        self.rotate_every = max(1, int(rotate_every))
-        self.max_failures = max(1, int(max_failures))
-        self._idx = 0
-        self._count = 0
-
-    def peek(self) -> Optional[dict]:
-        if not self.proxies:
-            return None
-        return self.proxies[self._idx]
-
-    def advance(self):
-        if not self.proxies:
-            return
-        self._idx = (self._idx + 1) % len(self.proxies)
-        self._count = 0
-
-    def size(self) -> int:
-        return len(self.proxies)
-
-    def _remove_current(self):
-        if not self.proxies:
-            return
-        del self.proxies[self._idx]
-        del self.failures[self._idx]
-        if self._idx >= len(self.proxies):
-            self._idx = 0
-        self._count = 0
-
-    def mark_failure_current(self):
-        if not self.proxies:
-            return
-        self.failures[self._idx] += 1
-        if self.failures[self._idx] >= self.max_failures:
-            self._remove_current()
-        else:
-            self.advance()
-
-    def use(self) -> Optional[dict]:
-        """Get current proxy and apply stickiness accounting.
-
-        After this call, internal counter increases. When it reaches
-        `rotate_every`, we advance to the next proxy.
-        """
-        proxy = self.peek()
-        if proxy is None:
-            return None
-        self._count += 1
-        if self._count >= self.rotate_every:
-            self.advance()
-        return proxy
-
-
 def scrape_all_data(year: Optional[int] = None,
                     term: Optional[str] = None,
                     verbose: bool = False,
@@ -514,113 +366,28 @@ def scrape_all_data(year: Optional[int] = None,
                     request_workers: int = 4) -> List[Subject]:
     start_time = datetime.now()
 
-    # Build proxies: if a list is provided, use rotator; otherwise static proxies
-    proxies = _build_proxies(proxy=proxy, proxy_http=proxy_http, proxy_https=proxy_https)
-    proxy_list: List[dict] = []
-    rotator: Optional[ProxyRotator] = None
-    if proxy_file:
-        proxy_list = _load_proxy_list(proxy_file, allowed_schemes=proxy_schemes)
-        if proxy_list:
-            rotator = ProxyRotator(proxy_list, rotate_every=rotate_every, max_failures=max_proxy_failures, shuffle=proxy_shuffle)
-
-    worker_count = max(1, int(request_workers))
-    if rotator and worker_count > 1:
-        # Rotation and failure culling are intentionally sequential so one
-        # request cannot remove the proxy another in-flight request is using.
-        print("Proxy rotation enabled; using one request worker")
-        worker_count = 1
-
-    # Course Explorer requires thousands of requests for a full term. Reusing a
-    # session per worker preserves connections without sharing curl handles
-    # across threads.
-    session_local = local()
-    session_lock = Lock()
-    http_sessions = []
-
-    def get_http_session():
-        session = getattr(session_local, "session", None)
-        if session is None:
-            session = requests.Session(impersonate="chrome123")
-            session_local.session = session
-            with session_lock:
-                http_sessions.append(session)
-        return session
-
-    # Keep --request-delay as an aggregate request-start limit. Workers overlap
-    # network latency and parsing, but never increase the configured crawl rate.
-    request_slot_lock = Lock()
-    next_request_at = 0.0
-
-    def wait_for_request_slot():
-        nonlocal next_request_at
-        if request_delay <= 0:
-            return
-        with request_slot_lock:
-            now = time.monotonic()
-            if next_request_at > now:
-                time.sleep(next_request_at - now)
-            next_request_at = time.monotonic() + request_delay + random.uniform(
-                0, request_delay * 0.25
-            )
-
-    def fetch(url: str):
-        last_exc = None
-        if rotator:
-            if rotator.size() == 0:
-                raise RuntimeError("No proxies left in rotation")
-            attempts = max(1, rotator.size()) if proxy_try_all else max(1, int(proxy_retries))
-        else:
-            attempts = max(1, int(proxy_retries))
-        for attempt in range(1, attempts + 1):
-            # Peek current proxy; only advance on success or explicit failure handling
-            use_proxies = rotator.peek() if rotator else proxies
-
-            wait_for_request_slot()
-
-            try:
-                r = get_http_session().get(
-                    url,
-                    proxies=use_proxies,
-                    timeout=request_timeout,
-                    verify=not insecure,
-                )
-                r.raise_for_status()
-                if rotator:
-                    # Count this as a successful use for rotation stickiness
-                    rotator.use()
-                return r
-            except KeyboardInterrupt:
-                raise
-            except Exception as e:
-                last_exc = e
-                response = getattr(e, "response", None)
-                status_code = getattr(response, "status_code", None)
-                if verbose or status_code in {403, 429}:
-                    print(
-                        f"  Request failed (attempt {attempt}/{attempts}, "
-                        f"status {status_code or 'unknown'}): {e}"
-                    )
-
-                # try next proxy on next iteration
-                if rotator:
-                    rotator.mark_failure_current()
-
-                if attempt < attempts:
-                    retry_after = getattr(response, "headers", {}).get("Retry-After")
-                    try:
-                        backoff = float(retry_after)
-                    except (TypeError, ValueError):
-                        backoff = min(60, 2 ** attempt)
-                    time.sleep(backoff + random.uniform(0, 1))
-                continue
-        # Exhausted attempts
-        raise last_exc if last_exc else RuntimeError("Unknown error during request")
-
-    course_executor = ThreadPoolExecutor(max_workers=worker_count)
+    client = CourseExplorerClient(
+        worker_count=request_workers,
+        proxy=proxy,
+        proxy_http=proxy_http,
+        proxy_https=proxy_https,
+        proxy_file=proxy_file,
+        rotate_every=rotate_every,
+        proxy_retries=proxy_retries,
+        request_timeout=request_timeout,
+        request_delay=request_delay,
+        proxy_schemes=proxy_schemes,
+        insecure=insecure,
+        proxy_try_all=proxy_try_all,
+        max_proxy_failures=max_proxy_failures,
+        proxy_shuffle=proxy_shuffle,
+        verbose=verbose,
+    )
+    course_executor = ThreadPoolExecutor(max_workers=client.worker_count)
 
     try:
         def fetch_course_sections(course_url: str) -> List[Section]:
-            return scrape_sections(fetch(course_url).text)
+            return scrape_sections(client.fetch(course_url).text)
 
         active_year, active_term = resolve_active_schedule()
 
@@ -653,7 +420,7 @@ def scrape_all_data(year: Optional[int] = None,
         completed_subjects = progress["completed_subjects"]
 
         print(f"Fetching subjects for {term} {year}...")
-        r = fetch(f"https://courses.illinois.edu/schedule/{year}/{term}")
+        r = client.fetch(f"https://courses.illinois.edu/schedule/{year}/{term}")
         subjects = scrape_subjects(r.text)
         total_subjects = len(subjects)
     
@@ -702,7 +469,7 @@ def scrape_all_data(year: Optional[int] = None,
             print(f"Processing subject {i}/{total_subjects}: {subject.code}")
 
             try:
-                r = fetch(f"https://courses.illinois.edu/schedule/{year}/{term}/{subject.code}")
+                r = client.fetch(f"https://courses.illinois.edu/schedule/{year}/{term}/{subject.code}")
             except Exception as e:
                 msg = f"  Failed to fetch subject page for {subject.code}: {e}"
                 if skip_errors:
@@ -717,14 +484,14 @@ def scrape_all_data(year: Optional[int] = None,
                 print(f"  Found {len(courses)} courses in {subject.code}")
 
             failed_courses = 0
-            for batch_start in range(0, len(courses), worker_count):
+            for batch_start in range(0, len(courses), client.worker_count):
                 # Check for shutdown request
                 if _shutdown_requested:
                     print("\n  Shutdown requested mid-subject, will retry this subject next run...")
                     failed_courses = len(courses)  # Force subject to not be marked complete
                     break
 
-                batch = courses[batch_start : batch_start + worker_count]
+                batch = courses[batch_start : batch_start + client.worker_count]
                 pending_courses = []
                 for offset, course in enumerate(batch):
                     course_number = course.number.split()[1]
@@ -815,8 +582,7 @@ def scrape_all_data(year: Optional[int] = None,
         return subjects
     finally:
         course_executor.shutdown(wait=True, cancel_futures=True)
-        for http_session in http_sessions:
-            http_session.close()
+        client.close()
 
 if __name__ == "__main__":
     import argparse
