@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
@@ -7,8 +7,13 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogTrigger,
 } from "@/components/ui/dialog";
-import { Drawer, DrawerContent } from "@/components/ui/drawer";
+import {
+    Drawer,
+    DrawerContent,
+    DrawerTrigger,
+} from "@/components/ui/drawer";
 import {
     formatLocalTime,
     useDateTimeContext,
@@ -39,14 +44,9 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
         resetToCurrentDateTime,
     } = useDateTimeContext();
     const [open, setOpen] = useState(false);
-    const triggerRef = useRef<HTMLButtonElement>(null);
     const isDesktop = useMediaQuery("(min-width: 768px)");
 
     const close = () => setOpen(false);
-    const restoreTriggerFocus = (event: Event) => {
-        event.preventDefault();
-        triggerRef.current?.focus();
-    };
     const handleDateTimeChange = (dateTime: Date) => {
         setSelectedDateTime(dateTime);
         close();
@@ -64,7 +64,6 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
 
     const trigger = (
         <Button
-            ref={triggerRef}
             variant="outline"
             className={cn(
                 "h-9 rounded-full lg:rounded-lg border flex items-center gap-2 w-9 lg:w-auto px-0 lg:px-3 shrink-0",
@@ -72,11 +71,8 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
                 className,
             )}
             aria-label="Select date and time"
-            aria-expanded={open}
-            aria-haspopup="dialog"
             title={`Selected: ${formattedDate} ${formattedTime}`}
             disabled={isFetching}
-            onClick={() => setOpen(true)}
         >
             <CalendarClock size={16} className="lg:w-4 lg:h-4" />
             <span className="hidden lg:inline text-sm font-light">
@@ -98,41 +94,27 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
 
     if (isDesktop) {
         return (
-            <>
-                {trigger}
-                {open && (
-                    <Dialog open onOpenChange={setOpen}>
-                        <DialogContent
-                            className="sm:max-w-xs p-0 [&>button:last-child]:hidden"
-                            onCloseAutoFocus={restoreTriggerFocus}
-                        >
-                            <DialogHeader className="sr-only">
-                                <DialogTitle>Select Date and Time</DialogTitle>
-                            </DialogHeader>
-                            <div className="p-4 flex justify-center">{picker}</div>
-                        </DialogContent>
-                    </Dialog>
-                )}
-            </>
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>{trigger}</DialogTrigger>
+                <DialogContent className="sm:max-w-xs p-0 [&>button:last-child]:hidden">
+                    <DialogHeader className="sr-only">
+                        <DialogTitle>Select Date and Time</DialogTitle>
+                    </DialogHeader>
+                    <div className="p-4 flex justify-center">{picker}</div>
+                </DialogContent>
+            </Dialog>
         );
     }
 
     return (
-        <>
-            {trigger}
-            {open && (
-                <Drawer open onOpenChange={setOpen}>
-                    <DrawerContent
-                        className="flex flex-col items-center"
-                        onCloseAutoFocus={restoreTriggerFocus}
-                    >
-                        <div className="p-4 pt-2 flex justify-center w-full">
-                            {picker}
-                        </div>
-                    </DrawerContent>
-                </Drawer>
-            )}
-        </>
+        <Drawer open={open} onOpenChange={setOpen}>
+            <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+            <DrawerContent className="flex flex-col items-center">
+                <div className="p-4 pt-2 flex justify-center w-full">
+                    {picker}
+                </div>
+            </DrawerContent>
+        </Drawer>
     );
 };
 

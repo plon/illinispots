@@ -57,6 +57,31 @@ class Subject:
     name: str # e.g. "Computer Science"
     courses: List[Course] = field(default_factory=list)
 
+
+@dataclass(frozen=True)
+class ScrapeOptions:
+    year: Optional[int] = None
+    term: Optional[str] = None
+    verbose: bool = False
+    proxy: Optional[str] = None
+    proxy_http: Optional[str] = None
+    proxy_https: Optional[str] = None
+    proxy_file: Optional[str] = None
+    rotate_every: int = 1
+    proxy_retries: int = 3
+    request_timeout: int = 30
+    request_delay: float = 0
+    proxy_schemes: Optional[List[str]] = None
+    insecure: bool = False
+    proxy_try_all: bool = False
+    max_proxy_failures: int = 2
+    proxy_shuffle: bool = False
+    skip_errors: bool = True
+    resume: bool = True
+    fresh: bool = False
+    request_workers: int = 4
+
+
 def scrape_subjects(html_content) -> List[Subject]:
     soup = BeautifulSoup(
         html_content, "html.parser", parse_only=TERM_TABLE_ONLY
@@ -344,58 +369,147 @@ def save_subject_data(subjects: List[Subject], year: int, term: str):
 
     write_json_snapshot(output_file, data)
 
-def scrape_all_data(year: Optional[int] = None,
-                    term: Optional[str] = None,
-                    verbose: bool = False,
-                    proxy: Optional[str] = None,
-                    proxy_http: Optional[str] = None,
-                    proxy_https: Optional[str] = None,
-                    proxy_file: Optional[str] = None,
-                    rotate_every: int = 1,
-                    proxy_retries: int = 3,
-                    request_timeout: int = 30,
-                    request_delay: float = 0,
-                    proxy_schemes: Optional[List[str]] = None,
-                    insecure: bool = False,
-                    proxy_try_all: bool = False,
-                    max_proxy_failures: int = 2,
-                    proxy_shuffle: bool = False,
-                    skip_errors: bool = True,
-                    resume: bool = True,
-                    fresh: bool = False,
-                    request_workers: int = 4) -> List[Subject]:
+
+def restore_subject_courses(subject: Subject, saved_subject: dict) -> None:
+    subject.courses = [
+        Course(
+            number=course["number"],
+            title=course["title"],
+            sections=[
+                Section(
+                    time=TimeSlot(
+                        start=section["time"]["start"],
+                        end=section["time"]["end"],
+                    ),
+                    location=Location(
+                        building=section["location"]["building"],
+                        room=section["location"]["room"],
+                    ),
+                    days=section["days"],
+                    start_date=section["start_date"],
+                    end_date=section["end_date"],
+                )
+                for section in course["sections"]
+            ],
+        )
+        for course in saved_subject["courses"]
+    ]
+
+
+def scrape_subject(
+    subject: Subject,
+    subject_index: int,
+    total_subjects: int,
+    year: int,
+    term: str,
+    client: CourseExplorerClient,
+    executor: ThreadPoolExecutor,
+    options: ScrapeOptions,
+) -> bool:
+    """Populate one subject and report whether it is safe to checkpoint."""
+    print(f"Processing subject {subject_index}/{total_subjects}: {subject.code}")
+    try:
+        response = client.fetch(
+            f"https://courses.illinois.edu/schedule/{year}/{term}/{subject.code}"
+        )
+    except Exception as error:
+        if options.skip_errors:
+            print(f"  Failed to fetch subject page for {subject.code}: {error}")
+            return False
+        raise
+
+    courses = scrape_courses(response.text)
+    if options.verbose:
+        print(f"  Found {len(courses)} courses in {subject.code}")
+
+    failed_courses = 0
+    for batch_start in range(0, len(courses), client.worker_count):
+        if _shutdown_requested:
+            print(
+                "\n  Shutdown requested mid-subject, "
+                "will retry this subject next run..."
+            )
+            return False
+
+        batch = courses[batch_start : batch_start + client.worker_count]
+        pending_courses = []
+        for offset, course in enumerate(batch):
+            course_number = course.number.split()[1]
+            course_url = (
+                f"https://courses.illinois.edu/schedule/{year}/{term}/"
+                f"{subject.code}/{course_number}"
+            )
+            if options.verbose:
+                print(
+                    f"    Processing course {batch_start + offset + 1}/"
+                    f"{len(courses)}: {course.number}"
+                )
+            pending_courses.append(
+                (
+                    course,
+                    datetime.now(),
+                    executor.submit(
+                        lambda url=course_url: scrape_sections(client.fetch(url).text)
+                    ),
+                )
+            )
+
+        for course, course_start, pending_course in pending_courses:
+            try:
+                sections = pending_course.result()
+            except Exception as error:
+                if not options.skip_errors:
+                    raise
+                print(f"    Skipping course {course.number}: {error}")
+                failed_courses += 1
+                continue
+
+            if not sections:
+                continue
+            course.sections = sections
+            subject.courses.append(course)
+            if options.verbose:
+                duration = datetime.now() - course_start
+                print(
+                    f"      Found {len(sections)} sections "
+                    f"({duration.total_seconds():.1f}s)"
+                )
+
+    if failed_courses:
+        print(
+            f"  WARNING: {subject.code} had {failed_courses}/{len(courses)} "
+            "failed courses, NOT marking as complete"
+        )
+        return False
+    return True
+
+
+def scrape_all_data(options: ScrapeOptions) -> List[Subject]:
     start_time = datetime.now()
 
     client = CourseExplorerClient(
-        worker_count=request_workers,
-        proxy=proxy,
-        proxy_http=proxy_http,
-        proxy_https=proxy_https,
-        proxy_file=proxy_file,
-        rotate_every=rotate_every,
-        proxy_retries=proxy_retries,
-        request_timeout=request_timeout,
-        request_delay=request_delay,
-        proxy_schemes=proxy_schemes,
-        insecure=insecure,
-        proxy_try_all=proxy_try_all,
-        max_proxy_failures=max_proxy_failures,
-        proxy_shuffle=proxy_shuffle,
-        verbose=verbose,
+        worker_count=options.request_workers,
+        proxy=options.proxy,
+        proxy_http=options.proxy_http,
+        proxy_https=options.proxy_https,
+        proxy_file=options.proxy_file,
+        rotate_every=options.rotate_every,
+        proxy_retries=options.proxy_retries,
+        request_timeout=options.request_timeout,
+        request_delay=options.request_delay,
+        proxy_schemes=options.proxy_schemes,
+        insecure=options.insecure,
+        proxy_try_all=options.proxy_try_all,
+        max_proxy_failures=options.max_proxy_failures,
+        proxy_shuffle=options.proxy_shuffle,
+        verbose=options.verbose,
     )
     course_executor = ThreadPoolExecutor(max_workers=client.worker_count)
 
     try:
-        def fetch_course_sections(course_url: str) -> List[Section]:
-            return scrape_sections(client.fetch(course_url).text)
-
         active_year, active_term = resolve_active_schedule()
-
-        if year is None:
-            year = active_year
-        if term is None:
-            term = active_term
-
+        year = options.year if options.year is not None else active_year
+        term = options.term if options.term is not None else active_term
         term = term.lower()
         if term not in VALID_TERMS:
             raise ValueError(f"Invalid term: {term}. Must be one of: {VALID_TERMS}")
@@ -403,11 +517,11 @@ def scrape_all_data(year: Optional[int] = None,
         print(f"Using Course Explorer schedule: {term} {year}")
 
         # Handle resumability
-        if fresh:
+        if options.fresh:
             clear_progress(year, term)
             progress = {"completed_subjects": {}}
             print(f"Starting fresh scrape for {term} {year}...")
-        elif resume:
+        elif options.resume:
             progress = load_progress(year, term)
             if progress["completed_subjects"]:
                 print(f"Resuming scrape for {term} {year} ({len(progress['completed_subjects'])} subjects already completed)...")
@@ -424,140 +538,65 @@ def scrape_all_data(year: Optional[int] = None,
         subjects = scrape_subjects(r.text)
         total_subjects = len(subjects)
     
-        # Rebuild subjects list from progress for already completed ones
         final_subjects: List[Subject] = []
         for subject in subjects:
-            if subject.code in completed_subjects:
-                # Reconstruct from saved progress
-                saved_data = completed_subjects[subject.code]
-                subject.courses = [
-                    Course(
-                        number=c["number"],
-                        title=c["title"],
-                        sections=[
-                            Section(
-                                time=TimeSlot(start=s["time"]["start"], end=s["time"]["end"]),
-                                location=Location(building=s["location"]["building"], room=s["location"]["room"]),
-                                days=s["days"],
-                                start_date=s["start_date"],
-                                end_date=s["end_date"]
-                            )
-                            for s in c["sections"]
-                        ]
-                    )
-                    for c in saved_data["courses"]
-                ]
-                if subject.courses:
-                    final_subjects.append(subject)
-    
-        total_courses = sum(len(s.courses) for s in final_subjects)
-        total_sections = sum(sum(len(c.sections) for c in s.courses) for s in final_subjects)
+            saved_subject = completed_subjects.get(subject.code)
+            if saved_subject is None:
+                continue
+            restore_subject_courses(subject, saved_subject)
+            if subject.courses:
+                final_subjects.append(subject)
 
-        for i, subject in enumerate(subjects, 1):
-            # Check for shutdown request
+        for subject_index, subject in enumerate(subjects, 1):
             if _shutdown_requested:
                 print("\nShutdown requested, saving progress...")
                 break
 
-            # Skip already completed subjects
             if subject.code in completed_subjects:
-                if verbose:
-                    print(f"Skipping subject {i}/{total_subjects}: {subject.code} (already completed)")
+                if options.verbose:
+                    print(
+                        f"Skipping subject {subject_index}/{total_subjects}: "
+                        f"{subject.code} (already completed)"
+                    )
                 continue
 
             subject_start = datetime.now()
-            print(f"Processing subject {i}/{total_subjects}: {subject.code}")
-
-            try:
-                r = client.fetch(f"https://courses.illinois.edu/schedule/{year}/{term}/{subject.code}")
-            except Exception as e:
-                msg = f"  Failed to fetch subject page for {subject.code}: {e}"
-                if skip_errors:
-                    print(msg)
-                    continue
-                else:
-                    raise
-
-            courses = scrape_courses(r.text)
-
-            if verbose:
-                print(f"  Found {len(courses)} courses in {subject.code}")
-
-            failed_courses = 0
-            for batch_start in range(0, len(courses), client.worker_count):
-                # Check for shutdown request
-                if _shutdown_requested:
-                    print("\n  Shutdown requested mid-subject, will retry this subject next run...")
-                    failed_courses = len(courses)  # Force subject to not be marked complete
-                    break
-
-                batch = courses[batch_start : batch_start + client.worker_count]
-                pending_courses = []
-                for offset, course in enumerate(batch):
-                    course_number = course.number.split()[1]
-                    course_url = (
-                        f"https://courses.illinois.edu/schedule/{year}/{term}/"
-                        f"{subject.code}/{course_number}"
-                    )
-                    course_number_in_subject = batch_start + offset + 1
-                    if verbose:
-                        print(
-                            f"    Processing course {course_number_in_subject}/"
-                            f"{len(courses)}: {course.number}"
-                        )
-                    pending_courses.append(
-                        (
-                            course,
-                            datetime.now(),
-                            course_executor.submit(fetch_course_sections, course_url),
-                        )
-                    )
-
-                # Consume futures in source order so output JSON remains stable.
-                for course, course_start, pending_course in pending_courses:
-                    try:
-                        sections = pending_course.result()
-                    except Exception as e:
-                        msg = f"    Skipping course {course.number}: {e}"
-                        if skip_errors:
-                            print(msg)
-                            failed_courses += 1
-                            continue
-                        raise
-
-                    if sections:
-                        course.sections = sections
-                        subject.courses.append(course)
-                        total_sections += len(sections)
-
-                        if verbose:
-                            course_duration = datetime.now() - course_start
-                            print(
-                                f"      Found {len(sections)} sections "
-                                f"({course_duration.total_seconds():.1f}s)"
-                            )
-
-            total_courses += len(subject.courses)
-        
-            # Only mark subject as complete if no courses failed
-            if failed_courses > 0:
-                print(f"  WARNING: {subject.code} had {failed_courses}/{len(courses)} failed courses, NOT marking as complete")
+            if not scrape_subject(
+                subject,
+                subject_index,
+                total_subjects,
+                year,
+                term,
+                client,
+                course_executor,
+                options,
+            ):
                 continue
-        
-            # Save progress after each subject
+
             if subject.courses:
                 final_subjects.append(subject)
             completed_subjects[subject.code] = {
                 "name": subject.name,
-                "courses": [asdict(c) for c in subject.courses]
+                "courses": [asdict(course) for course in subject.courses],
             }
             save_progress(year, term, completed_subjects)
-        
-            if verbose:
-                subject_duration = datetime.now() - subject_start
-                print(f"  Completed {subject.code} in {subject_duration.total_seconds():.1f}s")
-                print(f"  Running totals: {total_courses} courses, {total_sections} sections")
-                print()
+
+            if options.verbose:
+                duration = datetime.now() - subject_start
+                total_courses = sum(len(item.courses) for item in final_subjects)
+                total_sections = sum(
+                    len(course.sections)
+                    for item in final_subjects
+                    for course in item.courses
+                )
+                print(
+                    f"  Completed {subject.code} in "
+                    f"{duration.total_seconds():.1f}s"
+                )
+                print(
+                    f"  Running totals: {total_courses} courses, "
+                    f"{total_sections} sections\n"
+                )
 
         subjects = [subject for subject in final_subjects if len(subject.courses) > 0]
         parsed_section_count = sum(
@@ -650,26 +689,32 @@ if __name__ == "__main__":
     print("Press Ctrl+C at any time to stop and save partial results")
 
     subjects = scrape_all_data(
-        year=args.year,
-        term=args.term,
-        verbose=args.verbose,
-        proxy=args.proxy,
-        proxy_http=args.proxy_http,
-        proxy_https=args.proxy_https,
-        proxy_file=args.proxy_file,
-        rotate_every=args.rotate_every,
-        proxy_retries=args.proxy_retries,
-        request_timeout=args.timeout,
-        request_delay=args.request_delay,
-        request_workers=args.workers,
-        proxy_schemes=[s.strip() for s in args.proxy_schemes.split(',') if s.strip()],
-        insecure=args.insecure,
-        proxy_try_all=args.proxy_try_all,
-        max_proxy_failures=args.max_proxy_failures,
-        proxy_shuffle=args.proxy_shuffle,
-        skip_errors=args.skip_errors,
-        resume=args.resume,
-        fresh=args.fresh,
+        ScrapeOptions(
+            year=args.year,
+            term=args.term,
+            verbose=args.verbose,
+            proxy=args.proxy,
+            proxy_http=args.proxy_http,
+            proxy_https=args.proxy_https,
+            proxy_file=args.proxy_file,
+            rotate_every=args.rotate_every,
+            proxy_retries=args.proxy_retries,
+            request_timeout=args.timeout,
+            request_delay=args.request_delay,
+            request_workers=args.workers,
+            proxy_schemes=[
+                scheme.strip()
+                for scheme in args.proxy_schemes.split(",")
+                if scheme.strip()
+            ],
+            insecure=args.insecure,
+            proxy_try_all=args.proxy_try_all,
+            max_proxy_failures=args.max_proxy_failures,
+            proxy_shuffle=args.proxy_shuffle,
+            skip_errors=args.skip_errors,
+            resume=args.resume,
+            fresh=args.fresh,
+        )
     )
     print("\nScraping complete!")
     print(f"Scraped {len(subjects)} subjects")

@@ -551,22 +551,3 @@ export const searchFacilityIndex = (
     totalCount: buildingResults.length + allRooms.length,
   };
 };
-
-/**
- * Backward-compatible one-shot search. Interactive consumers should prepare an
- * index with createFacilitySearchIndex and reuse searchFacilityIndex.
- */
-export const performSearch = (
-  facilities: Facility[],
-  searchTerm: string,
-  filterCriteria: FilterCriteria = {},
-  hasActiveFilters: boolean = false,
-): SearchResultsData =>
-  searchFacilityIndex(
-    createFacilitySearchIndex(
-      facilities,
-      filterCriteria,
-      hasActiveFilters,
-    ),
-    searchTerm,
-  );

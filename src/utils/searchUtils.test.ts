@@ -3,8 +3,8 @@ import type { Facility, LibraryRoom } from "@/types";
 import { FacilityType, RoomStatus } from "@/types";
 import {
   createFacilitySearchIndex,
-  performSearch,
   searchFacilityIndex,
+  type SearchResultsData,
 } from "./searchUtils";
 
 const facilities: Facility[] = [
@@ -51,30 +51,80 @@ const facilities: Facility[] = [
   },
 ];
 
-function summarize(result: ReturnType<typeof performSearch>) {
+function summarize(result: SearchResultsData) {
   return {
     buildings: result.buildings.map((building) => ({
       id: building.facilityId,
-      score: building.score,
       matchingRooms: building.matchingRooms.map((room) => room.roomNumber),
     })),
     rooms: result.rooms.map((room) => ({
       id: `${room.facilityId}-${room.roomNumber}`,
-      score: room.score,
-      highlight: room.matchHighlight,
+      highlight: room.matchHighlight ?? null,
     })),
     totalCount: result.totalCount,
   };
 }
 
 describe("prepared facility search index", () => {
-  it("preserves one-shot search behavior across direct, alias, and fuzzy queries", () => {
+  it("returns stable direct, alias, course, and fuzzy matches", () => {
     const index = createFacilitySearchIndex(facilities);
+    const cases = [
+      {
+        query: "cif",
+        expected: {
+          buildings: [{ id: "cif", matchingRooms: ["0027", "1404"] }],
+          rooms: [
+            { id: "cif-0027", highlight: "" },
+            { id: "cif-1404", highlight: "" },
+          ],
+          totalCount: 3,
+        },
+      },
+      {
+        query: "1404",
+        expected: {
+          buildings: [],
+          rooms: [{ id: "cif-1404", highlight: "Room 1404" }],
+          totalCount: 1,
+        },
+      },
+      {
+        query: "cs 225",
+        expected: {
+          buildings: [],
+          rooms: [{ id: "cif-1404", highlight: null }],
+          totalCount: 1,
+        },
+      },
+      {
+        query: "orange room",
+        expected: {
+          buildings: [
+            { id: "main-library", matchingRooms: ["Orange Room"] },
+          ],
+          rooms: [
+            {
+              id: "main-library-Orange Room",
+              highlight: "Room Orange Room",
+            },
+          ],
+          totalCount: 2,
+        },
+      },
+      {
+        query: "main librarry",
+        expected: {
+          buildings: [
+            { id: "main-library", matchingRooms: ["Orange Room"] },
+          ],
+          rooms: [{ id: "main-library-Orange Room", highlight: "" }],
+          totalCount: 2,
+        },
+      },
+    ];
 
-    for (const query of ["cif", "1404", "cs 225", "orange room", "main librarry"]) {
-      expect(summarize(searchFacilityIndex(index, query))).toEqual(
-        summarize(performSearch(facilities, query)),
-      );
+    for (const { query, expected } of cases) {
+      expect(summarize(searchFacilityIndex(index, query))).toEqual(expected);
     }
   });
 
