@@ -41,7 +41,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import moment from "moment-timezone";
+import { parseTimeToMinutes } from "@/utils/time";
 
 interface LeftSidebarProps {
     facilityData: FacilityStatus | null;
@@ -83,7 +83,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             minDuration,
             freeUntil: freeUntil || undefined,
             startTime: startTime || undefined,
-            now: moment(selectedDateTime),
+            nowMinutes: parseTimeToMinutes(selectedDateTime.time) ?? undefined,
         }),
         [minDuration, freeUntil, startTime, selectedDateTime],
     );

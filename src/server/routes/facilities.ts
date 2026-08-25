@@ -1,12 +1,12 @@
 import { Hono } from "hono";
-import moment from "moment-timezone";
+import { DateTime } from "luxon";
 import {
   getFacilityStatus,
   type FacilityScope,
 } from "../services/facilities";
 import { Sentry } from "../observability";
-
-const CAMPUS_TIMEZONE = "America/Chicago";
+import { parseCampusRequestDateTime } from "../time";
+import { CAMPUS_TIMEZONE } from "../../utils/time";
 const FACILITY_SCOPES = new Set<FacilityScope>([
   "academic",
   "library",
@@ -17,18 +17,17 @@ type GetFacilityStatus = typeof getFacilityStatus;
 
 export interface FacilitiesRouteDependencies {
   getFacilityStatus?: GetFacilityStatus;
-  now?: () => moment.Moment;
+  now?: () => DateTime;
 }
 
 function resolveTargetMoment(
   date: string | undefined,
   time: string | undefined,
-  now: () => moment.Moment,
-): moment.Moment {
-  const value = date && time ? `${date} ${time}` : undefined;
-
-  if (value && moment(value, "YYYY-MM-DD HH:mm:ss", true).isValid()) {
-    return moment.tz(value, "YYYY-MM-DD HH:mm:ss", CAMPUS_TIMEZONE);
+  now: () => DateTime,
+): DateTime {
+  if (date && time) {
+    const target = parseCampusRequestDateTime(date, time);
+    if (target.isValid) return target;
   }
 
   if (date || time) {
@@ -37,14 +36,14 @@ function resolveTargetMoment(
     );
   }
 
-  return now().tz(CAMPUS_TIMEZONE);
+  return now().setZone(CAMPUS_TIMEZONE);
 }
 
 export function createFacilitiesRoutes(
   dependencies: FacilitiesRouteDependencies = {},
 ) {
   const loadFacilities = dependencies.getFacilityStatus ?? getFacilityStatus;
-  const now = dependencies.now ?? (() => moment());
+  const now = dependencies.now ?? DateTime.now;
 
   return new Hono().get("/", async (context) => {
     context.header("Cache-Control", "no-store");

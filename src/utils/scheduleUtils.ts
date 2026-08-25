@@ -1,5 +1,5 @@
-import moment from "moment-timezone";
 import { RoomScheduleBlock, HourlyScheduleBlock, BlockSection } from "@/types";
+import { formatMinutesAsTime, parseTimeToMinutes } from "@/utils/time";
 
 export const SCHEDULE_BLOCK_STYLES = {
   available:
@@ -10,160 +10,85 @@ export const SCHEDULE_BLOCK_STYLES = {
   occupiedBase: "bg-red-200 dark:bg-red-900/80",
 } as const;
 
-/**
- * Processes raw schedule data into hourly blocks with sections
- * @param scheduleData The raw schedule data from the API
- * @returns An array of hourly blocks with sections
- */
+interface ParsedScheduleBlock {
+  block: RoomScheduleBlock;
+  start: number;
+  end: number;
+}
+
 export function processScheduleIntoHourlyBlocks(
   scheduleData: RoomScheduleBlock[],
 ): HourlyScheduleBlock[] {
-  if (!scheduleData || scheduleData.length === 0) {
-    return [];
-  }
+  const parsed = scheduleData.flatMap((block): ParsedScheduleBlock[] => {
+    const start = parseTimeToMinutes(block.start);
+    const end = parseTimeToMinutes(block.end);
+    return start !== null && end !== null && end > start
+      ? [{ block, start, end }]
+      : [];
+  });
+  if (parsed.length === 0) return [];
 
+  parsed.sort((left, right) => left.start - right.start);
+  const firstStart = parsed[0].start;
+  const lastEnd = Math.max(...parsed.map(({ end }) => end));
   const hourlyBlocks: HourlyScheduleBlock[] = [];
-  const timezone = "America/Chicago";
+  let current = firstStart;
 
-  const firstBlock = scheduleData[0];
-  const lastBlock = scheduleData[scheduleData.length - 1];
-
-  const firstStartTime = moment.tz(`1970-01-01T${firstBlock.start}`, timezone);
-  const lastEndTime = moment.tz(`1970-01-01T${lastBlock.end}`, timezone);
-
-  // Special handling for the first block - it can start at any time
-  let currentTime = firstStartTime.clone();
-
-  // For the first block, keep its original start time
-  // but round the end time to the next hour boundary if it crosses an hour
-  let firstBlockEndTime = currentTime.clone();
-  if (firstBlockEndTime.minutes() > 0 || firstBlockEndTime.seconds() > 0) {
-    firstBlockEndTime.add(1, "hour").startOf("hour");
-  } else {
-    firstBlockEndTime.add(1, "hour");
-  }
-
-  // Make sure we don't exceed the last end time
-  if (firstBlockEndTime.isAfter(lastEndTime)) {
-    firstBlockEndTime = lastEndTime.clone();
-  }
-
-  const firstHourlyBlock = createHourlyBlock(
-    currentTime,
-    firstBlockEndTime,
-    scheduleData,
-  );
-  hourlyBlocks.push(firstHourlyBlock);
-
-  currentTime = firstBlockEndTime.clone();
-
-  // Create standard 1-hour blocks until we reach the last end time
-  while (currentTime.isBefore(lastEndTime)) {
-    const blockEndTime = currentTime.clone().add(1, "hour");
-
-    // Make sure we don't exceed the last end time
-    const endTime = blockEndTime.isAfter(lastEndTime)
-      ? lastEndTime.clone()
-      : blockEndTime;
-
-    const hourlyBlock = createHourlyBlock(currentTime, endTime, scheduleData);
-    hourlyBlocks.push(hourlyBlock);
-
-    currentTime = endTime.clone();
+  while (current < lastEnd) {
+    const nextHour = current % 60 === 0 ? current + 60 : Math.ceil(current / 60) * 60;
+    const end = Math.min(nextHour, lastEnd);
+    hourlyBlocks.push(createHourlyBlock(current, end, parsed));
+    current = end;
   }
 
   return hourlyBlocks;
 }
 
-/**
- * Creates a single hourly block with sections based on the schedule data
- */
 function createHourlyBlock(
-  startTime: moment.Moment,
-  endTime: moment.Moment,
-  scheduleData: RoomScheduleBlock[],
+  startTime: number,
+  endTime: number,
+  scheduleData: ParsedScheduleBlock[],
 ): HourlyScheduleBlock {
   const sections: BlockSection[] = [];
-  const timezone = "America/Chicago";
+  const overlappingBlocks = scheduleData.filter(
+    ({ start, end }) => start < endTime && end > startTime,
+  );
+  let currentSectionStart = startTime;
 
-  const blockStartStr = startTime.format("HH:mm:ss");
-  const blockEndStr = endTime.format("HH:mm:ss");
+  for (const { block, start, end } of overlappingBlocks) {
+    const adjustedStart = Math.max(start, startTime);
+    const adjustedEnd = Math.min(end, endTime);
 
-  // Find all schedule blocks that overlap with this hourly block
-  const overlappingBlocks = scheduleData.filter((block) => {
-    const blockStart = moment.tz(`1970-01-01T${block.start}`, timezone);
-    const blockEnd = moment.tz(`1970-01-01T${block.end}`, timezone);
-
-    // A block overlaps if it starts before the hourly block ends AND ends after the hourly block starts
-    return blockStart.isBefore(endTime) && blockEnd.isAfter(startTime);
-  });
-
-  if (overlappingBlocks.length === 0) {
-    // If no overlapping blocks, create a single available section
-    sections.push({
-      start: blockStartStr,
-      end: blockEndStr,
-      status: "available",
-      details: null,
-    });
-  } else {
-    let currentSectionStart = startTime.clone();
-
-    // Sort overlapping blocks by start time
-    overlappingBlocks.sort((a, b) => {
-      const aStart = moment.tz(`1970-01-01T${a.start}`, timezone);
-      const bStart = moment.tz(`1970-01-01T${b.start}`, timezone);
-      return aStart.diff(bStart);
-    });
-
-    for (const block of overlappingBlocks) {
-      const blockStart = moment.tz(`1970-01-01T${block.start}`, timezone);
-      const blockEnd = moment.tz(`1970-01-01T${block.end}`, timezone);
-
-      // Adjust block times to be within the hourly block
-      const adjustedStart = blockStart.isBefore(startTime)
-        ? startTime.clone()
-        : blockStart.clone();
-      const adjustedEnd = blockEnd.isAfter(endTime)
-        ? endTime.clone()
-        : blockEnd.clone();
-
-      // If there's a gap before this block, add an available section
-      if (adjustedStart.isAfter(currentSectionStart)) {
-        sections.push({
-          start: currentSectionStart.format("HH:mm:ss"),
-          end: adjustedStart.format("HH:mm:ss"),
-          status: "available",
-          details: null,
-        });
-      }
-
-      // Add the current block as a section
+    if (adjustedStart > currentSectionStart) {
       sections.push({
-        start: adjustedStart.format("HH:mm:ss"),
-        end: adjustedEnd.format("HH:mm:ss"),
-        status: block.status,
-        details: block.details,
-      });
-
-      // Update the current section start time
-      currentSectionStart = adjustedEnd.clone();
-    }
-
-    // If there's remaining time after the last block, add an available section
-    if (currentSectionStart.isBefore(endTime)) {
-      sections.push({
-        start: currentSectionStart.format("HH:mm:ss"),
-        end: endTime.format("HH:mm:ss"),
+        start: formatMinutesAsTime(currentSectionStart),
+        end: formatMinutesAsTime(adjustedStart),
         status: "available",
         details: null,
       });
     }
+
+    sections.push({
+      start: formatMinutesAsTime(adjustedStart),
+      end: formatMinutesAsTime(adjustedEnd),
+      status: block.status,
+      details: block.details,
+    });
+    currentSectionStart = Math.max(currentSectionStart, adjustedEnd);
+  }
+
+  if (currentSectionStart < endTime) {
+    sections.push({
+      start: formatMinutesAsTime(currentSectionStart),
+      end: formatMinutesAsTime(endTime),
+      status: "available",
+      details: null,
+    });
   }
 
   return {
-    start: blockStartStr,
-    end: blockEndStr,
+    start: formatMinutesAsTime(startTime),
+    end: formatMinutesAsTime(endTime),
     sections,
   };
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import moment from "moment-timezone";
+import { formatTimeForDisplay, getDurationMinutes } from "@/utils/time";
 import {
   HybridTooltip,
   HybridTooltipContent,
@@ -15,13 +15,7 @@ interface AcademicTimeBlockProps {
 }
 
 const AcademicTimeBlock = ({ block, baseWidthPx = 56 }: AcademicTimeBlockProps) => {
-  const startTime = moment.tz(`1970-01-01T${block.start}`, "America/Chicago");
-  const endTime = moment.tz(`1970-01-01T${block.end}`, "America/Chicago");
-
-  let durationMinutes = endTime.diff(startTime, "minutes");
-  if (durationMinutes < 0) {
-     durationMinutes = 0;
-  }
+  const durationMinutes = getDurationMinutes(block.start, block.end);
 
   const widthRatio = durationMinutes > 0 ? durationMinutes / 60 : 0;
   const calculatedWidthPx = Math.max(widthRatio * baseWidthPx, 4);
@@ -40,7 +34,7 @@ const AcademicTimeBlock = ({ block, baseWidthPx = 56 }: AcademicTimeBlockProps) 
   const tooltipContent = isAvailable ? (
     <>
       <p className="font-medium text-[13px] leading-tight">
-        {startTime.format("h:mm A")} - {endTime.format("h:mm A")}
+        {formatTimeForDisplay(block.start)} - {formatTimeForDisplay(block.end)}
       </p>
       <p className="text-[12px] leading-tight mt-0.5">Available</p>
       <p className="text-[12px] leading-tight">{durationMinutes} minutes</p>
@@ -48,7 +42,7 @@ const AcademicTimeBlock = ({ block, baseWidthPx = 56 }: AcademicTimeBlockProps) 
   ) : (
     <>
       <p className="font-medium text-[13px] leading-tight">
-        {startTime.format("h:mm A")} - {endTime.format("h:mm A")}
+        {formatTimeForDisplay(block.start)} - {formatTimeForDisplay(block.end)}
       </p>
       <p className="text-[12px] leading-tight mt-0.5 capitalize">
         {academicDetails?.type}: {academicDetails?.course || academicDetails?.identifier}

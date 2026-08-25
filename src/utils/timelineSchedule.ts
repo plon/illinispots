@@ -1,13 +1,17 @@
-import moment from "moment-timezone";
 import type { RoomScheduleBlock } from "@/types";
+import {
+  addDateDays,
+  differenceInCalendarDays,
+  getDateWeekday,
+  parseTimeToMinutes,
+} from "@/utils/time";
 
-export const CAMPUS_TIMEZONE = "America/Chicago";
+export { CAMPUS_TIMEZONE } from "@/utils/time";
 export const TIMELINE_HOUR_WIDTH_PX = 72;
 
 const DEFAULT_START_MINUTES = 8 * 60;
 const DEFAULT_END_MINUTES = 22 * 60;
 const MINUTES_PER_HOUR = 60;
-const TIME_PATTERN = /^(\d{2}):(\d{2})(?::(\d{2}))?$/;
 
 export interface TimelineDayOption {
   date: string;
@@ -42,33 +46,22 @@ export function buildTimelineDayOptions(
   selectedDate: string,
   today: string,
 ): TimelineDayOption[] {
-  const todayMoment = moment.tz(today, CAMPUS_TIMEZONE);
-  const selectedMoment = moment.tz(selectedDate, CAMPUS_TIMEZONE);
-  const daysFromToday = selectedMoment.diff(todayMoment, "days");
+  const daysFromToday = differenceInCalendarDays(selectedDate, today) ?? 0;
   const windowOffset = Math.floor(daysFromToday / 7) * 7;
-  const firstDay = todayMoment.clone().add(windowOffset, "days");
+  const firstDay = addDateDays(today, windowOffset) ?? today;
 
   return Array.from({ length: 7 }, (_, index) => {
-    const day = firstDay.clone().add(index, "days");
-    const date = day.format("YYYY-MM-DD");
+    const date = addDateDays(firstDay, index) ?? firstDay;
+    const day = Number(date.slice(-2));
     return {
       date,
-      label: date === today ? "Today" : day.format("ddd D"),
+      label:
+        date === today ? "Today" : `${getDateWeekday(date, true) ?? ""} ${day}`,
     };
   });
 }
 
-export function parseScheduleTime(time: string): number | null {
-  const match = TIME_PATTERN.exec(time);
-  if (!match) return null;
-
-  const hour = Number(match[1]);
-  const minute = Number(match[2]);
-  const second = match[3] === undefined ? 0 : Number(match[3]);
-
-  if (hour > 23 || minute > 59 || second > 59) return null;
-  return hour * MINUTES_PER_HOUR + minute + second / 60;
-}
+export const parseScheduleTime = parseTimeToMinutes;
 
 export function formatScheduleTime(time: string): string {
   const minutes = parseScheduleTime(time);

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import moment from "moment-timezone";
+import { DateTime } from "luxon";
 import { ServerConfigurationError } from "../config";
 import { Sentry } from "../observability";
 import {
@@ -16,22 +16,22 @@ export interface RoomScheduleRouteDependencies {
   loadRoomSchedule?: (
     query: RoomScheduleQuery,
   ) => Promise<RoomScheduleBlock[]>;
-  now?: () => moment.Moment;
+  now?: () => DateTime;
 }
 
 export function createRoomScheduleRoutes(
   dependencies: RoomScheduleRouteDependencies = {},
 ) {
   const loadSchedule = dependencies.loadRoomSchedule ?? loadRoomSchedule;
-  const now = dependencies.now ?? (() => moment());
+  const now = dependencies.now ?? DateTime.now;
 
   return new Hono().get("/", async (context) => {
     context.header("Cache-Control", "no-store");
 
     const buildingId = context.req.query("buildingId");
     const roomNumber = context.req.query("roomNumber");
-    const nowAtCampus = now().tz(CAMPUS_TIMEZONE);
-    const date = context.req.query("date") ?? nowAtCampus.format("YYYY-MM-DD");
+    const nowAtCampus = now().setZone(CAMPUS_TIMEZONE);
+    const date = context.req.query("date") ?? nowAtCampus.toFormat("yyyy-MM-dd");
     if (!buildingId || !roomNumber) {
       return context.json(
         { error: "Missing required parameters: buildingId and roomNumber" },

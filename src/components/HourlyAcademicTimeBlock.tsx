@@ -1,5 +1,5 @@
 import React from "react";
-import moment from "moment-timezone";
+import { formatTimeForDisplay, getDurationMinutes } from "@/utils/time";
 import {
   HybridTooltip,
   HybridTooltipContent,
@@ -18,13 +18,7 @@ const HourlyAcademicTimeBlock = ({
   block,
   baseWidthPx = 56,
 }: HourlyAcademicTimeBlockProps) => {
-  const startTime = moment.tz(`1970-01-01T${block.start}`, "America/Chicago");
-  const endTime = moment.tz(`1970-01-01T${block.end}`, "America/Chicago");
-
-  let durationMinutes = endTime.diff(startTime, "minutes");
-  if (durationMinutes < 0) {
-    durationMinutes = 0;
-  }
+  const durationMinutes = getDurationMinutes(block.start, block.end);
 
   // For hourly blocks, we want a consistent width based on the duration
   // Standard blocks will be 60 minutes = baseWidthPx
@@ -39,7 +33,7 @@ const HourlyAcademicTimeBlock = ({
   const tooltipContent = (
     <>
       <p className="font-medium text-[13px] leading-tight">
-        {startTime.format("h:mm A")} - {endTime.format("h:mm A")}
+        {formatTimeForDisplay(block.start)} - {formatTimeForDisplay(block.end)}
       </p>
       <p className="text-[12px] leading-tight">{durationMinutes} minutes</p>
 
@@ -74,19 +68,11 @@ const HourlyAcademicTimeBlock = ({
       {block.sections.length > 1 && (
         <div className="mt-1 border-t border-border pt-1">
           {block.sections.map((section, idx) => {
-            const sectionStart = moment.tz(
-              `1970-01-01T${section.start}`,
-              "America/Chicago",
-            );
-            const sectionEnd = moment.tz(
-              `1970-01-01T${section.end}`,
-              "America/Chicago",
-            );
             return (
               <div key={idx} className="mt-0.5">
                 <p className="text-[12px] leading-tight">
-                  {sectionStart.format("h:mm A")} -{" "}
-                  {sectionEnd.format("h:mm A")}:
+                  {formatTimeForDisplay(section.start)} -{" "}
+                  {formatTimeForDisplay(section.end)}:
                   {section.status === "available" ? (
                     <span className="text-green-600 dark:text-green-400"> Available</span>
                   ) : (
@@ -137,20 +123,8 @@ interface BlockSectionProps {
 }
 
 const BlockSectionComponent = ({ section, parentBlock }: BlockSectionProps) => {
-  const startTime = moment.tz(`1970-01-01T${section.start}`, "America/Chicago");
-  const endTime = moment.tz(`1970-01-01T${section.end}`, "America/Chicago");
-  const parentStartTime = moment.tz(
-    `1970-01-01T${parentBlock.start}`,
-    "America/Chicago",
-  );
-  const parentEndTime = moment.tz(
-    `1970-01-01T${parentBlock.end}`,
-    "America/Chicago",
-  );
-
-  // Calculate the section's width as a percentage of the parent block
-  const parentDuration = parentEndTime.diff(parentStartTime, "minutes");
-  const sectionDuration = endTime.diff(startTime, "minutes");
+  const parentDuration = getDurationMinutes(parentBlock.start, parentBlock.end);
+  const sectionDuration = getDurationMinutes(section.start, section.end);
 
   // Ensure we don't divide by zero and the percentage is valid
   const widthPercentage =
