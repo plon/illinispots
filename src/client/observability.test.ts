@@ -1,5 +1,8 @@
 import { describe, expect, it } from "bun:test";
-import { CLIENT_TRACE_PROPAGATION_TARGETS } from "./observability";
+import {
+  CLIENT_TRACE_PROPAGATION_TARGETS,
+  shouldCreateClientRequestSpan,
+} from "./observability";
 
 function matchesTraceTarget(
   url: string,
@@ -52,5 +55,28 @@ describe("CLIENT_TRACE_PROPAGATION_TARGETS", () => {
     expect(
       matchesTraceTarget("https://fly.dev.attacker.example/api"),
     ).toBe(false);
+  });
+});
+
+describe("shouldCreateClientRequestSpan", () => {
+  it("filters Mapbox requests", () => {
+    expect(
+      shouldCreateClientRequestSpan(
+        "https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/16/1/2.vector.pbf",
+      ),
+    ).toBe(false);
+    expect(
+      shouldCreateClientRequestSpan("https://events.mapbox.com/events/v2"),
+    ).toBe(false);
+  });
+
+  it("keeps application and unrelated third-party requests", () => {
+    expect(shouldCreateClientRequestSpan("/api/facilities")).toBe(true);
+    expect(
+      shouldCreateClientRequestSpan("https://illinispots.com/api/facilities"),
+    ).toBe(true);
+    expect(
+      shouldCreateClientRequestSpan("https://mapbox.com.example.com/tiles"),
+    ).toBe(true);
   });
 });

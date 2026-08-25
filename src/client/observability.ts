@@ -8,6 +8,15 @@ export const CLIENT_TRACE_PROPAGATION_TARGETS = [
   /^https:\/\/illinispots(?:-staging)?\.fly\.dev(?:[/:?#]|$)/,
 ];
 
+export function shouldCreateClientRequestSpan(url: string): boolean {
+  try {
+    const hostname = new URL(url, "https://illinispots.local").hostname;
+    return hostname !== "mapbox.com" && !hostname.endsWith(".mapbox.com");
+  } catch {
+    return true;
+  }
+}
+
 export function initializeClientObservability(router: AnyRouter): void {
   if (Sentry.isInitialized()) return;
 
@@ -17,7 +26,11 @@ export function initializeClientObservability(router: AnyRouter): void {
   Sentry.init({
     dsn: config.sentryDsn,
     environment: config.appEnv,
-    integrations: [Sentry.tanstackRouterBrowserTracingIntegration(router)],
+    integrations: [
+      Sentry.tanstackRouterBrowserTracingIntegration(router, {
+        shouldCreateSpanForRequest: shouldCreateClientRequestSpan,
+      }),
+    ],
     tracesSampleRate: 1,
     tracePropagationTargets: CLIENT_TRACE_PROPAGATION_TARGETS,
     sendDefaultPii: false,

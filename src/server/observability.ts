@@ -34,6 +34,7 @@ export function sentryTracing(app: Hono): MiddlewareHandler {
       shouldTraceServerPath(requestPathname(normalizedRequest?.url))
         ? inheritOrSampleWith(1)
         : 0,
+    ignoreSpans: [{ op: "middleware.hono" }],
     sendDefaultPii: false,
   });
 }

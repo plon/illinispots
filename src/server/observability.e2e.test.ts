@@ -62,7 +62,7 @@ async function reservePort(): Promise<number> {
 
 describe("server observability end to end", () => {
   it(
-    "emits one continued Hono transaction and filters health checks",
+    "emits one focused Hono transaction and filters health checks",
     async () => {
       const envelopes: string[] = [];
       const collector = Bun.serve({
@@ -159,9 +159,9 @@ describe("server observability end to end", () => {
           "req-waterfall-test",
         );
         expect(transaction.tags?.request_id).toBe("req-waterfall-test");
-        expect(transaction.spans?.some((span) => span.op === "middleware.hono")).toBe(
-          true,
-        );
+        expect(
+          transaction.spans?.some((span) => span.op === "middleware.hono"),
+        ).toBe(false);
         expect(
           transactionsFrom(envelopes).some(
             (captured) =>
