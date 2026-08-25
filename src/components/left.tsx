@@ -30,6 +30,8 @@ import {
     LoaderPinwheel,
     MoreHorizontal,
     Star,
+    CalendarClock,
+    RotateCcw,
 } from "lucide-react";
 import FacilityAccordion from "@/components/FacilityAccordion";
 import DateTimeButton from "@/components/DateTimeButton";
@@ -41,7 +43,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { parseTimeToMinutes } from "@/utils/time";
+import { parseTimeToMinutes, formatDateForDisplay, formatTimeForDisplay, getCampusDateTimeParts } from "@/utils/time";
 
 interface LeftSidebarProps {
     facilityData: FacilityStatus | null;
@@ -55,6 +57,42 @@ interface LeftSidebarProps {
     error?: string | null;
     onRetry?: () => void;
 }
+
+interface ActiveTimeBannerProps {
+    selectedDate: string;
+    selectedTime: string;
+    onReset: () => void;
+}
+
+const ActiveTimeBanner: React.FC<ActiveTimeBannerProps> = ({
+    selectedDate,
+    selectedTime,
+    onReset,
+}) => {
+    const campusToday = useMemo(() => getCampusDateTimeParts().date, []);
+    const dateLabel = selectedDate === campusToday ? "Today" : formatDateForDisplay(selectedDate);
+
+    return (
+        <div className="bg-primary/10 border-b border-primary/20 px-3 py-1.5 flex items-center justify-between text-xs text-foreground shrink-0">
+            <div className="flex items-center gap-1.5 min-w-0 font-medium text-primary">
+                <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">
+                    Viewing {dateLabel} at {formatTimeForDisplay(selectedTime)}
+                </span>
+            </div>
+            <Button
+                variant="ghost"
+                size="sm"
+                onClick={onReset}
+                className="h-6 px-2 text-xs text-primary hover:text-primary hover:bg-primary/15 shrink-0 font-normal underline"
+            >
+                <RotateCcw className="h-3 w-3 mr-1" />
+                Reset to now
+            </Button>
+        </div>
+    );
+};
+
 
 
 const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -73,7 +111,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const scrollAreaRef = useRef<HTMLDivElement | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const { favorites, toggleFavorite } = useFavorites();
-    const { selectedDateTime } = useDateTimeContext();
+    const { selectedDateTime, isCurrentDateTime, resetToCurrentDateTime } = useDateTimeContext();
     const [minDuration, setMinDuration] = useState<number | undefined>(undefined);
     const [freeUntil, setFreeUntil] = useState<string>("");
     const [startTime, setStartTime] = useState<string>("");
@@ -346,6 +384,14 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     </div>
                 </TooltipProvider>
             </div>
+
+            {!isCurrentDateTime && (
+                <ActiveTimeBanner
+                    selectedDate={selectedDateTime.date}
+                    selectedTime={selectedDateTime.time}
+                    onReset={resetToCurrentDateTime}
+                />
+            )}
 
             <ScrollArea
                 className="flex-1 relative"

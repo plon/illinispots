@@ -3,6 +3,7 @@ import {
   addDateDays,
   differenceInCalendarDays,
   formatMinutesAsTime,
+  formatShortMonthDay,
   formatTimeForDisplay,
   getCampusDateTimeParts,
   getDurationMinutes,
@@ -20,6 +21,9 @@ describe("time helpers", () => {
     expect(formatTimeForDisplay("24:00:00")).toBe("12:00 AM");
     expect(formatTimeForDisplay("8:05")).toBe("8:05 AM");
     expect(formatTimeForDisplay(undefined)).toBe("");
+    expect(formatShortMonthDay("2026-03-08")).toBe("3/8");
+    expect(formatShortMonthDay("2026-11-25")).toBe("11/25");
+    expect(formatShortMonthDay("invalid")).toBe("invalid");
   });
 
   it("calculates ordinary and overnight durations", () => {

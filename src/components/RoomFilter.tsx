@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { ListFilter, Hourglass, Clock } from "lucide-react";
+import { getCampusDateTimeParts, formatTimeForDisplay } from "@/utils/time";
 
 const PRESET_DURATIONS = [30, 60, 120, 240] as const;
 const MIN_CUSTOM_DURATION = 1;
@@ -160,10 +161,8 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                             onChange={(e) => setStartTime(e.target.value)}
                             onFocus={() => {
                                 if (!startTime) {
-                                    const now = new Date();
-                                    const hours = String(now.getHours()).padStart(2, '0');
-                                    const minutes = String(now.getMinutes()).padStart(2, '0');
-                                    setStartTime(`${hours}:${minutes}`);
+                                    const campusNow = getCampusDateTimeParts();
+                                    setStartTime(campusNow.time.slice(0, 5));
                                 }
                             }}
                             className="h-9 pl-9 font-mono text-sm [&::-webkit-calendar-picker-indicator]:hidden"
@@ -280,7 +279,7 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                                         : "hover:border-primary/50 hover:bg-primary/5"
                                         }`}
                                 >
-                                    {time}
+                                    {formatTimeForDisplay(time)}
                                 </Button>
                             ))}
                         </div>
@@ -291,10 +290,8 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                                 onChange={(e) => setFreeUntil(e.target.value)}
                                 onFocus={() => {
                                     if (!freeUntil) {
-                                        const now = new Date();
-                                        const hours = String(now.getHours()).padStart(2, '0');
-                                        const minutes = String(now.getMinutes()).padStart(2, '0');
-                                        setFreeUntil(`${hours}:${minutes}`);
+                                        const campusNow = getCampusDateTimeParts();
+                                        setFreeUntil(campusNow.time.slice(0, 5));
                                     }
                                 }}
                                 className="h-9 pl-9 font-mono text-sm [&::-webkit-calendar-picker-indicator]:hidden"
