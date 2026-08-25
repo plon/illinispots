@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { SearchResultRoom } from "@/utils/searchUtils";
 import { AcademicRoom, FacilityType, LibraryRoom, RoomStatus } from "@/types";
 import { RoomBadge } from "@/components/RoomBadge";
-import { formatDuration, formatTime } from "@/utils/format";
+import { formatDuration } from "@/utils/format";
+import { formatTimeForDisplay } from "@/utils/time";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import AcademicRoomDetailLoader from "@/components/AcademicRoomDetailLoader";
@@ -79,7 +80,7 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
                         {formatDuration(room.availableFor)}
                       </strong>
                       {academicRoom.availableUntil && (
-                        <> (until {formatTime(academicRoom.availableUntil)})</>
+                        <> (until {formatTimeForDisplay(academicRoom.availableUntil)})</>
                       )}
                     </span>
                   </div>
@@ -103,7 +104,7 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
                   <div className="flex items-center gap-1.5 text-foreground/80 pt-0.5">
                     <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
                     <span>
-                      Available at {formatTime(academicRoom.availableAt)}
+                      Available at {formatTimeForDisplay(academicRoom.availableAt)}
                       {room.availableFor ? ` for ${formatDuration(room.availableFor)}` : ""}
                     </span>
                   </div>

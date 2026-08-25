@@ -76,7 +76,6 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
             initialDateTime={selectedDateTime}
             onDateTimeChange={handleDateTimeChange}
             onResetToNow={handleResetToNow}
-            compact={true}
             isFetching={isFetching}
             closeContainer={closeContainer}
         />

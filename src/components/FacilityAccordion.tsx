@@ -15,7 +15,8 @@ import {
   LibraryRoom,
   FacilityRoom,
 } from "@/types";
-import { formatTime, formatDuration } from "@/utils/format";
+import { formatDuration } from "@/utils/format";
+import { formatTimeForDisplay } from "@/utils/time";
 import {
   RoomBadge,
   STATUS_BADGE_STYLES,
@@ -50,7 +51,7 @@ export const getRoomAvailabilityMessage = (room: LibraryRoom): React.ReactNode =
   } else if (room.status === RoomStatus.OPENING_SOON && room.availableAt) {
     return (
       <span className="text-xs text-muted-foreground">
-        {`Available at ${formatTime(room.availableAt)}`}
+        {`Available at ${formatTimeForDisplay(room.availableAt)}`}
         {room.availableFor ? ` for ${formatDuration(room.availableFor)}` : ""}
       </span>
     );
@@ -58,7 +59,7 @@ export const getRoomAvailabilityMessage = (room: LibraryRoom): React.ReactNode =
     // Handle case where it's reserved but will be available later
     return (
       <span className="text-xs text-muted-foreground">
-        {`Available at ${formatTime(room.availableAt)}`}
+        {`Available at ${formatTimeForDisplay(room.availableAt)}`}
         {room.availableFor ? ` for ${formatDuration(room.availableFor)}` : ""}
       </span>
     );
@@ -140,7 +141,7 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
                 Building is currently closed
                 <br />
                 {facility.hours && facility.hours.open ? (
-                  <span>Opens {formatTime(facility.hours.open)}</span>
+                  <span>Opens {formatTimeForDisplay(facility.hours.open)}</span>
                 ) : (
                   <span>Not open today</span>
                 )}
@@ -271,7 +272,7 @@ const RoomAvailabilityDetails: React.FC<{ room: AcademicRoom }> = ({
         {room.availableUntil && (
           <p>
             <span className="font-medium text-foreground/70">Until:</span>{" "}
-            {formatTime(room.availableUntil)}
+            {formatTimeForDisplay(room.availableUntil)}
           </p>
         )}
       </>
@@ -299,7 +300,7 @@ const RoomOccupancyDetails: React.FC<{ room: AcademicRoom }> = ({ room }) => (
       <p>
         <span className="font-medium text-foreground/70">Available at:</span>{" "}
         <span className="font-normal text-muted-foreground">
-          {formatTime(room.availableAt)}
+          {formatTimeForDisplay(room.availableAt)}
           {room.availableFor && ` for ${formatDuration(room.availableFor)}`}
         </span>
       </p>

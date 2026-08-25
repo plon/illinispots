@@ -61,19 +61,6 @@ export function buildTimelineDayOptions(
   });
 }
 
-export const parseScheduleTime = parseTimeToMinutes;
-
-export function formatScheduleTime(time: string): string {
-  const minutes = parseScheduleTime(time);
-  if (minutes === null) return time;
-
-  const hour = Math.floor(minutes / MINUTES_PER_HOUR);
-  const minute = Math.floor(minutes % MINUTES_PER_HOUR);
-  const period = hour >= 12 ? "PM" : "AM";
-  const displayHour = hour % 12 || 12;
-  return `${displayHour}:${minute.toString().padStart(2, "0")} ${period}`;
-}
-
 export function formatDuration(minutes: number): string {
   const roundedMinutes = Math.round(minutes);
   const hours = Math.floor(roundedMinutes / MINUTES_PER_HOUR);
@@ -95,8 +82,8 @@ export function buildTimelineModel(
   schedule: RoomScheduleBlock[],
 ): TimelineModel {
   const parsedBlocks = schedule.flatMap((block) => {
-    const startMinutes = parseScheduleTime(block.start);
-    const endMinutes = parseScheduleTime(block.end);
+    const startMinutes = parseTimeToMinutes(block.start);
+    const endMinutes = parseTimeToMinutes(block.end);
 
     if (
       startMinutes === null ||

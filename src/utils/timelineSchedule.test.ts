@@ -4,8 +4,6 @@ import {
   buildTimelineDayOptions,
   buildTimelineModel,
   formatDuration,
-  formatScheduleTime,
-  parseScheduleTime,
   TIMELINE_HOUR_WIDTH_PX,
 } from "./timelineSchedule";
 
@@ -95,17 +93,8 @@ describe("buildTimelineModel", () => {
   });
 });
 
-describe("timeline time formatting", () => {
-  it("validates schedule times", () => {
-    expect(parseScheduleTime("09:30:30")).toBe(570.5);
-    expect(parseScheduleTime("24:00:00")).toBeNull();
-    expect(parseScheduleTime("09:90:00")).toBeNull();
-    expect(parseScheduleTime("n/a")).toBeNull();
-  });
-
-  it("formats times and durations", () => {
-    expect(formatScheduleTime("00:05:00")).toBe("12:05 AM");
-    expect(formatScheduleTime("13:30:00")).toBe("1:30 PM");
+describe("formatDuration", () => {
+  it("formats timeline durations", () => {
     expect(formatDuration(80)).toBe("1h 20m");
   });
 });

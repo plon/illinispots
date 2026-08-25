@@ -19,6 +19,7 @@ import {
   isLibraryOpen,
 } from "./library-hours";
 import { LIBRARY_HOURS } from "../../utils/libraryHours";
+import { CAMPUS_TIMEZONE } from "../../utils/time";
 import { getSupabaseConfig } from "../config";
 import { Sentry } from "../observability";
 import { parseCampusTimestamp, wholeMinutesBetween } from "../time";
@@ -72,21 +73,19 @@ async function executeAcademicAvailabilityRpc(
  */
 async function getReservation(
   lid: string,
-  targetMoment: DateTime,
+  targetDateTime: DateTime,
   fetcher: FacilitiesFetch,
 ): Promise<ReservationResponse> {
   const url = "https://libcal.library.illinois.edu/spaces/availability/grid";
-  const timezone = "America/Chicago";
+  const targetDay = targetDateTime.setZone(CAMPUS_TIMEZONE).startOf("day");
+  const nextDay = targetDay.plus({ days: 1 });
 
-  const targetDateCST = targetMoment.setZone(timezone).startOf("day");
-  const nextDateCST = targetDateCST.plus({ days: 1 });
-
-  const startDate = targetDateCST.toFormat("yyyy-MM-dd");
+  const startDate = targetDay.toFormat("yyyy-MM-dd");
   const fetchNextDay =
-    lid === "3604" && targetMoment.hour >= 22;
+    lid === "3604" && targetDateTime.hour >= 22;
   const endDate = fetchNextDay
-    ? nextDateCST.plus({ days: 1 }).toFormat("yyyy-MM-dd")
-    : nextDateCST.toFormat("yyyy-MM-dd");
+    ? nextDay.plus({ days: 1 }).toFormat("yyyy-MM-dd")
+    : nextDay.toFormat("yyyy-MM-dd");
 
   const payload = {
     lid: lid,
@@ -185,16 +184,16 @@ function calculateAvailabilityDuration(
  */
 const isOpeningSoon = (
   availableAt: string, // HH:mm:ss format
-  targetMoment: DateTime, // Use targetMoment
+  targetDateTime: DateTime,
 ): boolean => {
   let availableTime = parseCampusTimestamp(
-    `${targetMoment.toFormat("yyyy-MM-dd")} ${availableAt}`,
+    `${targetDateTime.toFormat("yyyy-MM-dd")} ${availableAt}`,
   );
-  if (availableTime < targetMoment) {
+  if (availableTime < targetDateTime) {
     availableTime = availableTime.plus({ days: 1 });
   }
 
-  const diffInMinutes = wholeMinutesBetween(availableTime, targetMoment);
+  const diffInMinutes = wholeMinutesBetween(availableTime, targetDateTime);
   // Check if it's opening within the next 20 minutes (inclusive of 0)
   return diffInMinutes <= 20 && diffInMinutes >= 0;
 };
@@ -205,13 +204,13 @@ const isOpeningSoon = (
 function linkRoomsReservations(
   roomsData: StudyRoom[],
   reservationsData: ReservationResponse,
-  targetMoment: DateTime,
+  targetDateTime: DateTime,
 ): RoomReservations {
   const roomReservations: RoomReservations = {};
   const libraryIds = new Set(
     Object.values(LIBRARIES).map((lib) => parseInt(lib.id)),
   );
-  const targetMomentString = targetMoment.toFormat("yyyy-MM-dd HH:mm:ss");
+  const targetDateTimeString = targetDateTime.toFormat("yyyy-MM-dd HH:mm:ss");
 
   for (const room of roomsData) {
     if (!libraryIds.has(room.lid)) continue;
@@ -229,7 +228,7 @@ function linkRoomsReservations(
 
     const libraryClosingTime = getActiveLibraryHours(
       libraryName,
-      targetMoment,
+      targetDateTime,
     )?.close ?? null;
 
     // Filter slots relevant to the room and sort them
@@ -250,24 +249,24 @@ function linkRoomsReservations(
 
       // Only determine status once
       if (!currentStatusDetermined) {
-        // Check if the slot is currently available at targetMoment
+        // Check if the slot is currently available at targetDateTime
         if (
           isAvailableSlot &&
-          startTime <= targetMoment &&
-          endTime > targetMoment
+          startTime <= targetDateTime &&
+          endTime > targetDateTime
         ) {
           // Check if it's actually within library hours if closing time is known
           if (
             !libraryClosingTime ||
-            targetMoment < libraryClosingTime
+            targetDateTime < libraryClosingTime
           ) {
             isCurrentlyAvailable = true;
             roomStatus = RoomStatus.AVAILABLE;
-            // Calculate duration from targetMoment until end of contiguous block or closing time
+            // Calculate duration from targetDateTime until end of contiguous block or closing time
             availableDuration = calculateAvailabilityDuration(
               roomSpecificSlots,
               index,
-              targetMoment, // Start calculating from targetMoment
+              targetDateTime, // Start calculating from targetDateTime
               libraryClosingTime,
             );
             currentStatusDetermined = true; // Status found
@@ -275,11 +274,11 @@ function linkRoomsReservations(
           }
         }
 
-        // If not currently available, find the next available slot starting after targetMoment
+        // If not currently available, find the next available slot starting after targetDateTime
         if (
           !isCurrentlyAvailable && // Only look if not already found available
           isAvailableSlot &&
-          startTime > targetMoment
+          startTime > targetDateTime
         ) {
           // Ensure the potential next slot starts before the library closes
           if (!libraryClosingTime || startTime < libraryClosingTime) {
@@ -292,9 +291,9 @@ function linkRoomsReservations(
         }
       }
 
-      // If targetMoment is past the end of this slot, and we haven't found the status yet,
-      // it means the targetMoment falls between slots (or after the last one).
-      if (!currentStatusDetermined && targetMoment >= endTime) {
+      // If targetDateTime is past the end of this slot, and we haven't found the status yet,
+      // it means the targetDateTime falls between slots (or after the last one).
+      if (!currentStatusDetermined && targetDateTime >= endTime) {
         // Continue searching for the next available slot
       }
     }
@@ -319,7 +318,7 @@ function linkRoomsReservations(
 
         if (
           availableAt &&
-          isOpeningSoon(availableAt, targetMoment) &&
+          isOpeningSoon(availableAt, targetDateTime) &&
           availableDuration >= 30
         ) {
           roomStatus = RoomStatus.OPENING_SOON;
@@ -339,9 +338,9 @@ function linkRoomsReservations(
 
     let firstRelevantSlotIndex = -1;
     for (let i = 0; i < roomSpecificSlots.length; i++) {
-      // Find the first slot that ends after the targetMoment.
+      // Find the first slot that ends after the targetDateTime.
       // This includes the currently active slot or the next future slot.
-      if (roomSpecificSlots[i].end > targetMomentString) {
+      if (roomSpecificSlots[i].end > targetDateTimeString) {
         firstRelevantSlotIndex = i;
         break;
       }
@@ -401,8 +400,8 @@ function linkRoomsReservations(
  * Gets formatted library data with room availability for a specific time
  */
 async function getFormattedLibraryData(
-  openLibraries: string[], // Libraries determined to be open at targetMoment
-  targetMoment: DateTime, // Use targetMoment
+  openLibraries: string[], // Libraries determined to be open at targetDateTime
+  targetDateTime: DateTime,
   fetcher: FacilitiesFetch,
 ): Promise<FormattedLibraryData> {
   const result: FormattedLibraryData = {};
@@ -411,7 +410,7 @@ async function getFormattedLibraryData(
     return result; // No open libraries to process
   }
 
-  // Process only the libraries that are open at targetMoment. Keep failures
+  // Process only the libraries that are open at targetDateTime. Keep failures
   // isolated so one unavailable LibCal calendar does not erase other results.
   const libraryPromises = openLibraries.map(async (libraryName) => {
     const libraryInfo = LIBRARIES[libraryName];
@@ -428,7 +427,7 @@ async function getFormattedLibraryData(
 
     let reservationData: ReservationResponse;
     try {
-      reservationData = await getReservation(lid, targetMoment, fetcher);
+      reservationData = await getReservation(lid, targetDateTime, fetcher);
     } catch (error) {
       Sentry.captureException(error, {
         tags: {
@@ -445,7 +444,7 @@ async function getFormattedLibraryData(
     const roomReservations = linkRoomsReservations(
       libraryRooms,
       reservationData,
-      targetMoment,
+      targetDateTime,
     );
     const availableCount = Object.values(roomReservations).filter(
       (room) => room.status === RoomStatus.AVAILABLE,
@@ -479,7 +478,7 @@ async function getFormattedLibraryData(
  * Fetches academic building data from Supabase for a specific time
  */
 async function fetchAcademicBuildingData(
-  targetMoment: DateTime,
+  targetDateTime: DateTime,
   executeRpc: NonNullable<
     FacilitiesServiceDependencies["executeAcademicAvailabilityRpc"]
   >,
@@ -495,8 +494,8 @@ async function fetchAcademicBuildingData(
       },
       async (span) => {
         const response = await executeRpc("get_cached_spots", {
-          check_time_param: targetMoment.toFormat("HH:mm:ss"),
-          check_date_param: targetMoment.toFormat("yyyy-MM-dd"),
+          check_time_param: targetDateTime.toFormat("HH:mm:ss"),
+          check_date_param: targetDateTime.toFormat("yyyy-MM-dd"),
           min_minutes_param: 30,
         });
 
@@ -518,14 +517,14 @@ async function fetchAcademicBuildingData(
             "cache.hit": cacheMetadata?.hit,
             "cache.source": cacheMetadata?.source,
             "cache.fallback_reason": cacheMetadata?.reason,
-            "availability.check_date": targetMoment.toFormat("yyyy-MM-dd"),
+            "availability.check_date": targetDateTime.toFormat("yyyy-MM-dd"),
           });
 
           if (cacheResult === "fallback") {
             span.addEvent("cache.fallback", {
               "fallback.operation": "get_spots",
               "fallback.reason": cacheMetadata?.reason ?? "unknown",
-              "availability.check_date": targetMoment.toFormat("yyyy-MM-dd"),
+              "availability.check_date": targetDateTime.toFormat("yyyy-MM-dd"),
             });
           }
 
@@ -584,7 +583,7 @@ async function fetchAcademicBuildingData(
       } else {
         if (
           roomData.availableAt &&
-          isOpeningSoon(roomData.availableAt, targetMoment) &&
+          isOpeningSoon(roomData.availableAt, targetDateTime) &&
           roomData.availableFor &&
           roomData.availableFor >= 30
         ) {
@@ -668,13 +667,13 @@ function initializeLibraryFacilities(): Record<string, Facility> {
  */
 async function updateLibraryFacilities(
   libraryFacilities: Record<string, Facility>,
-  targetMoment: DateTime, // Use targetMoment
+  targetDateTime: DateTime,
   fetcher: FacilitiesFetch,
 ): Promise<Record<string, Facility>> {
   Object.entries(libraryFacilities).forEach(([libraryName, facility]) => {
-    facility.isOpen = isLibraryOpen(libraryName, targetMoment);
+    facility.isOpen = isLibraryOpen(libraryName, targetDateTime);
 
-    const dayOfWeek = targetMoment.toFormat("cccc");
+    const dayOfWeek = targetDateTime.toFormat("cccc");
     const dailyHours = LIBRARY_HOURS[libraryName]?.[dayOfWeek];
     facility.hours.open = dailyHours?.open ?? "";
     facility.hours.close = dailyHours?.close ?? "";
@@ -690,7 +689,7 @@ async function updateLibraryFacilities(
 
   const libraryData = await getFormattedLibraryData(
     openLibraryNames,
-    targetMoment,
+    targetDateTime,
     fetcher,
   );
 
@@ -733,7 +732,7 @@ export type FacilityScope = "academic" | "library" | "all";
  * framework concerns out of the availability domain.
  */
 export async function getFacilityStatus(
-  targetMoment: DateTime,
+  targetDateTime: DateTime,
   facilityScope: FacilityScope,
   dependencies: FacilitiesServiceDependencies = {},
 ): Promise<FacilityStatus> {
@@ -749,14 +748,14 @@ export async function getFacilityStatus(
     executeAcademicAvailabilityRpc;
 
   if (includeAcademic) {
-    fetchPromises.push(fetchAcademicBuildingData(targetMoment, executeRpc));
+    fetchPromises.push(fetchAcademicBuildingData(targetDateTime, executeRpc));
   }
 
   if (includeLibraries) {
     fetchPromises.push(
       updateLibraryFacilities(
         initializeLibraryFacilities(),
-        targetMoment,
+        targetDateTime,
         fetcher,
       ),
     );
@@ -766,7 +765,7 @@ export async function getFacilityStatus(
   const facilities = Object.assign({}, ...results);
 
   return {
-    timestamp: targetMoment.toUTC().toISO() ?? targetMoment.toString(),
+    timestamp: targetDateTime.toUTC().toISO() ?? targetDateTime.toString(),
     facilities,
   };
 }

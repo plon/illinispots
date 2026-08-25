@@ -6,6 +6,7 @@ import {
   formatTimeForDisplay,
   getCampusDateTimeParts,
   getDurationMinutes,
+  getOvernightDurationMinutes,
   parseTimeToMinutes,
 } from "./time";
 
@@ -15,12 +16,14 @@ describe("time helpers", () => {
     expect(parseTimeToMinutes("24:00:00")).toBeNull();
     expect(formatMinutesAsTime(510.5)).toBe("08:30:30");
     expect(formatTimeForDisplay("13:05:00")).toBe("1:05 PM");
+    expect(formatTimeForDisplay("8:05")).toBe("8:05 AM");
+    expect(formatTimeForDisplay(undefined)).toBe("");
   });
 
   it("calculates ordinary and overnight durations", () => {
     expect(getDurationMinutes("08:30", "10:00")).toBe(90);
     expect(getDurationMinutes("23:30", "01:00")).toBe(0);
-    expect(getDurationMinutes("23:30", "01:00", true)).toBe(90);
+    expect(getOvernightDurationMinutes("23:30", "01:00")).toBe(90);
   });
 
   it("does date-only arithmetic without crossing DST boundaries", () => {

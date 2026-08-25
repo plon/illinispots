@@ -20,7 +20,7 @@ export interface FacilitiesRouteDependencies {
   now?: () => DateTime;
 }
 
-function resolveTargetMoment(
+function resolveTargetDateTime(
   date: string | undefined,
   time: string | undefined,
   now: () => DateTime,
@@ -56,7 +56,7 @@ export function createFacilitiesRoutes(
       );
     }
 
-    const targetMoment = resolveTargetMoment(
+    const targetDateTime = resolveTargetDateTime(
       context.req.query("date"),
       context.req.query("time"),
       now,
@@ -64,7 +64,7 @@ export function createFacilitiesRoutes(
 
     try {
       const data = await loadFacilities(
-        targetMoment,
+        targetDateTime,
         (facilityType as FacilityScope | undefined) ?? "all",
       );
       return context.json(data);

@@ -10,8 +10,10 @@ import React, {
 import { createFileRoute } from "@tanstack/react-router";
 import { getUpdatedAccordionItems } from "@/utils/accordion";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import type { SelectedCampusDateTime } from "@/contexts/DateTimeContext";
-import { getCampusDateTimeParts } from "@/utils/time";
+import {
+  getCampusDateTimeParts,
+  type CampusDateTime,
+} from "@/utils/time";
 import LeftSidebar from "@/components/left";
 import { FacilityStatus, FacilityType } from "@/types";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
@@ -43,7 +45,7 @@ function MapLoadingFallback() {
 }
 
 const fetchFacilityData = async (
-  selectedDateTime: SelectedCampusDateTime,
+  selectedDateTime: CampusDateTime,
   type: "academic" | "library",
 ): Promise<FacilityStatus> => {
   const dateParam = selectedDateTime.date;

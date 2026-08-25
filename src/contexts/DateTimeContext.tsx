@@ -6,44 +6,34 @@ import React, {
   useState,
   ReactNode,
 } from "react";
-import { getCampusDateTimeParts, type CampusDateTimeParts } from "@/utils/time";
+import { getCampusDateTimeParts, type CampusDateTime } from "@/utils/time";
 
 const MINUTE_MS = 60_000;
-
-export function startOfMinute(date: Date): Date {
-  const minute = new Date(date);
-  minute.setSeconds(0, 0);
-  return minute;
-}
 
 export function millisecondsUntilNextMinute(date: Date): number {
   return MINUTE_MS - (date.getTime() % MINUTE_MS);
 }
 
-export type SelectedCampusDateTime = Pick<CampusDateTimeParts, "date" | "time">;
-
 interface DateTimeContextType {
-  selectedDateTime: SelectedCampusDateTime;
-  setSelectedDateTime: (dateTime: SelectedCampusDateTime) => void;
-  formattedDate: string;
-  formattedTime: string;
+  selectedDateTime: CampusDateTime;
+  setSelectedDateTime: (dateTime: CampusDateTime) => void;
   isCurrentDateTime: boolean;
   resetToCurrentDateTime: () => void;
 }
 
 const DateTimeContext = createContext<DateTimeContextType | undefined>(undefined);
 
-function currentCampusDateTime(): SelectedCampusDateTime {
+function currentCampusDateTime(): CampusDateTime {
   const { date, time } = getCampusDateTimeParts();
   return { date, time: `${time.slice(0, 5)}:00` };
 }
 
 export function DateTimeProvider({ children }: { children: ReactNode }) {
   const [selectedDateTime, setSelectedDateTimeState] =
-    useState<SelectedCampusDateTime>(currentCampusDateTime);
+    useState<CampusDateTime>(currentCampusDateTime);
   const [isLive, setIsLive] = useState(true);
 
-  const setSelectedDateTime = useCallback((dateTime: SelectedCampusDateTime) => {
+  const setSelectedDateTime = useCallback((dateTime: CampusDateTime) => {
     setIsLive(false);
     setSelectedDateTimeState(dateTime);
   }, []);
@@ -98,8 +88,6 @@ export function DateTimeProvider({ children }: { children: ReactNode }) {
       value={{
         selectedDateTime,
         setSelectedDateTime,
-        formattedDate: selectedDateTime.date,
-        formattedTime: selectedDateTime.time,
         isCurrentDateTime: isLive,
         resetToCurrentDateTime,
       }}

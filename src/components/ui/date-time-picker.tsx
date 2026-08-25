@@ -4,21 +4,20 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Clock, RotateCcw } from "lucide-react";
 import { useId, useState, useEffect } from "react";
-import type { SelectedCampusDateTime } from "@/contexts/DateTimeContext";
 import {
+  type CampusDateTime,
   formatDateForDisplay,
   formatTimeForDisplay,
   getCampusDateTimeParts,
+  parseTimeToMinutes,
 } from "@/utils/time";
 
 interface DateTimePickerProps {
-  initialDateTime: SelectedCampusDateTime;
-  onDateTimeChange?: (dateTime: SelectedCampusDateTime) => void;
-  onResetToNow?: () => void;
-  showResetButton?: boolean;
-  compact?: boolean;
-  isFetching?: boolean;
-  closeContainer?: () => void;
+  initialDateTime: CampusDateTime;
+  onDateTimeChange: (dateTime: CampusDateTime) => void;
+  onResetToNow: () => void;
+  isFetching: boolean;
+  closeContainer: () => void;
 }
 
 function dateStringToCalendarDate(date: string): Date {
@@ -34,9 +33,7 @@ function DateTimePicker({
   initialDateTime,
   onDateTimeChange,
   onResetToNow,
-  showResetButton = true,
-  compact = false,
-  isFetching = false,
+  isFetching,
   closeContainer,
 }: DateTimePickerProps) {
   const id = useId();
@@ -52,41 +49,38 @@ function DateTimePicker({
     setLocalTimeValue(initialDateTime.time.slice(0, 5));
   }, [initialDateTime]);
 
+  const selectedDate = localSelectedDate
+    ? calendarDateToString(localSelectedDate)
+    : null;
+  const isValidSelection =
+    selectedDate !== null && parseTimeToMinutes(localTimeValue) !== null;
+
   const handleConfirm = () => {
-    if (localSelectedDate && /^\d{2}:\d{2}$/.test(localTimeValue)) {
-      onDateTimeChange?.({
-        date: calendarDateToString(localSelectedDate),
-        time: `${localTimeValue}:00`,
-      });
-    }
-    closeContainer?.();
+    if (!selectedDate || !isValidSelection) return;
+    onDateTimeChange({ date: selectedDate, time: `${localTimeValue}:00` });
+    closeContainer();
   };
 
   const handleReset = () => {
     const now = getCampusDateTimeParts();
     setLocalSelectedDate(dateStringToCalendarDate(now.date));
     setLocalTimeValue(now.time.slice(0, 5));
-    if (onResetToNow) onResetToNow();
-    else onDateTimeChange?.({ date: now.date, time: `${now.time.slice(0, 5)}:00` });
-    closeContainer?.();
+    onResetToNow();
+    closeContainer();
   };
 
-  const selectedDate = localSelectedDate
-    ? calendarDateToString(localSelectedDate)
-    : null;
-  const previewText =
-    selectedDate && /^\d{2}:\d{2}$/.test(localTimeValue)
-      ? `${formatDateForDisplay(selectedDate)} ${formatTimeForDisplay(localTimeValue)}`
-      : "Invalid date/time";
+  const previewText = isValidSelection
+    ? `${formatDateForDisplay(selectedDate)} ${formatTimeForDisplay(localTimeValue)}`
+    : "Invalid date/time";
 
   return (
-    <div className={compact ? "w-[280px]" : ""}>
+    <div className="w-[280px]">
       <div
         className={`rounded-lg border border-border overflow-hidden ${isFetching ? "opacity-70" : ""}`}
       >
         <Calendar
           mode="single"
-          className={compact ? "p-1 bg-background" : "p-2 bg-background"}
+          className="p-1 bg-background"
           selected={localSelectedDate}
           onSelect={setLocalSelectedDate}
           initialFocus
@@ -120,23 +114,21 @@ function DateTimePicker({
           {previewText}
         </p>
         <div className="flex items-center gap-2">
-          {showResetButton && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleReset}
-              className="h-7 px-2"
-              disabled={isFetching}
-            >
-              <RotateCcw size={14} className="mr-1" />
-              Now
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleReset}
+            className="h-7 px-2"
+            disabled={isFetching}
+          >
+            <RotateCcw size={14} className="mr-1" />
+            Now
+          </Button>
           <Button
             size="sm"
             onClick={handleConfirm}
             className="h-7 px-3"
-            disabled={isFetching || !selectedDate}
+            disabled={isFetching || !isValidSelection}
           >
             Confirm
           </Button>

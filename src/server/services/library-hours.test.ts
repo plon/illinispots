@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { DateTime } from "luxon";
-import { isLibraryOpen } from "../server/services/library-hours";
+import { isLibraryOpen } from "./library-hours";
 
 const CAMPUS_TIMEZONE = "America/Chicago";
 

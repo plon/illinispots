@@ -16,10 +16,13 @@ import {
   TooltipProvider,
 } from "@/components/ui/HybridTooltip";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { formatTimeForDisplay, getDurationMinutes } from "@/utils/time";
+import {
+  formatTimeForDisplay,
+  getOvernightDurationMinutes,
+} from "@/utils/time";
 
 const TimeBlock = ({ slot }: TimeBlockProps) => {
-  const durationMinutes = getDurationMinutes(slot.start, slot.end, true);
+  const durationMinutes = getOvernightDurationMinutes(slot.start, slot.end);
 
   const getWidth = () => {
     // Base width for 60 minutes is w-14 (equal to height)

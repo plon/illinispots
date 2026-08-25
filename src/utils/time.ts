@@ -1,6 +1,6 @@
 export const CAMPUS_TIMEZONE = "America/Chicago";
 
-const TIME_PATTERN = /^(\d{2}):(\d{2})(?::(\d{2}))?$/;
+const TIME_PATTERN = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/;
 const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const MINUTES_PER_DAY = 24 * 60;
 
@@ -32,42 +32,42 @@ const shortWeekdayFormatter = new Intl.DateTimeFormat("en-US", {
   weekday: "short",
 });
 
-export interface CampusDateTimeParts {
+export interface CampusDateTime {
   date: string;
   time: string;
-  year: number;
-  month: number;
-  day: number;
+}
+
+export interface CampusDateTimeParts extends CampusDateTime {
   hour: number;
   minute: number;
-  second: number;
+}
+
+function readNumericPart(
+  parts: Intl.DateTimeFormatPart[],
+  type: Intl.DateTimeFormatPartTypes,
+): number {
+  const part = parts.find((candidate) => candidate.type === type);
+  if (!part) throw new Error(`Intl formatter omitted ${type}`);
+  return Number(part.value);
 }
 
 export function getCampusDateTimeParts(
   value: Date | number = new Date(),
 ): CampusDateTimeParts {
   const parts = campusPartsFormatter.formatToParts(value);
-  const values = Object.fromEntries(
-    parts
-      .filter((part) => part.type !== "literal")
-      .map((part) => [part.type, Number(part.value)]),
-  );
-  const year = values.year;
-  const month = values.month;
-  const day = values.day;
-  const hour = values.hour;
-  const minute = values.minute;
-  const second = values.second;
+  const year = readNumericPart(parts, "year");
+  const month = readNumericPart(parts, "month");
+  const day = readNumericPart(parts, "day");
+  const hour = readNumericPart(parts, "hour");
+  const minute = readNumericPart(parts, "minute");
+  const second = readNumericPart(parts, "second");
+  const pad = (part: number) => part.toString().padStart(2, "0");
 
   return {
-    date: `${year.toString().padStart(4, "0")}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`,
-    time: `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}:${second.toString().padStart(2, "0")}`,
-    year,
-    month,
-    day,
+    date: `${year.toString().padStart(4, "0")}-${pad(month)}-${pad(day)}`,
+    time: `${pad(hour)}:${pad(minute)}:${pad(second)}`,
     hour,
     minute,
-    second,
   };
 }
 
@@ -83,16 +83,20 @@ export function parseTimeToMinutes(time: string): number | null {
   return hour * 60 + minute + second / 60;
 }
 
-export function formatMinutesAsTime(minutes: number, includeSeconds = true): string {
-  const normalized = ((minutes % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
-  const hour = Math.floor(normalized / 60);
-  const minute = Math.floor(normalized % 60);
-  const second = Math.round((normalized - Math.floor(normalized)) * 60) % 60;
-  const base = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
-  return includeSeconds ? `${base}:${second.toString().padStart(2, "0")}` : base;
+export function formatMinutesAsTime(minutes: number): string {
+  const secondsPerDay = MINUTES_PER_DAY * 60;
+  const roundedSeconds = Math.round(minutes * 60);
+  const normalizedSeconds =
+    ((roundedSeconds % secondsPerDay) + secondsPerDay) % secondsPerDay;
+  const hour = Math.floor(normalizedSeconds / 3600);
+  const minute = Math.floor((normalizedSeconds % 3600) / 60);
+  const second = normalizedSeconds % 60;
+  const pad = (part: number) => part.toString().padStart(2, "0");
+  return `${pad(hour)}:${pad(minute)}:${pad(second)}`;
 }
 
-export function formatTimeForDisplay(time: string): string {
+export function formatTimeForDisplay(time: string | undefined): string {
+  if (!time) return "";
   const minutes = parseTimeToMinutes(time);
   if (minutes === null) return time;
 
@@ -102,17 +106,25 @@ export function formatTimeForDisplay(time: string): string {
   return `${hour % 12 || 12}:${minute.toString().padStart(2, "0")} ${period}`;
 }
 
-export function getDurationMinutes(
-  start: string,
-  end: string,
-  wrapsAtMidnight = false,
-): number {
+function timeDifference(start: string, end: string): number | null {
   const startMinutes = parseTimeToMinutes(start);
   const endMinutes = parseTimeToMinutes(end);
-  if (startMinutes === null || endMinutes === null) return 0;
+  return startMinutes === null || endMinutes === null
+    ? null
+    : endMinutes - startMinutes;
+}
 
-  const duration = endMinutes - startMinutes;
-  return duration < 0 && wrapsAtMidnight ? duration + MINUTES_PER_DAY : Math.max(0, duration);
+export function getDurationMinutes(start: string, end: string): number {
+  return Math.max(0, timeDifference(start, end) ?? 0);
+}
+
+export function getOvernightDurationMinutes(
+  start: string,
+  end: string,
+): number {
+  const duration = timeDifference(start, end);
+  if (duration === null) return 0;
+  return duration < 0 ? duration + MINUTES_PER_DAY : duration;
 }
 
 function dateToUtc(date: string): Date | null {

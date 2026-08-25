@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { getCampusDateTimeParts } from "@/utils/time";
+import {
+  formatTimeForDisplay,
+  getCampusDateTimeParts,
+} from "@/utils/time";
 import { Clock } from "lucide-react";
 import type { RoomScheduleBlock } from "@/types";
 import {
@@ -12,7 +15,6 @@ import {
   buildTimelineDayOptions,
   buildTimelineModel,
   formatDuration,
-  formatScheduleTime,
   TIMELINE_HOUR_WIDTH_PX,
 } from "@/utils/timelineSchedule";
 
@@ -213,8 +215,8 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
                       details?.title ||
                       (block.status === "event" ? "Event" : "Class");
                     const blockDescription = isAvailable
-                      ? `Available, ${formatDuration(durationMinutes)}, ${formatScheduleTime(block.start)} to ${formatScheduleTime(block.end)}`
-                      : `${eventLabel}${details?.title && details.title !== eventLabel ? `: ${details.title}` : ""}, ${formatDuration(durationMinutes)}, ${formatScheduleTime(block.start)} to ${formatScheduleTime(block.end)}`;
+                      ? `Available, ${formatDuration(durationMinutes)}, ${formatTimeForDisplay(block.start)} to ${formatTimeForDisplay(block.end)}`
+                      : `${eventLabel}${details?.title && details.title !== eventLabel ? `: ${details.title}` : ""}, ${formatDuration(durationMinutes)}, ${formatTimeForDisplay(block.start)} to ${formatTimeForDisplay(block.end)}`;
 
                     return (
                       <HybridTooltip
@@ -265,8 +267,8 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
                             <div className="flex items-center gap-1.5 border-t border-border/60 pt-1 text-[11px] text-muted-foreground">
                               <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
                               <span>
-                                {formatScheduleTime(block.start)} -{" "}
-                                {formatScheduleTime(block.end)}
+                                {formatTimeForDisplay(block.start)} -{" "}
+                                {formatTimeForDisplay(block.end)}
                               </span>
                             </div>
                           </div>

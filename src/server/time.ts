@@ -1,13 +1,18 @@
 import { DateTime } from "luxon";
 import { CAMPUS_TIMEZONE } from "../utils/time";
 
-export function parseCampusTimestamp(value: string): DateTime {
+export function parseCampusTimestamp(value: string): DateTime<boolean> {
   const sql = DateTime.fromSQL(value, { zone: CAMPUS_TIMEZONE });
-  if (sql.isValid) return sql;
+  const timestamp = sql.isValid
+    ? sql
+    : DateTime.fromISO(value, { zone: CAMPUS_TIMEZONE }).setZone(
+        CAMPUS_TIMEZONE,
+      );
 
-  return DateTime.fromISO(value, { zone: CAMPUS_TIMEZONE }).setZone(
-    CAMPUS_TIMEZONE,
-  );
+  if (!timestamp.isValid) {
+    throw new Error(`Invalid timestamp: ${value}`);
+  }
+  return timestamp;
 }
 
 export function parseCampusRequestDateTime(

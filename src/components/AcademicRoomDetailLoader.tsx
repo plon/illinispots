@@ -32,13 +32,13 @@ const AcademicRoomDetailLoader: React.FC<AcademicRoomDetailLoaderProps> = ({
   buildingId,
   roomNumber,
 }) => {
-  const { formattedDate } = useDateTimeContext();
-  const [selectedDate, setSelectedDate] = useState(formattedDate);
+  const { selectedDateTime } = useDateTimeContext();
+  const [selectedDate, setSelectedDate] = useState(selectedDateTime.date);
 
   // Sync if global context date changes
   useEffect(() => {
-    setSelectedDate(formattedDate);
-  }, [formattedDate]);
+    setSelectedDate(selectedDateTime.date);
+  }, [selectedDateTime.date]);
 
   const {
     data: scheduleData,

@@ -1,5 +1,8 @@
-import { formatTime } from "./format";
-import { getCampusDateTimeParts, getDateWeekday } from "./time";
+import {
+  formatTimeForDisplay,
+  getCampusDateTimeParts,
+  getDateWeekday,
+} from "./time";
 
 export interface LibraryHours {
   [key: string]: {
@@ -49,5 +52,5 @@ export const getLibraryHoursMessage = (
   const hours = dayOfWeek ? LIBRARY_HOURS[libraryName]?.[dayOfWeek] : undefined;
   if (!hours) return "Hours not available for this day";
 
-  return `Reservable hours for ${dayOfWeek}: ${formatTime(hours.open)} - ${formatTime(hours.close)}${hours.nextDay ? " (next day)" : ""}`;
+  return `Reservable hours for ${dayOfWeek}: ${formatTimeForDisplay(hours.open)} - ${formatTimeForDisplay(hours.close)}${hours.nextDay ? " (next day)" : ""}`;
 };
