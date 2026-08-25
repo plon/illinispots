@@ -65,6 +65,32 @@ describe("processScheduleIntoHourlyBlocks", () => {
     ]);
   });
 
+  it("keeps blocks that end at midnight", () => {
+    expect(
+      processScheduleIntoHourlyBlocks([
+        {
+          start: "23:00:00",
+          end: "24:00:00",
+          status: "available",
+          details: null,
+        },
+      ]),
+    ).toEqual([
+      {
+        start: "23:00:00",
+        end: "00:00:00",
+        sections: [
+          {
+            start: "23:00:00",
+            end: "00:00:00",
+            status: "available",
+            details: null,
+          },
+        ],
+      },
+    ]);
+  });
+
   it("ignores invalid and zero-length blocks", () => {
     expect(
       processScheduleIntoHourlyBlocks([

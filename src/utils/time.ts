@@ -78,7 +78,14 @@ export function parseTimeToMinutes(time: string): number | null {
   const hour = Number(match[1]);
   const minute = Number(match[2]);
   const second = match[3] === undefined ? 0 : Number(match[3]);
-  if (hour > 23 || minute > 59 || second > 59) return null;
+  if (
+    hour > 24 ||
+    minute > 59 ||
+    second > 59 ||
+    (hour === 24 && (minute !== 0 || second !== 0))
+  ) {
+    return null;
+  }
 
   return hour * 60 + minute + second / 60;
 }
@@ -100,7 +107,7 @@ export function formatTimeForDisplay(time: string | undefined): string {
   const minutes = parseTimeToMinutes(time);
   if (minutes === null) return time;
 
-  const hour = Math.floor(minutes / 60);
+  const hour = Math.floor(minutes / 60) % 24;
   const minute = Math.floor(minutes % 60);
   const period = hour >= 12 ? "PM" : "AM";
   return `${hour % 12 || 12}:${minute.toString().padStart(2, "0")} ${period}`;

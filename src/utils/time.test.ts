@@ -13,9 +13,11 @@ import {
 describe("time helpers", () => {
   it("parses and formats wall-clock schedule times", () => {
     expect(parseTimeToMinutes("08:30:30")).toBe(510.5);
-    expect(parseTimeToMinutes("24:00:00")).toBeNull();
+    expect(parseTimeToMinutes("24:00:00")).toBe(1440);
+    expect(parseTimeToMinutes("24:01:00")).toBeNull();
     expect(formatMinutesAsTime(510.5)).toBe("08:30:30");
     expect(formatTimeForDisplay("13:05:00")).toBe("1:05 PM");
+    expect(formatTimeForDisplay("24:00:00")).toBe("12:00 AM");
     expect(formatTimeForDisplay("8:05")).toBe("8:05 AM");
     expect(formatTimeForDisplay(undefined)).toBe("");
   });
