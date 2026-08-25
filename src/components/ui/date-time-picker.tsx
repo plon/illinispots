@@ -4,119 +4,88 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Clock, RotateCcw } from "lucide-react";
 import { useId, useState, useEffect } from "react";
-import moment from "moment-timezone";
+import {
+  type CampusDateTime,
+  formatDateForDisplay,
+  formatTimeForDisplay,
+  getCampusDateTimeParts,
+  parseTimeToMinutes,
+} from "@/utils/time";
 
 interface DateTimePickerProps {
-  initialDateTime?: Date;
-  onDateTimeChange?: (dateTime: Date) => void;
-  onResetToNow?: () => void;
-  showResetButton?: boolean;
-  compact?: boolean;
-  isFetching?: boolean;
-  closeContainer?: () => void;
+  initialDateTime: CampusDateTime;
+  onDateTimeChange: (dateTime: CampusDateTime) => void;
+  onResetToNow: () => void;
+  isFetching: boolean;
+  closeContainer: () => void;
+}
+
+function dateStringToCalendarDate(date: string): Date {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(year, month - 1, day, 12);
+}
+
+function calendarDateToString(date: Date): string {
+  return `${date.getFullYear().toString().padStart(4, "0")}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
 }
 
 function DateTimePicker({
-  initialDateTime = new Date(),
+  initialDateTime,
   onDateTimeChange,
   onResetToNow,
-  showResetButton = true,
-  compact = false,
-  isFetching = false,
+  isFetching,
   closeContainer,
 }: DateTimePickerProps) {
   const id = useId();
   const [localSelectedDate, setLocalSelectedDate] = useState<Date | undefined>(
-    initialDateTime,
+    () => dateStringToCalendarDate(initialDateTime.date),
   );
-  const initialTimeValue = moment(initialDateTime).format("HH:mm");
-  const [localTimeValue, setLocalTimeValue] = useState(initialTimeValue);
+  const [localTimeValue, setLocalTimeValue] = useState(
+    initialDateTime.time.slice(0, 5),
+  );
 
   useEffect(() => {
-    setLocalSelectedDate(initialDateTime);
-    setLocalTimeValue(moment(initialDateTime).format("HH:mm"));
+    setLocalSelectedDate(dateStringToCalendarDate(initialDateTime.date));
+    setLocalTimeValue(initialDateTime.time.slice(0, 5));
   }, [initialDateTime]);
 
-  const getCombinedDateTime = (date: Date, time: string): Date | undefined => {
-    const [hours, minutes] = time.split(":").map(Number);
-    if (isNaN(hours) || isNaN(minutes)) {
-      console.error("Error parsing time value:", time);
-      return undefined;
-    }
-    const combinedDate = new Date(date.getTime());
-    combinedDate.setHours(hours);
-    combinedDate.setMinutes(minutes);
-    combinedDate.setSeconds(0);
-    combinedDate.setMilliseconds(0);
-    return combinedDate;
-  };
-
-  const handleDateSelect = (date: Date | undefined) => {
-    setLocalSelectedDate(date);
-  };
-
-  const handleTimeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalTimeValue(event.target.value);
-  };
+  const selectedDate = localSelectedDate
+    ? calendarDateToString(localSelectedDate)
+    : null;
+  const isValidSelection =
+    selectedDate !== null && parseTimeToMinutes(localTimeValue) !== null;
 
   const handleConfirm = () => {
-    // Determine the date/time to confirm (either the locally changed one or the initial one)
-    const dateTimeToConfirm = localSelectedDate
-      ? getCombinedDateTime(localSelectedDate, localTimeValue)
-      : undefined;
-
-    // Ensure we have a valid date to work with
-    if (dateTimeToConfirm && onDateTimeChange) {
-      onDateTimeChange(dateTimeToConfirm); // Pass the date/time back
-      if (closeContainer) closeContainer(); // Close the container
-    } else if (!dateTimeToConfirm && onDateTimeChange) {
-      // Fallback: If something went wrong getting the combined time,
-      // confirm with the initial time to ensure closure
-      onDateTimeChange(initialDateTime);
-      if (closeContainer) closeContainer();
-    } else if (closeContainer) {
-      // If no onDateTimeChange provided, just close
-      closeContainer();
-    }
+    if (!selectedDate || !isValidSelection) return;
+    onDateTimeChange({ date: selectedDate, time: `${localTimeValue}:00` });
+    closeContainer();
   };
 
   const handleReset = () => {
-    const now = new Date();
-    now.setSeconds(0, 0);
-    setLocalSelectedDate(now);
-    setLocalTimeValue(moment(now).format("HH:mm"));
-    if (onResetToNow) {
-      onResetToNow();
-      if (closeContainer) closeContainer();
-    } else if (onDateTimeChange) {
-      onDateTimeChange(now);
-      if (closeContainer) closeContainer();
-    }
+    const now = getCampusDateTimeParts();
+    setLocalSelectedDate(dateStringToCalendarDate(now.date));
+    setLocalTimeValue(now.time.slice(0, 5));
+    onResetToNow();
+    closeContainer();
   };
 
-  const currentLocalFullDateTime = localSelectedDate
-    ? getCombinedDateTime(localSelectedDate, localTimeValue)
-    : undefined;
-
-  const previewText = currentLocalFullDateTime
-    ? moment(currentLocalFullDateTime).format("M/D/YY h:mm A")
+  const previewText = isValidSelection
+    ? `${formatDateForDisplay(selectedDate)} ${formatTimeForDisplay(localTimeValue)}`
     : "Invalid date/time";
 
   return (
-    <div className={compact ? "w-[280px]" : ""}>
+    <div className="w-[280px]">
       <div
         className={`rounded-lg border border-border overflow-hidden ${isFetching ? "opacity-70" : ""}`}
       >
-        {/* Calendar */}
         <Calendar
           mode="single"
-          className={compact ? "p-1 bg-background" : "p-2 bg-background"}
+          className="p-1 bg-background"
           selected={localSelectedDate}
-          onSelect={handleDateSelect}
+          onSelect={setLocalSelectedDate}
           initialFocus
           disabled={isFetching}
         />
-        {/* Time Input Section */}
         <div className="border-t border-border p-3">
           <div className="flex items-center gap-3">
             <Label htmlFor={id} className="text-xs">
@@ -128,7 +97,7 @@ function DateTimePicker({
                 type="time"
                 step="60"
                 value={localTimeValue}
-                onChange={handleTimeChange}
+                onChange={(event) => setLocalTimeValue(event.target.value)}
                 className="peer ps-9 [&::-webkit-calendar-picker-indicator]:hidden"
                 disabled={isFetching}
               />
@@ -140,32 +109,26 @@ function DateTimePicker({
         </div>
       </div>
 
-      {/* Bottom Section with Preview and Buttons */}
       <div className="mt-2 flex justify-between items-center gap-2">
-        {/* Preview Text */}
         <p className="text-xs text-muted-foreground truncate flex-1 mr-2">
           {previewText}
         </p>
-
-        {/* Buttons Group */}
         <div className="flex items-center gap-2">
-          {showResetButton && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleReset}
-              className="h-7 px-2"
-              disabled={isFetching}
-            >
-              <RotateCcw size={14} className="mr-1" />
-              Now
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleReset}
+            className="h-7 px-2"
+            disabled={isFetching}
+          >
+            <RotateCcw size={14} className="mr-1" />
+            Now
+          </Button>
           <Button
             size="sm"
             onClick={handleConfirm}
             className="h-7 px-3"
-            disabled={isFetching}
+            disabled={isFetching || !isValidSelection}
           >
             Confirm
           </Button>

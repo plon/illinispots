@@ -7,7 +7,7 @@ import {
   MapProps,
   FacilityType,
 } from "@/types";
-import { formatTime } from "@/utils/format";
+import { formatTimeForDisplay } from "@/utils/time";
 import {
   recordInitialLoadMilestone,
   recordMapLoadDuration,
@@ -204,7 +204,7 @@ export default function FacilityMap({
             ? `${data.available}/${data.total} available`
             : `CLOSED${
                 data.hours.open
-                  ? `<br/><span class="text-[11px] text-muted-foreground/80">Opens ${formatTime(data.hours.open)}</span>`
+                  ? `<br/><span class="text-[11px] text-muted-foreground/80">Opens ${formatTimeForDisplay(data.hours.open)}</span>`
                   : `<br/><span class="text-[11px] text-muted-foreground/80">Not open today</span>`
               }`
         }</div>

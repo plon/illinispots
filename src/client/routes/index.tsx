@@ -10,7 +10,10 @@ import React, {
 import { createFileRoute } from "@tanstack/react-router";
 import { getUpdatedAccordionItems } from "@/utils/accordion";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import moment from "moment-timezone";
+import {
+  getCampusDateTimeParts,
+  type CampusDateTime,
+} from "@/utils/time";
 import LeftSidebar from "@/components/left";
 import { FacilityStatus, FacilityType } from "@/types";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
@@ -42,11 +45,11 @@ function MapLoadingFallback() {
 }
 
 const fetchFacilityData = async (
-  selectedDateTime: Date,
+  selectedDateTime: CampusDateTime,
   type: "academic" | "library",
 ): Promise<FacilityStatus> => {
-  const dateParam = moment(selectedDateTime).format("YYYY-MM-DD");
-  const timeParam = moment(selectedDateTime).format("HH:mm:ss");
+  const dateParam = selectedDateTime.date;
+  const timeParam = selectedDateTime.time;
   const apiUrl = `/api/facilities?date=${dateParam}&time=${timeParam}&type=${type}`;
 
   const res = await fetch(apiUrl);
@@ -64,7 +67,7 @@ const fetchFacilityData = async (
 };
 
 const IlliniSpotsPage: React.FC = () => {
-  const { selectedDateTime, isCurrentDateTime } = useDateTimeContext();
+  const { selectedDateTime, liveNow, isCurrentDateTime } = useDateTimeContext();
   const [showMapPreference, setShowMapPreference] = useState<boolean | null>(
     null,
   );
@@ -97,11 +100,11 @@ const IlliniSpotsPage: React.FC = () => {
     queryKey: [
       "facilities",
       "academic",
-      isCurrentDateTime ? "live" : selectedDateTime.toISOString(),
+      isCurrentDateTime ? "live" : `${selectedDateTime.date}T${selectedDateTime.time}`,
     ],
     queryFn: () =>
       fetchFacilityData(
-        isCurrentDateTime ? new Date() : selectedDateTime,
+        isCurrentDateTime ? getCampusDateTimeParts() : selectedDateTime,
         "academic",
       ),
     staleTime: isCurrentDateTime ? 0 : 5 * 60 * 1000,
@@ -122,11 +125,11 @@ const IlliniSpotsPage: React.FC = () => {
     queryKey: [
       "facilities",
       "library",
-      isCurrentDateTime ? "live" : selectedDateTime.toISOString(),
+      isCurrentDateTime ? "live" : `${selectedDateTime.date}T${selectedDateTime.time}`,
     ],
     queryFn: () =>
       fetchFacilityData(
-        isCurrentDateTime ? new Date() : selectedDateTime,
+        isCurrentDateTime ? getCampusDateTimeParts() : selectedDateTime,
         "library",
       ),
     staleTime: isCurrentDateTime ? 0 : 5 * 60 * 1000,
@@ -140,10 +143,10 @@ const IlliniSpotsPage: React.FC = () => {
 
   const facilityData = useMemo<FacilityStatus | undefined>(() => {
     const currentAcademicData = isCurrentDateTime
-      ? ageLiveAvailability(academicData, selectedDateTime)
+      ? ageLiveAvailability(academicData, liveNow)
       : academicData;
     const currentLibraryData = isCurrentDateTime
-      ? ageLiveAvailability(libraryData, selectedDateTime)
+      ? ageLiveAvailability(libraryData, liveNow)
       : libraryData;
 
     if (!currentAcademicData && !currentLibraryData) {
@@ -166,7 +169,7 @@ const IlliniSpotsPage: React.FC = () => {
         ...matchingLibraryFacilities,
       },
     };
-  }, [academicData, isCurrentDateTime, libraryData, selectedDateTime]);
+  }, [academicData, isCurrentDateTime, libraryData, liveNow]);
 
   useEffect(() => {
     if (!isCurrentDateTime) return;

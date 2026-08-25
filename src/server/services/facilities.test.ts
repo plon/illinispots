@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, mock, spyOn } from "bun:test";
-import moment from "moment-timezone";
+import { DateTime } from "luxon";
 import { FacilityType, RoomStatus } from "../../types";
 import { getFacilityStatus, type FacilitiesFetch } from "./facilities";
 
 const CAMPUS_TIMEZONE = "America/Chicago";
+const atCampusTime = (value: string) =>
+  DateTime.fromFormat(value, "yyyy-MM-dd HH:mm:ss", { zone: CAMPUS_TIMEZONE });
 
 describe("getFacilityStatus", () => {
   afterEach(() => {
@@ -11,11 +13,7 @@ describe("getFacilityStatus", () => {
   });
 
   it("maps the academic RPC contract into room availability", async () => {
-    const target = moment.tz(
-      "2026-08-24 10:00:00",
-      "YYYY-MM-DD HH:mm:ss",
-      CAMPUS_TIMEZONE,
-    );
+    const target = atCampusTime("2026-08-24 10:00:00");
     const rpcCalls: unknown[] = [];
     const unexpectedFetch: FacilitiesFetch = async () => {
       throw new Error("LibCal should not be called for academic scope");
@@ -75,7 +73,7 @@ describe("getFacilityStatus", () => {
         },
       },
     ]);
-    expect(result.timestamp).toBe(target.toISOString());
+    expect(result.timestamp).toBe(target.toUTC().toISO()!);
 
     const facility = result.facilities.siebel;
     expect(facility.type).toBe(FacilityType.ACADEMIC);
@@ -90,11 +88,7 @@ describe("getFacilityStatus", () => {
 
   it("rejects malformed academic responses instead of returning invalid facilities", async () => {
     spyOn(console, "error").mockImplementation(() => {});
-    const target = moment.tz(
-      "2026-08-24 10:00:00",
-      "YYYY-MM-DD HH:mm:ss",
-      CAMPUS_TIMEZONE,
-    );
+    const target = atCampusTime("2026-08-24 10:00:00");
 
     const result = await getFacilityStatus(target, "academic", {
       executeAcademicAvailabilityRpc: async () => ({
@@ -107,11 +101,7 @@ describe("getFacilityStatus", () => {
   });
 
   it("maps LibCal slots into current, upcoming, and unavailable rooms", async () => {
-    const target = moment.tz(
-      "2026-08-24 08:15:00",
-      "YYYY-MM-DD HH:mm:ss",
-      CAMPUS_TIMEZONE,
-    );
+    const target = atCampusTime("2026-08-24 08:15:00");
     const requests: Array<{ url: string; body: URLSearchParams }> = [];
     const fetchLibCal: FacilitiesFetch = async (input, init) => {
       requests.push({
@@ -180,11 +170,7 @@ describe("getFacilityStatus", () => {
   });
 
   it("requests the additional calendar day needed for Funk's overnight hours", async () => {
-    const target = moment.tz(
-      "2026-08-24 22:30:00",
-      "YYYY-MM-DD HH:mm:ss",
-      CAMPUS_TIMEZONE,
-    );
+    const target = atCampusTime("2026-08-24 22:30:00");
     const requestWindows: Record<string, { start: string; end: string }> = {};
     const fetchLibCal: FacilitiesFetch = async (_input, init) => {
       const body = new URLSearchParams(String(init?.body));
@@ -204,11 +190,7 @@ describe("getFacilityStatus", () => {
   });
 
   it("caps overnight availability at the active interval's closing time", async () => {
-    const target = moment.tz(
-      "2026-08-25 01:30:00",
-      "YYYY-MM-DD HH:mm:ss",
-      CAMPUS_TIMEZONE,
-    );
+    const target = atCampusTime("2026-08-25 01:30:00");
     const fetchLibCal: FacilitiesFetch = async () =>
       Response.json({
         slots: [
@@ -235,11 +217,7 @@ describe("getFacilityStatus", () => {
 
   it("preserves other facility results when one LibCal request times out", async () => {
     spyOn(console, "error").mockImplementation(() => {});
-    const target = moment.tz(
-      "2026-08-24 10:00:00",
-      "YYYY-MM-DD HH:mm:ss",
-      CAMPUS_TIMEZONE,
-    );
+    const target = atCampusTime("2026-08-24 10:00:00");
     const partiallyTimedOutFetch: FacilitiesFetch = async (
       _input,
       init,

@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import { CalendarClock } from "lucide-react";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
-import { formatTime } from "@/utils/format";
-import moment from "moment-timezone";
+import { formatDateForDisplay, formatTimeForDisplay } from "@/utils/time";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import {
     Dialog,
@@ -34,7 +33,7 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
     const [open, setOpen] = useState(false);
     const isDesktop = useMediaQuery("(min-width: 768px)");
 
-    const handleDateTimeChange = (dateTime: Date) => {
+    const handleDateTimeChange = (dateTime: typeof selectedDateTime) => {
         setSelectedDateTime(dateTime);
         setOpen(false);
     };
@@ -48,10 +47,10 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
         setOpen(false);
     };
 
-    const formattedDate = moment(selectedDateTime).format("MMM D, YYYY");
-    const formattedTimeStr = formatTime(moment(selectedDateTime).format("HH:mm"));
-    const formattedDateTimeSubtext =
-        moment(selectedDateTime).format("M/D ") + formattedTimeStr;
+    const formattedDate = formatDateForDisplay(selectedDateTime.date);
+    const formattedTimeStr = formatTimeForDisplay(selectedDateTime.time);
+    const [, month, day] = selectedDateTime.date.split("-");
+    const formattedDateTimeSubtext = `${Number(month)}/${Number(day)} ${formattedTimeStr}`;
 
     const triggerButton = (
         <Button
@@ -77,7 +76,6 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
             initialDateTime={selectedDateTime}
             onDateTimeChange={handleDateTimeChange}
             onResetToNow={handleResetToNow}
-            compact={true}
             isFetching={isFetching}
             closeContainer={closeContainer}
         />

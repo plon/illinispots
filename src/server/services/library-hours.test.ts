@@ -1,13 +1,13 @@
 import { describe, expect, it } from "bun:test";
-import moment from "moment-timezone";
-import { isLibraryOpen } from "./libraryHours";
+import { DateTime } from "luxon";
+import { isLibraryOpen } from "./library-hours";
 
 const CAMPUS_TIMEZONE = "America/Chicago";
 
 describe("isLibraryOpen", () => {
   it("keeps overnight hours open until, but not including, closing time", () => {
     const atCampusTime = (value: string) =>
-      moment.tz(value, "YYYY-MM-DD HH:mm:ss", CAMPUS_TIMEZONE);
+      DateTime.fromFormat(value, "yyyy-MM-dd HH:mm:ss", { zone: CAMPUS_TIMEZONE });
 
     expect(
       isLibraryOpen("Funk ACES Library", atCampusTime("2026-08-24 22:30:00")),

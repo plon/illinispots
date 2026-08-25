@@ -6,83 +6,84 @@ import React, {
   useState,
   ReactNode,
 } from "react";
-import moment from "moment-timezone";
+import { getCampusDateTimeParts, type CampusDateTime } from "@/utils/time";
 
 const MINUTE_MS = 60_000;
-
-export function startOfMinute(date: Date): Date {
-  const minute = new Date(date);
-  minute.setSeconds(0, 0);
-  return minute;
-}
 
 export function millisecondsUntilNextMinute(date: Date): number {
   return MINUTE_MS - (date.getTime() % MINUTE_MS);
 }
 
 interface DateTimeContextType {
-  selectedDateTime: Date;
-  setSelectedDateTime: (date: Date) => void;
-  formattedDate: string;
-  formattedTime: string;
+  selectedDateTime: CampusDateTime;
+  liveNow: Date;
+  setSelectedDateTime: (dateTime: CampusDateTime) => void;
   isCurrentDateTime: boolean;
   resetToCurrentDateTime: () => void;
 }
 
+interface DateTimeState {
+  selectedDateTime: CampusDateTime;
+  liveNow: Date;
+  isLive: boolean;
+}
+
 const DateTimeContext = createContext<DateTimeContextType | undefined>(undefined);
 
-export function DateTimeProvider({ children }: { children: ReactNode }) {
-  const [selectedDateTime, setSelectedDateTimeState] = useState<Date>(() =>
-    startOfMinute(new Date()),
-  );
-  const [isLive, setIsLive] = useState(true);
+function createLiveState(now = new Date()): DateTimeState {
+  const { date, time } = getCampusDateTimeParts(now);
+  return {
+    selectedDateTime: { date, time: `${time.slice(0, 5)}:00` },
+    liveNow: now,
+    isLive: true,
+  };
+}
 
-  const setSelectedDateTime = useCallback((date: Date) => {
-    setIsLive(false);
-    setSelectedDateTimeState(startOfMinute(date));
+export function DateTimeProvider({ children }: { children: ReactNode }) {
+  const [state, setState] = useState<DateTimeState>(createLiveState);
+
+  const setSelectedDateTime = useCallback((dateTime: CampusDateTime) => {
+    setState((current) => ({
+      ...current,
+      selectedDateTime: dateTime,
+      isLive: false,
+    }));
   }, []);
 
   const resetToCurrentDateTime = useCallback(() => {
-    setIsLive(true);
-    setSelectedDateTimeState(startOfMinute(new Date()));
+    setState(createLiveState());
   }, []);
 
   useEffect(() => {
-    if (!isLive) return;
+    if (!state.isLive) return;
 
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
-
     const stopTimer = () => {
       if (timeoutId !== undefined) {
         clearTimeout(timeoutId);
         timeoutId = undefined;
       }
     };
-
     const scheduleNextMinute = () => {
       stopTimer();
       if (document.visibilityState !== "visible") return;
 
-      const now = new Date();
       timeoutId = setTimeout(() => {
         timeoutId = undefined;
-        setSelectedDateTimeState(startOfMinute(new Date()));
+        setState(createLiveState());
         scheduleNextMinute();
-      }, millisecondsUntilNextMinute(now));
+      }, millisecondsUntilNextMinute(new Date()));
     };
-
     const catchUpToNow = () => {
       if (document.visibilityState === "visible") {
-        setSelectedDateTimeState(startOfMinute(new Date()));
+        setState(createLiveState());
         scheduleNextMinute();
       } else {
         stopTimer();
       }
     };
 
-    if (document.visibilityState === "visible") {
-      scheduleNextMinute();
-    }
+    if (document.visibilityState === "visible") scheduleNextMinute();
     document.addEventListener("visibilitychange", catchUpToNow);
     window.addEventListener("focus", catchUpToNow);
 
@@ -91,22 +92,15 @@ export function DateTimeProvider({ children }: { children: ReactNode }) {
       document.removeEventListener("visibilitychange", catchUpToNow);
       window.removeEventListener("focus", catchUpToNow);
     };
-  }, [isLive]);
-
-  // Format the date as YYYY-MM-DD for API calls
-  const formattedDate = moment(selectedDateTime).format("YYYY-MM-DD");
-  
-  // Format the time as HH:mm:ss for API calls
-  const formattedTime = moment(selectedDateTime).format("HH:mm:ss");
+  }, [state.isLive]);
 
   return (
     <DateTimeContext.Provider
       value={{
-        selectedDateTime,
+        selectedDateTime: state.selectedDateTime,
+        liveNow: state.liveNow,
         setSelectedDateTime,
-        formattedDate,
-        formattedTime,
-        isCurrentDateTime: isLive,
+        isCurrentDateTime: state.isLive,
         resetToCurrentDateTime,
       }}
     >
@@ -118,7 +112,7 @@ export function DateTimeProvider({ children }: { children: ReactNode }) {
 export function useDateTimeContext() {
   const context = useContext(DateTimeContext);
   if (context === undefined) {
-    throw new Error("useDateTimeContext must be used within a DateTimeProvider");
+    throw new Error("useDateTimeContext must be used within DateTimeProvider");
   }
   return context;
 }

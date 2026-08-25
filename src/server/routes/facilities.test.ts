@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import moment from "moment-timezone";
+import { DateTime } from "luxon";
 import type { FacilityStatus } from "../../types";
 import type { FacilityScope } from "../services/facilities";
 import { createApp } from "../app";
@@ -34,7 +34,7 @@ describe("GET /api/facilities", () => {
     const app = createApp({
       facilities: {
         getFacilityStatus: async (target, scope) => {
-          calls.push({ timestamp: target.format(), scope });
+          calls.push({ timestamp: target.toISO({ suppressMilliseconds: true })!, scope });
           return expected;
         },
       },
@@ -53,18 +53,18 @@ describe("GET /api/facilities", () => {
   });
 
   it("falls back to the injected clock for incomplete date/time input", async () => {
-    const fixedNow = moment.tz(
+    const fixedNow = DateTime.fromFormat(
       "2026-01-15 09:45:00",
-      "YYYY-MM-DD HH:mm:ss",
-      "America/Chicago",
+      "yyyy-MM-dd HH:mm:ss",
+      { zone: "America/Chicago" },
     );
     let receivedTimestamp = "";
     const app = createApp({
       facilities: {
-        now: () => fixedNow.clone(),
+        now: () => fixedNow,
         getFacilityStatus: async (target) => {
-          receivedTimestamp = target.format();
-          return { timestamp: target.toISOString(), facilities: {} };
+          receivedTimestamp = target.toISO({ suppressMilliseconds: true })!;
+          return { timestamp: target.toISO()! ?? target.toString(), facilities: {} };
         },
       },
     });
