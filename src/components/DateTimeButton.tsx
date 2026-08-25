@@ -3,15 +3,13 @@ import { Button } from "@/components/ui/button";
 import { CalendarClock } from "lucide-react";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
-import { formatDateForDisplay, formatTimeForDisplay } from "@/utils/time";
+import { formatDateForDisplay, formatShortMonthDay, formatTimeForDisplay } from "@/utils/time";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
 
@@ -43,24 +41,24 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
         setOpen(false);
     };
 
-    const closeContainer = () => {
-        setOpen(false);
-    };
-
     const formattedDate = formatDateForDisplay(selectedDateTime.date);
     const formattedTimeStr = formatTimeForDisplay(selectedDateTime.time);
-    const [, month, day] = selectedDateTime.date.split("-");
-    const formattedDateTimeSubtext = `${Number(month)}/${Number(day)} ${formattedTimeStr}`;
+    const formattedDateTimeSubtext = `${formatShortMonthDay(selectedDateTime.date)} ${formattedTimeStr}`;
 
     const triggerButton = (
         <Button
             variant="outline"
             className={cn(
-                `h-9 rounded-full lg:rounded-lg border flex items-center gap-2 w-9 lg:w-auto px-0 lg:px-3 shrink-0 ${!isCurrentDateTime ? "bg-muted" : ""
+                `relative h-9 rounded-full lg:rounded-lg border flex items-center gap-2 w-9 lg:w-auto px-0 lg:px-3 shrink-0 transition-colors ${
+                    !isCurrentDateTime
+                        ? "border-primary/50 bg-primary/10 text-primary font-medium hover:bg-primary/15"
+                        : "border-input hover:border-foreground/40 text-foreground"
                 }`,
                 className,
             )}
-            aria-label="Select date and time"
+            aria-label={`Select date and time. Currently viewing ${
+                isCurrentDateTime ? "live" : `${formattedDate} ${formattedTimeStr}`
+            }`}
             title={`Selected: ${formattedDate} ${formattedTimeStr}`}
             disabled={isFetching}
         >
@@ -68,6 +66,9 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
             <span className="hidden lg:inline text-sm font-light">
                 {isCurrentDateTime ? "Now" : formattedDateTimeSubtext}
             </span>
+            {!isCurrentDateTime && (
+                <span className="lg:hidden absolute top-1 right-1 size-2 rounded-full bg-primary ring-2 ring-background" />
+            )}
         </Button>
     );
 
@@ -77,31 +78,31 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
             onDateTimeChange={handleDateTimeChange}
             onResetToNow={handleResetToNow}
             isFetching={isFetching}
-            closeContainer={closeContainer}
         />
     );
 
     if (isDesktop) {
         return (
-            <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>{triggerButton}</DialogTrigger>
-                <DialogContent className="sm:max-w-xs p-0 [&>button:last-child]:hidden">
-                    <DialogHeader className="sr-only">
-                        <DialogTitle>Select Date and Time</DialogTitle>
-                    </DialogHeader>
-                    <div className="p-4 flex justify-center">
-                        {dateTimePickerComponent}
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
+                <PopoverContent
+                    className="w-auto p-3 border-border/60 shadow-xl"
+                    side="bottom"
+                    align="end"
+                    sideOffset={8}
+                    onOpenAutoFocus={(e) => e.preventDefault()}
+                >
+                    {dateTimePickerComponent}
+                </PopoverContent>
+            </Popover>
         );
     }
 
     return (
         <Drawer open={open} onOpenChange={setOpen}>
             <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
-            <DrawerContent className="flex flex-col items-center">
-                <div className="p-4 pt-2 flex justify-center w-full">
+            <DrawerContent className="flex flex-col items-center max-h-[90vh]">
+                <div className="p-4 pt-2 flex justify-center w-full overflow-y-auto">
                     {dateTimePickerComponent}
                 </div>
             </DrawerContent>

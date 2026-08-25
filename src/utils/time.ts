@@ -176,3 +176,10 @@ export function formatDateForDisplay(date: string): string {
   const value = dateToUtc(date);
   return value ? shortDateFormatter.format(value) : date;
 }
+
+export function formatShortMonthDay(date: string): string {
+  const match = DATE_PATTERN.exec(date);
+  if (!match) return date;
+  return `${Number(match[2])}/${Number(match[3])}`;
+}
+
