@@ -16,35 +16,46 @@ export function millisecondsUntilNextMinute(date: Date): number {
 
 interface DateTimeContextType {
   selectedDateTime: CampusDateTime;
+  liveNow: Date;
   setSelectedDateTime: (dateTime: CampusDateTime) => void;
   isCurrentDateTime: boolean;
   resetToCurrentDateTime: () => void;
 }
 
+interface DateTimeState {
+  selectedDateTime: CampusDateTime;
+  liveNow: Date;
+  isLive: boolean;
+}
+
 const DateTimeContext = createContext<DateTimeContextType | undefined>(undefined);
 
-function currentCampusDateTime(): CampusDateTime {
-  const { date, time } = getCampusDateTimeParts();
-  return { date, time: `${time.slice(0, 5)}:00` };
+function createLiveState(now = new Date()): DateTimeState {
+  const { date, time } = getCampusDateTimeParts(now);
+  return {
+    selectedDateTime: { date, time: `${time.slice(0, 5)}:00` },
+    liveNow: now,
+    isLive: true,
+  };
 }
 
 export function DateTimeProvider({ children }: { children: ReactNode }) {
-  const [selectedDateTime, setSelectedDateTimeState] =
-    useState<CampusDateTime>(currentCampusDateTime);
-  const [isLive, setIsLive] = useState(true);
+  const [state, setState] = useState<DateTimeState>(createLiveState);
 
   const setSelectedDateTime = useCallback((dateTime: CampusDateTime) => {
-    setIsLive(false);
-    setSelectedDateTimeState(dateTime);
+    setState((current) => ({
+      ...current,
+      selectedDateTime: dateTime,
+      isLive: false,
+    }));
   }, []);
 
   const resetToCurrentDateTime = useCallback(() => {
-    setIsLive(true);
-    setSelectedDateTimeState(currentCampusDateTime());
+    setState(createLiveState());
   }, []);
 
   useEffect(() => {
-    if (!isLive) return;
+    if (!state.isLive) return;
 
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     const stopTimer = () => {
@@ -59,13 +70,13 @@ export function DateTimeProvider({ children }: { children: ReactNode }) {
 
       timeoutId = setTimeout(() => {
         timeoutId = undefined;
-        setSelectedDateTimeState(currentCampusDateTime());
+        setState(createLiveState());
         scheduleNextMinute();
       }, millisecondsUntilNextMinute(new Date()));
     };
     const catchUpToNow = () => {
       if (document.visibilityState === "visible") {
-        setSelectedDateTimeState(currentCampusDateTime());
+        setState(createLiveState());
         scheduleNextMinute();
       } else {
         stopTimer();
@@ -81,14 +92,15 @@ export function DateTimeProvider({ children }: { children: ReactNode }) {
       document.removeEventListener("visibilitychange", catchUpToNow);
       window.removeEventListener("focus", catchUpToNow);
     };
-  }, [isLive]);
+  }, [state.isLive]);
 
   return (
     <DateTimeContext.Provider
       value={{
-        selectedDateTime,
+        selectedDateTime: state.selectedDateTime,
+        liveNow: state.liveNow,
         setSelectedDateTime,
-        isCurrentDateTime: isLive,
+        isCurrentDateTime: state.isLive,
         resetToCurrentDateTime,
       }}
     >
@@ -100,7 +112,7 @@ export function DateTimeProvider({ children }: { children: ReactNode }) {
 export function useDateTimeContext() {
   const context = useContext(DateTimeContext);
   if (context === undefined) {
-    throw new Error("useDateTimeContext must be used within a DateTimeProvider");
+    throw new Error("useDateTimeContext must be used within DateTimeProvider");
   }
   return context;
 }

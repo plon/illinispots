@@ -67,7 +67,7 @@ const fetchFacilityData = async (
 };
 
 const IlliniSpotsPage: React.FC = () => {
-  const { selectedDateTime, isCurrentDateTime } = useDateTimeContext();
+  const { selectedDateTime, liveNow, isCurrentDateTime } = useDateTimeContext();
   const [showMapPreference, setShowMapPreference] = useState<boolean | null>(
     null,
   );
@@ -143,10 +143,10 @@ const IlliniSpotsPage: React.FC = () => {
 
   const facilityData = useMemo<FacilityStatus | undefined>(() => {
     const currentAcademicData = isCurrentDateTime
-      ? ageLiveAvailability(academicData, new Date())
+      ? ageLiveAvailability(academicData, liveNow)
       : academicData;
     const currentLibraryData = isCurrentDateTime
-      ? ageLiveAvailability(libraryData, new Date())
+      ? ageLiveAvailability(libraryData, liveNow)
       : libraryData;
 
     if (!currentAcademicData && !currentLibraryData) {
@@ -169,7 +169,7 @@ const IlliniSpotsPage: React.FC = () => {
         ...matchingLibraryFacilities,
       },
     };
-  }, [academicData, isCurrentDateTime, libraryData]);
+  }, [academicData, isCurrentDateTime, libraryData, liveNow]);
 
   useEffect(() => {
     if (!isCurrentDateTime) return;
