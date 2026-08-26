@@ -4,7 +4,6 @@ import { getCampusDateTimeParts, parseTimeToMinutes } from "@/utils/time";
 export interface FilterCriteria {
   minDuration?: number;
   freeUntil?: string;
-  startTime?: string;
   nowMinutes?: number;
 }
 
@@ -12,7 +11,7 @@ export const isRoomAvailable = (
   room: FacilityRoom,
   criteria: FilterCriteria,
 ): boolean => {
-  if (!criteria.minDuration && !criteria.freeUntil && !criteria.startTime) {
+  if (!criteria.minDuration && !criteria.freeUntil) {
     return true;
   }
 
@@ -28,21 +27,6 @@ export const isRoomAvailable = (
   const nowMinutes =
     criteria.nowMinutes ?? campusNow.hour * 60 + campusNow.minute;
 
-  if (criteria.startTime) {
-    const startMinutes = parseTimeToMinutes(criteria.startTime);
-    if (
-      startMinutes === null ||
-      startMinutes < nowMinutes ||
-      availableFor < startMinutes - nowMinutes
-    ) {
-      return false;
-    }
-  }
-
-  if (criteria.minDuration && availableFor < criteria.minDuration) {
-    return false;
-  }
-
   if (criteria.freeUntil) {
     const targetMinutes = parseTimeToMinutes(criteria.freeUntil);
     if (
@@ -52,6 +36,10 @@ export const isRoomAvailable = (
     ) {
       return false;
     }
+  }
+
+  if (criteria.minDuration && availableFor < criteria.minDuration) {
+    return false;
   }
 
   return true;

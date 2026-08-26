@@ -12,8 +12,8 @@ import {
     DrawerTrigger,
 } from "@/components/ui/drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { ListFilter, Hourglass, Clock } from "lucide-react";
-import { getCampusDateTimeParts, formatTimeForDisplay } from "@/utils/time";
+import { ListFilter, Clock } from "lucide-react";
+import { getCampusDateTimeParts } from "@/utils/time";
 
 const PRESET_DURATIONS = [30, 60, 120, 240] as const;
 const MIN_CUSTOM_DURATION = 1;
@@ -23,8 +23,6 @@ interface RoomFilterPopoverProps {
     setMinDuration: (value: number | undefined) => void;
     freeUntil: string;
     setFreeUntil: (value: string) => void;
-    startTime: string;
-    setStartTime: (value: string) => void;
     hasActiveFilters: boolean;
     onClearAll: () => void;
     matchingRoomsCount: number;
@@ -35,8 +33,6 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
     setMinDuration,
     freeUntil,
     setFreeUntil,
-    startTime,
-    setStartTime,
     hasActiveFilters,
     onClearAll,
     matchingRoomsCount,
@@ -141,14 +137,14 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">
                             <Clock size={14} className="text-muted-foreground" />
-                            Start Time
+                            Free Until
                         </div>
-                        {startTime && (
+                        {freeUntil && (
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 className="h-5 px-1 text-xs text-muted-foreground hover:text-foreground hover:bg-transparent underline"
-                                onClick={() => setStartTime("")}
+                                onClick={() => setFreeUntil("")}
                             >
                                 Clear
                             </Button>
@@ -157,22 +153,19 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                     <div className="relative">
                         <Input
                             type="time"
-                            value={startTime}
-                            onChange={(e) => setStartTime(e.target.value)}
+                            value={freeUntil}
+                            onChange={(e) => setFreeUntil(e.target.value)}
                             onFocus={() => {
-                                if (!startTime) {
-                                    const campusNow = getCampusDateTimeParts();
-                                    setStartTime(campusNow.time.slice(0, 5));
+                                if (!freeUntil) {
+                                     const campusNow = getCampusDateTimeParts();
+                                    setFreeUntil(campusNow.time.slice(0, 5));
                                 }
                             }}
                             className="h-9 pl-9 pr-3 font-mono text-sm appearance-none [&::-webkit-date-and-time-value]:text-left [&::-webkit-date-and-time-value]:min-h-0 [&::-webkit-calendar-picker-indicator]:hidden"
-                            placeholder="When room must be free"
+                            placeholder="Custom time"
                         />
                         <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                     </div>
-                    <p className="text-[10px] text-muted-foreground pl-1">
-                        Find rooms that are available by this time.
-                    </p>
                 </div>
 
                 <div className="space-y-3">
@@ -245,64 +238,6 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                             )}
                         </div>
                     )}
-                </div>
-
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">
-                            <Hourglass size={14} className="text-muted-foreground" />
-                            Free Until
-                        </div>
-                        {freeUntil && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-5 px-1 text-xs text-muted-foreground hover:text-foreground hover:bg-transparent underline"
-                                onClick={() => setFreeUntil("")}
-                            >
-                                Clear
-                            </Button>
-                        )}
-                    </div>
-                    <div className="space-y-2">
-                        <div className="grid grid-cols-3 gap-2">
-                            {["12:00", "15:00", "18:00"].map((time) => (
-                                <Button
-                                    key={time}
-                                    variant={freeUntil === time ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() =>
-                                        setFreeUntil(freeUntil === time ? "" : time)
-                                    }
-                                    className={`h-8 text-xs font-medium transition-all ${freeUntil === time
-                                        ? "shadow-sm"
-                                        : "hover:border-primary/50 hover:bg-primary/5"
-                                        }`}
-                                >
-                                    {formatTimeForDisplay(time)}
-                                </Button>
-                            ))}
-                        </div>
-                        <div className="relative">
-                            <Input
-                                type="time"
-                                value={freeUntil}
-                                onChange={(e) => setFreeUntil(e.target.value)}
-                                onFocus={() => {
-                                    if (!freeUntil) {
-                                        const campusNow = getCampusDateTimeParts();
-                                        setFreeUntil(campusNow.time.slice(0, 5));
-                                    }
-                                }}
-                                className="h-9 pl-9 pr-3 font-mono text-sm appearance-none [&::-webkit-date-and-time-value]:text-left [&::-webkit-date-and-time-value]:min-h-0 [&::-webkit-calendar-picker-indicator]:hidden"
-                                placeholder="Custom time"
-                            />
-                            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                        </div>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground pl-1">
-                        Find rooms available at least until this time today.
-                    </p>
                 </div>
             </div>
         </div>
