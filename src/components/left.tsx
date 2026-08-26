@@ -43,7 +43,18 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { parseTimeToMinutes, formatDateForDisplay, formatTimeForDisplay, getCampusDateTimeParts } from "@/utils/time";
+import {
+    CAMPUS_TIMEZONE,
+    parseTimeToMinutes,
+    formatDateForDisplay,
+    formatTimeForDisplay,
+    getCampusDateTimeParts,
+} from "@/utils/time";
+import {
+    parseNaturalLanguageSearch,
+    type NaturalLanguageSearchResult,
+} from "@/utils/naturalLanguageSearch";
+import { DateTime } from "luxon";
 
 interface LeftSidebarProps {
     facilityData: FacilityStatus | null;
@@ -93,6 +104,58 @@ const ActiveTimeBanner: React.FC<ActiveTimeBannerProps> = ({
     );
 };
 
+interface NaturalSearchPromptProps {
+    interpretation: NaturalLanguageSearchResult;
+    onApply: () => void;
+}
+
+const NaturalSearchPrompt: React.FC<NaturalSearchPromptProps> = ({
+    interpretation,
+    onApply,
+}) => {
+    const errorMessage =
+        interpretation.error === "ambiguous-time"
+            ? "Add AM or PM so we know which time you mean."
+            : interpretation.error === "multiple-date-times"
+                ? "Use one date and time in each search."
+                : null;
+    const target = interpretation.dateTime;
+
+    return (
+        <div className="px-4 py-8 flex justify-center">
+            <div className="w-full max-w-sm rounded-lg border bg-card p-4 space-y-3 text-center">
+                <CalendarClock className="h-6 w-6 mx-auto text-primary" />
+                {errorMessage ? (
+                    <>
+                        <p className="text-sm font-medium">Clarify your search</p>
+                        <p className="text-xs text-muted-foreground">{errorMessage}</p>
+                    </>
+                ) : target ? (
+                    <>
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium">
+                                {interpretation.locationQuery
+                                    ? `Search ${interpretation.locationQuery}`
+                                    : "View all spots"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                {formatDateForDisplay(target.date)} at{" "}
+                                {formatTimeForDisplay(target.time)}
+                            </p>
+                        </div>
+                        <Button size="sm" onClick={onApply} className="h-8 text-xs">
+                            Search this time
+                        </Button>
+                        <p className="text-[11px] text-muted-foreground">
+                            Press Enter to apply
+                        </p>
+                    </>
+                ) : null}
+            </div>
+        </div>
+    );
+};
+
 
 
 const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -111,7 +174,12 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const scrollAreaRef = useRef<HTMLDivElement | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const { favorites, toggleFavorite } = useFavorites();
-    const { selectedDateTime, isCurrentDateTime, resetToCurrentDateTime } = useDateTimeContext();
+    const {
+        selectedDateTime,
+        setSelectedDateTime,
+        isCurrentDateTime,
+        resetToCurrentDateTime,
+    } = useDateTimeContext();
     const [minDuration, setMinDuration] = useState<number | undefined>(undefined);
     const [freeUntil, setFreeUntil] = useState<string>("");
 
@@ -126,6 +194,39 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
     const hasActiveFilters = !!minDuration || !!freeUntil;
     const isSearching = searchTerm.trim().length > 0;
+    const naturalSearch = useMemo(
+        () => parseNaturalLanguageSearch(searchTerm),
+        [searchTerm],
+    );
+    const hasTemporalSearch = naturalSearch.temporalText !== null;
+
+    const applyNaturalSearch = useCallback(() => {
+        if (naturalSearch.error || !naturalSearch.dateTime) return;
+
+        setSelectedDateTime(naturalSearch.dateTime);
+        setSearchTerm(naturalSearch.locationQuery);
+    }, [naturalSearch, setSelectedDateTime]);
+
+    const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        applyNaturalSearch();
+    };
+
+    const facilityDataMatchesSelection = useMemo(() => {
+        if (!facilityData || isCurrentDateTime) return true;
+
+        const responseDateTime = DateTime.fromISO(facilityData.timestamp).setZone(
+            CAMPUS_TIMEZONE,
+        );
+        if (!responseDateTime.isValid) return false;
+
+        return (
+            responseDateTime.toFormat("yyyy-MM-dd") === selectedDateTime.date &&
+            responseDateTime.toFormat("HH:mm") === selectedDateTime.time.slice(0, 5)
+        );
+    }, [facilityData, isCurrentDateTime, selectedDateTime]);
+
+    const searchFacilityData = facilityDataMatchesSelection ? facilityData : null;
 
     const scrollToAccordion = useCallback((accordionId: string) => {
         const element = accordionRefs.current[accordionId];
@@ -237,7 +338,10 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 </h1>
                 <TooltipProvider delayDuration={50}>
                     <div className="flex-1 min-w-0 flex gap-2 items-center">
-                        <div className="relative flex-1 min-w-[70px]">
+                        <form
+                            className="relative flex-1 min-w-[70px]"
+                            onSubmit={handleSearchSubmit}
+                        >
                             <Search
                                 className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                                 aria-hidden="true"
@@ -246,12 +350,13 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Search buildings & rooms..."
+                                placeholder="Try ECEB tomorrow at 2:30 pm"
                                 className={`pl-8 ${searchTerm ? "pr-8" : ""} h-9 md:h-9 rounded-full text-sm`}
-                                aria-label="Search buildings and rooms"
+                                aria-label="Search buildings, rooms, dates, and times"
                             />
                             {searchTerm && (
                                 <button
+                                    type="button"
                                     onClick={() => setSearchTerm("")}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                                     aria-label="Clear search"
@@ -259,7 +364,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                     <X size={14} />
                                 </button>
                             )}
-                        </div>
+                        </form>
                         <RoomFilter
                             minDuration={minDuration}
                             setMinDuration={setMinDuration}
@@ -393,15 +498,22 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 viewportClassName="[&>div]:!block [&>div]:!min-w-0"
                 ref={scrollAreaRef}
             >
-                {isSearching ? (
+                {isSearching && hasTemporalSearch ? (
+                    <NaturalSearchPrompt
+                        interpretation={naturalSearch}
+                        onApply={applyNaturalSearch}
+                    />
+                ) : isSearching ? (
                     <SearchResults
-                        facilityData={facilityData}
+                        facilityData={searchFacilityData}
                         searchTerm={searchTerm}
                         filterCriteria={filterCriteria}
                         hasActiveFilters={hasActiveFilters}
                         onClearFilters={clearFilters}
                         onClearSearch={() => setSearchTerm("")}
-                        isLoading={isAcademicLoading}
+                        isLoading={
+                            isAcademicLoading || isFetching || !facilityDataMatchesSelection
+                        }
                         isLibraryLoading={isLibraryFetching}
                     />
                 ) : (
