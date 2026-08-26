@@ -350,7 +350,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Try ECEB tomorrow at 2:30 pm"
+                                placeholder="Try CIF tmrw 2pm"
                                 className={`pl-8 ${searchTerm ? "pr-8" : ""} h-9 md:h-9 rounded-full text-sm`}
                                 aria-label="Search buildings, rooms, dates, and times"
                             />
