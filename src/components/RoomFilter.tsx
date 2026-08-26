@@ -165,7 +165,7 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                                     setStartTime(campusNow.time.slice(0, 5));
                                 }
                             }}
-                            className="h-9 pl-9 font-mono text-sm [&::-webkit-calendar-picker-indicator]:hidden"
+                            className="h-9 pl-9 pr-3 font-mono text-sm appearance-none [&::-webkit-date-and-time-value]:text-left [&::-webkit-date-and-time-value]:min-h-0 [&::-webkit-calendar-picker-indicator]:hidden"
                             placeholder="When room must be free"
                         />
                         <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -294,7 +294,7 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                                         setFreeUntil(campusNow.time.slice(0, 5));
                                     }
                                 }}
-                                className="h-9 pl-9 font-mono text-sm [&::-webkit-calendar-picker-indicator]:hidden"
+                                className="h-9 pl-9 pr-3 font-mono text-sm appearance-none [&::-webkit-date-and-time-value]:text-left [&::-webkit-date-and-time-value]:min-h-0 [&::-webkit-calendar-picker-indicator]:hidden"
                                 placeholder="Custom time"
                             />
                             <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />

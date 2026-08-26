@@ -86,6 +86,13 @@ body {
         @apply bg-background text-foreground;
         overflow: hidden;
     }
+    /* Fix iOS Safari native date & time input right-alignment and overflow */
+    input[type="time"]::-webkit-date-and-time-value,
+    input[type="date"]::-webkit-date-and-time-value,
+    input[type="datetime-local"]::-webkit-date-and-time-value {
+        text-align: left;
+        min-height: 1.2em;
+    }
 }
 
 .marker {
