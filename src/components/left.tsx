@@ -114,19 +114,17 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const { selectedDateTime, isCurrentDateTime, resetToCurrentDateTime } = useDateTimeContext();
     const [minDuration, setMinDuration] = useState<number | undefined>(undefined);
     const [freeUntil, setFreeUntil] = useState<string>("");
-    const [startTime, setStartTime] = useState<string>("");
 
     const filterCriteria: FilterCriteria = useMemo(
         () => ({
             minDuration,
             freeUntil: freeUntil || undefined,
-            startTime: startTime || undefined,
             nowMinutes: parseTimeToMinutes(selectedDateTime.time) ?? undefined,
         }),
-        [minDuration, freeUntil, startTime, selectedDateTime],
+        [minDuration, freeUntil, selectedDateTime],
     );
 
-    const hasActiveFilters = !!minDuration || !!freeUntil || !!startTime;
+    const hasActiveFilters = !!minDuration || !!freeUntil;
     const isSearching = searchTerm.trim().length > 0;
 
     const scrollToAccordion = useCallback((accordionId: string) => {
@@ -226,7 +224,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const clearFilters = () => {
         setMinDuration(undefined);
         setFreeUntil("");
-        setStartTime("");
     };
 
     const [isFavoritesDialogOpen, setIsFavoritesDialogOpen] = useState(false);
@@ -268,8 +265,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                             setMinDuration={setMinDuration}
                             freeUntil={freeUntil}
                             setFreeUntil={setFreeUntil}
-                            startTime={startTime}
-                            setStartTime={setStartTime}
                             hasActiveFilters={hasActiveFilters}
                             onClearAll={clearFilters}
                             matchingRoomsCount={matchingRoomsCount}
