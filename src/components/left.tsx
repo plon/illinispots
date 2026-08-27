@@ -44,7 +44,6 @@ import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
-    CAMPUS_TIMEZONE,
     parseTimeToMinutes,
     formatDateForDisplay,
     formatTimeForDisplay,
@@ -54,7 +53,6 @@ import {
     parseNaturalLanguageSearch,
     type NaturalLanguageSearchResult,
 } from "@/utils/naturalLanguageSearch";
-import { DateTime } from "luxon";
 
 interface LeftSidebarProps {
     facilityData: FacilityStatus | null;
@@ -215,14 +213,13 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const facilityDataMatchesSelection = useMemo(() => {
         if (!facilityData || isCurrentDateTime) return true;
 
-        const responseDateTime = DateTime.fromISO(facilityData.timestamp).setZone(
-            CAMPUS_TIMEZONE,
-        );
-        if (!responseDateTime.isValid) return false;
+        const responseInstant = new Date(facilityData.timestamp);
+        if (Number.isNaN(responseInstant.getTime())) return false;
+        const responseDateTime = getCampusDateTimeParts(responseInstant);
 
         return (
-            responseDateTime.toFormat("yyyy-MM-dd") === selectedDateTime.date &&
-            responseDateTime.toFormat("HH:mm") === selectedDateTime.time.slice(0, 5)
+            responseDateTime.date === selectedDateTime.date &&
+            responseDateTime.time.slice(0, 5) === selectedDateTime.time.slice(0, 5)
         );
     }, [facilityData, isCurrentDateTime, selectedDateTime]);
 

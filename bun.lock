@@ -5,6 +5,7 @@
     "": {
       "name": "illinispots",
       "dependencies": {
+        "@date-fns/tz": "^1.5.0",
         "@fontsource-variable/inter": "^5.3.0",
         "@leeoniya/ufuzzy": "^1.0.19",
         "@radix-ui/react-accordion": "^1.2.1",
@@ -25,6 +26,7 @@
         "chrono-node": "^2.10.1",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
+        "date-fns": "^4.4.0",
         "hono": "^4.13.3",
         "lucide-react": "^0.454.0",
         "luxon": "^3.7.2",
