@@ -1,85 +1,153 @@
-"use client";
 import * as React from "react";
-import { DayPicker } from "react-day-picker";
-
+import {
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  isSameMonth,
+  isSameDay,
+  isToday,
+  format,
+} from "date-fns";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
-import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons";
 
-export type CalendarProps = React.ComponentProps<typeof DayPicker>;
+export interface CalendarProps {
+  className?: string;
+  selected?: Date;
+  onSelect?: (date: Date | undefined) => void;
+  disabled?: boolean;
+}
+
+const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 function Calendar({
   className,
-  classNames,
-  showOutsideDays = true,
-  components: userComponents,
-  ...props
+  selected,
+  onSelect,
+  disabled = false,
 }: CalendarProps) {
-  const defaultClassNames = {
-    months: "relative flex flex-col sm:flex-row gap-4",
-    month: "w-full",
-    month_caption: "relative mx-10 mb-1 flex h-9 items-center justify-center z-20",
-    caption_label: "text-sm font-medium",
-    nav: "absolute top-0 flex w-full justify-between z-10",
-    button_previous: cn(
-      buttonVariants({ variant: "ghost" }),
-      "size-9 text-muted-foreground/80 hover:text-foreground p-0",
-    ),
-    button_next: cn(
-      buttonVariants({ variant: "ghost" }),
-      "size-9 text-muted-foreground/80 hover:text-foreground p-0",
-    ),
-    weekday: "size-9 p-0 text-xs font-medium text-muted-foreground/80",
-    day_button:
-      "relative flex size-9 items-center justify-center whitespace-nowrap rounded-lg p-0 text-foreground outline-offset-2 group-[[data-selected]:not(.range-middle)]:[transition-property:color,background-color,border-radius,box-shadow] group-[[data-selected]:not(.range-middle)]:duration-150 focus:outline-none group-data-[disabled]:pointer-events-none focus-visible:z-10 hover:bg-accent group-data-[selected]:bg-primary hover:text-foreground group-data-[selected]:text-primary-foreground group-data-[disabled]:text-foreground/30 group-data-[disabled]:line-through group-data-[outside]:text-foreground/30 group-data-[outside]:group-data-[selected]:text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 group-[.range-start:not(.range-end)]:rounded-e-none group-[.range-end:not(.range-start)]:rounded-s-none group-[.range-middle]:rounded-none group-data-[selected]:group-[.range-middle]:bg-accent group-data-[selected]:group-[.range-middle]:text-foreground",
-    day: "group size-9 px-0 text-sm",
-    range_start: "range-start",
-    range_end: "range-end",
-    range_middle: "range-middle",
-    today:
-      "*:after:pointer-events-none *:after:absolute *:after:bottom-1 *:after:start-1/2 *:after:z-10 *:after:size-[3px] *:after:-translate-x-1/2 *:after:rounded-full *:after:bg-primary [&[data-selected]:not(.range-middle)>*]:after:bg-background [&[data-disabled]>*]:after:bg-foreground/30 *:after:transition-colors",
-    outside: "text-muted-foreground data-selected:bg-accent/50 data-selected:text-muted-foreground",
-    hidden: "invisible",
-    week_number: "size-9 p-0 text-xs font-medium text-muted-foreground/80",
-  };
-
-  const mergedClassNames: typeof defaultClassNames = Object.keys(defaultClassNames).reduce(
-    (acc, key) => ({
-      ...acc,
-      [key]: classNames?.[key as keyof typeof classNames]
-        ? cn(
-            defaultClassNames[key as keyof typeof defaultClassNames],
-            classNames[key as keyof typeof classNames],
-          )
-        : defaultClassNames[key as keyof typeof defaultClassNames],
-    }),
-    {} as typeof defaultClassNames,
+  const [currentMonth, setCurrentMonth] = React.useState<Date>(() =>
+    startOfMonth(selected ?? new Date()),
   );
 
-  const defaultComponents = {
-    Chevron: (props: any) => {
-      if (props.orientation === "left") {
-        return <ChevronLeftIcon size={16} strokeWidth={2} {...props} aria-hidden="true" />;
-      }
-      return <ChevronRightIcon size={16} strokeWidth={2} {...props} aria-hidden="true" />;
-    },
+  React.useEffect(() => {
+    if (selected) {
+      setCurrentMonth(startOfMonth(selected));
+    }
+  }, [selected]);
+
+  const days = React.useMemo(() => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(monthStart);
+    const startDate = startOfWeek(monthStart);
+    const endDate = endOfWeek(monthEnd);
+
+    return eachDayOfInterval({ start: startDate, end: endDate });
+  }, [currentMonth]);
+
+  const handlePreviousMonth = () => {
+    setCurrentMonth((prev) => subMonths(prev, 1));
   };
 
-  const mergedComponents = {
-    ...defaultComponents,
-    ...userComponents,
+  const handleNextMonth = () => {
+    setCurrentMonth((prev) => addMonths(prev, 1));
   };
 
   return (
-    <DayPicker
-      showOutsideDays={showOutsideDays}
-      className={cn("w-fit", className)}
-      classNames={mergedClassNames}
-      components={mergedComponents}
-      {...props}
-    />
+    <div className={cn("p-2", className)}>
+      <div className="relative flex h-9 items-center justify-between">
+        <button
+          type="button"
+          onClick={handlePreviousMonth}
+          disabled={disabled}
+          className={cn(
+            buttonVariants({ variant: "ghost" }),
+            "size-9 text-muted-foreground/80 hover:text-foreground p-0",
+          )}
+          aria-label="Previous month"
+        >
+          <ChevronLeft size={16} strokeWidth={2} aria-hidden="true" />
+        </button>
+        <div className="text-sm font-medium">
+          {format(currentMonth, "MMMM yyyy")}
+        </div>
+        <button
+          type="button"
+          onClick={handleNextMonth}
+          disabled={disabled}
+          className={cn(
+            buttonVariants({ variant: "ghost" }),
+            "size-9 text-muted-foreground/80 hover:text-foreground p-0",
+          )}
+          aria-label="Next month"
+        >
+          <ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
+        </button>
+      </div>
+
+      <div className="mt-2 grid grid-cols-7 text-center">
+        {WEEKDAYS.map((weekday) => (
+          <div
+            key={weekday}
+            className="size-9 p-0 text-xs font-medium text-muted-foreground/80 flex items-center justify-center"
+          >
+            {weekday}
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-1 grid grid-cols-7 gap-y-0.5 justify-items-center">
+        {days.map((day) => {
+          const isSelected = selected ? isSameDay(day, selected) : false;
+          const isCurrentMonth = isSameMonth(day, currentMonth);
+          const isTodayDate = isToday(day);
+
+          return (
+            <button
+              key={day.toISOString()}
+              type="button"
+              disabled={disabled}
+              onClick={() => {
+                if (disabled) return;
+                if (!isCurrentMonth) {
+                  setCurrentMonth(startOfMonth(day));
+                }
+                onSelect?.(isSelected ? undefined : day);
+              }}
+              className={cn(
+                "relative flex size-9 items-center justify-center whitespace-nowrap rounded-lg p-0 text-sm outline-offset-2 focus:outline-none focus-visible:z-10 hover:bg-accent hover:text-foreground",
+                !isCurrentMonth && "text-muted-foreground/40",
+                isSelected &&
+                  "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground font-medium",
+                isTodayDate && !isSelected && "font-semibold text-primary",
+                disabled && "text-foreground/30 line-through pointer-events-none",
+              )}
+              aria-label={format(day, "EEEE, MMMM d, yyyy")}
+              aria-selected={isSelected ? "true" : undefined}
+            >
+              {format(day, "d")}
+              {isTodayDate && (
+                <span
+                  className={cn(
+                    "pointer-events-none absolute bottom-1 start-1/2 size-[3px] -translate-x-1/2 rounded-full",
+                    isSelected ? "bg-primary-foreground" : "bg-primary",
+                  )}
+                  aria-hidden="true"
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
+
 Calendar.displayName = "Calendar";
 
 export { Calendar };
