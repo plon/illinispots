@@ -57,9 +57,8 @@ This directory contains scripts for collecting and processing UIUC course and bu
 
 7. **load_to_postgres.py**
 
-   - Loads the final data into PostgreSQL database
+   - Replaces the current class schedule and upserts building and room metadata
    - Input: `buildings_enriched.json`
-   - Creates and populates database tables
    - Runs weekly through [the Course Explorer GitHub Actions workflow](../.github/workflows/course-explorer-weekly.yml), which selects the active term from `academic_calendar.json` in the America/Chicago timezone and supports manual year/term overrides
    - The workflow paces Course Explorer requests and retries transient failures with exponential backoff
 

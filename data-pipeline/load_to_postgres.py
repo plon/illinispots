@@ -2,7 +2,6 @@ from pathlib import Path
 from supabase import create_client
 import json
 from typing import List, Dict, Set
-from datetime import datetime
 import os
 from dotenv import load_dotenv, find_dotenv
 from sentry_monitor import emit_gauges
@@ -64,29 +63,6 @@ def validate_json_structure(json_data: Dict) -> None:
                     raise DataValidationError(
                         f"Class in room '{room_number}', building '{building_name}' missing keys: {missing_class_keys}"
                     )
-
-
-def validate_academic_terms_structure(terms_data: List[Dict]) -> None:
-    required_keys = {"academic_year", "term", "part_of_term", "start_date", "end_date"}
-    valid_parts_of_term = {"A", "B"}
-
-    for term in terms_data:
-        missing_keys = required_keys - set(term.keys())
-        if missing_keys:
-            raise DataValidationError(f"Academic term missing keys: {missing_keys}")
-
-        if term["part_of_term"] not in valid_parts_of_term:
-            raise DataValidationError(f"Invalid part_of_term: {term['part_of_term']}")
-
-        try:
-            start_date = datetime.strptime(term["start_date"], "%Y-%m-%d").date()
-            end_date = datetime.strptime(term["end_date"], "%Y-%m-%d").date()
-            if end_date <= start_date:
-                raise DataValidationError(
-                    f"End date must be after start date for term: {term}"
-                )
-        except ValueError as e:
-            raise DataValidationError(f"Invalid date format in term: {term}") from e
 
 
 def prepare_and_validate_data(
@@ -205,8 +181,6 @@ def bulk_insert(table_name: str, records: List[Dict], upsert: bool = False) -> S
                     key = record["name"]
                 elif table_name == "rooms":
                     key = f"{record['building_name']}_{record['room_number']}"
-                elif table_name == "academic_terms":
-                    key = f"{record['academic_year']}_{record['term']}_{record['start_date']}_{record['end_date']}"
                 else:  # class_schedule
                     key = f"{record['building_name']}_{record['room_number']}_{record['day_of_week']}_{record['start_time']}_{record['start_date']}_{record['end_date']}"
                 inserted_ids.add(key)
@@ -300,7 +274,6 @@ def clear_table(table_name: str) -> None:
         "buildings": "name",
         "rooms": "building_name",
         "class_schedule": "building_name",
-        "academic_terms": "academic_year",
     }
 
     try:
@@ -341,11 +314,7 @@ def main():
         with open(data_dir / "buildings_enriched.json", "r") as f:
             json_data = json.load(f)
 
-        with open(data_dir / "academic_calendar.json", "r") as f:
-            academic_terms_data = json.load(f)
-
         validate_json_structure(json_data)
-        validate_academic_terms_structure(academic_terms_data)
         print("JSON structures validated successfully")
 
         print("\nPreparing and validating data...")
@@ -361,15 +330,12 @@ def main():
         # Clear tables and verify
         # 'buildings' and 'rooms' are not cleared to preserve them across updates.
         # Rooms are upserted. Buildings will also be upserted.
-        tables_to_clear = ["class_schedule", "academic_terms"]
+        tables_to_clear = ["class_schedule"]
         for table in tables_to_clear:
             clear_table(table)
         print("Relevant tables cleared successfully (buildings and rooms preserved)")
 
         print("\nInserting and verifying data...")
-
-        academic_terms_ids = bulk_insert("academic_terms", academic_terms_data)
-        print(f"Inserted {len(academic_terms_ids)} academic terms")
 
         building_ids = bulk_insert("buildings", buildings, upsert=True)
         print(f"Processed {len(building_ids)} buildings from current data (upserted)")
@@ -383,17 +349,7 @@ def main():
         print("\nPerforming final database verification...")
         database_counts = verify_database_contents(buildings, rooms, schedules)
 
-        db_terms_count = (
-            supabase.table("academic_terms").select("*", count="exact").execute()
-        )
-        if db_terms_count.count != len(academic_terms_data):
-            raise DataValidationError(
-                f"Academic terms count mismatch. Expected: {len(academic_terms_data)}, Got: {db_terms_count.count}"
-            )
-        print(f"Verified academic terms count: {db_terms_count.count}")
-
         print("\nFinal Summary:")
-        print(f"Academic terms inserted and verified: {len(academic_terms_ids)}")
         print(f"Buildings from current data processed (upserted): {len(building_ids)}")
         print(f"Rooms from current data processed (upserted): {len(room_ids)}")
         print(f"Class schedules inserted and verified: {len(schedule_ids)}")
@@ -412,11 +368,9 @@ def main():
                 "pipeline.database.class_schedule_rows": database_counts[
                     "class_schedule_rows"
                 ],
-                "pipeline.database.academic_terms": db_terms_count.count,
                 "pipeline.load.buildings": len(buildings),
                 "pipeline.load.rooms": len(rooms),
                 "pipeline.load.class_schedule_rows": len(schedules),
-                "pipeline.load.academic_terms": len(academic_terms_data),
             },
             get_metric_attributes(data_dir),
         )

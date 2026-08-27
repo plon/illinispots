@@ -14,33 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      academic_terms: {
-        Row: {
-          academic_year: string | null
-          end_date: string | null
-          id: number
-          part_of_term: string | null
-          start_date: string | null
-          term: string | null
-        }
-        Insert: {
-          academic_year?: string | null
-          end_date?: string | null
-          id?: number
-          part_of_term?: string | null
-          start_date?: string | null
-          term?: string | null
-        }
-        Update: {
-          academic_year?: string | null
-          end_date?: string | null
-          id?: number
-          part_of_term?: string | null
-          start_date?: string | null
-          term?: string | null
-        }
-        Relationships: []
-      }
       buildings: {
         Row: {
           friday_close: string | null
@@ -337,7 +310,6 @@ export type Database = {
         Args: { target_date: string }
         Returns: undefined
       }
-      update_daily_events: { Args: { events_data: Json }; Returns: string }
     }
     Enums: {
       [_ in never]: never
