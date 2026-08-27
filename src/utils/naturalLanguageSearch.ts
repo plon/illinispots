@@ -1,5 +1,6 @@
 import * as chrono from "chrono-node/en";
-import { DateTime } from "luxon";
+import { format } from "date-fns";
+import { TZDate, tzOffset } from "@date-fns/tz";
 import {
   CAMPUS_TIMEZONE,
   type CampusDateTime,
@@ -48,14 +49,12 @@ export function parseNaturalLanguageSearch(
     };
   }
 
-  const campusReference = DateTime.fromJSDate(referenceInstant).setZone(
-    CAMPUS_TIMEZONE,
-  );
+  const campusReference = TZDate.tz(CAMPUS_TIMEZONE, referenceInstant);
   const matches = chrono.parse(
     normalizedQuery,
     {
       instant: referenceInstant,
-      timezone: campusReference.offset,
+      timezone: tzOffset(CAMPUS_TIMEZONE, referenceInstant),
     },
     { forwardDate: true },
   );
@@ -99,29 +98,27 @@ export function parseNaturalLanguageSearch(
     };
   }
 
-  let target: DateTime;
+  let target: TZDate;
   if (match.start.isCertain("timezoneOffset")) {
     // Rebuilding relative durations from wall-clock parts loses time at DST boundaries.
-    target = DateTime.fromJSDate(match.start.date()).setZone(CAMPUS_TIMEZONE);
+    target = TZDate.tz(CAMPUS_TIMEZONE, match.start.date());
   } else {
-    target = DateTime.fromObject(
-      {
-        year: match.start.get("year") ?? campusReference.year,
-        month: match.start.get("month") ?? campusReference.month,
-        day: match.start.get("day") ?? campusReference.day,
-        hour: hasExplicitHour
-          ? (match.start.get("hour") ?? campusReference.hour)
-          : campusReference.hour,
-        minute: hasExplicitHour
-          ? (match.start.get("minute") ?? 0)
-          : campusReference.minute,
-        second: 0,
-      },
-      { zone: CAMPUS_TIMEZONE },
+    target = TZDate.tz(
+      CAMPUS_TIMEZONE,
+      match.start.get("year") ?? campusReference.getFullYear(),
+      (match.start.get("month") ?? campusReference.getMonth() + 1) - 1,
+      match.start.get("day") ?? campusReference.getDate(),
+      hasExplicitHour
+        ? (match.start.get("hour") ?? campusReference.getHours())
+        : campusReference.getHours(),
+      hasExplicitHour
+        ? (match.start.get("minute") ?? 0)
+        : campusReference.getMinutes(),
+      0,
     );
   }
 
-  if (!target.isValid) {
+  if (Number.isNaN(target.getTime())) {
     return {
       locationQuery,
       temporalText,
@@ -134,8 +131,8 @@ export function parseNaturalLanguageSearch(
     locationQuery,
     temporalText,
     dateTime: {
-      date: target.toFormat("yyyy-MM-dd"),
-      time: target.startOf("minute").toFormat("HH:mm:ss"),
+      date: format(target, "yyyy-MM-dd"),
+      time: format(target, "HH:mm':00'"),
     },
     error: null,
   };
