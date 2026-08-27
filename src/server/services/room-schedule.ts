@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { RoomScheduleBlock } from "../../types";
+import type { Database } from "../../types/database.types";
 import { getSupabaseConfig } from "../config";
 import { Sentry } from "../observability";
 import { parseRoomSchedule } from "./external-contracts";
@@ -40,7 +41,7 @@ async function executeRoomScheduleRpc(
   parameters: RoomScheduleRpcParameters,
 ): Promise<RoomScheduleRpcResult> {
   const config = getSupabaseConfig();
-  const supabase = createClient(config.url, config.key);
+  const supabase = createClient<Database>(config.url, config.key);
 
   return await supabase.rpc(procedure, parameters);
 }

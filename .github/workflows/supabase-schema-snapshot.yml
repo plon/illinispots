@@ -1,0 +1,106 @@
+name: Refresh Supabase schema snapshot
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "supabase/migrations/**"
+  workflow_dispatch:
+
+permissions:
+  checks: read
+  contents: write
+
+concurrency:
+  group: supabase-schema-snapshot-main
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    name: Refresh deployed schema
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Wait for Supabase deployment
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for attempt in {1..72}; do
+            check=$(gh api \
+              "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/check-runs" \
+              --jq '[.check_runs[] | select(
+                .name == "Supabase Preview" and .app.slug == "supabase"
+              )] | last | select(. != null) |
+              [.status, (.conclusion // "")] | @tsv')
+
+            if [[ -z "$check" ]]; then
+              sleep 10
+              continue
+            fi
+
+            read -r status conclusion <<< "$check"
+            if [[ "$status" != "completed" ]]; then
+              sleep 10
+              continue
+            fi
+
+            if [[ "$conclusion" == "success" ]]; then
+              exit 0
+            fi
+
+            echo "Supabase deployment concluded with: $conclusion" >&2
+            exit 1
+          done
+
+          echo "Timed out waiting for the Supabase deployment check" >&2
+          exit 1
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.0
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Generate deployed schema artifacts
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: |
+          bunx supabase db dump \
+            --project-ref "$SUPABASE_PROJECT_ID" \
+            --schema public \
+            --file /tmp/schema.sql
+          bunx supabase gen types \
+            --project-id "$SUPABASE_PROJECT_ID" \
+            --schema public \
+            > /tmp/database.types.ts
+          perl -0pi -e 's/[ \t]+$//mg; s/\n+\z/\n/' /tmp/schema.sql
+          install -m 0644 /tmp/schema.sql supabase/schema.sql
+          install -m 0644 /tmp/database.types.ts src/types/database.types.ts
+
+      - name: Validate generated types
+        run: bun run typecheck
+
+      - name: Commit updated artifacts
+        run: |
+          git add supabase/schema.sql src/types/database.types.ts
+          if git diff --cached --quiet; then
+            echo "Schema artifacts are already current"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(db): Refresh deployed schema snapshot"
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main

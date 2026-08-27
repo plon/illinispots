@@ -26,7 +26,9 @@ illiniSpots is a web application that helps UIUC students find available study s
 
 - Sources: class data from Course Explorer, daily events from the university Tableau feed, building hours from Facilities, and library reservations from LibCal (links below).
 - Freshness: library reservations are read live; daily events are scraped and updated regularly via a cron job; class/building data is refreshed via the data pipeline.
-- Deterministic rules: availability for academic rooms is computed in SQL ([`get_spots` migration](supabase/migrations/20260819000100_optimize_get_spots.sql)), using only official schedules + events and building hours.
+- Deterministic rules: availability for academic rooms is computed by the
+  [`get_spots` database function](supabase/schema.sql), using only official
+  schedules, events, and building hours.
 - Known limitations:
   - Unofficial use (study groups, ad‑hoc meetings) and last‑minute changes may not be reflected.
   - Departmental access restrictions can make an “available” room unusable.
@@ -70,6 +72,7 @@ port. The two public data endpoints remain `/api/facilities` and
 ### Prerequisites
 
 - Bun 1.4+
+- Docker-compatible container runtime for the local Supabase database
 - Supabase project (PostgreSQL)
 
 ### Setup
@@ -87,9 +90,15 @@ bun install
 - Create a database (e.g., via Supabase).
 - Link the project with `bunx supabase link --project-ref <project-ref>`.
 - Apply the versioned schema and security policies with `bunx supabase db push`.
-- The files under [`database/`](database) remain readable references for the
-  current tables and functions; [`supabase/migrations`](supabase/migrations) is
-  the deployment source of truth.
+- [`supabase/migrations`](supabase/migrations) is the deployment source of
+  truth. [`supabase/schema.sql`](supabase/schema.sql) is a generated snapshot
+  of the deployed `public` schema.
+
+Schema changes must be made through a migration. After a migration reaches
+`main` and the Supabase GitHub check succeeds, the schema snapshot workflow
+refreshes `supabase/schema.sql` in a follow-up commit. The workflow requires
+the `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, and
+`SUPABASE_PROJECT_ID` repository secrets.
 
 3) Environment
 

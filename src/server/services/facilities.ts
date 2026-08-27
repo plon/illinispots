@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { DateTime } from "luxon";
+import type { Database } from "../../types/database.types";
 import {
   StudyRoom,
   TimeSlot,
@@ -63,7 +64,10 @@ async function executeAcademicAvailabilityRpc(
   parameters: AcademicAvailabilityRpcParameters,
 ): Promise<AcademicAvailabilityRpcResult> {
   const supabaseConfig = getSupabaseConfig();
-  const supabase = createClient(supabaseConfig.url, supabaseConfig.key);
+  const supabase = createClient<Database>(
+    supabaseConfig.url,
+    supabaseConfig.key,
+  );
 
   return await supabase.rpc(procedure, parameters);
 }
