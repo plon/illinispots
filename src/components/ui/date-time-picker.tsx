@@ -56,11 +56,9 @@ function DateTimePicker({
         className={`rounded-lg border border-border overflow-hidden bg-card ${isFetching ? "opacity-70" : ""}`}
       >
         <Calendar
-          mode="single"
           className="p-1 bg-background"
           selected={localSelectedDate}
           onSelect={setLocalSelectedDate}
-          initialFocus
           disabled={isFetching}
         />
 

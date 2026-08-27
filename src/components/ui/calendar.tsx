@@ -21,9 +21,6 @@ export interface CalendarProps {
   selected?: Date;
   onSelect?: (date: Date | undefined) => void;
   disabled?: boolean;
-  showOutsideDays?: boolean;
-  mode?: "single";
-  initialFocus?: boolean;
 }
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -33,7 +30,6 @@ function Calendar({
   selected,
   onSelect,
   disabled = false,
-  showOutsideDays = true,
 }: CalendarProps) {
   const [currentMonth, setCurrentMonth] = React.useState<Date>(() =>
     startOfMonth(selected ?? new Date()),
@@ -110,16 +106,6 @@ function Calendar({
           const isSelected = selected ? isSameDay(day, selected) : false;
           const isCurrentMonth = isSameMonth(day, currentMonth);
           const isTodayDate = isToday(day);
-
-          if (!isCurrentMonth && !showOutsideDays) {
-            return (
-              <div
-                key={day.toISOString()}
-                className="size-9 p-0"
-                aria-hidden="true"
-              />
-            );
-          }
 
           return (
             <button
