@@ -11,7 +11,11 @@ import { Star } from 'lucide-react';
 interface FavoritesSectionProps {
   favorites: FavoriteItem[];
   facilityData: FacilityStatus | null;
-  onFavoriteClick: (facilityId: string, type: 'library' | 'academic') => void;
+  onFavoriteClick: (
+    facilityId: string,
+    type: 'library' | 'academic',
+    facilityName: string,
+  ) => void;
   onToggleFavorite: (item: FavoriteItem) => void;
 }
 
@@ -47,7 +51,7 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
           };
 
           const handleFacilityClick = () => {
-            onFavoriteClick(favorite.id, favorite.type);
+            onFavoriteClick(favorite.id, favorite.type, favorite.name);
           };
           
           return (

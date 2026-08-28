@@ -296,9 +296,14 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     }, [facilityData, filterFacilitiesByAvailability]);
 
     const handleFavoriteClick = useCallback(
-        (facilityId: string, type: "library" | "academic") => {
+        (
+            facilityId: string,
+            type: "library" | "academic",
+            facilityName: string,
+        ) => {
             posthog.capture("facility_selected", {
                 facility_id: facilityId,
+                facility_name: facilityName,
                 facility_type: type,
                 selection_source: "favorites",
             });

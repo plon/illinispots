@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { usePostHog } from "@posthog/react";
 import {
   FacilityRoomProps,
   TimeBlockProps,
@@ -93,7 +94,10 @@ export const RoomSchedule = ({ slots }: RoomScheduleProps) => {
 export default function FacilityRoomDetails({
   roomName,
   room,
+  facilityId,
+  facilityName,
 }: FacilityRoomProps) {
+  const posthog = usePostHog();
   const [isImageLoading, setIsImageLoading] = useState(true);
 
   // Use the discriminated union to determine room type
@@ -102,8 +106,24 @@ export default function FacilityRoomDetails({
     return (
       <div className="px-4 py-2">
         <div className="flex gap-2 mb-2">
-          <Button asChild variant="outline" size="sm" className="flex-1">
-            <a href={libraryRoom.url} target="_blank" rel="noopener noreferrer">
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="flex-1"
+          >
+            <a
+              href={libraryRoom.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                posthog.capture("library_room_reservation_opened", {
+                  facility_id: facilityId,
+                  facility_name: facilityName,
+                  room_number: roomName,
+                });
+              }}
+            >
               <BookOpen className="w-4 h-4 mr-2" />
               Reserve
             </a>

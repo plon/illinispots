@@ -244,8 +244,10 @@ const IlliniSpotsPage: React.FC = () => {
 
   const handleMarkerClick = useCallback(
     (id: string, facilityType: FacilityType) => {
+      const facilityName = facilityData?.facilities[id]?.name;
       posthog.capture("facility_selected", {
         facility_id: id,
+        facility_name: facilityName,
         facility_type: facilityType,
         selection_source: "map",
       });
@@ -263,7 +265,7 @@ const IlliniSpotsPage: React.FC = () => {
         return getUpdatedAccordionItems(itemId, prevItems);
       });
     },
-    [posthog],
+    [facilityData, posthog],
   );
 
   const showFetchingOverlay = isAcademicFetching && !isAcademicLoading;
