@@ -95,7 +95,7 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
   const handleToggle = () => {
     const isExpanding = !expandedItems.includes(facilityId);
     if (isExpanding) {
-      posthog.capture("facility_selected", {
+      posthog.capture("facility_accordion_expanded", {
         facility_id: facility.id,
         facility_name: facility.name,
         facility_type: facilityType,
@@ -118,11 +118,10 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
           onClick={handleToggle}
           className="px-4 py-2 hover:no-underline hover:bg-muted group"
           aria-label={`${facility.name} details`}
-          data-attr={`facility-accordion-${facility.id}`}
-          data-facility-id={facility.id}
-          data-facility-name={facility.name}
-          data-facility-type={facilityType}
         >
+          <span className="sr-only" aria-hidden="true">
+            {facility.name}
+          </span>
           <div className="flex items-center justify-between flex-1 mr-2">
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <span className="font-medium truncate">{facility.name}</span>
@@ -246,10 +245,6 @@ const LibraryRoomsAccordion: React.FC<LibraryRoomsAccordionProps> = ({
                   }}
                   className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm"
                   aria-label={`${roomName} in ${facility.name}`}
-                  data-attr={`facility-${facility.id}-room-${roomName}`}
-                  data-facility-id={facility.id}
-                  data-facility-name={facility.name}
-                  data-room-name={roomName}
                 >
                   <div className="flex items-center justify-between flex-1 mr-2">
                     <div className="flex flex-col items-start text-left">
@@ -435,10 +430,6 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
                   }}
                   className="py-2 px-2 text-sm hover:no-underline hover:bg-muted/20 rounded-md group [&[data-state=open]>svg]:text-primary"
                   aria-label={`Room ${roomNumber} in ${facility.name}`}
-                  data-attr={`facility-${facility.id}-room-${roomNumber}`}
-                  data-facility-id={facility.id}
-                  data-facility-name={facility.name}
-                  data-room-number={roomNumber}
                 >
                   {/* Room details for the trigger */}
                   <div className="flex justify-between items-center w-full mr-2 text-left">
@@ -504,9 +495,6 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
           }}
           className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm font-normal"
           aria-label={`Available rooms in ${facility.name} (${availableRooms.length})`}
-          data-attr={`facility-${facility.id}-available-rooms`}
-          data-facility-id={facility.id}
-          data-facility-name={facility.name}
         >
           Available Rooms ({availableRooms.length})
         </AccordionTrigger>
@@ -545,9 +533,6 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
           }}
           className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm font-normal"
           aria-label={`Occupied rooms in ${facility.name} (${occupiedRooms.length})`}
-          data-attr={`facility-${facility.id}-occupied-rooms`}
-          data-facility-id={facility.id}
-          data-facility-name={facility.name}
         >
           Occupied Rooms ({occupiedRooms.length})
         </AccordionTrigger>

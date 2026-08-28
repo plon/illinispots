@@ -296,8 +296,11 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     }, [facilityData, filterFacilitiesByAvailability]);
 
     const handleFavoriteClick = useCallback(
-        (facilityId: string, type: "library" | "academic") => {
-            const facilityName = facilityData?.facilities[facilityId]?.name;
+        (
+            facilityId: string,
+            type: "library" | "academic",
+            facilityName: string,
+        ) => {
             posthog.capture("facility_selected", {
                 facility_id: facilityId,
                 facility_name: facilityName,
@@ -316,7 +319,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
             scrollToAccordion(accordionId);
         },
-        [expandedItems, facilityData, posthog, setExpandedItems, scrollToAccordion],
+        [expandedItems, posthog, setExpandedItems, scrollToAccordion],
     );
 
     const matchingRoomsCount = useMemo(() => {

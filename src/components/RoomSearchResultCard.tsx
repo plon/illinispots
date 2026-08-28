@@ -149,10 +149,6 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
             className="h-8 text-xs font-medium gap-1.5 hover:bg-secondary"
             aria-expanded={isScheduleOpen}
             aria-label={`${isScheduleOpen ? "Hide" : "View"} schedule for room ${roomNumber} in ${facility.name}`}
-            data-attr={`search-schedule-${facility.id}-room-${roomNumber}`}
-            data-facility-id={facility.id}
-            data-facility-name={facility.name}
-            data-room-number={roomNumber}
           >
             <Calendar className="w-3.5 h-3.5" />
             {isScheduleOpen ? "Hide Schedule" : "View Schedule"}
@@ -172,10 +168,6 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
                   variant="outline"
                   size="sm"
                   className="h-8 text-xs font-medium gap-1.5 hover:bg-secondary"
-                  data-attr={`search-reserve-${facility.id}-room-${roomNumber}`}
-                  data-facility-id={facility.id}
-                  data-facility-name={facility.name}
-                  data-room-number={roomNumber}
                 >
                   <a
                     href={libraryRoom.url}
@@ -186,7 +178,6 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
                         facility_id: facility.id,
                         facility_name: facility.name,
                         room_number: roomNumber,
-                        url: libraryRoom.url,
                       })
                     }
                   >

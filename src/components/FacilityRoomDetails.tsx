@@ -111,10 +111,6 @@ export default function FacilityRoomDetails({
             variant="outline"
             size="sm"
             className="flex-1"
-            data-attr={facilityId ? `reserve-${facilityId}-room-${roomName}` : `reserve-room-${roomName}`}
-            data-facility-id={facilityId}
-            data-facility-name={facilityName}
-            data-room-name={roomName}
           >
             <a
               href={libraryRoom.url}
@@ -125,7 +121,6 @@ export default function FacilityRoomDetails({
                   facility_id: facilityId,
                   facility_name: facilityName,
                   room_number: roomName,
-                  url: libraryRoom.url,
                 });
               }}
             >
