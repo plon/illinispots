@@ -36,15 +36,6 @@ function RootComponent() {
   const config = getClientConfig();
 
   if (!config.posthogProjectToken || !config.posthogHost) {
-    if (import.meta.env.DEV) {
-      const variableName = !config.posthogProjectToken
-        ? "VITE_PUBLIC_POSTHOG_PROJECT_TOKEN"
-        : "VITE_PUBLIC_POSTHOG_HOST";
-      throw new Error(
-        `${variableName} variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once ${variableName} is configured`,
-      );
-    }
-
     return <Outlet />;
   }
 
