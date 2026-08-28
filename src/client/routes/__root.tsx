@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { PostHogProvider, usePostHog } from "@posthog/react";
+import { PostHogProvider } from "@posthog/react";
 import {
   Outlet,
   createRootRoute,
@@ -9,12 +9,9 @@ import { getClientConfig } from "@/client/config";
 import { Sentry } from "@/client/observability";
 
 function RootError({ error, reset }: ErrorComponentProps) {
-  const posthog = usePostHog();
-
   useEffect(() => {
     Sentry.captureException(error);
-    posthog.captureException(error);
-  }, [error, posthog]);
+  }, [error]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background p-6 text-foreground">
@@ -57,7 +54,6 @@ function RootComponent() {
       options={{
         api_host: config.posthogHost,
         defaults: "2026-01-30",
-        capture_exceptions: true,
         debug: import.meta.env.DEV,
       }}
     >
