@@ -45,6 +45,7 @@ illiniSpots is a web application that helps UIUC students find available study s
 
 - Frontend: React 19, Vite 8, TanStack Router, TanStack Query, TypeScript, Tailwind CSS, shadcn/ui, and Mapbox.
 - Backend: Hono on Bun, Supabase (PostgreSQL), and SQL functions (`database/functions`).
+- Analytics: PostHog for browser usage analytics.
 - Observability: Sentry for the React client, Bun server, API dependencies, and scheduled data pipelines.
 
 ### Application Architecture
@@ -93,7 +94,7 @@ bun install
 
 3) Environment
 
-Copy `.env.example` to `.env.local` and provide:
+Copy `.env.example` to `.env.local` and configure:
 
 ```env
 SUPABASE_URL=your_supabase_url
@@ -102,7 +103,19 @@ VITE_MAPBOX_ACCESS_TOKEN=your_public_mapbox_token
 VITE_MAPBOX_STYLE_URL=mapbox://styles/<user>/<style-id>
 ```
 
-`SUPABASE_PUBLISHABLE_KEY` is used by the Hono server for read-only database queries. In local development, Mapbox and Sentry configuration is read from `.env` (`VITE_*`). In production/staging, the server injects configuration at runtime from environment variables / Fly secrets. Writing pipeline scrapers (`data-pipeline/`) use `SUPABASE_SECRET_KEY` (service role).
+PostHog analytics and Sentry observability are optional. To enable them, add
+the relevant variables:
+
+```env
+VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
+VITE_PUBLIC_POSTHOG_HOST=https://your-posthog-host
+SENTRY_DSN=your_sentry_dsn
+VITE_SENTRY_DSN=your_sentry_dsn
+SENTRY_AUTH_TOKEN=your_sentry_auth_token
+```
+
+`SUPABASE_PUBLISHABLE_KEY` is used by the Hono server for read-only database queries. In local development, Mapbox, PostHog, and Sentry configuration is read from `.env` (`VITE_*`). In production/staging, the server injects configuration at runtime from environment variables / Fly secrets. `SENTRY_AUTH_TOKEN` is only needed to upload source maps during a production build. Writing pipeline scrapers (`data-pipeline/`) use `SUPABASE_SECRET_KEY` (service role).
+
 4) Run locally
 
 ```bash
@@ -123,24 +136,36 @@ TypeScript validation.
 
 ### Production
 
-The existing Vercel project deploys the Vite build as static assets and the
-Hono API as a Bun 1.4 Vercel Function. This retains Vercel preview deployments,
-CDN delivery, autoscaling, and the existing domain. Vercel requires the same
-environment variables shown above for Production, Preview, and Development
-deployments.
+The application runs as a long-lived Bun server in Docker containers on
+[Fly.io Machines](https://fly.io/docs/machines/). Hono serves both the Vite
+production build and `/api/*` from port 3000, keeping the frontend and API on
+the same origin.
 
-Preview deployments are created from pull requests. The `/api/*` contract stays
-same-origin, so previews and the production domain do not need CORS
-configuration.
+Production uses [`fly.toml`](fly.toml), and staging uses
+[`fly.staging.toml`](fly.staging.toml). Both environments use rolling deploys
+and health checks against `/api/health`; production keeps at least two Machines
+running. Pushes to `main` deploy production through GitHub Actions. Pull
+requests deploy to staging when labeled `deploy:staging`.
 
-For a container deployment, build and run directly:
+The Hono API can also run as a Vercel Function using the serverless entrypoint
+at [`api/[...route].ts`](api/%5B...route%5D.ts).
+
+Configure the production and staging environment variables shown above as Fly
+secrets, then deploy with `flyctl`:
+
+```bash
+flyctl deploy --config fly.toml
+flyctl deploy --config fly.staging.toml
+```
+
+To run the production server locally without Docker:
 
 ```bash
 bun run build
 bun run start
 ```
 
-Or use the included image:
+Or use the same Docker image deployed to Fly:
 
 ```bash
 docker build -t illinispots .
