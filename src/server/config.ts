@@ -76,5 +76,11 @@ export function getPublicClientConfig(
       environment.SENTRY_DSN ||
       environment.VITE_SENTRY_DSN ||
       "",
+    ...(environment.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN
+      ? { posthogProjectToken: environment.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN }
+      : {}),
+    ...(environment.VITE_PUBLIC_POSTHOG_HOST
+      ? { posthogHost: environment.VITE_PUBLIC_POSTHOG_HOST }
+      : {}),
   };
 }

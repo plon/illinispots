@@ -13,6 +13,8 @@ export type FallbackClientEnvironment = {
   readonly VITE_MAPBOX_ACCESS_TOKEN?: string;
   readonly VITE_MAPBOX_STYLE_URL?: string;
   readonly VITE_SENTRY_DSN?: string;
+  readonly VITE_PUBLIC_POSTHOG_PROJECT_TOKEN?: string;
+  readonly VITE_PUBLIC_POSTHOG_HOST?: string;
   readonly MODE?: string;
 };
 
@@ -42,5 +44,19 @@ export function getClientConfig(
       runtimeConfig?.sentryDsn ||
       fallbackEnv.VITE_SENTRY_DSN ||
       "",
+    ...(runtimeConfig?.posthogProjectToken ||
+    fallbackEnv.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN
+      ? {
+          posthogProjectToken:
+            runtimeConfig?.posthogProjectToken ||
+            fallbackEnv.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN,
+        }
+      : {}),
+    ...(runtimeConfig?.posthogHost || fallbackEnv.VITE_PUBLIC_POSTHOG_HOST
+      ? {
+          posthogHost:
+            runtimeConfig?.posthogHost || fallbackEnv.VITE_PUBLIC_POSTHOG_HOST,
+        }
+      : {}),
   };
 }

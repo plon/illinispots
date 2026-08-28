@@ -8,6 +8,7 @@ import React, {
   Suspense,
 } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { usePostHog } from "@posthog/react";
 import { getUpdatedAccordionItems } from "@/utils/accordion";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
@@ -67,6 +68,7 @@ const fetchFacilityData = async (
 };
 
 const IlliniSpotsPage: React.FC = () => {
+  const posthog = usePostHog();
   const { selectedDateTime, liveNow, isCurrentDateTime } = useDateTimeContext();
   const [showMapPreference, setShowMapPreference] = useState<boolean | null>(
     null,
@@ -242,6 +244,12 @@ const IlliniSpotsPage: React.FC = () => {
 
   const handleMarkerClick = useCallback(
     (id: string, facilityType: FacilityType) => {
+      posthog.capture("facility_selected", {
+        facility_id: id,
+        facility_type: facilityType,
+        selection_source: "map",
+      });
+
       const itemId = `${
         facilityType === FacilityType.LIBRARY ? "library" : "building"
       }-${id}`;
@@ -255,7 +263,7 @@ const IlliniSpotsPage: React.FC = () => {
         return getUpdatedAccordionItems(itemId, prevItems);
       });
     },
-    [],
+    [posthog],
   );
 
   const showFetchingOverlay = isAcademicFetching && !isAcademicLoading;

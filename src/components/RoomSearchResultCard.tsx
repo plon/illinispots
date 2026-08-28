@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePostHog } from "@posthog/react";
 import { SearchResultRoom } from "@/utils/searchUtils";
 import { AcademicRoom, FacilityType, LibraryRoom, RoomStatus } from "@/types";
 import { RoomBadge } from "@/components/RoomBadge";
@@ -26,6 +27,7 @@ interface RoomSearchResultCardProps {
 export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
   roomResult,
 }) => {
+  const posthog = usePostHog();
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
 
@@ -34,6 +36,18 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
   const isAcademic = facilityType === FacilityType.ACADEMIC;
   const academicRoom = isAcademic ? (room as AcademicRoom) : null;
   const libraryRoom = !isAcademic ? (room as LibraryRoom) : null;
+
+  const toggleSchedule = () => {
+    const openingSchedule = !isScheduleOpen;
+    setIsScheduleOpen(openingSchedule);
+    if (openingSchedule) {
+      posthog.capture("room_schedule_viewed", {
+        facility_id: facility.id,
+        facility_type: facilityType,
+        room_number: roomNumber,
+      });
+    }
+  };
 
   return (
     <div className="rounded-lg border border-border/80 bg-card p-3.5 shadow-xs hover:border-primary/40 transition-all duration-150 space-y-2.5">
@@ -129,7 +143,7 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => setIsScheduleOpen(!isScheduleOpen)}
+            onClick={toggleSchedule}
             className="h-8 text-xs font-medium gap-1.5 hover:bg-secondary"
             aria-expanded={isScheduleOpen}
           >
@@ -156,6 +170,12 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
                     href={libraryRoom.url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() =>
+                      posthog.capture("library_room_reservation_opened", {
+                        facility_id: facility.id,
+                        room_number: roomNumber,
+                      })
+                    }
                   >
                     <BookOpen className="w-3.5 h-3.5" />
                     Reserve

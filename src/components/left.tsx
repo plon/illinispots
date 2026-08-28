@@ -8,6 +8,7 @@ import React, {
     memo,
     useState,
 } from "react";
+import { usePostHog } from "@posthog/react";
 import { getUpdatedAccordionItems } from "@/utils/accordion";
 import { Accordion } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -168,6 +169,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     error = null,
     onRetry,
 }) => {
+    const posthog = usePostHog();
     const accordionRefs = useRef<AccordionRefs>({});
     const scrollAreaRef = useRef<HTMLDivElement | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
@@ -201,9 +203,14 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const applyNaturalSearch = useCallback(() => {
         if (naturalSearch.error || !naturalSearch.dateTime) return;
 
+        posthog.capture("availability_search_applied", {
+            has_location_query: Boolean(naturalSearch.locationQuery),
+            selected_date: naturalSearch.dateTime.date,
+            selected_time: naturalSearch.dateTime.time,
+        });
         setSelectedDateTime(naturalSearch.dateTime);
         setSearchTerm(naturalSearch.locationQuery);
-    }, [naturalSearch, setSelectedDateTime]);
+    }, [naturalSearch, posthog, setSelectedDateTime]);
 
     const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -290,6 +297,12 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
     const handleFavoriteClick = useCallback(
         (facilityId: string, type: "library" | "academic") => {
+            posthog.capture("facility_selected", {
+                facility_id: facilityId,
+                facility_type: type,
+                selection_source: "favorites",
+            });
+
             // Find the facility and expand its accordion
             const prefix = type === "library" ? "library" : "building";
             const accordionId = `${prefix}-${facilityId}`;
@@ -301,7 +314,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
             scrollToAccordion(accordionId);
         },
-        [expandedItems, setExpandedItems, scrollToAccordion],
+        [expandedItems, posthog, setExpandedItems, scrollToAccordion],
     );
 
     const matchingRoomsCount = useMemo(() => {
@@ -323,6 +336,14 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         setMinDuration(undefined);
         setFreeUntil("");
     };
+
+    const resetSelectedDateTime = useCallback(() => {
+        posthog.capture("date_time_changed", {
+            selection: "now",
+            selection_source: "active_time_banner",
+        });
+        resetToCurrentDateTime();
+    }, [posthog, resetToCurrentDateTime]);
 
     const [isFavoritesDialogOpen, setIsFavoritesDialogOpen] = useState(false);
 
@@ -486,7 +507,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 <ActiveTimeBanner
                     selectedDate={selectedDateTime.date}
                     selectedTime={selectedDateTime.time}
-                    onReset={resetToCurrentDateTime}
+                    onReset={resetSelectedDateTime}
                 />
             )}
 
