@@ -112,5 +112,19 @@ describe("getPublicClientConfig", () => {
       mapboxStyleUrl: "mapbox://styles/vite",
       sentryDsn: "https://vite@sentry.io/2",
     });
+
+    expect(
+      getPublicClientConfig({
+        VITE_PUBLIC_POSTHOG_PROJECT_TOKEN: "phc_test_token",
+        VITE_PUBLIC_POSTHOG_HOST: "https://us.i.posthog.com",
+      }),
+    ).toEqual({
+      appEnv: "development",
+      mapboxAccessToken: "",
+      mapboxStyleUrl: "",
+      sentryDsn: "",
+      posthogProjectToken: "phc_test_token",
+      posthogHost: "https://us.i.posthog.com",
+    });
   });
 });

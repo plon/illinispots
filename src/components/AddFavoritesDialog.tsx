@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { usePostHog } from '@posthog/react';
 import {
     Dialog,
     DialogContent,
@@ -29,6 +30,7 @@ export const AddFavoritesDialog: React.FC<AddFavoritesDialogProps> = ({
     favorites,
     onToggleFavorite,
 }) => {
+    const posthog = usePostHog();
     const [searchTerm, setSearchTerm] = useState("");
 
     const facilities = useMemo(() => {
@@ -45,6 +47,12 @@ export const AddFavoritesDialog: React.FC<AddFavoritesDialogProps> = ({
     const isFavorite = (id: string) => favorites.some(f => f.id === id);
 
     const handleToggle = (facility: Facility) => {
+        const action = isFavorite(facility.id) ? 'removed' : 'added';
+        posthog.capture('favorites_updated', {
+            action,
+            facility_id: facility.id,
+            facility_type: facility.type,
+        });
         onToggleFavorite({
             id: facility.id,
             name: facility.name,

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePostHog } from "@posthog/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -37,6 +38,7 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
     onClearAll,
     matchingRoomsCount,
 }) => {
+    const posthog = usePostHog();
     const [isOpen, setIsOpen] = useState(false);
     const isDesktop = useMediaQuery("(min-width: 768px)");
     const [isCustomDurationOpen, setIsCustomDurationOpen] = useState(false);
@@ -72,6 +74,34 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
         }
     };
 
+    const captureCustomDuration = () => {
+        if (isCustomDurationValid) {
+            posthog.capture("room_filter_applied", {
+                filter_type: "minimum_duration",
+                minimum_duration_minutes: customDurationNumber,
+                selection_source: "custom",
+            });
+        }
+    };
+
+    const applyFreeUntil = (value: string, selectionSource: "picker" | "focus_default") => {
+        setFreeUntil(value);
+        posthog.capture("room_filter_applied", {
+            filter_type: "free_until",
+            ...(value
+                ? { free_until: value, selection_source: selectionSource }
+                : { action: "cleared" }),
+        });
+    };
+
+    const clearFreeUntil = () => {
+        setFreeUntil("");
+        posthog.capture("room_filter_applied", {
+            filter_type: "free_until",
+            action: "cleared",
+        });
+    };
+
     const openCustomDuration = () => {
         if (!customDuration && minDuration !== undefined) {
             setCustomDuration(String(minDuration));
@@ -80,18 +110,32 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
     };
 
     const selectPresetDuration = (duration: number | undefined) => {
+        posthog.capture("room_filter_applied", {
+            filter_type: "minimum_duration",
+            ...(duration === undefined
+                ? { action: "cleared" }
+                : { minimum_duration_minutes: duration }),
+        });
         setIsCustomDurationOpen(false);
         setCustomDuration("");
         setMinDuration(duration);
     };
 
     const clearMinimumDuration = () => {
+        posthog.capture("room_filter_applied", {
+            filter_type: "minimum_duration",
+            action: "cleared",
+        });
         setIsCustomDurationOpen(false);
         setCustomDuration("");
         setMinDuration(undefined);
     };
 
     const clearAllFilters = () => {
+        posthog.capture("room_filter_applied", {
+            filter_type: "all",
+            action: "cleared",
+        });
         setIsCustomDurationOpen(false);
         setCustomDuration("");
         onClearAll();
@@ -144,7 +188,7 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                                 variant="ghost"
                                 size="sm"
                                 className="h-5 px-1 text-xs text-muted-foreground hover:text-foreground hover:bg-transparent underline"
-                                onClick={() => setFreeUntil("")}
+                                onClick={clearFreeUntil}
                             >
                                 Clear
                             </Button>
@@ -154,11 +198,11 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                         <Input
                             type="time"
                             value={freeUntil}
-                            onChange={(e) => setFreeUntil(e.target.value)}
+                            onChange={(e) => applyFreeUntil(e.target.value, "picker")}
                             onFocus={() => {
                                 if (!freeUntil) {
-                                     const campusNow = getCampusDateTimeParts();
-                                    setFreeUntil(campusNow.time.slice(0, 5));
+                                    const campusNow = getCampusDateTimeParts();
+                                    applyFreeUntil(campusNow.time.slice(0, 5), "focus_default");
                                 }
                             }}
                             className="h-9 pl-9 pr-3 font-mono text-sm appearance-none [&::-webkit-date-and-time-value]:text-left [&::-webkit-date-and-time-value]:min-h-0 [&::-webkit-calendar-picker-indicator]:hidden"
@@ -222,6 +266,7 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                                     step={1}
                                     value={customDuration}
                                     onChange={(e) => handleCustomDurationChange(e.target.value)}
+                                    onBlur={captureCustomDuration}
                                     placeholder="e.g. 90"
                                     aria-label="Custom minimum availability duration in minutes"
                                     aria-invalid={hasCustomDurationError}

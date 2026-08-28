@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePostHog } from "@posthog/react";
 import { Button } from "@/components/ui/button";
 import { CalendarClock } from "lucide-react";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
@@ -22,6 +23,7 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
     className,
     isFetching,
 }) => {
+    const posthog = usePostHog();
     const {
         selectedDateTime,
         setSelectedDateTime,
@@ -32,11 +34,18 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
     const isDesktop = useMediaQuery("(min-width: 768px)");
 
     const handleDateTimeChange = (dateTime: typeof selectedDateTime) => {
+        posthog.capture("date_time_changed", {
+            selected_date: dateTime.date,
+            selected_time: dateTime.time,
+        });
         setSelectedDateTime(dateTime);
         setOpen(false);
     };
 
     const handleResetToNow = () => {
+        posthog.capture("date_time_changed", {
+            selection: "now",
+        });
         resetToCurrentDateTime();
         setOpen(false);
     };

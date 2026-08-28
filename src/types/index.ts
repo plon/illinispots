@@ -263,4 +263,6 @@ export interface PublicClientConfig {
   mapboxAccessToken: string;
   mapboxStyleUrl: string;
   sentryDsn: string;
+  posthogProjectToken?: string;
+  posthogHost?: string;
 }
