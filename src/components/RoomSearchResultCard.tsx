@@ -43,8 +43,10 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
     if (openingSchedule) {
       posthog.capture("room_schedule_viewed", {
         facility_id: facility.id,
+        facility_name: facility.name,
         facility_type: facilityType,
         room_number: roomNumber,
+        selection_source: "search",
       });
     }
   };
@@ -146,6 +148,11 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
             onClick={toggleSchedule}
             className="h-8 text-xs font-medium gap-1.5 hover:bg-secondary"
             aria-expanded={isScheduleOpen}
+            aria-label={`${isScheduleOpen ? "Hide" : "View"} schedule for room ${roomNumber} in ${facility.name}`}
+            data-attr={`search-schedule-${facility.id}-room-${roomNumber}`}
+            data-facility-id={facility.id}
+            data-facility-name={facility.name}
+            data-room-number={roomNumber}
           >
             <Calendar className="w-3.5 h-3.5" />
             {isScheduleOpen ? "Hide Schedule" : "View Schedule"}
@@ -165,6 +172,10 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
                   variant="outline"
                   size="sm"
                   className="h-8 text-xs font-medium gap-1.5 hover:bg-secondary"
+                  data-attr={`search-reserve-${facility.id}-room-${roomNumber}`}
+                  data-facility-id={facility.id}
+                  data-facility-name={facility.name}
+                  data-room-number={roomNumber}
                 >
                   <a
                     href={libraryRoom.url}
@@ -173,7 +184,9 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
                     onClick={() =>
                       posthog.capture("library_room_reservation_opened", {
                         facility_id: facility.id,
+                        facility_name: facility.name,
                         room_number: roomNumber,
+                        url: libraryRoom.url,
                       })
                     }
                   >

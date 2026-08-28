@@ -55,6 +55,19 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
               key={favorite.id}
               className="mx-4 px-3 py-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
               onClick={handleFacilityClick}
+              data-attr={`favorite-${favorite.id}`}
+              data-facility-id={favorite.id}
+              data-facility-name={favorite.name}
+              data-facility-type={favorite.type}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleFacilityClick();
+                }
+              }}
+              aria-label={`Favorite: ${favorite.name}`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0 flex-1">

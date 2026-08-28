@@ -219,6 +219,8 @@ export interface FacilityRoomProps {
   room: FacilityRoom;
   // facilityType for facility-level decisions
   facilityType: FacilityType;
+  facilityId?: string;
+  facilityName?: string;
 }
 export interface AccordionRefs {
   [key: string]: HTMLDivElement | null;
