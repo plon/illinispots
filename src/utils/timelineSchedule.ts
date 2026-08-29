@@ -1,4 +1,4 @@
-import type { RoomScheduleBlock } from "@/types";
+import type { RoomScheduleBlock, TimeSlot } from "@/types";
 import {
   addDateDays,
   differenceInCalendarDays,
@@ -21,6 +21,8 @@ export interface TimelineDayOption {
 export interface TimelineBlock {
   block: RoomScheduleBlock;
   durationMinutes: number;
+  leftPercent: number;
+  widthPercent: number;
   leftPx: number;
   widthPx: number;
 }
@@ -28,6 +30,7 @@ export interface TimelineBlock {
 export interface TimelineTick {
   hour: number;
   label: string;
+  percent: number;
   positionPx: number;
 }
 
@@ -78,12 +81,39 @@ function formatHour(hour: number): string {
   return `${normalizedHour % 12 || 12} ${normalizedHour >= 12 ? "PM" : "AM"}`;
 }
 
+export function convertLibrarySlotsToScheduleBlocks(
+  slots: TimeSlot[],
+): RoomScheduleBlock[] {
+  return slots.map((slot) => ({
+    start: slot.start,
+    end: slot.end,
+    status: slot.available ? "available" : "event",
+    details: slot.available
+      ? null
+      : {
+          type: "event",
+          title: "Reserved",
+          identifier: "Reserved",
+        },
+  }));
+}
+
 export function buildTimelineModel(
   schedule: RoomScheduleBlock[],
 ): TimelineModel {
   const parsedBlocks = schedule.flatMap((block) => {
     const startMinutes = parseTimeToMinutes(block.start);
-    const endMinutes = parseTimeToMinutes(block.end);
+    let endMinutes = parseTimeToMinutes(block.end);
+
+    if (
+      endMinutes !== null &&
+      startMinutes !== null &&
+      endMinutes === 0 &&
+      block.end.startsWith("00:") &&
+      startMinutes > 0
+    ) {
+      endMinutes = 24 * 60;
+    }
 
     if (
       startMinutes === null ||
@@ -118,16 +148,22 @@ export function buildTimelineModel(
   const totalHours = endHour - startHour;
   const totalWidthPx = totalHours * TIMELINE_HOUR_WIDTH_PX;
 
+  const totalMinutes = totalHours * MINUTES_PER_HOUR;
+
   const blocks = parsedBlocks.flatMap((parsed): TimelineBlock[] => {
     const clippedStart = Math.max(startMinutes, parsed.startMinutes);
     const clippedEnd = Math.min(endMinutes, parsed.endMinutes);
     const durationMinutes = clippedEnd - clippedStart;
     if (durationMinutes <= 0) return [];
 
+    const offsetMinutes = clippedStart - startMinutes;
+
     return [
       {
         block: parsed.block,
         durationMinutes,
+        leftPercent: totalMinutes > 0 ? (offsetMinutes / totalMinutes) * 100 : 0,
+        widthPercent: totalMinutes > 0 ? (durationMinutes / totalMinutes) * 100 : 0,
         leftPx:
           ((clippedStart - startMinutes) / MINUTES_PER_HOUR) *
           TIMELINE_HOUR_WIDTH_PX,
@@ -142,6 +178,7 @@ export function buildTimelineModel(
     return {
       hour,
       label: formatHour(hour),
+      percent: totalHours > 0 ? (index / totalHours) * 100 : 0,
       positionPx: index * TIMELINE_HOUR_WIDTH_PX,
     };
   });
