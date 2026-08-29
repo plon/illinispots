@@ -291,7 +291,7 @@ const IlliniSpotsPage: React.FC = () => {
         className={`${
           showMap
             ? "md:w-[37%] h-[60vh] md:h-screen order-2 md:order-1"
-            : "h-screen max-w-3xl md:border-x border-border shadow-xs"
+            : "h-screen max-w-3xl md:border-x border-border shadow-sm"
         } w-full flex-1 overflow-hidden relative`}
       >
         <LeftSidebar
