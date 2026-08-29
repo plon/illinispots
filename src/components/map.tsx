@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import type { FeatureCollection, Point } from "geojson";
-import mapboxgl from "mapbox-gl";
+import * as mapboxgl from "mapbox-gl/esm";
 import "mapbox-gl/dist/mapbox-gl.css";
 import {
   MarkerData,
@@ -71,12 +71,13 @@ export default function FacilityMap({
       return;
     }
 
-    mapboxgl.accessToken = token;
+    mapboxgl.setAccessToken(token);
 
     let timeoutId: number | undefined;
 
     try {
       const mapInstance = new mapboxgl.Map({
+        accessToken: token,
         container: mapContainer.current,
         style: styleUrl,
         // minZoom: 15.2,
