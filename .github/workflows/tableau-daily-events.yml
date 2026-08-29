@@ -2,8 +2,9 @@ name: Tableau daily events
 
 on:
   schedule:
-    # 5:17 AM CST / 6:17 AM CDT. The offset changes because GitHub cron uses UTC.
-    - cron: "17 11 * * *"
+    # Run early enough to absorb GitHub scheduler delays before the 7:00 AM deadline.
+    - cron: "17 1 * * *"
+      timezone: "America/Chicago"
   workflow_dispatch:
 
 permissions:
@@ -48,11 +49,13 @@ jobs:
       - name: Start Sentry monitor
         id: sentry-monitor
         continue-on-error: true
+        # 313 minutes after 1:17 AM is the 6:30 AM Central freshness deadline.
         run: >-
           python sentry_monitor.py start
           --monitor-slug tableau-daily-events
-          --schedule "17 11 * * *"
-          --checkin-margin 30
+          --schedule "17 1 * * *"
+          --timezone "America/Chicago"
+          --checkin-margin 313
           --max-runtime 15
 
       - name: Update Tableau daily events
