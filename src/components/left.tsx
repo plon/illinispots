@@ -371,7 +371,11 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const [isFavoritesDialogOpen, setIsFavoritesDialogOpen] = useState(false);
 
     return (
-        <div className="h-full bg-background border-t md:border-t-0 md:border-l flex flex-col relative">
+        <div
+            className={`h-full bg-background flex flex-col relative ${
+                showMap ? "border-t md:border-t-0 md:border-r" : ""
+            }`}
+        >
             <div className="sidebar-header py-2 px-3 md:py-3 md:px-4 border-b flex select-none items-center gap-2">
                 <h1 className="text-base md:text-lg font-bold shrink-0 leading-none">
                     <span style={{ color: "#FF5F05" }}>illini</span>
