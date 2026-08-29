@@ -15,13 +15,14 @@ import {
   buildTimelineDayOptions,
   buildTimelineModel,
   formatDuration,
-  TIMELINE_HOUR_WIDTH_PX,
 } from "@/utils/timelineSchedule";
 
 interface TimelineScheduleProps {
   scheduleData: RoomScheduleBlock[];
-  selectedDate: string;
-  onDateChange: (newDate: string) => void;
+  selectedDate?: string;
+  onDateChange?: (newDate: string) => void;
+  onBlockClick?: (block: RoomScheduleBlock) => void;
+  emptyMessage?: string;
 }
 
 function DaySelector({
@@ -66,6 +67,8 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
   scheduleData,
   selectedDate,
   onDateChange,
+  onBlockClick,
+  emptyMessage,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
@@ -86,14 +89,16 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
 
   const currentCampusTime = getCampusDateTimeParts(currentTime);
   const today = currentCampusTime.date;
-  const isToday = selectedDate === today;
+  const activeDate = selectedDate ?? today;
+  const isToday = activeDate === today;
   const currentMinutes = currentCampusTime.hour * 60 + currentCampusTime.minute;
-  const currentTimePositionPx =
+  const totalMinutes = timeline.totalHours * 60;
+  const currentTimePercent =
     isToday &&
+    totalMinutes > 0 &&
     currentMinutes >= timeline.startMinutes &&
     currentMinutes <= timeline.endMinutes
-      ? ((currentMinutes - timeline.startMinutes) / 60) *
-        TIMELINE_HOUR_WIDTH_PX
+      ? ((currentMinutes - timeline.startMinutes) / totalMinutes) * 100
       : null;
 
   useEffect(() => {
@@ -104,15 +109,20 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
     if (isToday) {
       const now = getCampusDateTimeParts();
       const minutes = now.hour * 60 + now.minute;
-      if (minutes >= timeline.startMinutes && minutes <= timeline.endMinutes) {
-        const position =
-          ((minutes - timeline.startMinutes) / 60) * TIMELINE_HOUR_WIDTH_PX;
+      const totalMinutes = timeline.totalHours * 60;
+      if (
+        totalMinutes > 0 &&
+        minutes >= timeline.startMinutes &&
+        minutes <= timeline.endMinutes
+      ) {
+        const fraction = (minutes - timeline.startMinutes) / totalMinutes;
+        const position = fraction * container.scrollWidth;
         targetScroll = Math.max(0, position - container.clientWidth * 0.35);
       }
     }
 
     container.scrollTo({ left: targetScroll, behavior: "smooth" });
-  }, [isToday, selectedDate, timeline.endMinutes, timeline.startMinutes]);
+  }, [isToday, activeDate, timeline.endMinutes, timeline.startMinutes, timeline.totalHours]);
 
   const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
     const container = scrollContainerRef.current;
@@ -137,13 +147,23 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
     isDraggingRef.current = false;
   };
 
+  if (scheduleData.length === 0) {
+    return (
+      <div className="w-full min-w-0 max-w-full rounded-md border border-border/50 bg-muted/20 p-3 text-center text-xs text-muted-foreground">
+        {emptyMessage ?? "No schedule slots available for this room."}
+      </div>
+    );
+  }
+
   return (
     <div className="w-full min-w-0 max-w-full space-y-1.5 overflow-hidden pb-0.5 pt-1">
-      <DaySelector
-        selectedDate={selectedDate}
-        today={today}
-        onDateChange={onDateChange}
-      />
+      {onDateChange && (
+        <DaySelector
+          selectedDate={activeDate}
+          today={today}
+          onDateChange={onDateChange}
+        />
+      )}
 
       <div className="w-full min-w-0 max-w-full overflow-hidden rounded-md border border-border/50 bg-muted/20">
         <div
@@ -159,9 +179,8 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
           }}
         >
           <div
-            className="relative"
+            className="relative w-full"
             style={{
-              width: `${timeline.totalWidthPx}px`,
               minWidth: `${timeline.totalWidthPx}px`,
             }}
           >
@@ -178,7 +197,7 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
                   <div
                     key={tick.hour}
                     className="pointer-events-none absolute bottom-0 top-0 flex flex-col items-center"
-                    style={{ left: `${tick.positionPx}px`, transform }}
+                    style={{ left: `${tick.percent}%`, transform }}
                   >
                     <span className="whitespace-nowrap text-[10px] font-normal leading-none text-muted-foreground/80">
                       {tick.label}
@@ -196,7 +215,7 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
                     key={index}
                     className="pointer-events-none absolute bottom-0 top-0 border-r border-border/25"
                     style={{
-                      left: `${(index + 1) * TIMELINE_HOUR_WIDTH_PX}px`,
+                      left: `${((index + 1) / timeline.totalHours) * 100}%`,
                     }}
                   />
                 ),
@@ -204,16 +223,21 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
 
               <TooltipProvider delayDuration={50}>
                 {timeline.blocks.map(
-                  ({ block, durationMinutes, leftPx, widthPx }) => {
+                  ({ block, durationMinutes, leftPercent, widthPercent, widthPx }) => {
                     const isAvailable = block.status === "available";
                     const isPast =
                       isToday && block.end <= currentCampusTime.time;
                     const details = block.details;
-                    const eventLabel =
+                    const displayLabel =
                       details?.course ||
-                      details?.identifier ||
-                      details?.title ||
-                      (block.status === "event" ? "Event" : "Class");
+                      (details?.identifier && details.identifier !== "Reserved"
+                        ? details.identifier
+                        : details?.title && details.title !== "Reserved"
+                          ? details.title
+                          : null);
+                    const eventLabel =
+                      displayLabel ||
+                      (block.status === "event" ? "Reserved" : "Class");
                     const blockDescription = isAvailable
                       ? `Available, ${formatDuration(durationMinutes)}, ${formatTimeForDisplay(block.start)} to ${formatTimeForDisplay(block.end)}`
                       : `${eventLabel}${details?.title && details.title !== eventLabel ? `: ${details.title}` : ""}, ${formatDuration(durationMinutes)}, ${formatTimeForDisplay(block.start)} to ${formatTimeForDisplay(block.end)}`;
@@ -226,16 +250,21 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
                           <button
                             type="button"
                             aria-label={blockDescription}
+                            onClick={() => {
+                              if (onBlockClick) {
+                                onBlockClick(block);
+                              }
+                            }}
                             className={`absolute bottom-0 top-0 flex cursor-pointer items-center justify-center overflow-hidden border-r border-background/50 px-1.5 transition-colors focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${
                               isAvailable
                                 ? "border-emerald-600/30 bg-emerald-500/25 text-emerald-900 hover:bg-emerald-500/35 dark:bg-emerald-950/70 dark:text-emerald-300 dark:hover:bg-emerald-900/80"
                                 : "border-rose-600/40 bg-rose-500/30 text-rose-950 hover:bg-rose-500/40 dark:bg-rose-950/80 dark:text-rose-200 dark:hover:bg-rose-900/90"
                             } ${isPast ? "opacity-45" : ""}`}
-                            style={{ left: `${leftPx}px`, width: `${widthPx}px` }}
+                            style={{ left: `${leftPercent}%`, width: `${widthPercent}%` }}
                           >
-                            {!isAvailable && widthPx >= 30 && (
+                            {!isAvailable && displayLabel && widthPx >= 36 && (
                               <span className="truncate text-[10.5px] font-semibold leading-none text-foreground/90">
-                                {eventLabel}
+                                {displayLabel}
                               </span>
                             )}
                           </button>
@@ -258,7 +287,7 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
                               </span>
                             </div>
 
-                            {!isAvailable && details?.title && (
+                            {!isAvailable && details?.title && details.title !== eventLabel && (
                               <p className="text-xs font-medium leading-tight text-popover-foreground">
                                 {details.title}
                               </p>
@@ -279,10 +308,10 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
                 )}
               </TooltipProvider>
 
-              {currentTimePositionPx !== null && (
+              {currentTimePercent !== null && (
                 <div
                   className="pointer-events-none absolute bottom-0 top-0 z-20 flex -translate-x-1/2 flex-col items-center"
-                  style={{ left: `${currentTimePositionPx}px` }}
+                  style={{ left: `${currentTimePercent}%` }}
                 >
                   <div className="-mt-0.5 h-1.5 w-1.5 rounded-full bg-red-500" />
                   <div className="h-full w-[1.5px] bg-red-500 shadow-xs" />

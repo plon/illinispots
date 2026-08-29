@@ -15,7 +15,7 @@ import {
   Calendar,
   ChevronDown,
   ChevronUp,
-  BookOpen,
+  ExternalLink,
   Image as ImageIcon,
   Clock,
 } from "lucide-react";
@@ -181,8 +181,8 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
                       })
                     }
                   >
-                    <BookOpen className="w-3.5 h-3.5" />
                     Reserve
+                    <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </Button>
               )}
@@ -193,11 +193,10 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 w-8 p-0"
-                      title="View Room Photo"
+                      className="h-8 text-xs font-medium gap-1.5 hover:bg-secondary"
                     >
                       <ImageIcon className="w-3.5 h-3.5" />
-                      <span className="sr-only">View room photo</span>
+                      Photo
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="p-5">
