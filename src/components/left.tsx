@@ -50,10 +50,10 @@ import {
     formatTimeForDisplay,
     getCampusDateTimeParts,
 } from "@/utils/time";
-import {
-    parseNaturalLanguageSearch,
-    type NaturalLanguageSearchResult,
-} from "@/utils/naturalLanguageSearch";
+import type { NaturalLanguageSearchResult } from "@/utils/naturalLanguageSearch";
+
+type NaturalLanguageParser =
+    typeof import("@/utils/naturalLanguageSearch")["parseNaturalLanguageSearch"];
 
 interface LeftSidebarProps {
     facilityData: FacilityStatus | null;
@@ -173,6 +173,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const accordionRefs = useRef<AccordionRefs>({});
     const scrollAreaRef = useRef<HTMLDivElement | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [naturalLanguageParser, setNaturalLanguageParser] =
+        useState<NaturalLanguageParser | null>(null);
     const { favorites, toggleFavorite } = useFavorites();
     const {
         selectedDateTime,
@@ -194,11 +196,27 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
     const hasActiveFilters = !!minDuration || !!freeUntil;
     const isSearching = searchTerm.trim().length > 0;
-    const naturalSearch = useMemo(
-        () => parseNaturalLanguageSearch(searchTerm),
-        [searchTerm],
-    );
+    const naturalSearch = useMemo<NaturalLanguageSearchResult>(() => {
+        if (naturalLanguageParser) {
+            return naturalLanguageParser(searchTerm);
+        }
+
+        return {
+            locationQuery: searchTerm.trim(),
+            temporalText: null,
+            dateTime: null,
+            error: null,
+        };
+    }, [naturalLanguageParser, searchTerm]);
     const hasTemporalSearch = naturalSearch.temporalText !== null;
+
+    const loadNaturalLanguageParser = useCallback(() => {
+        void import("@/utils/naturalLanguageSearch").then(
+            ({ parseNaturalLanguageSearch }) => {
+                setNaturalLanguageParser(() => parseNaturalLanguageSearch);
+            },
+        );
+    }, []);
 
     const applyNaturalSearch = useCallback(() => {
         if (naturalSearch.error || !naturalSearch.dateTime) return;
@@ -372,6 +390,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                             <Input
                                 type="text"
                                 value={searchTerm}
+                                onFocus={loadNaturalLanguageParser}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="Try CIF tmrw 2pm"
                                 className={`pl-8 ${searchTerm ? "pr-8" : ""} h-9 md:h-9 rounded-full text-sm`}
