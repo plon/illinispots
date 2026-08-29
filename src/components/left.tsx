@@ -8,7 +8,7 @@ import React, {
     memo,
     useState,
 } from "react";
-import { usePostHog } from "@posthog/react";
+import { usePostHog } from "@/client/analytics";
 import { getUpdatedAccordionItems } from "@/utils/accordion";
 import { Accordion } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";

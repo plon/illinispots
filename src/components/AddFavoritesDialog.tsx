@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { usePostHog } from '@posthog/react';
+import { usePostHog } from '@/client/analytics';
 import {
     Dialog,
     DialogContent,

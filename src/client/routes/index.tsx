@@ -8,7 +8,7 @@ import React, {
   Suspense,
 } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { usePostHog } from "@posthog/react";
+import { usePostHog } from "@/client/analytics";
 import { getUpdatedAccordionItems } from "@/utils/accordion";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {

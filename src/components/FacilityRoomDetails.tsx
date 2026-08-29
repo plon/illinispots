@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { usePostHog } from "@posthog/react";
+import { usePostHog } from "@/client/analytics";
 import {
   FacilityRoomProps,
   TimeBlockProps,

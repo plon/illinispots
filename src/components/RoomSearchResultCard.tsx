@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { usePostHog } from "@posthog/react";
+import { usePostHog } from "@/client/analytics";
 import { SearchResultRoom } from "@/utils/searchUtils";
 import { AcademicRoom, FacilityType, LibraryRoom, RoomStatus } from "@/types";
 import { RoomBadge } from "@/components/RoomBadge";

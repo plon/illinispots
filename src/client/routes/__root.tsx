@@ -1,11 +1,9 @@
 import { useEffect } from "react";
-import { PostHogProvider } from "@posthog/react";
 import {
   Outlet,
   createRootRoute,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { getClientConfig } from "@/client/config";
 import { Sentry } from "@/client/observability";
 
 function RootError({ error, reset }: ErrorComponentProps) {
@@ -33,24 +31,7 @@ function RootError({ error, reset }: ErrorComponentProps) {
 }
 
 function RootComponent() {
-  const config = getClientConfig();
-
-  if (!config.posthogProjectToken || !config.posthogHost) {
-    return <Outlet />;
-  }
-
-  return (
-    <PostHogProvider
-      apiKey={config.posthogProjectToken}
-      options={{
-        api_host: config.posthogHost,
-        defaults: "2026-01-30",
-        debug: import.meta.env.DEV,
-      }}
-    >
-      <Outlet />
-    </PostHogProvider>
-  );
+  return <Outlet />;
 }
 
 export const Route = createRootRoute({

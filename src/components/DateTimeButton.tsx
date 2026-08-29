@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { usePostHog } from "@posthog/react";
+import { usePostHog } from "@/client/analytics";
 import { Button } from "@/components/ui/button";
 import { CalendarClock } from "lucide-react";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
