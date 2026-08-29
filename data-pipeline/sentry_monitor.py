@@ -55,7 +55,7 @@ def start_monitor(args: argparse.Namespace) -> None:
                 status=MonitorStatus.IN_PROGRESS,
                 monitor_config={
                     "schedule": {"type": "crontab", "value": args.schedule},
-                    "timezone": "UTC",
+                    "timezone": args.timezone,
                     "checkin_margin": args.checkin_margin,
                     "max_runtime": args.max_runtime,
                 },
@@ -196,6 +196,7 @@ def parse_args() -> argparse.Namespace:
     start_parser = subparsers.add_parser("start")
     start_parser.add_argument("--monitor-slug", required=True)
     start_parser.add_argument("--schedule", required=True)
+    start_parser.add_argument("--timezone", default="UTC")
     start_parser.add_argument("--checkin-margin", type=int, required=True)
     start_parser.add_argument("--max-runtime", type=int, required=True)
     start_parser.set_defaults(handler=start_monitor)
