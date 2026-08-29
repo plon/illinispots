@@ -270,7 +270,7 @@ const IlliniSpotsPage: React.FC = () => {
 
   const showFetchingOverlay = isAcademicFetching && !isAcademicLoading;
   const mainContentClasses = `h-screen flex ${
-    showMap ? "md:flex-row" : ""
+    showMap ? "md:flex-row" : "items-center bg-muted/20"
   } flex-col`;
 
   return (
@@ -289,8 +289,10 @@ const IlliniSpotsPage: React.FC = () => {
 
       <div
         className={`${
-          showMap ? "md:w-[37%] h-[60vh] md:h-screen" : "h-screen"
-        } w-full flex-1 overflow-hidden order-2 md:order-1 relative`}
+          showMap
+            ? "md:w-[37%] h-[60vh] md:h-screen order-2 md:order-1"
+            : "h-screen max-w-3xl md:border-x border-border shadow-xs"
+        } w-full flex-1 overflow-hidden relative`}
       >
         <LeftSidebar
           facilityData={facilityData || null}
