@@ -9,14 +9,17 @@ import React, {
 } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { usePostHog } from "@posthog/react";
-import { getUpdatedAccordionItems } from "@/utils/accordion";
+import {
+  getFacilityAccordionId,
+  getUpdatedAccordionItems,
+} from "@/utils/accordion";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   getCampusDateTimeParts,
   type CampusDateTime,
 } from "@/utils/time";
 import LeftSidebar from "@/components/left";
-import { FacilityStatus, FacilityType } from "@/types";
+import { AccordionRevealRequest, FacilityStatus, FacilityType } from "@/types";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
 import {
   recordInitialLoadMilestone,
@@ -74,6 +77,8 @@ const IlliniSpotsPage: React.FC = () => {
     null,
   );
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [accordionRevealRequest, setAccordionRevealRequest] =
+    useState<AccordionRevealRequest | null>(null);
   const recordedLoadMilestones = useRef(new Set<InitialLoadMilestone>());
 
   const recordLoadMilestone = useCallback(
@@ -252,20 +257,24 @@ const IlliniSpotsPage: React.FC = () => {
         selection_source: "map",
       });
 
-      const itemId = `${
-        facilityType === FacilityType.LIBRARY ? "library" : "building"
-      }-${id}`;
+      const group =
+        facilityType === FacilityType.LIBRARY ? "library" : "building";
+      const itemId = getFacilityAccordionId(group, id);
+      const waitForExpansion = !expandedItems.includes(itemId);
 
-      // Use the shared utility function to update the expanded items
-      setExpandedItems((prevItems) => {
-        if (prevItems.includes(itemId)) {
-          return prevItems;
-        }
+      if (waitForExpansion) {
+        setExpandedItems((prevItems) =>
+          getUpdatedAccordionItems(itemId, prevItems),
+        );
+      }
 
-        return getUpdatedAccordionItems(itemId, prevItems);
-      });
+      setAccordionRevealRequest((previousRequest) => ({
+        accordionId: itemId,
+        requestId: (previousRequest?.requestId ?? 0) + 1,
+        waitForExpansion,
+      }));
     },
-    [facilityData, posthog],
+    [expandedItems, facilityData, posthog],
   );
 
   const showFetchingOverlay = isAcademicFetching && !isAcademicLoading;
@@ -298,6 +307,7 @@ const IlliniSpotsPage: React.FC = () => {
           facilityData={facilityData || null}
           expandedItems={expandedItems}
           setExpandedItems={setExpandedItems}
+          revealRequest={accordionRevealRequest}
           showMap={showMap}
           setShowMap={setShowMap}
           isFetching={showFetchingOverlay}

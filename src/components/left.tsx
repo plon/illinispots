@@ -9,7 +9,10 @@ import React, {
     useState,
 } from "react";
 import { usePostHog } from "@posthog/react";
-import { getUpdatedAccordionItems } from "@/utils/accordion";
+import {
+    getFacilityAccordionId,
+    getUpdatedAccordionItems,
+} from "@/utils/accordion";
 import { Accordion } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -21,7 +24,13 @@ import {
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { TooltipProvider } from "@/components/ui/HybridTooltip";
-import { Facility, FacilityStatus, FacilityType, AccordionRefs } from "@/types";
+import {
+    Facility,
+    FacilityStatus,
+    FacilityType,
+    AccordionRefs,
+    AccordionRevealRequest,
+} from "@/types";
 import {
     Github,
     Map as MapIcon,
@@ -66,6 +75,7 @@ interface LeftSidebarProps {
     isAcademicLoading?: boolean;
     error?: string | null;
     onRetry?: () => void;
+    revealRequest?: AccordionRevealRequest | null;
 }
 
 interface ActiveTimeBannerProps {
@@ -168,6 +178,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     isAcademicLoading = false,
     error = null,
     onRetry,
+    revealRequest,
 }) => {
     const posthog = usePostHog();
     const accordionRefs = useRef<AccordionRefs>({});
@@ -250,36 +261,88 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
     const searchFacilityData = facilityDataMatchesSelection ? facilityData : null;
 
-    const scrollToAccordion = useCallback((accordionId: string) => {
-        const element = accordionRefs.current[accordionId];
-        if (element) {
-            setTimeout(() => {
-                element.scrollIntoView({
-                    behavior: "smooth",
-                    block: "nearest",
+    const revealCleanupRef = useRef<(() => void) | null>(null);
+
+    const scrollToAccordion = useCallback(
+        (accordionId: string, waitForExpansion: boolean) => {
+            revealCleanupRef.current?.();
+
+            const element = accordionRefs.current[accordionId];
+            const viewport = scrollAreaRef.current?.querySelector<HTMLDivElement>(
+                "[data-radix-scroll-area-viewport]",
+            );
+            if (!element || !viewport) return;
+
+            const prefersReducedMotion = window.matchMedia(
+                "(prefers-reduced-motion: reduce)",
+            ).matches;
+            let frameId: number | null = null;
+            let fallbackId: number | null = null;
+            let handleAnimationEnd: (() => void) | null = null;
+
+            const reveal = () => {
+                const viewportRect = viewport.getBoundingClientRect();
+                const elementRect = element.getBoundingClientRect();
+                const top = Math.max(
+                    0,
+                    viewport.scrollTop + elementRect.top - viewportRect.top - 8,
+                );
+
+                viewport.scrollTo({
+                    top,
+                    behavior: prefersReducedMotion ? "auto" : "smooth",
                 });
-            }, 100);
-        }
-    }, []);
+            };
+
+            const cleanup = () => {
+                if (frameId !== null) cancelAnimationFrame(frameId);
+                if (fallbackId !== null) window.clearTimeout(fallbackId);
+                if (handleAnimationEnd) {
+                    element.removeEventListener("animationend", handleAnimationEnd);
+                }
+                if (revealCleanupRef.current === cleanup) {
+                    revealCleanupRef.current = null;
+                }
+            };
+
+            revealCleanupRef.current = cleanup;
+            frameId = requestAnimationFrame(() => {
+                frameId = null;
+                if (!waitForExpansion || prefersReducedMotion) {
+                    cleanup();
+                    reveal();
+                    return;
+                }
+
+                handleAnimationEnd = () => {
+                    cleanup();
+                    reveal();
+                };
+                element.addEventListener("animationend", handleAnimationEnd);
+                fallbackId = window.setTimeout(handleAnimationEnd, 250);
+            });
+        },
+        [],
+    );
+
+    useEffect(() => {
+        if (!revealRequest) return;
+        scrollToAccordion(
+            revealRequest.accordionId,
+            revealRequest.waitForExpansion,
+        );
+    }, [revealRequest, scrollToAccordion]);
+
+    useEffect(() => () => revealCleanupRef.current?.(), []);
 
     const toggleItem = useCallback(
         (value: string) => {
-            setExpandedItems((prevItems) => getUpdatedAccordionItems(value, prevItems));
+            setExpandedItems((prevItems) =>
+                getUpdatedAccordionItems(value, prevItems),
+            );
         },
         [setExpandedItems],
     );
-
-    const prevExpandedItemsRef = useRef<string[]>([]);
-
-    useEffect(() => {
-        const newItems = expandedItems.filter(
-            (item) => !prevExpandedItemsRef.current.includes(item),
-        );
-        if (newItems.length === 1) {
-            scrollToAccordion(newItems[0]);
-        }
-        prevExpandedItemsRef.current = expandedItems;
-    }, [expandedItems, scrollToAccordion]);
 
     const filterFacilitiesByAvailability = useCallback(
         (facilities: Facility[]) => {
@@ -326,16 +389,17 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 selection_source: "favorites",
             });
 
-            // Find the facility and expand its accordion
-            const prefix = type === "library" ? "library" : "building";
-            const accordionId = `${prefix}-${facilityId}`;
+            const group = type === "library" ? "library" : "building";
+            const accordionId = getFacilityAccordionId(group, facilityId);
+            const waitForExpansion = !expandedItems.includes(accordionId);
 
-            // Add to expanded items if not already expanded
-            if (!expandedItems.includes(accordionId)) {
-                setExpandedItems((prev) => [...prev, accordionId]);
+            if (waitForExpansion) {
+                setExpandedItems((prevItems) =>
+                    getUpdatedAccordionItems(accordionId, prevItems),
+                );
             }
 
-            scrollToAccordion(accordionId);
+            scrollToAccordion(accordionId, waitForExpansion);
         },
         [expandedItems, posthog, setExpandedItems, scrollToAccordion],
     );

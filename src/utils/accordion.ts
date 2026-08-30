@@ -1,36 +1,58 @@
-/**
- * Utility functions for handling accordion state
- */
+export type FacilityAccordionGroup = "library" | "building";
 
-/**
- * Updates the expanded items array when toggling an accordion item
- * Ensures only one top-level facility accordion of each type (library/academic) can be open at a time
- * 
- * @param value The accordion item ID being toggled
- * @param prevItems The current array of expanded accordion items
- * @returns The updated array of expanded accordion items
- */
-export const getUpdatedAccordionItems = (value: string, prevItems: string[]): string[] => {
-  // If the item is already in the list, just remove it (close the accordion)
+const DELIMITER = ":";
+const FACILITY_PREFIX = "facility";
+
+const encodeSegment = (value: string) => encodeURIComponent(value);
+
+export const getFacilityAccordionId = (
+  group: FacilityAccordionGroup,
+  facilityId: string,
+): string =>
+  [FACILITY_PREFIX, group, encodeSegment(facilityId)].join(DELIMITER);
+
+export const getAccordionChildId = (
+  facilityAccordionId: string,
+  ...segments: string[]
+): string =>
+  [facilityAccordionId, ...segments.map(encodeSegment)].join(DELIMITER);
+
+const getFacilityRoot = (value: string): string | null => {
+  const segments = value.split(DELIMITER);
+  if (
+    segments.length < 3 ||
+    segments[0] !== FACILITY_PREFIX ||
+    (segments[1] !== "library" && segments[1] !== "building")
+  ) {
+    return null;
+  }
+
+  return segments.slice(0, 3).join(DELIMITER);
+};
+
+const isFacilityAccordion = (value: string): boolean =>
+  getFacilityRoot(value) === value;
+
+export const getUpdatedAccordionItems = (
+  value: string,
+  prevItems: string[],
+): string[] => {
   if (prevItems.includes(value)) {
     return prevItems.filter((item) => item !== value);
   }
 
-  // Handle only top-level facility accordions (ensure only one of each type is open)
-  // Match exactly library-{id} or building-{id} pattern (no additional segments)
-  const libraryPattern = /^library-[^-]+$/;
-  const buildingPattern = /^building-[^-]+$/;
-
-  if (libraryPattern.test(value)) {
-    // For library facilities, close any other open library facility
-    const filteredItems = prevItems.filter(item => !libraryPattern.test(item));
-    return [...filteredItems, value];
-  } else if (buildingPattern.test(value)) {
-    // For academic buildings, close any other open academic building
-    const filteredItems = prevItems.filter(item => !buildingPattern.test(item));
-    return [...filteredItems, value];
+  if (!isFacilityAccordion(value)) {
+    return [...prevItems, value];
   }
 
-  // For all other items (like room accordions or available/occupied sections), just add them
-  return [...prevItems, value];
+  const nextRoot = getFacilityRoot(value);
+  const nextGroup = value.split(DELIMITER)[1];
+  const retainedItems = prevItems.filter((item) => {
+    const itemRoot = getFacilityRoot(item);
+    if (!itemRoot || itemRoot === nextRoot) return true;
+
+    return itemRoot.split(DELIMITER)[1] !== nextGroup;
+  });
+
+  return [...retainedItems, value];
 };

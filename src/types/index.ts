@@ -226,6 +226,12 @@ export interface AccordionRefs {
   [key: string]: HTMLDivElement | null;
 }
 
+export interface AccordionRevealRequest {
+  accordionId: string;
+  requestId: number;
+  waitForExpansion: boolean;
+}
+
 export interface RoomBadgeProps {
   status: RoomStatus;
   availableAt?: string;
