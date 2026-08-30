@@ -229,6 +229,13 @@ export interface OpenFacilityIds {
   building: string | null;
 }
 
+export type FacilitySelectionHandler = (
+  facilityId: string,
+  facilityType: FacilityType,
+  source: "map" | "favorites",
+  facilityName?: string,
+) => void;
+
 export interface FacilityRevealRequest {
   facilityId: string;
   group: FacilityAccordionGroup;

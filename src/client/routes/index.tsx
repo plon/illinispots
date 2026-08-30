@@ -17,6 +17,7 @@ import {
 import LeftSidebar from "@/components/left";
 import {
   FacilityRevealRequest,
+  FacilitySelectionHandler,
   FacilityStatus,
   FacilityType,
   OpenFacilityIds,
@@ -251,14 +252,15 @@ const IlliniSpotsPage: React.FC = () => {
 
   const showMap = showMapPreference === true;
 
-  const handleMarkerClick = useCallback(
-    (id: string, facilityType: FacilityType) => {
-      const facilityName = facilityData?.facilities[id]?.name;
+  const handleFacilitySelection = useCallback<FacilitySelectionHandler>(
+    (id, facilityType, source, suppliedFacilityName) => {
+      const facilityName =
+        suppliedFacilityName ?? facilityData?.facilities[id]?.name;
       posthog.capture("facility_selected", {
         facility_id: id,
         facility_name: facilityName,
         facility_type: facilityType,
-        selection_source: "map",
+        selection_source: source,
       });
 
       const group =
@@ -279,6 +281,12 @@ const IlliniSpotsPage: React.FC = () => {
       });
     },
     [openFacilityIds, facilityData, posthog],
+  );
+
+  const handleMarkerClick = useCallback(
+    (id: string, facilityType: FacilityType) =>
+      handleFacilitySelection(id, facilityType, "map"),
+    [handleFacilitySelection],
   );
 
   const showFetchingOverlay = isAcademicFetching && !isAcademicLoading;
@@ -312,6 +320,7 @@ const IlliniSpotsPage: React.FC = () => {
           openFacilityIds={openFacilityIds}
           setOpenFacilityIds={setOpenFacilityIds}
           revealRequest={facilityRevealRequest}
+          onFacilitySelect={handleFacilitySelection}
           showMap={showMap}
           setShowMap={setShowMap}
           isFetching={showFetchingOverlay}

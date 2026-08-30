@@ -20,12 +20,13 @@ import {
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { TooltipProvider } from "@/components/ui/HybridTooltip";
+import { useFacilityReveal } from "@/hooks/useFacilityReveal";
 import {
     Facility,
     FacilityStatus,
     FacilityType,
     FacilityRevealRequest,
-    FacilityAccordionGroup,
+    FacilitySelectionHandler,
     OpenFacilityIds,
 } from "@/types";
 import {
@@ -73,6 +74,7 @@ interface LeftSidebarProps {
     error?: string | null;
     onRetry?: () => void;
     revealRequest?: FacilityRevealRequest | null;
+    onFacilitySelect: FacilitySelectionHandler;
 }
 
 interface ActiveTimeBannerProps {
@@ -176,15 +178,11 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     error = null,
     onRetry,
     revealRequest,
+    onFacilitySelect,
 }) => {
     const posthog = usePostHog();
-    const facilityRefs = useRef<Record<FacilityAccordionGroup, Map<string, HTMLDivElement>>>(
-        {
-            library: new Map(),
-            building: new Map(),
-        },
-    );
     const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+    const { registerFacility, revealFacility } = useFacilityReveal(scrollAreaRef);
     const [searchTerm, setSearchTerm] = useState("");
     const [naturalLanguageParser, setNaturalLanguageParser] =
         useState<NaturalLanguageParser | null>(null);
@@ -263,99 +261,14 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
     const searchFacilityData = facilityDataMatchesSelection ? facilityData : null;
 
-    const revealCleanupRef = useRef<(() => void) | null>(null);
-
-    const scrollToFacility = useCallback(
-        (
-            group: FacilityAccordionGroup,
-            facilityId: string,
-            waitForExpansion: boolean,
-        ) => {
-            revealCleanupRef.current?.();
-
-            const element = facilityRefs.current[group].get(facilityId);
-            const viewport = scrollAreaRef.current?.querySelector<HTMLDivElement>(
-                "[data-radix-scroll-area-viewport]",
-            );
-            if (!element || !viewport) return;
-
-            const prefersReducedMotion = window.matchMedia(
-                "(prefers-reduced-motion: reduce)",
-            ).matches;
-            let frameId: number | null = null;
-            let fallbackId: number | null = null;
-            let handleAnimationEnd: (() => void) | null = null;
-
-            const reveal = () => {
-                const viewportRect = viewport.getBoundingClientRect();
-                const elementRect = element.getBoundingClientRect();
-                const top = Math.max(
-                    0,
-                    viewport.scrollTop + elementRect.top - viewportRect.top - 8,
-                );
-
-                viewport.scrollTo({
-                    top,
-                    behavior: prefersReducedMotion ? "auto" : "smooth",
-                });
-            };
-
-            const cleanup = () => {
-                if (frameId !== null) cancelAnimationFrame(frameId);
-                if (fallbackId !== null) window.clearTimeout(fallbackId);
-                if (handleAnimationEnd) {
-                    element.removeEventListener("animationend", handleAnimationEnd);
-                }
-                if (revealCleanupRef.current === cleanup) {
-                    revealCleanupRef.current = null;
-                }
-            };
-
-            revealCleanupRef.current = cleanup;
-            frameId = requestAnimationFrame(() => {
-                frameId = null;
-                if (!waitForExpansion || prefersReducedMotion) {
-                    cleanup();
-                    reveal();
-                    return;
-                }
-
-                handleAnimationEnd = () => {
-                    cleanup();
-                    reveal();
-                };
-                element.addEventListener("animationend", handleAnimationEnd);
-                fallbackId = window.setTimeout(handleAnimationEnd, 250);
-            });
-        },
-        [],
-    );
-
     useEffect(() => {
         if (!revealRequest) return;
-        scrollToFacility(
+        revealFacility(
             revealRequest.group,
             revealRequest.facilityId,
             revealRequest.waitForExpansion,
         );
-    }, [revealRequest, scrollToFacility]);
-
-    useEffect(() => () => revealCleanupRef.current?.(), []);
-
-    const registerFacilityRef = useCallback(
-        (
-            group: FacilityAccordionGroup,
-            facilityId: string,
-            element: HTMLDivElement | null,
-        ) => {
-            if (element) {
-                facilityRefs.current[group].set(facilityId, element);
-            } else {
-                facilityRefs.current[group].delete(facilityId);
-            }
-        },
-        [],
-    );
+    }, [revealRequest, revealFacility]);
 
     const filterFacilitiesByAvailability = useCallback(
         (facilities: Facility[]) => {
@@ -395,26 +308,14 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             type: "library" | "academic",
             facilityName: string,
         ) => {
-            posthog.capture("facility_selected", {
-                facility_id: facilityId,
-                facility_name: facilityName,
-                facility_type: type,
-                selection_source: "favorites",
-            });
-
-            const group = type === "library" ? "library" : "building";
-            const waitForExpansion = openFacilityIds[group] !== facilityId;
-
-            if (waitForExpansion) {
-                setOpenFacilityIds((currentIds) => ({
-                    ...currentIds,
-                    [group]: facilityId,
-                }));
-            }
-
-            scrollToFacility(group, facilityId, waitForExpansion);
+            onFacilitySelect(
+                facilityId,
+                type === "library" ? FacilityType.LIBRARY : FacilityType.ACADEMIC,
+                "favorites",
+                facilityName,
+            );
         },
-        [openFacilityIds, posthog, setOpenFacilityIds, scrollToFacility],
+        [onFacilitySelect],
     );
 
     const matchingRoomsCount = useMemo(() => {
@@ -671,7 +572,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                             facilityType={FacilityType.LIBRARY}
                                             isExpanded={openFacilityIds.library === facility.id}
                                             itemRef={(element) =>
-                                                registerFacilityRef(
+                                                registerFacility(
                                                     "library",
                                                     facility.id,
                                                     element,
@@ -742,7 +643,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                             facilityType={FacilityType.ACADEMIC}
                                             isExpanded={openFacilityIds.building === facility.id}
                                             itemRef={(element) =>
-                                                registerFacilityRef(
+                                                registerFacility(
                                                     "building",
                                                     facility.id,
                                                     element,
