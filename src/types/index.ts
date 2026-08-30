@@ -222,13 +222,16 @@ export interface FacilityRoomProps {
   facilityId: string;
   facilityName: string;
 }
-export interface AccordionRefs {
-  [key: string]: HTMLDivElement | null;
+export type FacilityAccordionGroup = "library" | "building";
+
+export interface OpenFacilityIds {
+  library: string | null;
+  building: string | null;
 }
 
-export interface AccordionRevealRequest {
-  accordionId: string;
-  requestId: number;
+export interface FacilityRevealRequest {
+  facilityId: string;
+  group: FacilityAccordionGroup;
   waitForExpansion: boolean;
 }
 

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { usePostHog } from "@posthog/react";
 import {
   Accordion,
@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   FacilityType,
   Facility,
-  AccordionRefs,
   RoomStatus,
   AcademicRoom,
   LibraryRoom,
@@ -25,21 +24,14 @@ import {
 } from "@/components/RoomBadge";
 import FacilityRoomDetails from "@/components/FacilityRoomDetails";
 import { getLibraryHoursMessage } from "@/utils/libraryHours";
-import {
-  FacilityAccordionGroup,
-  getAccordionChildId,
-  getFacilityAccordionId,
-} from "@/utils/accordion";
 import AcademicRoomDetailLoader from "@/components/AcademicRoomDetailLoader";
 import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
 
 interface FacilityAccordionProps {
   facility: Facility;
   facilityType: FacilityType;
-  expandedItems: string[];
-  toggleItem: (itemId: string) => void;
-  accordionRefs: React.MutableRefObject<AccordionRefs>;
-  idPrefix: FacilityAccordionGroup;
+  isExpanded: boolean;
+  itemRef: (element: HTMLDivElement | null) => void;
   filterCriteria?: FilterCriteria;
 }
 
@@ -78,14 +70,11 @@ export const getRoomAvailabilityMessage = (room: LibraryRoom): React.ReactNode =
 export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
   facility,
   facilityType,
-  expandedItems,
-  toggleItem,
-  accordionRefs,
-  idPrefix,
+  isExpanded,
+  itemRef,
   filterCriteria = {},
 }) => {
   const posthog = usePostHog();
-  const facilityId = getFacilityAccordionId(idPrefix, facility.id);
 
   const filteredAvailableCount = useMemo(() => {
     return Object.values(facility.rooms).filter((room) => {
@@ -98,7 +87,7 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
   }, [facility.rooms, filterCriteria]);
 
   const handleToggle = () => {
-    const isExpanding = !expandedItems.includes(facilityId);
+    const isExpanding = !isExpanded;
     if (isExpanding) {
       posthog.capture("facility_accordion_expanded", {
         facility_id: facility.id,
@@ -107,16 +96,12 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
         selection_source: "list",
       });
     }
-    toggleItem(facilityId);
   };
 
   return (
     <AccordionItem
-      value={facilityId}
-      key={facilityId}
-      ref={(el) => {
-        accordionRefs.current[facilityId] = el;
-      }}
+      value={facility.id}
+      ref={itemRef}
     >
       <div className="sticky top-0 bg-background z-10">
         <AccordionTrigger
@@ -175,19 +160,11 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
         ) : facilityType === FacilityType.LIBRARY ? (
           <LibraryRoomsAccordion
             facility={facility}
-            expandedItems={expandedItems}
-            toggleItem={toggleItem}
-            accordionRefs={accordionRefs}
-            idPrefix={idPrefix}
             filterCriteria={filterCriteria}
           />
         ) : (
           <AcademicRoomsAccordion
             facility={facility}
-            expandedItems={expandedItems}
-            toggleItem={toggleItem}
-            accordionRefs={accordionRefs}
-            idPrefix={idPrefix}
             filterCriteria={filterCriteria}
           />
         )}
@@ -198,46 +175,40 @@ export const FacilityAccordion: React.FC<FacilityAccordionProps> = ({
 
 interface LibraryRoomsAccordionProps {
   facility: Facility;
-  expandedItems: string[];
-  toggleItem: (itemId: string) => void;
-  accordionRefs: React.MutableRefObject<AccordionRefs>;
-  idPrefix: FacilityAccordionGroup;
   filterCriteria?: FilterCriteria;
 }
 
 const LibraryRoomsAccordion: React.FC<LibraryRoomsAccordionProps> = ({
   facility,
-  expandedItems,
-  toggleItem,
-  accordionRefs,
-  idPrefix,
   filterCriteria = {},
 }) => {
   const posthog = usePostHog();
-  const facilityId = getFacilityAccordionId(idPrefix, facility.id);
+  const [expandedRooms, setExpandedRooms] = useState<string[]>([]);
 
   return (
-    <Accordion type="multiple" value={expandedItems} className="w-full">
+    <Accordion
+      type="multiple"
+      value={expandedRooms}
+      onValueChange={setExpandedRooms}
+      className="w-full"
+    >
       {Object.entries(facility.rooms)
         .sort(([nameA], [nameB]) => nameA.localeCompare(nameB)) // Sort library rooms by name
         .filter(([, room]) => isRoomAvailable(room, filterCriteria))
         .map(([roomName, room]) => {
           // We know these are library rooms since facility.type is LIBRARY
           const libraryRoom = room as LibraryRoom;
-          const roomId = getAccordionChildId(facilityId, "room", roomName);
+          const roomId = roomName;
           return (
             <AccordionItem
               value={roomId}
               key={roomId}
-              ref={(el) => {
-                accordionRefs.current[roomId] = el; // Assign ref for potential scrolling
-              }}
             >
               {/* Sticky header for room name/status */}
               <div className="sticky top-0 bg-background z-5">
                 <AccordionTrigger
                   onClick={() => {
-                    const isExpanding = !expandedItems.includes(roomId);
+                    const isExpanding = !expandedRooms.includes(roomId);
                     if (isExpanding) {
                       posthog.capture("room_schedule_viewed", {
                         facility_id: facility.id,
@@ -247,7 +218,6 @@ const LibraryRoomsAccordion: React.FC<LibraryRoomsAccordionProps> = ({
                         selection_source: "accordion",
                       });
                     }
-                    toggleItem(roomId);
                   }}
                   className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm"
                   aria-label={`${roomName} in ${facility.name}`}
@@ -284,10 +254,6 @@ const LibraryRoomsAccordion: React.FC<LibraryRoomsAccordionProps> = ({
 
 interface AcademicRoomsAccordionProps {
   facility: Facility;
-  expandedItems: string[];
-  toggleItem: (itemId: string) => void;
-  accordionRefs: React.MutableRefObject<AccordionRefs>;
-  idPrefix: FacilityAccordionGroup;
   filterCriteria?: FilterCriteria;
 }
 
@@ -352,16 +318,10 @@ const RoomOccupancyDetails: React.FC<{ room: AcademicRoom }> = ({ room }) => (
 
 const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
   facility,
-  expandedItems,
-  toggleItem,
-  accordionRefs, // Refs might need adjustment for deep nesting if scrolling to specific room is needed
-  idPrefix,
   filterCriteria = {},
 }) => {
   const posthog = usePostHog();
-  const facilityId = getFacilityAccordionId(idPrefix, facility.id);
-  const availableId = getAccordionChildId(facilityId, "group", "available");
-  const occupiedId = getAccordionChildId(facilityId, "group", "occupied");
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
   // Filter available and occupied rooms
   const availableRooms = useMemo(
@@ -411,38 +371,25 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
         {/* Indent room list */}
         {rooms.map(([roomNumber, room]) => {
           const academicRoom = room as AcademicRoom;
-          const roomAccordionId = getAccordionChildId(
-            facilityId,
-            "group",
-            statusType,
-            "room",
-            roomNumber,
-          );
-          const isRoomExpanded = expandedItems.includes(roomAccordionId);
-
           return (
-            // Nest Accordion for each room
             <Accordion
-              key={roomAccordionId}
-              type="multiple"
-              value={expandedItems}
+              key={roomNumber}
+              type="single"
+              collapsible
+              onValueChange={(value) => {
+                if (!value) return;
+                posthog.capture("room_schedule_viewed", {
+                  facility_id: facility.id,
+                  facility_name: facility.name,
+                  facility_type: FacilityType.ACADEMIC,
+                  room_number: roomNumber,
+                  selection_source: "accordion",
+                });
+              }}
               className="w-full border-b last:border-b-0"
             >
-              <AccordionItem value={roomAccordionId} className="border-b-0">
+              <AccordionItem value="details" className="border-b-0">
                 <AccordionTrigger
-                  onClick={() => {
-                    const isExpanding = !expandedItems.includes(roomAccordionId);
-                    if (isExpanding) {
-                      posthog.capture("room_schedule_viewed", {
-                        facility_id: facility.id,
-                        facility_name: facility.name,
-                        facility_type: FacilityType.ACADEMIC,
-                        room_number: roomNumber,
-                        selection_source: "accordion",
-                      });
-                    }
-                    toggleItem(roomAccordionId);
-                  }}
                   className="py-2 px-2 text-sm hover:no-underline hover:bg-muted/20 rounded-md group [&[data-state=open]>svg]:text-primary"
                   aria-label={`Room ${roomNumber} in ${facility.name}`}
                 >
@@ -464,16 +411,10 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pt-0 pb-1 pl-1 pr-4 min-w-0 max-w-full overflow-hidden">
-                  {/* Conditionally render loader only when this specific room is expanded */}
-                  {isRoomExpanded ? (
-                    <AcademicRoomDetailLoader
-                      buildingId={facility.name} // Use facility name as ID for API call
-                      roomNumber={roomNumber}
-                    />
-                  ) : (
-                    // Placeholder so content area doesn't collapse instantly
-                    <div className="h-10"></div>
-                  )}
+                  <AcademicRoomDetailLoader
+                    buildingId={facility.name}
+                    roomNumber={roomNumber}
+                  />
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
@@ -485,17 +426,17 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
 
   // Main return uses the Available/Occupied groups
   return (
-    <Accordion type="multiple" value={expandedItems} className="w-full">
+    <Accordion
+      type="multiple"
+      value={expandedGroups}
+      onValueChange={setExpandedGroups}
+      className="w-full"
+    >
       {/* Available Rooms Section */}
-      <AccordionItem
-        value={availableId}
-        ref={(el) => {
-          accordionRefs.current[availableId] = el;
-        }}
-      >
+      <AccordionItem value="available">
         <AccordionTrigger
           onClick={() => {
-            const isExpanding = !expandedItems.includes(availableId);
+            const isExpanding = !expandedGroups.includes("available");
             if (isExpanding) {
               posthog.capture("facility_room_group_expanded", {
                 facility_id: facility.id,
@@ -505,7 +446,6 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
                 room_count: availableRooms.length,
               });
             }
-            toggleItem(availableId);
           }}
           className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm font-normal"
           aria-label={`Available rooms in ${facility.name} (${availableRooms.length})`}
@@ -524,15 +464,10 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
       </AccordionItem>
 
       {/* Occupied Rooms Section */}
-      <AccordionItem
-        value={occupiedId}
-        ref={(el) => {
-          accordionRefs.current[occupiedId] = el;
-        }}
-      >
+      <AccordionItem value="occupied">
         <AccordionTrigger
           onClick={() => {
-            const isExpanding = !expandedItems.includes(occupiedId);
+            const isExpanding = !expandedGroups.includes("occupied");
             if (isExpanding) {
               posthog.capture("facility_room_group_expanded", {
                 facility_id: facility.id,
@@ -542,7 +477,6 @@ const AcademicRoomsAccordion: React.FC<AcademicRoomsAccordionProps> = ({
                 room_count: occupiedRooms.length,
               });
             }
-            toggleItem(occupiedId);
           }}
           className="px-4 py-2 hover:no-underline hover:bg-muted/50 text-sm font-normal"
           aria-label={`Occupied rooms in ${facility.name} (${occupiedRooms.length})`}

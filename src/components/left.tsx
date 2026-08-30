@@ -9,10 +9,6 @@ import React, {
     useState,
 } from "react";
 import { usePostHog } from "@posthog/react";
-import {
-    getFacilityAccordionId,
-    getUpdatedAccordionItems,
-} from "@/utils/accordion";
 import { Accordion } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -28,8 +24,9 @@ import {
     Facility,
     FacilityStatus,
     FacilityType,
-    AccordionRefs,
-    AccordionRevealRequest,
+    FacilityRevealRequest,
+    FacilityAccordionGroup,
+    OpenFacilityIds,
 } from "@/types";
 import {
     Github,
@@ -68,14 +65,14 @@ interface LeftSidebarProps {
     facilityData: FacilityStatus | null;
     showMap: boolean;
     setShowMap: Dispatch<SetStateAction<boolean>>;
-    expandedItems: string[];
-    setExpandedItems: Dispatch<SetStateAction<string[]>>;
+    openFacilityIds: OpenFacilityIds;
+    setOpenFacilityIds: Dispatch<SetStateAction<OpenFacilityIds>>;
     isFetching: boolean;
     isLibraryFetching: boolean;
     isAcademicLoading?: boolean;
     error?: string | null;
     onRetry?: () => void;
-    revealRequest?: AccordionRevealRequest | null;
+    revealRequest?: FacilityRevealRequest | null;
 }
 
 interface ActiveTimeBannerProps {
@@ -171,8 +168,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     facilityData,
     showMap,
     setShowMap,
-    expandedItems,
-    setExpandedItems,
+    openFacilityIds,
+    setOpenFacilityIds,
     isFetching,
     isLibraryFetching,
     isAcademicLoading = false,
@@ -181,7 +178,12 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     revealRequest,
 }) => {
     const posthog = usePostHog();
-    const accordionRefs = useRef<AccordionRefs>({});
+    const facilityRefs = useRef<Record<FacilityAccordionGroup, Map<string, HTMLDivElement>>>(
+        {
+            library: new Map(),
+            building: new Map(),
+        },
+    );
     const scrollAreaRef = useRef<HTMLDivElement | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [naturalLanguageParser, setNaturalLanguageParser] =
@@ -263,11 +265,15 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
     const revealCleanupRef = useRef<(() => void) | null>(null);
 
-    const scrollToAccordion = useCallback(
-        (accordionId: string, waitForExpansion: boolean) => {
+    const scrollToFacility = useCallback(
+        (
+            group: FacilityAccordionGroup,
+            facilityId: string,
+            waitForExpansion: boolean,
+        ) => {
             revealCleanupRef.current?.();
 
-            const element = accordionRefs.current[accordionId];
+            const element = facilityRefs.current[group].get(facilityId);
             const viewport = scrollAreaRef.current?.querySelector<HTMLDivElement>(
                 "[data-radix-scroll-area-viewport]",
             );
@@ -327,21 +333,28 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
     useEffect(() => {
         if (!revealRequest) return;
-        scrollToAccordion(
-            revealRequest.accordionId,
+        scrollToFacility(
+            revealRequest.group,
+            revealRequest.facilityId,
             revealRequest.waitForExpansion,
         );
-    }, [revealRequest, scrollToAccordion]);
+    }, [revealRequest, scrollToFacility]);
 
     useEffect(() => () => revealCleanupRef.current?.(), []);
 
-    const toggleItem = useCallback(
-        (value: string) => {
-            setExpandedItems((prevItems) =>
-                getUpdatedAccordionItems(value, prevItems),
-            );
+    const registerFacilityRef = useCallback(
+        (
+            group: FacilityAccordionGroup,
+            facilityId: string,
+            element: HTMLDivElement | null,
+        ) => {
+            if (element) {
+                facilityRefs.current[group].set(facilityId, element);
+            } else {
+                facilityRefs.current[group].delete(facilityId);
+            }
         },
-        [setExpandedItems],
+        [],
     );
 
     const filterFacilitiesByAvailability = useCallback(
@@ -390,18 +403,18 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             });
 
             const group = type === "library" ? "library" : "building";
-            const accordionId = getFacilityAccordionId(group, facilityId);
-            const waitForExpansion = !expandedItems.includes(accordionId);
+            const waitForExpansion = openFacilityIds[group] !== facilityId;
 
             if (waitForExpansion) {
-                setExpandedItems((prevItems) =>
-                    getUpdatedAccordionItems(accordionId, prevItems),
-                );
+                setOpenFacilityIds((currentIds) => ({
+                    ...currentIds,
+                    [group]: facilityId,
+                }));
             }
 
-            scrollToAccordion(accordionId, waitForExpansion);
+            scrollToFacility(group, facilityId, waitForExpansion);
         },
-        [expandedItems, posthog, setExpandedItems, scrollToAccordion],
+        [openFacilityIds, posthog, setOpenFacilityIds, scrollToFacility],
     );
 
     const matchingRoomsCount = useMemo(() => {
@@ -639,16 +652,31 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                 <h2 className="text-sm font-normal text-muted-foreground pl-6">
                                     Library
                                 </h2>
-                                <Accordion type="multiple" value={expandedItems} className="w-full">
+                                <Accordion
+                                    type="single"
+                                    collapsible
+                                    value={openFacilityIds.library ?? ""}
+                                    onValueChange={(facilityId) =>
+                                        setOpenFacilityIds((currentIds) => ({
+                                            ...currentIds,
+                                            library: facilityId || null,
+                                        }))
+                                    }
+                                    className="w-full"
+                                >
                                     {libraryFacilities.map((facility) => (
                                         <FacilityAccordion
-                                            key={`library-${facility.id}`}
+                                            key={facility.id}
                                             facility={facility}
                                             facilityType={FacilityType.LIBRARY}
-                                            expandedItems={expandedItems}
-                                            toggleItem={toggleItem}
-                                            accordionRefs={accordionRefs}
-                                            idPrefix="library"
+                                            isExpanded={openFacilityIds.library === facility.id}
+                                            itemRef={(element) =>
+                                                registerFacilityRef(
+                                                    "library",
+                                                    facility.id,
+                                                    element,
+                                                )
+                                            }
                                             filterCriteria={filterCriteria}
                                         />
                                     ))}
@@ -695,16 +723,31 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                 <h2 className="text-sm font-normal text-muted-foreground pl-6">
                                     Academic
                                 </h2>
-                                <Accordion type="multiple" value={expandedItems} className="w-full">
+                                <Accordion
+                                    type="single"
+                                    collapsible
+                                    value={openFacilityIds.building ?? ""}
+                                    onValueChange={(facilityId) =>
+                                        setOpenFacilityIds((currentIds) => ({
+                                            ...currentIds,
+                                            building: facilityId || null,
+                                        }))
+                                    }
+                                    className="w-full"
+                                >
                                     {academicFacilities.map((facility) => (
                                         <FacilityAccordion
-                                            key={`building-${facility.id}`}
+                                            key={facility.id}
                                             facility={facility}
                                             facilityType={FacilityType.ACADEMIC}
-                                            expandedItems={expandedItems}
-                                            toggleItem={toggleItem}
-                                            accordionRefs={accordionRefs}
-                                            idPrefix="building"
+                                            isExpanded={openFacilityIds.building === facility.id}
+                                            itemRef={(element) =>
+                                                registerFacilityRef(
+                                                    "building",
+                                                    facility.id,
+                                                    element,
+                                                )
+                                            }
                                             filterCriteria={filterCriteria}
                                         />
                                     ))}
