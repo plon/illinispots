@@ -1,69 +1,86 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useSyncExternalStore } from "react";
+import { createLocalStorageStore } from "@/utils/storageStore";
 
-const FAVORITES_STORAGE_KEY = 'illinispots-favorites';
+export const FAVORITES_STORAGE_KEY = "illinispots-favorites";
 
 export interface FavoriteItem {
   id: string;
   name: string;
-  type: 'library' | 'academic';
+  type: "library" | "academic";
 }
 
-export const useFavorites = () => {
-  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+export interface UseFavoritesResult {
+  favorites: FavoriteItem[];
+  addFavorite: (item: FavoriteItem) => void;
+  removeFavorite: (id: string) => void;
+  toggleFavorite: (item: FavoriteItem) => void;
+  isFavorite: (id: string) => boolean;
+  getFavoritesByType: (type: "library" | "academic") => FavoriteItem[];
+}
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setFavorites(Array.isArray(parsed) ? parsed : []);
-      }
-    } catch (error) {
-      console.error('Error loading favorites from localStorage:', error);
-      setFavorites([]);
-    }
-  }, []);
+function isValidFavoriteItem(item: unknown): item is FavoriteItem {
+  return (
+    typeof item === "object" &&
+    item !== null &&
+    typeof (item as FavoriteItem).id === "string" &&
+    typeof (item as FavoriteItem).name === "string" &&
+    ((item as FavoriteItem).type === "library" ||
+      (item as FavoriteItem).type === "academic")
+  );
+}
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
-    } catch (error) {
-      console.error('Error saving favorites to localStorage:', error);
-    }
-  }, [favorites]);
+export function parseFavorites(raw: string | null): FavoriteItem[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isValidFavoriteItem);
+  } catch {
+    return [];
+  }
+}
 
-  const addFavorite = useCallback((item: FavoriteItem) => {
-    setFavorites(prev => {
-      // Check if already favorited
-      if (prev.some(fav => fav.id === item.id)) {
-        return prev;
-      }
-      return [...prev, item];
-    });
-  }, []);
+export const favoritesStore = createLocalStorageStore<FavoriteItem[]>(
+  FAVORITES_STORAGE_KEY,
+  [],
+  parseFavorites,
+);
 
-  const removeFavorite = useCallback((id: string) => {
-    setFavorites(prev => prev.filter(fav => fav.id !== id));
-  }, []);
+export function addFavorite(item: FavoriteItem): void {
+  favoritesStore.set((prev) =>
+    prev.some((fav) => fav.id === item.id) ? prev : [...prev, item],
+  );
+}
 
-  const toggleFavorite = useCallback((item: FavoriteItem) => {
-    setFavorites(prev => {
-      const exists = prev.some(fav => fav.id === item.id);
-      if (exists) {
-        return prev.filter(fav => fav.id !== item.id);
-      } else {
-        return [...prev, item];
-      }
-    });
-  }, []);
+export function removeFavorite(id: string): void {
+  favoritesStore.set((prev) => prev.filter((fav) => fav.id !== id));
+}
 
-  const isFavorite = useCallback((id: string) => {
-    return favorites.some(fav => fav.id === id);
-  }, [favorites]);
+export function toggleFavorite(item: FavoriteItem): void {
+  favoritesStore.set((prev) =>
+    prev.some((fav) => fav.id === item.id)
+      ? prev.filter((fav) => fav.id !== item.id)
+      : [...prev, item],
+  );
+}
 
-  const getFavoritesByType = useCallback((type: 'library' | 'academic') => {
-    return favorites.filter(fav => fav.type === type);
-  }, [favorites]);
+export const useFavorites = (): UseFavoritesResult => {
+  const favorites = useSyncExternalStore(
+    favoritesStore.subscribe,
+    favoritesStore.getSnapshot,
+    favoritesStore.getServerSnapshot,
+  );
+
+  const isFavorite = useCallback(
+    (id: string) => favorites.some((fav) => fav.id === id),
+    [favorites],
+  );
+
+  const getFavoritesByType = useCallback(
+    (type: "library" | "academic") =>
+      favorites.filter((fav) => fav.type === type),
+    [favorites],
+  );
 
   return {
     favorites,
