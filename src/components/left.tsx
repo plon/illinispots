@@ -23,7 +23,6 @@ import {
     Facility,
     FacilityStatus,
     FacilityType,
-    SelectionSource,
 } from "@/types";
 import {
     Github,
@@ -63,10 +62,11 @@ interface LeftSidebarProps {
     facilityData: FacilityStatus | null;
     showMap: boolean;
     setShowMap: Dispatch<SetStateAction<boolean>>;
-    selectedFacilityId: string | null;
-    selectionSource?: SelectionSource;
-    selectionTimestamp?: number;
-    onSelectFacility: (facilityId: string | null, source?: SelectionSource) => void;
+    expandedFacilityIds: string[];
+    onExpandedFacilityIdsChange: (facilityIds: string[]) => void;
+    onExternalSelectFacility: (facilityId: string) => void;
+    scrollTargetId?: string | null;
+    scrollTargetTimestamp?: number;
     isFetching: boolean;
     isLibraryFetching: boolean;
     isAcademicLoading?: boolean;
@@ -165,10 +165,11 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     facilityData,
     showMap,
     setShowMap,
-    selectedFacilityId,
-    selectionSource,
-    selectionTimestamp,
-    onSelectFacility,
+    expandedFacilityIds,
+    onExpandedFacilityIdsChange,
+    onExternalSelectFacility,
+    scrollTargetId,
+    scrollTargetTimestamp,
     isFetching,
     isLibraryFetching,
     isAcademicLoading = false,
@@ -300,23 +301,22 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 selection_source: "favorites",
             });
 
-            onSelectFacility(facilityId, "favorite");
+            onExternalSelectFacility(facilityId);
         },
-        [onSelectFacility, posthog],
+        [onExternalSelectFacility, posthog],
     );
 
-    // Auto-scroll ONLY when selectedFacilityId changes from an external source (map or favorites)
+    // Auto-scroll ONLY when triggered by an external source (map or favorites)
     useEffect(() => {
-        if (!selectedFacilityId || selectionSource === "list") return;
-        const element = document.getElementById(`facility-${selectedFacilityId}`);
+        if (!scrollTargetId) return;
+        const element = document.getElementById(`facility-${scrollTargetId}`);
         if (element) {
             element.scrollIntoView({
                 behavior: "smooth",
                 block: "start",
             });
         }
-    }, [selectedFacilityId, selectionSource, selectionTimestamp]);
-
+    }, [scrollTargetId, scrollTargetTimestamp]);
     const matchingRoomsCount = useMemo(() => {
         const allFacilities = facilityData
             ? Object.values(facilityData.facilities)
@@ -549,9 +549,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         <FacilityListView
                             libraryFacilities={libraryFacilities}
                             academicFacilities={academicFacilities}
-                            selectedFacilityId={selectedFacilityId}
-                            onSelectFacility={onSelectFacility}
-                            filterCriteria={filterCriteria}
+                            expandedFacilityIds={expandedFacilityIds}
+                            onExpandedFacilityIdsChange={onExpandedFacilityIdsChange}
                             isLibraryFetching={isLibraryFetching}
                             isAcademicLoading={isAcademicLoading}
                             error={error}

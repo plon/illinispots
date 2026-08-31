@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { Facility, FacilityType, SelectionSource } from "@/types";
+import { Facility, FacilityType } from "@/types";
 import { FilterCriteria } from "@/utils/filterUtils";
 import { FavoriteItem } from "@/hooks/useFavorites";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,8 @@ import { FacilityAccordionItem } from "./FacilityAccordionItem";
 interface FacilityListViewProps {
   libraryFacilities: Facility[];
   academicFacilities: Facility[];
-  selectedFacilityId: string | null;
-  onSelectFacility: (facilityId: string | null, source?: SelectionSource) => void;
+  expandedFacilityIds: string[];
+  onExpandedFacilityIdsChange: (facilityIds: string[]) => void;
   filterCriteria?: FilterCriteria;
   isLibraryFetching?: boolean;
   isAcademicLoading?: boolean;
@@ -25,8 +25,8 @@ export const FacilityListView: React.FC<FacilityListViewProps> = memo(
   ({
     libraryFacilities,
     academicFacilities,
-    selectedFacilityId,
-    onSelectFacility,
+    expandedFacilityIds,
+    onExpandedFacilityIdsChange,
     filterCriteria = {},
     isLibraryFetching = false,
     isAcademicLoading = false,
@@ -34,11 +34,6 @@ export const FacilityListView: React.FC<FacilityListViewProps> = memo(
     onRetry,
     hasActiveFilters = false,
   }) => {
-    const handleToggleFacility = (facilityId: string) => {
-      const nextId = selectedFacilityId === facilityId ? null : facilityId;
-      onSelectFacility(nextId, "list");
-    };
-
     return (
       <div className="w-full">
         {/* Library Section */}
@@ -48,10 +43,9 @@ export const FacilityListView: React.FC<FacilityListViewProps> = memo(
               Library
             </h2>
             <Accordion
-              type="single"
-              collapsible
-              value={selectedFacilityId || ""}
-              onValueChange={(val) => onSelectFacility(val || null, "list")}
+              type="multiple"
+              value={expandedFacilityIds}
+              onValueChange={onExpandedFacilityIdsChange}
               className="w-full border-t border-border/70"
             >
               {libraryFacilities.map((facility) => (
@@ -59,8 +53,6 @@ export const FacilityListView: React.FC<FacilityListViewProps> = memo(
                   key={`facility-${facility.id}`}
                   facility={facility}
                   facilityType={FacilityType.LIBRARY}
-                  isOpen={selectedFacilityId === facility.id}
-                  onToggle={() => handleToggleFacility(facility.id)}
                   filterCriteria={filterCriteria}
                 />
               ))}
@@ -108,10 +100,9 @@ export const FacilityListView: React.FC<FacilityListViewProps> = memo(
               Academic
             </h2>
             <Accordion
-              type="single"
-              collapsible
-              value={selectedFacilityId || ""}
-              onValueChange={(val) => onSelectFacility(val || null, "list")}
+              type="multiple"
+              value={expandedFacilityIds}
+              onValueChange={onExpandedFacilityIdsChange}
               className="w-full border-t border-border/70"
             >
               {academicFacilities.map((facility) => (
@@ -119,8 +110,6 @@ export const FacilityListView: React.FC<FacilityListViewProps> = memo(
                   key={`facility-${facility.id}`}
                   facility={facility}
                   facilityType={FacilityType.ACADEMIC}
-                  isOpen={selectedFacilityId === facility.id}
-                  onToggle={() => handleToggleFacility(facility.id)}
                   filterCriteria={filterCriteria}
                 />
               ))}

@@ -15,7 +15,7 @@ import {
   type CampusDateTime,
 } from "@/utils/time";
 import LeftSidebar from "@/components/left";
-import { FacilityStatus, FacilityType, SelectionSource } from "@/types";
+import { FacilityStatus, FacilityType } from "@/types";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
 import {
   recordInitialLoadMilestone,
@@ -72,26 +72,28 @@ const IlliniSpotsPage: React.FC = () => {
   const [showMapPreference, setShowMapPreference] = useState<boolean | null>(
     null,
   );
-  const [facilitySelection, setFacilitySelection] = useState<{
+  const [expandedFacilityIds, setExpandedFacilityIds] = useState<string[]>([]);
+  const [scrollTarget, setScrollTarget] = useState<{
     id: string | null;
-    source: SelectionSource;
     timestamp: number;
-  }>({
-    id: null,
-    source: "url",
-    timestamp: 0,
-  });
+  }>({ id: null, timestamp: 0 });
 
-  const handleSelectFacility = useCallback(
-    (facilityId: string | null, source: SelectionSource = "list") => {
-      setFacilitySelection({
-        id: facilityId,
-        source,
-        timestamp: Date.now(),
-      });
+  const handleExpandedFacilityIdsChange = useCallback(
+    (facilityIds: string[]) => {
+      setExpandedFacilityIds(facilityIds);
     },
     [],
   );
+
+  const handleExternalSelectFacility = useCallback((facilityId: string) => {
+    setExpandedFacilityIds((prev) =>
+      prev.includes(facilityId) ? prev : [...prev, facilityId],
+    );
+    setScrollTarget({
+      id: facilityId,
+      timestamp: Date.now(),
+    });
+  }, []);
   const recordedLoadMilestones = useRef(new Set<InitialLoadMilestone>());
 
   const recordLoadMilestone = useCallback(
@@ -270,9 +272,9 @@ const IlliniSpotsPage: React.FC = () => {
         selection_source: "map",
       });
 
-      handleSelectFacility(id, "map");
+      handleExternalSelectFacility(id);
     },
-    [facilityData, handleSelectFacility, posthog],
+    [facilityData, handleExternalSelectFacility, posthog],
   );
 
   const showFetchingOverlay = isAcademicFetching && !isAcademicLoading;
@@ -303,10 +305,11 @@ const IlliniSpotsPage: React.FC = () => {
       >
         <LeftSidebar
           facilityData={facilityData || null}
-          selectedFacilityId={facilitySelection.id}
-          selectionSource={facilitySelection.source}
-          selectionTimestamp={facilitySelection.timestamp}
-          onSelectFacility={handleSelectFacility}
+          expandedFacilityIds={expandedFacilityIds}
+          onExpandedFacilityIdsChange={handleExpandedFacilityIdsChange}
+          onExternalSelectFacility={handleExternalSelectFacility}
+          scrollTargetId={scrollTarget.id}
+          scrollTargetTimestamp={scrollTarget.timestamp}
           showMap={showMap}
           setShowMap={setShowMap}
           isFetching={showFetchingOverlay}

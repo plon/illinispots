@@ -21,8 +21,6 @@ import { FacilityRoomView } from "./FacilityRoomView";
 interface FacilityAccordionItemProps {
   facility: Facility;
   facilityType: FacilityType;
-  isOpen: boolean;
-  onToggle: () => void;
   filterCriteria?: FilterCriteria;
 }
 
@@ -30,8 +28,6 @@ export const FacilityAccordionItem: React.FC<FacilityAccordionItemProps> = memo(
   ({
     facility,
     facilityType,
-    isOpen,
-    onToggle,
     filterCriteria = {},
   }) => {
     const posthog = usePostHog();
@@ -47,16 +43,12 @@ export const FacilityAccordionItem: React.FC<FacilityAccordionItemProps> = memo(
     }, [facility.rooms, filterCriteria]);
 
     const handleTriggerClick = () => {
-      const willOpen = !isOpen;
-      if (willOpen) {
-        posthog.capture("facility_accordion_expanded", {
-          facility_id: facility.id,
-          facility_name: facility.name,
-          facility_type: facilityType,
-          selection_source: "list",
-        });
-      }
-      onToggle();
+      posthog.capture("facility_accordion_expanded", {
+        facility_id: facility.id,
+        facility_name: facility.name,
+        facility_type: facilityType,
+        selection_source: "list",
+      });
     };
 
     return (
