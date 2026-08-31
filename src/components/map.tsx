@@ -56,9 +56,6 @@ export default function FacilityMap({
       );
     };
 
-    setIsMapLoaded(false);
-    setMapError(null);
-
     const config = getClientConfig();
     const styleUrl = config.mapboxStyleUrl;
     const token = config.mapboxAccessToken;
@@ -67,6 +64,8 @@ export default function FacilityMap({
         "Mapbox style and access token are not configured.",
       );
       recordMapOutcome("missing_configuration");
+      // Without this update, missing credentials leave the loading overlay active.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMapError("The map is not configured.");
       return;
     }

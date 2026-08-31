@@ -35,12 +35,6 @@ function Calendar({
     startOfMonth(selected ?? new Date()),
   );
 
-  React.useEffect(() => {
-    if (selected) {
-      setCurrentMonth(startOfMonth(selected));
-    }
-  }, [selected]);
-
   const days = React.useMemo(() => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(monthStart);
