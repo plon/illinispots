@@ -9,14 +9,13 @@ import React, {
 } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { usePostHog } from "@posthog/react";
-import { getUpdatedAccordionItems } from "@/utils/accordion";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   getCampusDateTimeParts,
   type CampusDateTime,
 } from "@/utils/time";
 import LeftSidebar from "@/components/left";
-import { FacilityStatus, FacilityType } from "@/types";
+import { FacilityStatus, FacilityType, SelectionSource } from "@/types";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
 import {
   recordInitialLoadMilestone,
@@ -73,7 +72,26 @@ const IlliniSpotsPage: React.FC = () => {
   const [showMapPreference, setShowMapPreference] = useState<boolean | null>(
     null,
   );
-  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [facilitySelection, setFacilitySelection] = useState<{
+    id: string | null;
+    source: SelectionSource;
+    timestamp: number;
+  }>({
+    id: null,
+    source: "url",
+    timestamp: 0,
+  });
+
+  const handleSelectFacility = useCallback(
+    (facilityId: string | null, source: SelectionSource = "list") => {
+      setFacilitySelection({
+        id: facilityId,
+        source,
+        timestamp: Date.now(),
+      });
+    },
+    [],
+  );
   const recordedLoadMilestones = useRef(new Set<InitialLoadMilestone>());
 
   const recordLoadMilestone = useCallback(
@@ -252,20 +270,9 @@ const IlliniSpotsPage: React.FC = () => {
         selection_source: "map",
       });
 
-      const itemId = `${
-        facilityType === FacilityType.LIBRARY ? "library" : "building"
-      }-${id}`;
-
-      // Use the shared utility function to update the expanded items
-      setExpandedItems((prevItems) => {
-        if (prevItems.includes(itemId)) {
-          return prevItems;
-        }
-
-        return getUpdatedAccordionItems(itemId, prevItems);
-      });
+      handleSelectFacility(id, "map");
     },
-    [facilityData, posthog],
+    [facilityData, handleSelectFacility, posthog],
   );
 
   const showFetchingOverlay = isAcademicFetching && !isAcademicLoading;
@@ -296,8 +303,10 @@ const IlliniSpotsPage: React.FC = () => {
       >
         <LeftSidebar
           facilityData={facilityData || null}
-          expandedItems={expandedItems}
-          setExpandedItems={setExpandedItems}
+          selectedFacilityId={facilitySelection.id}
+          selectionSource={facilitySelection.source}
+          selectionTimestamp={facilitySelection.timestamp}
+          onSelectFacility={handleSelectFacility}
           showMap={showMap}
           setShowMap={setShowMap}
           isFetching={showFetchingOverlay}
