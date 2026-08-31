@@ -26,7 +26,7 @@ import {
   LIVE_REFRESH_INTERVAL_MS,
   shouldRefetchFacilitiesOnReconnect,
 } from "@/utils/liveUpdates";
-
+import { useShowMapPreference } from "@/hooks/useShowMapPreference";
 const FacilityMap = lazy(() => import("@/components/map"));
 
 function MapLoadingFallback() {
@@ -69,9 +69,7 @@ const fetchFacilityData = async (
 const IlliniSpotsPage: React.FC = () => {
   const posthog = usePostHog();
   const { selectedDateTime, liveNow, isCurrentDateTime } = useDateTimeContext();
-  const [showMapPreference, setShowMapPreference] = useState<boolean | null>(
-    null,
-  );
+  const [showMap, setShowMap] = useShowMapPreference();
   const [expandedFacilityIds, setExpandedFacilityIds] = useState<string[]>([]);
   const [scrollTarget, setScrollTarget] = useState<{
     id: string | null;
@@ -98,17 +96,14 @@ const IlliniSpotsPage: React.FC = () => {
 
   const recordLoadMilestone = useCallback(
     (milestone: InitialLoadMilestone) => {
-      if (
-        showMapPreference === null ||
-        recordedLoadMilestones.current.has(milestone)
-      ) {
+      if (recordedLoadMilestones.current.has(milestone)) {
         return;
       }
 
       recordedLoadMilestones.current.add(milestone);
-      recordInitialLoadMilestone(milestone, showMapPreference);
+      recordInitialLoadMilestone(milestone, showMap);
     },
-    [showMapPreference],
+    [showMap],
   );
 
   const {
@@ -230,37 +225,6 @@ const IlliniSpotsPage: React.FC = () => {
       recordLoadMilestone("library_data_ready");
     }
   }, [isLibrarySuccess, libraryData, recordLoadMilestone]);
-
-  useEffect(() => {
-    try {
-      const storedShowMap = localStorage.getItem("showMap");
-      setShowMapPreference(storedShowMap === null || storedShowMap === "true");
-    } catch {
-      setShowMapPreference(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (showMapPreference === null) return;
-
-    try {
-      localStorage.setItem("showMap", showMapPreference.toString());
-    } catch {
-      // Continue without persistence when browser storage is unavailable.
-    }
-  }, [showMapPreference]);
-
-  const setShowMap = useCallback<React.Dispatch<React.SetStateAction<boolean>>>(
-    (value) => {
-      setShowMapPreference((currentValue) => {
-        const hydratedValue = currentValue ?? true;
-        return typeof value === "function" ? value(hydratedValue) : value;
-      });
-    },
-    [],
-  );
-
-  const showMap = showMapPreference === true;
 
   const handleMarkerClick = useCallback(
     (id: string, facilityType: FacilityType) => {
