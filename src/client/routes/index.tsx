@@ -9,7 +9,6 @@ import React, {
 } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { usePostHog } from "@posthog/react";
-import { getUpdatedAccordionItems } from "@/utils/accordion";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   getCampusDateTimeParts,
@@ -73,7 +72,28 @@ const IlliniSpotsPage: React.FC = () => {
   const [showMapPreference, setShowMapPreference] = useState<boolean | null>(
     null,
   );
-  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [expandedFacilityIds, setExpandedFacilityIds] = useState<string[]>([]);
+  const [scrollTarget, setScrollTarget] = useState<{
+    id: string | null;
+    timestamp: number;
+  }>({ id: null, timestamp: 0 });
+
+  const handleExpandedFacilityIdsChange = useCallback(
+    (facilityIds: string[]) => {
+      setExpandedFacilityIds(facilityIds);
+    },
+    [],
+  );
+
+  const handleExternalSelectFacility = useCallback((facilityId: string) => {
+    setExpandedFacilityIds((prev) =>
+      prev.includes(facilityId) ? prev : [...prev, facilityId],
+    );
+    setScrollTarget({
+      id: facilityId,
+      timestamp: Date.now(),
+    });
+  }, []);
   const recordedLoadMilestones = useRef(new Set<InitialLoadMilestone>());
 
   const recordLoadMilestone = useCallback(
@@ -252,20 +272,9 @@ const IlliniSpotsPage: React.FC = () => {
         selection_source: "map",
       });
 
-      const itemId = `${
-        facilityType === FacilityType.LIBRARY ? "library" : "building"
-      }-${id}`;
-
-      // Use the shared utility function to update the expanded items
-      setExpandedItems((prevItems) => {
-        if (prevItems.includes(itemId)) {
-          return prevItems;
-        }
-
-        return getUpdatedAccordionItems(itemId, prevItems);
-      });
+      handleExternalSelectFacility(id);
     },
-    [facilityData, posthog],
+    [facilityData, handleExternalSelectFacility, posthog],
   );
 
   const showFetchingOverlay = isAcademicFetching && !isAcademicLoading;
@@ -296,8 +305,11 @@ const IlliniSpotsPage: React.FC = () => {
       >
         <LeftSidebar
           facilityData={facilityData || null}
-          expandedItems={expandedItems}
-          setExpandedItems={setExpandedItems}
+          expandedFacilityIds={expandedFacilityIds}
+          onExpandedFacilityIdsChange={handleExpandedFacilityIdsChange}
+          onExternalSelectFacility={handleExternalSelectFacility}
+          scrollTargetId={scrollTarget.id}
+          scrollTargetTimestamp={scrollTarget.timestamp}
           showMap={showMap}
           setShowMap={setShowMap}
           isFetching={showFetchingOverlay}

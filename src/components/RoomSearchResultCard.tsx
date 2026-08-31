@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import AcademicRoomDetailLoader from "@/components/AcademicRoomDetailLoader";
 import { RoomSchedule } from "@/components/FacilityRoomDetails";
-import { getRoomAvailabilityMessage } from "@/components/FacilityAccordion";
+import { getRoomAvailabilityMessage } from "@/components/facilities/roomUtils";
 import {
   Building2,
   Calendar,
