@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { TimelineSchedule } from "@/components/TimelineSchedule";
 import { RoomScheduleBlock } from "@/types";
@@ -28,17 +28,16 @@ const fetchScheduleForDate = async (
   return response.json();
 };
 
-const AcademicRoomDetailLoader: React.FC<AcademicRoomDetailLoaderProps> = ({
+interface AcademicRoomScheduleLoaderProps extends AcademicRoomDetailLoaderProps {
+  initialDate: string;
+}
+
+function AcademicRoomScheduleLoader({
   buildingId,
   roomNumber,
-}) => {
-  const { selectedDateTime } = useDateTimeContext();
-  const [selectedDate, setSelectedDate] = useState(selectedDateTime.date);
-
-  // Sync if global context date changes
-  useEffect(() => {
-    setSelectedDate(selectedDateTime.date);
-  }, [selectedDateTime.date]);
+  initialDate,
+}: AcademicRoomScheduleLoaderProps) {
+  const [selectedDate, setSelectedDate] = useState(initialDate);
 
   const {
     data: scheduleData,
@@ -79,6 +78,22 @@ const AcademicRoomDetailLoader: React.FC<AcademicRoomDetailLoaderProps> = ({
       onDateChange={setSelectedDate}
     />
   );
-};
+}
+
+function AcademicRoomDetailLoader({
+  buildingId,
+  roomNumber,
+}: AcademicRoomDetailLoaderProps) {
+  const { selectedDateTime } = useDateTimeContext();
+
+  return (
+    <AcademicRoomScheduleLoader
+      key={selectedDateTime.date}
+      buildingId={buildingId}
+      roomNumber={roomNumber}
+      initialDate={selectedDateTime.date}
+    />
+  );
+}
 
 export default AcademicRoomDetailLoader;
