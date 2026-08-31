@@ -1,21 +1,21 @@
 import React, { useState, useMemo, memo } from "react";
-import { Facility, FacilityType, RoomStatus } from "@/types";
+import { Facility, FacilityType } from "@/types";
 import { FilterCriteria, isRoomAvailable } from "@/utils/filterUtils";
 import { getLibraryHoursMessage } from "@/utils/libraryHours";
 import { formatTimeForDisplay } from "@/utils/time";
 import { RoomRow } from "./RoomRow";
+import { groupAcademicRooms } from "./roomUtils";
 
 interface FacilityRoomViewProps {
   facility: Facility;
-  facilityType: FacilityType;
   filterCriteria?: FilterCriteria;
 }
 
 type RoomTab = "available" | "occupied" | "all";
 
 export const FacilityRoomView: React.FC<FacilityRoomViewProps> = memo(
-  ({ facility, facilityType, filterCriteria = {} }) => {
-    const isAcademic = facilityType === FacilityType.ACADEMIC;
+  ({ facility, filterCriteria = {} }) => {
+    const isAcademic = facility.type === FacilityType.ACADEMIC;
     const [activeTab, setActiveTab] = useState<RoomTab>("available");
     const [expandedRoomId, setExpandedRoomId] = useState<string | null>(null);
 
@@ -31,29 +31,15 @@ export const FacilityRoomView: React.FC<FacilityRoomViewProps> = memo(
         );
     }, [facility.rooms, filterCriteria]);
 
-    const { availableRooms, occupiedRooms } = useMemo(() => {
-      const available: typeof allRooms = [];
-      const occupied: typeof allRooms = [];
-
-      for (const entry of allRooms) {
-        const [, room] = entry;
-        if (
-          room.status === RoomStatus.AVAILABLE ||
-          room.status === RoomStatus.PASSING_PERIOD
-        ) {
-          available.push(entry);
-        } else {
-          occupied.push(entry);
-        }
-      }
-
-      return { availableRooms: available, occupiedRooms: occupied };
-    }, [allRooms]);
+    const { availableRooms, occupiedRooms } = useMemo(
+      () => groupAcademicRooms(allRooms),
+      [allRooms],
+    );
 
     if (!facility.isOpen) {
       return (
         <div className="px-4 py-3 text-sm text-muted-foreground bg-muted/20 border-t">
-          {facilityType === FacilityType.LIBRARY ? (
+          {facility.type === FacilityType.LIBRARY ? (
             getLibraryHoursMessage(facility.name)
           ) : (
             <div>
@@ -71,12 +57,13 @@ export const FacilityRoomView: React.FC<FacilityRoomViewProps> = memo(
       );
     }
 
-    const roomsToDisplay =
-      activeTab === "available"
+    const roomsToDisplay = isAcademic
+      ? activeTab === "available"
         ? availableRooms
         : activeTab === "occupied"
           ? occupiedRooms
-          : allRooms;
+          : allRooms
+      : allRooms;
 
     return (
       <div className="bg-muted/10 border-t border-border/60">
@@ -149,7 +136,6 @@ export const FacilityRoomView: React.FC<FacilityRoomViewProps> = memo(
                 room={room}
                 facilityId={facility.id}
                 facilityName={facility.name}
-                facilityType={facilityType}
                 isExpanded={expandedRoomId === roomNumber}
                 onToggleExpand={() =>
                   setExpandedRoomId((prev) =>

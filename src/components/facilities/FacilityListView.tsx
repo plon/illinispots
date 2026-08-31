@@ -1,7 +1,6 @@
 import React, { memo } from "react";
-import { Facility, FacilityType } from "@/types";
+import { Facility } from "@/types";
 import { FilterCriteria } from "@/utils/filterUtils";
-import { FavoriteItem } from "@/hooks/useFavorites";
 import { Button } from "@/components/ui/button";
 import { Accordion } from "@/components/ui/accordion";
 import { FacilityAccordionItem } from "./FacilityAccordionItem";
@@ -17,8 +16,6 @@ interface FacilityListViewProps {
   error?: string | null;
   onRetry?: () => void;
   hasActiveFilters?: boolean;
-  favorites?: FavoriteItem[];
-  onToggleFavorite?: (item: FavoriteItem) => void;
 }
 
 export const FacilityListView: React.FC<FacilityListViewProps> = memo(
@@ -52,7 +49,7 @@ export const FacilityListView: React.FC<FacilityListViewProps> = memo(
                 <FacilityAccordionItem
                   key={`facility-${facility.id}`}
                   facility={facility}
-                  facilityType={FacilityType.LIBRARY}
+                  isExpanded={expandedFacilityIds.includes(facility.id)}
                   filterCriteria={filterCriteria}
                 />
               ))}
@@ -109,7 +106,7 @@ export const FacilityListView: React.FC<FacilityListViewProps> = memo(
                 <FacilityAccordionItem
                   key={`facility-${facility.id}`}
                   facility={facility}
-                  facilityType={FacilityType.ACADEMIC}
+                  isExpanded={expandedFacilityIds.includes(facility.id)}
                   filterCriteria={filterCriteria}
                 />
               ))}

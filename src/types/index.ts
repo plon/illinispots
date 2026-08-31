@@ -21,8 +21,6 @@ export interface FacilityStatus {
   timestamp: string;
   facilities: Record<string, Facility>;
 }
-export type SelectionSource = "list" | "map" | "favorite" | "search" | "url";
-
 
 // Unified Facility type to represent both academic buildings and libraries
 export interface Facility {

@@ -3,7 +3,6 @@ import { usePostHog } from "@posthog/react";
 import { Badge } from "@/components/ui/badge";
 import {
   Facility,
-  FacilityType,
   RoomStatus,
 } from "@/types";
 import { FilterCriteria, isRoomAvailable } from "@/utils/filterUtils";
@@ -20,14 +19,14 @@ import { FacilityRoomView } from "./FacilityRoomView";
 
 interface FacilityAccordionItemProps {
   facility: Facility;
-  facilityType: FacilityType;
+  isExpanded: boolean;
   filterCriteria?: FilterCriteria;
 }
 
 export const FacilityAccordionItem: React.FC<FacilityAccordionItemProps> = memo(
   ({
     facility,
-    facilityType,
+    isExpanded,
     filterCriteria = {},
   }) => {
     const posthog = usePostHog();
@@ -43,12 +42,14 @@ export const FacilityAccordionItem: React.FC<FacilityAccordionItemProps> = memo(
     }, [facility.rooms, filterCriteria]);
 
     const handleTriggerClick = () => {
-      posthog.capture("facility_accordion_expanded", {
-        facility_id: facility.id,
-        facility_name: facility.name,
-        facility_type: facilityType,
-        selection_source: "list",
-      });
+      if (!isExpanded) {
+        posthog.capture("facility_accordion_expanded", {
+          facility_id: facility.id,
+          facility_name: facility.name,
+          facility_type: facility.type,
+          selection_source: "list",
+        });
+      }
     };
 
     return (
@@ -95,7 +96,6 @@ export const FacilityAccordionItem: React.FC<FacilityAccordionItemProps> = memo(
         <AccordionContent className="pb-0 pt-0">
           <FacilityRoomView
             facility={facility}
-            facilityType={facilityType}
             filterCriteria={filterCriteria}
           />
         </AccordionContent>

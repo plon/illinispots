@@ -551,13 +551,12 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                             academicFacilities={academicFacilities}
                             expandedFacilityIds={expandedFacilityIds}
                             onExpandedFacilityIdsChange={onExpandedFacilityIdsChange}
+                            filterCriteria={filterCriteria}
                             isLibraryFetching={isLibraryFetching}
                             isAcademicLoading={isAcademicLoading}
                             error={error}
                             onRetry={onRetry}
                             hasActiveFilters={hasActiveFilters}
-                            favorites={favorites}
-                            onToggleFavorite={toggleFavorite}
                         />
                     </>
                 )}

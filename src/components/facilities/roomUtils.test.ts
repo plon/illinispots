@@ -1,6 +1,14 @@
 import { describe, expect, it } from "bun:test";
-import { RoomStatus, LibraryRoom } from "@/types";
-import { getRoomAvailabilityMessage } from "./roomUtils";
+import { renderToStaticMarkup } from "react-dom/server";
+import { AcademicRoom, LibraryRoom, RoomStatus } from "@/types";
+import {
+  getRoomAvailabilityMessage,
+  groupAcademicRooms,
+} from "./roomUtils";
+import type { RoomEntry } from "./roomUtils";
+
+const renderAvailabilityMessage = (room: LibraryRoom) =>
+  renderToStaticMarkup(getRoomAvailabilityMessage(room));
 
 describe("getRoomAvailabilityMessage", () => {
   it("returns Unavailable for UNAVAILABLE status", () => {
@@ -11,8 +19,7 @@ describe("getRoomAvailabilityMessage", () => {
       thumbnail: "",
       slots: [],
     };
-    const node = getRoomAvailabilityMessage(room);
-    expect(node).toBeDefined();
+    expect(renderAvailabilityMessage(room)).toContain("Unavailable");
   });
 
   it("returns Available for AVAILABLE status", () => {
@@ -24,8 +31,7 @@ describe("getRoomAvailabilityMessage", () => {
       thumbnail: "",
       slots: [],
     };
-    const node = getRoomAvailabilityMessage(room);
-    expect(node).toBeDefined();
+    expect(renderAvailabilityMessage(room)).toContain("Available for 1h 30m");
   });
 
   it("returns Opens at for OPENING_SOON status", () => {
@@ -37,8 +43,7 @@ describe("getRoomAvailabilityMessage", () => {
       thumbnail: "",
       slots: [],
     };
-    const node = getRoomAvailabilityMessage(room);
-    expect(node).toBeDefined();
+    expect(renderAvailabilityMessage(room)).toContain("Opens at");
   });
 
   it("returns Fully booked when status is OCCUPIED without availableAt", () => {
@@ -49,7 +54,35 @@ describe("getRoomAvailabilityMessage", () => {
       thumbnail: "",
       slots: [],
     };
-    const node = getRoomAvailabilityMessage(room);
-    expect(node).toBeDefined();
+    expect(renderAvailabilityMessage(room)).toContain("Fully booked");
+  });
+});
+
+describe("groupAcademicRooms", () => {
+  const room = (status: RoomStatus): AcademicRoom => ({
+    type: "academic",
+    status,
+  });
+
+  it("uses explicit status groups without labeling reserved rooms occupied", () => {
+    const rooms: RoomEntry[] = [
+      ["available", room(RoomStatus.AVAILABLE)],
+      ["passing", room(RoomStatus.PASSING_PERIOD)],
+      ["occupied", room(RoomStatus.OCCUPIED)],
+      ["opening", room(RoomStatus.OPENING_SOON)],
+      ["reserved", room(RoomStatus.RESERVED)],
+      ["unavailable", room(RoomStatus.UNAVAILABLE)],
+    ];
+
+    const groups = groupAcademicRooms(rooms);
+
+    expect(groups.availableRooms.map(([name]) => name)).toEqual([
+      "available",
+      "passing",
+    ]);
+    expect(groups.occupiedRooms.map(([name]) => name)).toEqual([
+      "occupied",
+      "opening",
+    ]);
   });
 });

@@ -1,11 +1,34 @@
 import React from "react";
 import {
   AcademicRoom,
+  FacilityRoom,
   LibraryRoom,
   RoomStatus,
 } from "@/types";
 import { formatDuration } from "@/utils/format";
 import { formatTimeForDisplay } from "@/utils/time";
+
+export type RoomEntry = [roomName: string, room: FacilityRoom];
+
+export const groupAcademicRooms = (rooms: readonly RoomEntry[]) => {
+  const availableRooms: RoomEntry[] = [];
+  const occupiedRooms: RoomEntry[] = [];
+
+  for (const entry of rooms) {
+    switch (entry[1].status) {
+      case RoomStatus.AVAILABLE:
+      case RoomStatus.PASSING_PERIOD:
+        availableRooms.push(entry);
+        break;
+      case RoomStatus.OCCUPIED:
+      case RoomStatus.OPENING_SOON:
+        occupiedRooms.push(entry);
+        break;
+    }
+  }
+
+  return { availableRooms, occupiedRooms };
+};
 
 export const getRoomAvailabilityMessage = (
   room: LibraryRoom,

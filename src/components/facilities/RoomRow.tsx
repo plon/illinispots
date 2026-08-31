@@ -1,10 +1,8 @@
 import React, { memo, useState } from "react";
 import { usePostHog } from "@posthog/react";
 import {
-  AcademicRoom,
   FacilityRoom,
   FacilityType,
-  LibraryRoom,
   RoomStatus,
 } from "@/types";
 import { RoomBadge } from "@/components/RoomBadge";
@@ -24,7 +22,6 @@ interface RoomRowProps {
   room: FacilityRoom;
   facilityId: string;
   facilityName: string;
-  facilityType: FacilityType;
   isExpanded: boolean;
   onToggleExpand: () => void;
 }
@@ -35,7 +32,6 @@ export const RoomRow: React.FC<RoomRowProps> = memo(
     room,
     facilityId,
     facilityName,
-    facilityType,
     isExpanded,
     onToggleExpand,
   }) => {
@@ -43,9 +39,12 @@ export const RoomRow: React.FC<RoomRowProps> = memo(
     const [isImageLoading, setIsImageLoading] = useState(true);
     const [hasBeenExpanded, setHasBeenExpanded] = useState(isExpanded);
 
-    const isAcademic = facilityType === FacilityType.ACADEMIC;
-    const academicRoom = isAcademic ? (room as AcademicRoom) : null;
-    const libraryRoom = !isAcademic ? (room as LibraryRoom) : null;
+    const academicRoom = room.type === "academic" ? room : null;
+    const libraryRoom = room.type === "library" ? room : null;
+    const isAcademic = academicRoom !== null;
+    const facilityType = isAcademic
+      ? FacilityType.ACADEMIC
+      : FacilityType.LIBRARY;
 
     const isAvailable =
       room.status === RoomStatus.AVAILABLE ||
