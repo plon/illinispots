@@ -2,8 +2,7 @@ name: Tableau daily events
 
 on:
   schedule:
-    # Run early enough to absorb GitHub scheduler delays before the 7:00 AM deadline.
-    - cron: "17 1 * * *"
+    - cron: "5 0 * * *"
       timezone: "America/Chicago"
   workflow_dispatch:
 
@@ -49,13 +48,13 @@ jobs:
       - name: Start Sentry monitor
         id: sentry-monitor
         continue-on-error: true
-        # 313 minutes after 1:17 AM is the 6:30 AM Central freshness deadline.
+        # 415 minutes after 12:05 AM is the 7:00 AM Central freshness deadline.
         run: >-
           python sentry_monitor.py start
           --monitor-slug tableau-daily-events
-          --schedule "17 1 * * *"
+          --schedule "5 0 * * *"
           --timezone "America/Chicago"
-          --checkin-margin 313
+          --checkin-margin 415
           --max-runtime 15
 
       - name: Update Tableau daily events
