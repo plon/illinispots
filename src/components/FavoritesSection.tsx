@@ -54,8 +54,8 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
                 type="button"
                 onClick={() => onToggleFavorite(favorite)}
                 className="flex-shrink-0 rounded-full p-0.5 text-yellow-500 transition-colors hover:bg-muted/50 hover:text-yellow-600"
-                aria-label="Remove from favorites"
-                title="Remove from favorites"
+                aria-label={`Remove ${favorite.name} from favorites`}
+                title={`Remove ${favorite.name} from favorites`}
               >
                 <Star size={16} fill="currentColor" />
               </button>

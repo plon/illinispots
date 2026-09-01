@@ -205,7 +205,7 @@ export default function FacilityMap({
           data.isOpen
             ? `${data.available}/${data.total} available`
             : `CLOSED${
-                data.hours.open
+                data.hours?.open
                   ? `<br/><span class="text-[11px] text-muted-foreground/80">Opens ${formatTimeForDisplay(data.hours.open)}</span>`
                   : `<br/><span class="text-[11px] text-muted-foreground/80">Not open today</span>`
               }`
@@ -329,7 +329,7 @@ export default function FacilityMap({
       const layerId = "facility-labels";
 
       const features = Object.values(facilityData.facilities)
-        .filter((f) => f.coordinates)
+        .filter((f) => f.coordinates && f.roomCounts)
         .map((f) => ({
           type: "Feature" as const,
           geometry: {
