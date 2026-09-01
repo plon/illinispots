@@ -122,7 +122,7 @@ function Calendar({
                 disabled && "text-foreground/30 line-through pointer-events-none",
               )}
               aria-label={format(day, "EEEE, MMMM d, yyyy")}
-              aria-selected={isSelected ? "true" : undefined}
+              aria-pressed={isSelected}
             >
               {format(day, "d")}
               {isTodayDate && (
