@@ -12,7 +12,6 @@
         "@radix-ui/react-accordion": "^1.2.1",
         "@radix-ui/react-dialog": "^1.1.6",
         "@radix-ui/react-icons": "^1.3.2",
-        "@radix-ui/react-label": "^2.1.2",
         "@radix-ui/react-popover": "^1.1.23",
         "@radix-ui/react-scroll-area": "^1.2.0",
         "@radix-ui/react-slot": "^1.1.2",
@@ -227,8 +226,6 @@
     "@radix-ui/react-icons": ["@radix-ui/react-icons@1.3.2", "", { "peerDependencies": { "react": "^16.x || ^17.x || ^18.x || ^19.0.0 || ^19.0.0-rc" } }, "sha512-fyQIhGDhzfc9pK2kH6Pl9c4BDJGfMkPqkyIgYDthyNYoNg3wVhoJMMh19WS4Up/1KMPFVpNsT2q3WmXn2N1m6g=="],
 
     "@radix-ui/react-id": ["@radix-ui/react-id@1.1.4", "", { "dependencies": { "@radix-ui/react-use-layout-effect": "1.1.4" }, "peerDependencies": { "@types/react": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react"] }, "sha512-TMQp2llA+RYn7JcjnrMnz7wN4pcVttPZnRZo52PLQsoLVKzNlVwUeHmfePgTgRluXFvlD3GD5g5MOVVTJCO0qA=="],
-
-    "@radix-ui/react-label": ["@radix-ui/react-label@2.1.15", "", { "dependencies": { "@radix-ui/react-primitive": "2.1.10" }, "peerDependencies": { "@types/react": "*", "@types/react-dom": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc", "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react", "@types/react-dom"] }, "sha512-o/rdYEwZTTo5tjknnPeyQFU45kUC4i/XyeDPP+HGyi6XqpOP6Zf5Ya5vh/Yfe9Id5JiuWnnAx2XqIeD3UYZt0g=="],
 
     "@radix-ui/react-popover": ["@radix-ui/react-popover@1.1.23", "", { "dependencies": { "@radix-ui/primitive": "1.1.7", "@radix-ui/react-compose-refs": "1.1.5", "@radix-ui/react-context": "1.2.2", "@radix-ui/react-dismissable-layer": "1.1.19", "@radix-ui/react-focus-guards": "1.1.6", "@radix-ui/react-focus-scope": "1.1.16", "@radix-ui/react-id": "1.1.4", "@radix-ui/react-popper": "1.3.7", "@radix-ui/react-portal": "1.1.17", "@radix-ui/react-presence": "1.1.10", "@radix-ui/react-primitive": "2.1.10", "@radix-ui/react-slot": "1.3.3", "@radix-ui/react-use-controllable-state": "1.2.6", "aria-hidden": "^1.2.4", "react-remove-scroll": "^2.7.2" }, "peerDependencies": { "@types/react": "*", "@types/react-dom": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc", "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react", "@types/react-dom"] }, "sha512-mw58MrBlyHWFisTOYignD0vf/3gdcgAR+9of1s9G/38CbFiUwH1nCDkc0AUM9IrXFgN5Ue8n45j9WCgyM1sbiQ=="],
 

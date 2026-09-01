@@ -20,9 +20,10 @@ export default function FacilityMap({
   onMarkerClick,
   trackInitialLoad,
 }: MapProps) {
+  const onMarkerClickRef = useRef(onMarkerClick);
   const handleMarkerClick = useCallback(
-    (id: string, type: FacilityType) => onMarkerClick(id, type),
-    [onMarkerClick],
+    (id: string, type: FacilityType) => onMarkerClickRef.current(id, type),
+    [],
   );
 
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -39,7 +40,8 @@ export default function FacilityMap({
 
   useEffect(() => {
     trackInitialLoadRef.current = trackInitialLoad;
-  }, [trackInitialLoad]);
+    onMarkerClickRef.current = onMarkerClick;
+  }, [onMarkerClick, trackInitialLoad]);
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -408,26 +410,7 @@ export default function FacilityMap({
             const id: string = props.id;
             const type: FacilityType = props.type as FacilityType;
             const key = `${type}-${id}`;
-            const existing = markersRef.current.get(key)?.data;
-
-            let data: MarkerData | null = existing || null;
-            if (!data && facilityData.facilities[id]) {
-              const f = facilityData.facilities[id];
-              data = {
-                id: f.id,
-                name: f.name,
-                coordinates: {
-                  latitude: f.coordinates.latitude,
-                  longitude: f.coordinates.longitude,
-                },
-                isOpen: f.isOpen,
-                available: f.roomCounts.available,
-                total: f.roomCounts.total,
-                type: f.type,
-                hours: f.hours,
-              };
-            }
-
+            const data = markersRef.current.get(key)?.data;
             if (!data) return;
 
             const coords =

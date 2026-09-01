@@ -8,7 +8,7 @@ import { formatTimeForDisplay } from "@/utils/time";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import AcademicRoomDetailLoader from "@/components/AcademicRoomDetailLoader";
-import { RoomSchedule } from "@/components/FacilityRoomDetails";
+import { RoomSchedule } from "@/components/RoomSchedule";
 import { getRoomAvailabilityMessage } from "@/components/facilities/roomUtils";
 import {
   Building2,
@@ -52,7 +52,7 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
   };
 
   return (
-    <div className="rounded-lg border border-border/80 bg-card p-3.5 shadow-xs hover:border-primary/40 transition-all duration-150 space-y-2.5">
+    <div className="rounded-lg border border-border/80 bg-card p-3.5 shadow-xs hover:border-primary/40 transition-colors duration-150 space-y-2.5">
       {/* Header: Room Name & Status */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">

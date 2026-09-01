@@ -426,11 +426,15 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
                                     {/* Map Toggle */}
                                     <div className="flex items-center justify-between px-3 py-2">
-                                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                        <label
+                                            htmlFor="show-map-switch"
+                                            className="text-sm font-medium text-foreground flex items-center gap-2"
+                                        >
                                             <MapIcon size={16} />
                                             Show Map
                                         </label>
                                         <Switch
+                                            id="show-map-switch"
                                             checked={showMap}
                                             onCheckedChange={setShowMap}
                                             aria-label="Toggle map display"

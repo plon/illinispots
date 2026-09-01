@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ChevronDown, ExternalLink, Image as ImageIcon } from "lucide-react";
 import AcademicRoomDetailLoader from "@/components/AcademicRoomDetailLoader";
-import { RoomSchedule } from "@/components/FacilityRoomDetails";
+import { RoomSchedule } from "@/components/RoomSchedule";
 import {
   getRoomAvailabilityMessage,
   RoomAvailabilityDetails,

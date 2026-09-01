@@ -43,38 +43,35 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
       </h2>
       <div className="mt-1 space-y-1">
         {favorites.map((favorite) => {
-          const facilityData = getFacilityData(favorite.id);
-          
-          const handleStarClick = (e: React.MouseEvent) => {
-            e.stopPropagation(); // Prevent facility click
-            onToggleFavorite(favorite);
-          };
+          const facility = getFacilityData(favorite.id);
 
-          const handleFacilityClick = () => {
-            onFavoriteClick(favorite.id, favorite.type, favorite.name);
-          };
-          
           return (
             <div
               key={favorite.id}
-              className="mx-4 px-3 py-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
-              onClick={handleFacilityClick}
+              className="mx-4 flex items-center gap-2 rounded-md px-3 py-2 transition-colors hover:bg-muted/50"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <button
-                    onClick={handleStarClick}
-                    className="text-yellow-500 hover:text-yellow-600 flex-shrink-0 p-0.5 rounded-full hover:bg-muted/50 transition-colors"
-                    aria-label="Remove from favorites"
-                    title="Remove from favorites"
-                  >
-                    <Star size={16} fill="currentColor" />
-                  </button>
-                  <span className="font-medium text-sm truncate">{favorite.name}</span>
-                </div>
-                <div className="flex-shrink-0 ml-2">
-                  {facilityData ? (
-                    !facilityData.isOpen ? (
+              <button
+                type="button"
+                onClick={() => onToggleFavorite(favorite)}
+                className="flex-shrink-0 rounded-full p-0.5 text-yellow-500 transition-colors hover:bg-muted/50 hover:text-yellow-600"
+                aria-label="Remove from favorites"
+                title="Remove from favorites"
+              >
+                <Star size={16} fill="currentColor" />
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  onFavoriteClick(favorite.id, favorite.type, favorite.name)
+                }
+                className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
+              >
+                <span className="truncate text-sm font-medium">
+                  {favorite.name}
+                </span>
+                <span className="flex-shrink-0">
+                  {facility ? (
+                    !facility.isOpen ? (
                       <Badge
                         variant="outline"
                         className={`${STATUS_BADGE_STYLES.closed} text-xs`}
@@ -86,11 +83,11 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
                         variant="outline"
                         className={`${getFacilityAvailabilityBadgeStyle(
                           true,
-                          facilityData.roomCounts.available,
+                          facility.roomCounts.available,
                         )} text-xs`}
                       >
-                        {facilityData.roomCounts.available}/
-                        {facilityData.roomCounts.total}
+                        {facility.roomCounts.available}/
+                        {facility.roomCounts.total}
                       </Badge>
                     )
                   ) : (
@@ -101,8 +98,8 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
                       --
                     </Badge>
                   )}
-                </div>
-              </div>
+                </span>
+              </button>
             </div>
           );
         })}
