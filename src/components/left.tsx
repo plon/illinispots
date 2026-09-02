@@ -521,7 +521,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
             <ScrollArea
                 className="flex-1 relative"
-                viewportClassName="[&>div]:!block [&>div]:!min-w-0"
+                viewportClassName="[&>div]:block! [&>div]:min-w-0!"
                 ref={scrollAreaRef}
             >
                 {isSearching && hasTemporalSearch ? (

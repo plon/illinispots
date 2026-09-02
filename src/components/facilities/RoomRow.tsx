@@ -72,7 +72,7 @@ export const RoomRow: React.FC<RoomRowProps> = memo(
           onClick={handleRowClick}
           aria-expanded={isExpanded}
           aria-label={`Room ${roomName} in ${facilityName}`}
-          className={`w-full text-left py-2.5 px-4 flex items-center justify-between hover:bg-muted/30 transition-colors gap-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+          className={`w-full text-left py-2.5 px-4 flex items-center justify-between hover:bg-muted/30 transition-colors gap-2 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring ${
             isExpanded ? "bg-muted/20" : ""
           }`}
         >

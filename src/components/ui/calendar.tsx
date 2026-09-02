@@ -114,7 +114,7 @@ function Calendar({
                 onSelect?.(isSelected ? undefined : day);
               }}
               className={cn(
-                "relative flex size-9 items-center justify-center whitespace-nowrap rounded-lg p-0 text-sm outline-offset-2 focus:outline-none focus-visible:z-10 hover:bg-accent hover:text-foreground",
+                "relative flex size-9 items-center justify-center whitespace-nowrap rounded-lg p-0 text-sm outline-offset-2 focus:outline-hidden focus-visible:z-10 hover:bg-accent hover:text-foreground",
                 !isCurrentMonth && "text-muted-foreground/40",
                 isSelected &&
                   "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground font-medium",
@@ -128,7 +128,7 @@ function Calendar({
               {isTodayDate && (
                 <span
                   className={cn(
-                    "pointer-events-none absolute bottom-1 start-1/2 size-[3px] -translate-x-1/2 rounded-full",
+                    "pointer-events-none absolute bottom-1 inset-s-1/2 size-[3px] -translate-x-1/2 rounded-full",
                     isSelected ? "bg-primary-foreground" : "bg-primary",
                   )}
                   aria-hidden="true"
