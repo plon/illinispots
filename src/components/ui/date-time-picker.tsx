@@ -77,7 +77,7 @@ function DateTimePicker({
                 className="peer pl-8 pr-2.5 h-8 text-xs font-mono appearance-none [&::-webkit-date-and-time-value]:text-left [&::-webkit-date-and-time-value]:min-h-0 [&::-webkit-calendar-picker-indicator]:hidden"
                 disabled={isFetching}
               />
-              <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-2.5 text-muted-foreground/80 peer-disabled:opacity-50">
+              <div className="pointer-events-none absolute inset-y-0 inset-s-0 flex items-center justify-center ps-2.5 text-muted-foreground/80 peer-disabled:opacity-50">
                 <Clock size={13} strokeWidth={2} aria-hidden="true" />
               </div>
             </div>

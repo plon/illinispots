@@ -31,7 +31,7 @@ export const ThemeToggle: React.FC = () => {
               onClick={() => setTheme(value)}
               className={`flex items-center justify-center gap-1.5 py-1 px-2 rounded-sm transition-all ${
                 isActive
-                  ? "bg-background text-foreground shadow-xs font-medium"
+                  ? "bg-background text-foreground shadow-2xs font-medium"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               aria-label={`Set ${label.toLowerCase()} theme`}

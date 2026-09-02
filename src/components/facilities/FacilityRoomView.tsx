@@ -82,7 +82,7 @@ export const FacilityRoomView: React.FC<FacilityRoomViewProps> = memo(
                 onClick={() => setActiveTab("available")}
                 className={`flex-1 py-1 px-2 rounded-md transition-all text-center ${
                   activeTab === "available"
-                    ? "bg-background text-foreground shadow-xs font-semibold"
+                    ? "bg-background text-foreground shadow-2xs font-semibold"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -95,7 +95,7 @@ export const FacilityRoomView: React.FC<FacilityRoomViewProps> = memo(
                 onClick={() => setActiveTab("occupied")}
                 className={`flex-1 py-1 px-2 rounded-md transition-all text-center ${
                   activeTab === "occupied"
-                    ? "bg-background text-foreground shadow-xs font-semibold"
+                    ? "bg-background text-foreground shadow-2xs font-semibold"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -108,7 +108,7 @@ export const FacilityRoomView: React.FC<FacilityRoomViewProps> = memo(
                 onClick={() => setActiveTab("all")}
                 className={`flex-1 py-1 px-2 rounded-md transition-all text-center ${
                   activeTab === "all"
-                    ? "bg-background text-foreground shadow-xs font-semibold"
+                    ? "bg-background text-foreground shadow-2xs font-semibold"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >

@@ -53,7 +53,7 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
               <button
                 type="button"
                 onClick={() => onToggleFavorite(favorite)}
-                className="flex-shrink-0 rounded-full p-0.5 text-yellow-500 transition-colors hover:bg-muted/50 hover:text-yellow-600"
+                className="shrink-0 rounded-full p-0.5 text-yellow-500 transition-colors hover:bg-muted/50 hover:text-yellow-600"
                 aria-label={`Remove ${favorite.name} from favorites`}
                 title={`Remove ${favorite.name} from favorites`}
               >
@@ -69,7 +69,7 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
                 <span className="truncate text-sm font-medium">
                   {favorite.name}
                 </span>
-                <span className="flex-shrink-0">
+                <span className="shrink-0">
                   {facility ? (
                     !facility.isOpen ? (
                       <Badge

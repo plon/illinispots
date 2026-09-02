@@ -237,7 +237,7 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                                 size="sm"
                                 onClick={() => selectPresetDuration(minDuration === mins && !isCustomDurationOpen ? undefined : mins)}
                                 className={`h-9 text-xs font-medium transition-all ${minDuration === mins && !isCustomDurationOpen
-                                    ? "shadow-sm"
+                                    ? "shadow-xs"
                                     : "hover:border-primary/50 hover:bg-primary/5"
                                     }`}
                             >
@@ -249,7 +249,7 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                             size="sm"
                             onClick={openCustomDuration}
                             className={`h-9 text-xs font-medium transition-all ${isCustomDurationOpen
-                                ? "shadow-sm"
+                                ? "shadow-xs"
                                 : "hover:border-primary/50 hover:bg-primary/5"
                                 }`}
                         >
