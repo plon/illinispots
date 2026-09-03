@@ -15,6 +15,13 @@ import {
 } from "@/utils/loadingMetrics";
 import { getClientConfig } from "@/client/config";
 import { Sentry } from "@/client/observability";
+
+const DESKTOP_HOVER_QUERY =
+  "(min-width: 768px) and (hover: hover) and (pointer: fine)";
+
+const canShowBuildingHoverTooltip = () =>
+  window.matchMedia(DESKTOP_HOVER_QUERY).matches;
+
 export default function FacilityMap({
   facilityData,
   onMarkerClick,
@@ -218,6 +225,8 @@ export default function FacilityMap({
       data: MarkerData,
     ) => {
       markerEl.addEventListener("mouseenter", () => {
+        if (!canShowBuildingHoverTooltip()) return;
+
         activePopupRef.current?.remove();
 
         activePopupRef.current = new mapboxgl.Popup({
@@ -436,6 +445,8 @@ export default function FacilityMap({
         };
 
         mapRef.on("mouseenter", layerId, (e: any) => {
+          if (!canShowBuildingHoverTooltip()) return;
+
           mapRef.getCanvas().style.cursor = "pointer";
           const feature = e.features && e.features[0];
           if (!feature) return;
