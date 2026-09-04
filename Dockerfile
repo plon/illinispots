@@ -1,4 +1,4 @@
-FROM oven/bun:1.4.0-alpine AS dependencies
+FROM oven/bun:1.4.1-alpine AS dependencies
 WORKDIR /app
 
 COPY package.json bun.lock ./
@@ -11,7 +11,7 @@ ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
 COPY . .
 RUN bun run build
 
-FROM oven/bun:1.4.0-alpine AS runtime
+FROM oven/bun:1.4.1-alpine AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
