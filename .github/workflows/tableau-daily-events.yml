@@ -17,7 +17,7 @@ jobs:
   update-daily-events:
     name: Update daily events
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     defaults:
       run:
@@ -55,7 +55,7 @@ jobs:
           --schedule "5 0 * * *"
           --timezone "America/Chicago"
           --checkin-margin 415
-          --max-runtime 15
+          --max-runtime 30
 
       - name: Update Tableau daily events
         run: >-
