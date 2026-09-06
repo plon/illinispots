@@ -17,7 +17,7 @@ jobs:
   update-daily-events:
     name: Update daily events
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 300
 
     defaults:
       run:
@@ -55,15 +55,22 @@ jobs:
           --schedule "5 0 * * *"
           --timezone "America/Chicago"
           --checkin-margin 415
-          --max-runtime 30
+          --max-runtime 300
 
       - name: Update Tableau daily events
-        run: >-
-          python sentry_monitor.py run-stage
-          --monitor-slug tableau-daily-events
-          --stage update-daily-events
-          --label "Update Tableau daily events"
-          -- python cron/tableau_dailyevents_scraper.py
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
+        with:
+          timeout_minutes: 20
+          max_attempts: 8
+          retry_wait_seconds: 900
+          shell: bash
+          command: >-
+            cd data-pipeline &&
+            python sentry_monitor.py run-stage
+            --monitor-slug tableau-daily-events
+            --stage update-daily-events
+            --label "Update Tableau daily events"
+            -- python cron/tableau_dailyevents_scraper.py
 
       - name: Complete Sentry monitor
         if: ${{ always() }}
