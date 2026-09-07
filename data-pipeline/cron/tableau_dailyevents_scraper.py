@@ -133,8 +133,9 @@ def load_to_postgres(df):
         df (DataFrame): Pandas DataFrame containing events data.
 
     Returns:
-        dict | bool: Inserted and unloadable event counts, or False when no
-            events were inserted.
+        dict | bool: Inserted and unloadable event counts, or False when the
+            database insert itself failed. An empty validated snapshot is
+            success with zero inserted events so stale events are cleared.
     """
     supabase = get_supabase_client()
 
@@ -229,8 +230,11 @@ def load_to_postgres(df):
             print(f"Error inserting events: {str(e)}")
             return False
     else:
-        print("No valid events to insert")
-        return False
+        print("No valid events to insert; cleared snapshot remains empty")
+        return {
+            "inserted_events": 0,
+            "unloadable_events": len(invalid_events),
+        }
 
 def main():
     """Main function to scrape daily events and load them to PostgreSQL.
@@ -247,8 +251,8 @@ def main():
 
     print("Step 2: Load data to PostgreSQL")
     load_counts = load_to_postgres(events)
-    if not load_counts:
-        raise RuntimeError("Failed Step 2: No valid events were inserted")
+    if load_counts is False:
+        raise RuntimeError("Failed Step 2: Error inserting events")
 
     print("Finished Step 2")
     
