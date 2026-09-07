@@ -17,6 +17,39 @@ TABLEAU_RETRY_BACKOFF_SECONDS = 5
 TABLEAU_RETRY_MAX_BACKOFF_SECONDS = 240
 
 
+def write_github_summary(
+    tableau_rows,
+    valid_rows,
+    inserted_events,
+    invalid_timestamp_events,
+    unloadable_events,
+    skipped_events,
+) -> None:
+    summary_path = os.getenv("GITHUB_STEP_SUMMARY")
+    if not summary_path:
+        return
+
+    with open(summary_path, "a") as summary:
+        summary.write("\n## Tableau daily events\n\n")
+        if skipped_events == 0:
+            summary.write(
+                f"✅ Loaded {inserted_events} daily event(s) "
+                f"from {tableau_rows} Tableau row(s).\n\n"
+            )
+        else:
+            summary.write(
+                f"⚠️ Loaded {inserted_events} daily event(s); "
+                f"skipped {skipped_events} of {tableau_rows} Tableau row(s).\n\n"
+            )
+        summary.write("| Metric | Count |\n| --- | --- |\n")
+        summary.write(f"| Tableau source rows | {tableau_rows} |\n")
+        summary.write(f"| Valid timestamp rows | {valid_rows} |\n")
+        summary.write(f"| Inserted daily events | {inserted_events} |\n")
+        summary.write(f"| Invalid timestamps | {invalid_timestamp_events} |\n")
+        summary.write(f"| Unloadable events | {unloadable_events} |\n")
+        summary.write(f"| Total skipped | {skipped_events} |\n")
+
+
 def get_supabase_client():
     """Initialize and return Supabase client.
 
@@ -267,16 +300,26 @@ def main():
 
     invalid_timestamp_events = events.attrs.get("invalid_timestamp_events", 0)
     unloadable_events = load_counts["unloadable_events"]
+    tableau_rows = events.attrs.get("tableau_rows", len(events))
+    valid_rows = len(events)
+    inserted_events = load_counts["inserted_events"]
+    skipped_events = invalid_timestamp_events + unloadable_events
+    write_github_summary(
+        tableau_rows,
+        valid_rows,
+        inserted_events,
+        invalid_timestamp_events,
+        unloadable_events,
+        skipped_events,
+    )
     emit_gauges(
         {
-            "pipeline.data.tableau_rows": events.attrs.get("tableau_rows", len(events)),
-            "pipeline.data.valid_timestamp_events": len(events),
-            "pipeline.database.daily_events": load_counts["inserted_events"],
+            "pipeline.data.tableau_rows": tableau_rows,
+            "pipeline.data.valid_timestamp_events": valid_rows,
+            "pipeline.database.daily_events": inserted_events,
             "pipeline.data.invalid_timestamp_events": invalid_timestamp_events,
             "pipeline.data.unloadable_events": unloadable_events,
-            "pipeline.data.skipped_events": (
-                invalid_timestamp_events + unloadable_events
-            ),
+            "pipeline.data.skipped_events": skipped_events,
         },
         {"pipeline": "tableau-daily-events"},
     )

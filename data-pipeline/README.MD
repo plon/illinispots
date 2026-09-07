@@ -67,6 +67,7 @@ This directory contains scripts for collecting and processing UIUC course and bu
    - Scrapes daily event data from [Tableau](https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents) and loads it into PostgreSQL
    - Updates the `daily_events` table with current day's events
    - Runs daily through [the GitHub Actions workflow](../.github/workflows/tableau-daily-events.yml), and can also be started manually from the Actions tab
+   - Emits a GitHub Actions job-summary table with source rows, valid rows, inserted events, and skipped events
    - The repository must define `SUPABASE_URL` and `SUPABASE_SECRET_KEY` as GitHub Actions repository secrets; the key must be allowed to read `rooms`, replace `daily_events`, and invoke `refresh_room_availability_cache`
 
 ## Data Flow Diagram
