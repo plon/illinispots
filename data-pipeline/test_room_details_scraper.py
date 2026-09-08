@@ -81,6 +81,23 @@ class AnswersParsingTests(unittest.TestCase):
             ["PC", "HDMI"],
         )
 
+    def test_equipment_supports_bullet_divs_without_copying_wrapper_text(self) -> None:
+        html = """
+        <div class="doc-body">
+          <h2>Equipment in this Technology Enhanced Classroom</h2>
+          <div>
+            <div>•<span> </span>PC</div>
+            <div>•<span> </span>HDMI</div>
+          </div>
+          <h2>Useful links</h2>
+        </div>
+        """
+
+        self.assertEqual(
+            parse_answers_room_page(html, "https://example.test/room")["equipment"],
+            ["PC", "HDMI"],
+        )
+
     def test_missing_equipment_list_is_a_parse_failure(self) -> None:
         with self.assertRaisesRegex(ValueError, "equipment list"):
             parse_answers_room_page(

@@ -334,11 +334,15 @@ def parse_answers_room_page(html_text: str, page_url: str) -> dict:
         raise ValueError(f"Could not find an equipment list on {page_url}")
 
     equipment: list[str] = []
-    for candidate in equipment_heading.find_all_next(["li", "p", "h2", "h3"]):
+    for candidate in equipment_heading.find_all_next(
+        ["li", "p", "div", "h2", "h3"]
+    ):
         if candidate.name in {"h2", "h3"}:
             break
         text = html.unescape(candidate.get_text(" ", strip=True))
-        if candidate.name == "p":
+        if candidate.name in {"p", "div"}:
+            if candidate.find(["li", "p", "div"], recursive=False) is not None:
+                continue
             if not text.startswith("•"):
                 continue
             text = text.removeprefix("•").strip()
