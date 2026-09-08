@@ -47,6 +47,7 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       strictPort: true,
+      allowedHosts: [".localtest.me"],
       proxy: {
         "/api": "http://localhost:3000",
       },
