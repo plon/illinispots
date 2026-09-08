@@ -43,7 +43,7 @@
     "cn": "^0.2.5",
     "date-fns": "^4.4.0",
     "hono": "^4.13.7",
-    "lucide-react": "^0.454.0",
+    "lucide-react": "^1.41.0",
     "luxon": "^3.7.2",
     "mapbox-gl": "^3.30.0",
     "posthog-js": "^1.427.2",
