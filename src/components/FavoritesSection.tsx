@@ -5,7 +5,7 @@ import { Facility, FacilityStatus } from '@/types';
 import {
   STATUS_BADGE_STYLES,
   getFacilityAvailabilityBadgeStyle,
-} from '@/components/RoomBadge';
+} from '@/components/roomBadgeStyles';
 import { Star } from 'lucide-react';
 
 interface FavoritesSectionProps {

@@ -38,7 +38,7 @@ const PopoverOpenContext = createContext<{
   setOpen?: (open: boolean) => void;
 }>({});
 
-export const usePopoverOpen = () => useContext(PopoverOpenContext);
+const usePopoverOpen = () => useContext(PopoverOpenContext);
 
 export const HybridTooltip = (props: TooltipProps & PopoverProps) => {
   const isTouch = useTouch();

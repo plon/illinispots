@@ -96,7 +96,10 @@
     "react/only-export-components": [
       "error",
       {
-        "allowConstantExport": true
+        "allowConstantExport": true,
+        "allowExportNames": [
+          "Route"
+        ]
       }
     ],
     "typescript/ban-ts-comment": "error",
@@ -153,7 +156,6 @@
         "**/*.{ts,tsx}"
       ],
       "rules": {
-        "react/only-export-components": "off",
         "typescript/no-explicit-any": "off",
         "typescript/no-require-imports": "off"
       },

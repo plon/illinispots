@@ -1,34 +1,20 @@
 import React, {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useState,
   ReactNode,
 } from "react";
 import { getCampusDateTimeParts, type CampusDateTime } from "@/utils/time";
-
-const MINUTE_MS = 60_000;
-
-export function millisecondsUntilNextMinute(date: Date): number {
-  return MINUTE_MS - (date.getTime() % MINUTE_MS);
-}
-
-interface DateTimeContextType {
-  selectedDateTime: CampusDateTime;
-  liveNow: Date;
-  setSelectedDateTime: (dateTime: CampusDateTime) => void;
-  isCurrentDateTime: boolean;
-  resetToCurrentDateTime: () => void;
-}
+import {
+  DateTimeContext,
+  millisecondsUntilNextMinute,
+} from "./dateTime";
 
 interface DateTimeState {
   selectedDateTime: CampusDateTime;
   liveNow: Date;
   isLive: boolean;
 }
-
-const DateTimeContext = createContext<DateTimeContextType | undefined>(undefined);
 
 function createLiveState(now = new Date()): DateTimeState {
   const { date, time } = getCampusDateTimeParts(now);
@@ -107,12 +93,4 @@ export function DateTimeProvider({ children }: { children: ReactNode }) {
       {children}
     </DateTimeContext.Provider>
   );
-}
-
-export function useDateTimeContext() {
-  const context = useContext(DateTimeContext);
-  if (context === undefined) {
-    throw new Error("useDateTimeContext must be used within DateTimeProvider");
-  }
-  return context;
 }

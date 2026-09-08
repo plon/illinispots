@@ -3,7 +3,7 @@ import { usePostHog } from "@posthog/react";
 import { Button } from "@/components/ui/button";
 import { CalendarClock } from "lucide-react";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
-import { useDateTimeContext } from "@/contexts/DateTimeContext";
+import { useDateTimeContext } from "@/contexts/dateTime";
 import { formatDateForDisplay, formatShortMonthDay, formatTimeForDisplay } from "@/utils/time";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import {

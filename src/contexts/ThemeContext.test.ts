@@ -1,15 +1,15 @@
 import { describe, expect, it, beforeEach, afterEach } from "bun:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { ThemeProvider } from "./ThemeContext";
 import {
-  ThemeProvider,
   getInitialTheme,
   getSystemThemeSnapshot,
   subscribeSystemTheme,
   applyThemeToDocument,
   useTheme,
   THEME_STORAGE_KEY,
-} from "./ThemeContext";
+} from "./theme";
 
 describe("ThemeContext production exports", () => {
   let localStorageStore: Record<string, string> = {};

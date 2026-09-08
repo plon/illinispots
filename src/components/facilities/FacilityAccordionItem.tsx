@@ -9,7 +9,7 @@ import { FilterCriteria, isRoomAvailable } from "@/utils/filterUtils";
 import {
   STATUS_BADGE_STYLES,
   getFacilityAvailabilityBadgeStyle,
-} from "@/components/RoomBadge";
+} from "@/components/roomBadgeStyles";
 import {
   AccordionItem,
   AccordionTrigger,
