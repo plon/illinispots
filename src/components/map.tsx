@@ -356,6 +356,7 @@ export default function FacilityMap({
         | undefined;
 
       if (existingSource) {
+        // oxlint-disable-next-line typescript/no-explicit-any
         existingSource.setData(geojson as any);
       } else {
         mapRef.addSource(sourceId, { type: "geojson", data: geojson });
@@ -363,6 +364,7 @@ export default function FacilityMap({
         const firstTextLayer = mapRef
           .getStyle()
           .layers?.find(
+            // oxlint-disable-next-line typescript/no-explicit-any
             (l: any) => l.type === "symbol" && l.layout && l.layout["text-field"],
           );
 
@@ -407,6 +409,7 @@ export default function FacilityMap({
           firstTextLayer && firstTextLayer.id,
         );
 
+        // oxlint-disable-next-line typescript/no-explicit-any
         const showPopupForFeature = (feature: any) => {
           try {
             const props = feature?.properties || {};
@@ -438,6 +441,7 @@ export default function FacilityMap({
           }
         };
 
+        // oxlint-disable-next-line typescript/no-explicit-any
         mapRef.on("mouseenter", layerId, (e: any) => {
           if (!canShowBuildingHoverTooltip()) return;
 
@@ -453,6 +457,7 @@ export default function FacilityMap({
           activePopupRef.current = null;
         });
 
+        // oxlint-disable-next-line typescript/no-explicit-any
         mapRef.on("click", layerId, (e: any) => {
           const feature = e.features && e.features[0];
           if (!feature) return;
