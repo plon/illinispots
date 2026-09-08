@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { Facility } from "@/types";
-import { FilterCriteria } from "@/utils/filterUtils";
+import { FilterCriteria, EMPTY_FILTER_CRITERIA } from "@/utils/filterUtils";
 import { Button } from "@/components/ui/button";
 import { Accordion } from "@/components/ui/accordion";
 import { FacilityAccordionItem } from "./FacilityAccordionItem";
@@ -24,7 +24,7 @@ export const FacilityListView: React.FC<FacilityListViewProps> = memo(
     academicFacilities,
     expandedFacilityIds,
     onExpandedFacilityIdsChange,
-    filterCriteria = {},
+    filterCriteria = EMPTY_FILTER_CRITERIA,
     isLibraryFetching = false,
     isAcademicLoading = false,
     error = null,

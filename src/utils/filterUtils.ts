@@ -7,6 +7,9 @@ export interface FilterCriteria {
   nowMinutes?: number;
 }
 
+/** Shared default for optional `filterCriteria` props: a fresh `{}` per render would break memoization. */
+export const EMPTY_FILTER_CRITERIA: FilterCriteria = {};
+
 export const isRoomAvailable = (
   room: FacilityRoom,
   criteria: FilterCriteria,

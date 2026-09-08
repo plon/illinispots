@@ -1,8 +1,10 @@
 import {
   PropsWithChildren,
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -42,22 +44,28 @@ export const usePopoverOpen = () => useContext(PopoverOpenContext);
 
 export const HybridTooltip = (props: TooltipProps & PopoverProps) => {
   const isTouch = useTouch();
-  const [open, setOpen] = useState(props.open || false);
+  const { open: controlledOpen, onOpenChange: controlledOnOpenChange } = props;
+  const [open, setOpen] = useState(controlledOpen || false);
 
-  const isControlled = props.open !== undefined;
-  const isOpen = isControlled ? props.open : open;
-  const onOpenChange = (value: boolean) => {
-    if (isControlled) {
-      props.onOpenChange?.(value);
-    } else {
-      setOpen(value);
-    }
-  };
+  const isControlled = controlledOpen !== undefined;
+  const isOpen = isControlled ? controlledOpen : open;
+  const onOpenChange = useCallback(
+    (value: boolean) => {
+      if (isControlled) {
+        controlledOnOpenChange?.(value);
+      } else {
+        setOpen(value);
+      }
+    },
+    [isControlled, controlledOnOpenChange],
+  );
+  const popoverOpenValue = useMemo(
+    () => ({ open: isOpen, setOpen: onOpenChange }),
+    [isOpen, onOpenChange],
+  );
 
   return (
-    <PopoverOpenContext.Provider
-      value={{ open: isOpen, setOpen: onOpenChange }}
-    >
+    <PopoverOpenContext.Provider value={popoverOpenValue}>
       {isTouch ? (
         <Popover {...props} open={isOpen} onOpenChange={onOpenChange} />
       ) : (

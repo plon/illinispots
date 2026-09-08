@@ -40,7 +40,9 @@ async function waitFor(
 ): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
+    // oxlint-disable-next-line no-await-in-loop -- polling helper: each check must run sequentially after the previous one
     if (await predicate()) return;
+    // oxlint-disable-next-line no-await-in-loop -- polling delay must run sequentially between checks; Promise.all does not apply
     await new Promise((resolve) => setTimeout(resolve, 25));
   }
   throw new Error(`Condition was not met within ${timeoutMs}ms`);

@@ -3,6 +3,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   ReactNode,
 } from "react";
@@ -94,16 +95,25 @@ export function DateTimeProvider({ children }: { children: ReactNode }) {
     };
   }, [state.isLive]);
 
+  const value = useMemo<DateTimeContextType>(
+    () => ({
+      selectedDateTime: state.selectedDateTime,
+      liveNow: state.liveNow,
+      setSelectedDateTime,
+      isCurrentDateTime: state.isLive,
+      resetToCurrentDateTime,
+    }),
+    [
+      state.selectedDateTime,
+      state.liveNow,
+      state.isLive,
+      setSelectedDateTime,
+      resetToCurrentDateTime,
+    ],
+  );
+
   return (
-    <DateTimeContext.Provider
-      value={{
-        selectedDateTime: state.selectedDateTime,
-        liveNow: state.liveNow,
-        setSelectedDateTime,
-        isCurrentDateTime: state.isLive,
-        resetToCurrentDateTime,
-      }}
-    >
+    <DateTimeContext.Provider value={value}>
       {children}
     </DateTimeContext.Provider>
   );

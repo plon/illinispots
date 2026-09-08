@@ -210,15 +210,18 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
 
             <div className="relative h-12 w-full overflow-hidden rounded border border-border/60 bg-muted/30">
               {Array.from({ length: timeline.totalHours - 1 }).map(
-                (_, index) => (
-                  <div
-                    key={index}
-                    className="pointer-events-none absolute bottom-0 top-0 border-r border-border/25"
-                    style={{
-                      left: `${((index + 1) / timeline.totalHours) * 100}%`,
-                    }}
-                  />
-                ),
+                (_, index) => {
+                  const left = `${((index + 1) / timeline.totalHours) * 100}%`;
+                  return (
+                    <div
+                      key={left}
+                      className="pointer-events-none absolute bottom-0 top-0 border-r border-border/25"
+                      style={{
+                        left,
+                      }}
+                    />
+                  );
+                },
               )}
 
               <TooltipProvider delayDuration={50}>
