@@ -82,7 +82,7 @@ def get_events_df():
         try:
             response = requests.get(
                 TABLEAU_CSV_URL,
-                impersonate="chrome124",
+                impersonate="chrome",
                 timeout=TABLEAU_REQUEST_TIMEOUT,
             )
             response.raise_for_status()

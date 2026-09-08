@@ -193,7 +193,7 @@ def fetch_url(url: str, label: str, attempts: int = REQUEST_ATTEMPTS) -> str:
         try:
             response = requests.get(
                 url,
-                impersonate="chrome124",
+                impersonate="chrome",
                 timeout=REQUEST_TIMEOUT,
             )
             response.raise_for_status()

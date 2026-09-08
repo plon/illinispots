@@ -383,7 +383,7 @@ def _load_proxy_list(path: str, allowed_schemes: Optional[List[str]] = None) -> 
     try:
         if path.startswith('http://') or path.startswith('https://'):
             try:
-                r = requests.get(path, impersonate='chrome123', timeout=30)
+                r = requests.get(path, impersonate='chrome', timeout=30)
                 r.raise_for_status()
                 lines = r.text.splitlines()
             except Exception as e:
@@ -529,7 +529,7 @@ def scrape_all_data(year: Optional[int] = None,
             try:
                 r = requests.get(
                     url,
-                    impersonate='chrome123',
+                    impersonate='chrome',
                     proxies=use_proxies,
                     timeout=request_timeout,
                     verify=not insecure,
