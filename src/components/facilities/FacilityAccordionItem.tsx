@@ -5,7 +5,7 @@ import {
   Facility,
   RoomStatus,
 } from "@/types";
-import { FilterCriteria, isRoomAvailable } from "@/utils/filterUtils";
+import { FilterCriteria, EMPTY_FILTER_CRITERIA, isRoomAvailable } from "@/utils/filterUtils";
 import {
   STATUS_BADGE_STYLES,
   getFacilityAvailabilityBadgeStyle,
@@ -27,7 +27,7 @@ export const FacilityAccordionItem: React.FC<FacilityAccordionItemProps> = memo(
   ({
     facility,
     isExpanded,
-    filterCriteria = {},
+    filterCriteria = EMPTY_FILTER_CRITERIA,
   }) => {
     const posthog = usePostHog();
 

@@ -7,7 +7,8 @@
     "oxc"
   ],
   "categories": {
-    "correctness": "error"
+    "correctness": "error",
+    "perf": "warn"
   },
   "env": {
     "builtin": true

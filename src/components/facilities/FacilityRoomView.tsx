@@ -1,6 +1,6 @@
 import React, { useState, useMemo, memo } from "react";
 import { Facility, FacilityType } from "@/types";
-import { FilterCriteria, isRoomAvailable } from "@/utils/filterUtils";
+import { FilterCriteria, EMPTY_FILTER_CRITERIA, isRoomAvailable } from "@/utils/filterUtils";
 import { getLibraryHoursMessage } from "@/utils/libraryHours";
 import { formatTimeForDisplay } from "@/utils/time";
 import { RoomRow } from "./RoomRow";
@@ -14,7 +14,7 @@ interface FacilityRoomViewProps {
 type RoomTab = "available" | "occupied" | "all";
 
 export const FacilityRoomView: React.FC<FacilityRoomViewProps> = memo(
-  ({ facility, filterCriteria = {} }) => {
+  ({ facility, filterCriteria = EMPTY_FILTER_CRITERIA }) => {
     const isAcademic = facility.type === FacilityType.ACADEMIC;
     const [activeTab, setActiveTab] = useState<RoomTab>("available");
     const [expandedRoomId, setExpandedRoomId] = useState<string | null>(null);
