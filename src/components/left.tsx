@@ -25,7 +25,6 @@ import {
     FacilityType,
 } from "@/types";
 import {
-    Github,
     Map as MapIcon,
     BadgeHelp,
     Search,
@@ -36,6 +35,7 @@ import {
     CalendarClock,
     RotateCcw,
 } from "lucide-react";
+import { GitHubLogoIcon } from "@radix-ui/react-icons";
 import DateTimeButton from "@/components/DateTimeButton";
 import { FavoritesSection } from "@/components/FavoritesSection";
 import { AddFavoritesDialog } from "@/components/AddFavoritesDialog";
@@ -489,7 +489,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                         rel="noopener noreferrer"
                                         className="flex items-center justify-start gap-2 px-3 py-2 rounded-md text-sm hover:bg-secondary transition-colors text-foreground"
                                     >
-                                        <Github size={16} />
+                                        <GitHubLogoIcon width={16} height={16} />
                                         View on GitHub
                                     </a>
 
