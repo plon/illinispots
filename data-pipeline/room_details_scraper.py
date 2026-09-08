@@ -26,11 +26,13 @@ import os
 import random
 import re
 import time
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
+from cron.utils.buildingnames import alias_map
 from curl_cffi import requests
 from dotenv import find_dotenv, load_dotenv
 
@@ -77,21 +79,112 @@ REGISTRAR_TO_COURSE_EXPLORER = {
 ANSWERS_TO_COURSE_EXPLORER = {
     "digital computer lab": "Digital Computer Laboratory",
     "literature, cultures, and linguistics building": "Literatures, Cultures, & Ling",
+    "main library": "Library",
+    "noyes laboratory of chemistry": "Noyes Laboratory",
+}
+
+# Answers usually includes the campus building acronym in parentheses. Prefer
+# that stable identifier over display-name matching, with only genuine source
+# disagreements represented here.
+ANSWERS_BUILDING_CODE_ALIASES = {
+    "SHSB": "SHS",
+}
+
+# A small number of Answers room labels use a descriptive or facilities-system
+# identifier instead of the Registrar's room number.
+ANSWERS_ROOM_NUMBER_ALIASES = {
+    ("FA", "AUDITORIUM"): "AUD",
+    ("LH", "1053"): "THEAT",
 }
 
 _BUILDING_LOOKUP = {
     key.lower(): value
-    for key, value in {**REGISTRAR_TO_COURSE_EXPLORER, **ANSWERS_TO_COURSE_EXPLORER}.items()
+    for key, value in {
+        **alias_map,
+        **REGISTRAR_TO_COURSE_EXPLORER,
+        **ANSWERS_TO_COURSE_EXPLORER,
+    }.items()
 }
 
-_PAREN_SUFFIX = re.compile(r"\s*\([^)]*\)\s*$")
-_TRAILING_ROOM = re.compile(r"([A-Za-z0-9]+(?:\s*/\s*[A-Za-z0-9]+)*)\s*$")
+_PAREN_SUFFIX = re.compile(r"\s*\(([^)]*)\)\s*$")
+_TRAILING_ROOM = re.compile(
+    r"([A-Za-z0-9][A-Za-z0-9-]*(?:\s*/\s*[A-Za-z0-9][A-Za-z0-9-]*)*)\s*$"
+)
+_TECH_CLASSROOM_PREFIX = "technology enhanced classrooms,"
 
 
 def map_building_name(raw_label: str) -> str:
     """Map a Registrar/Answers building label to the Course Explorer name."""
     cleaned = _PAREN_SUFFIX.sub("", html.unescape(raw_label)).strip()
     return _BUILDING_LOOKUP.get(cleaned.lower(), cleaned)
+
+
+def normalize_building_code(raw_code: str) -> str:
+    """Normalize Registrar codes such as `1MSEB` to Answers' `MSEB`."""
+    return re.sub(r"^\d+", "", raw_code).upper()
+
+
+def answers_building_code(raw_label: str) -> str | None:
+    """Extract and normalize an Answers building acronym when one is present."""
+    match = _PAREN_SUFFIX.search(html.unescape(raw_label))
+    if match is None:
+        return None
+    code = match.group(1).strip().upper()
+    return ANSWERS_BUILDING_CODE_ALIASES.get(code, code)
+
+
+def normalize_room_number(raw_room: str) -> str:
+    """Normalize source formatting while preserving the room's identity."""
+    return re.sub(r"[\s-]+", "", raw_room).upper()
+
+
+def parse_answers_room_number(raw_label: str) -> str | None:
+    """Return a room number only for Technology Enhanced Classroom documents."""
+    label = html.unescape(raw_label).strip()
+    if not label.lower().startswith(_TECH_CLASSROOM_PREFIX):
+        return None
+    label = _PAREN_SUFFIX.sub("", label).strip()
+    match = _TRAILING_ROOM.search(label)
+    return match.group(1).strip() if match else None
+
+
+@dataclass
+class RoomIndex:
+    """Resolve Answers rooms to Registrar rows without joining on display text."""
+
+    by_name: dict[tuple[str, str], dict]
+    by_code: dict[tuple[str, str], dict]
+    code_by_name: dict[str, str]
+
+    @classmethod
+    def from_rooms(cls, rooms: list[dict]) -> RoomIndex:
+        by_name: dict[tuple[str, str], dict] = {}
+        by_code: dict[tuple[str, str], dict] = {}
+        code_by_name: dict[str, str] = {}
+        for room in rooms:
+            building_name = room["building_name"]
+            building_code = normalize_building_code(room["building_code"])
+            room_number = normalize_room_number(room["room_number"])
+            by_name[(building_name, room_number)] = room
+            by_code[(building_code, room_number)] = room
+            code_by_name[building_name] = building_code
+        return cls(by_name=by_name, by_code=by_code, code_by_name=code_by_name)
+
+    def resolve(self, building_label: str, room_label: str) -> dict | None:
+        building_name = map_building_name(building_label)
+        building_code = answers_building_code(building_label)
+        if building_code is None:
+            building_code = self.code_by_name.get(building_name)
+
+        room_number = normalize_room_number(room_label)
+        if building_code is not None:
+            room_number = ANSWERS_ROOM_NUMBER_ALIASES.get(
+                (building_code, room_number), room_number
+            )
+            room = self.by_code.get((building_code, room_number))
+            if room is not None:
+                return room
+        return self.by_name.get((building_name, room_number))
 
 
 def fetch_url(url: str, label: str, attempts: int = REQUEST_ATTEMPTS) -> str:
@@ -216,13 +309,14 @@ def parse_answers_building_page(html_text: str) -> list[tuple[str, str]]:
         match = re.search(r"page\.php\?id=(\d+)", href)
         if not match:
             continue
+        label = html.unescape(link.get_text(" ", strip=True))
+        if parse_answers_room_number(label) is None:
+            continue
         url = urljoin(ANSWERS_BASE, f"page.php?id={match.group(1)}")
         if url in seen:
             continue
         seen.add(url)
-        label = html.unescape(link.get_text(" ", strip=True))
-        if label:
-            rooms.append((label, url))
+        rooms.append((label, url))
     return rooms
 
 
@@ -231,18 +325,27 @@ def parse_answers_room_page(html_text: str, page_url: str) -> dict:
     soup = BeautifulSoup(html_text, "html.parser")
     body = soup.select_one("div.doc-body") or soup
 
-    equipment: list[str] = []
+    equipment_heading = None
     for heading in body.find_all(["h2", "h3"]):
-        if "equipment in this" not in heading.get_text(" ", strip=True).lower():
-            continue
-        equipment_list = heading.find_next_sibling("ul")
-        if equipment_list is None:
-            continue
-        for item in equipment_list.find_all("li", recursive=False):
-            text = html.unescape(item.get_text(" ", strip=True))
-            if text:
-                equipment.append(text)
-        break
+        if "equipment in this" in heading.get_text(" ", strip=True).lower():
+            equipment_heading = heading
+            break
+    if equipment_heading is None:
+        raise ValueError(f"Could not find an equipment list on {page_url}")
+
+    equipment: list[str] = []
+    for candidate in equipment_heading.find_all_next(["li", "p", "h2", "h3"]):
+        if candidate.name in {"h2", "h3"}:
+            break
+        text = html.unescape(candidate.get_text(" ", strip=True))
+        if candidate.name == "p":
+            if not text.startswith("•"):
+                continue
+            text = text.removeprefix("•").strip()
+        if text:
+            equipment.append(text)
+    if not equipment:
+        raise ValueError(f"Could not find an equipment list on {page_url}")
 
     photo_urls: list[str] = []
     for figure in body.find_all("figure", class_="roomphoto"):
@@ -262,16 +365,20 @@ def parse_answers_room_page(html_text: str, page_url: str) -> dict:
 
 
 def scrape_answers_details(
-    rooms_by_key: dict[tuple[str, str], dict],
+    rooms: list[dict],
     request_delay: float,
 ) -> dict:
     """Crawl the Answers building/room pages and enrich matching Registrar rows."""
+    room_index = RoomIndex.from_rooms(rooms)
     stats = {
         "buildings": 0,
         "room_pages": 0,
         "enriched": 0,
         "unmatched": 0,
         "unmatched_sample": [],
+        "failed_buildings": 0,
+        "failed_rooms": 0,
+        "failure_sample": [],
     }
 
     building_entries = parse_answers_building_list(
@@ -290,16 +397,27 @@ def scrape_answers_details(
                     attempts=ANSWERS_REQUEST_ATTEMPTS,
                 )
             )
-        except RuntimeError as exc:
+        except (RuntimeError, ValueError) as exc:
             print(f"Skipping Answers building {building_label}: {exc}")
+            stats["failed_buildings"] += 1
+            if len(stats["failure_sample"]) < 10:
+                stats["failure_sample"].append(building_label)
             continue
         finally:
             time.sleep(request_delay)
 
         building_name = map_building_name(building_label)
         for room_label, room_url in room_entries:
-            trailing = _TRAILING_ROOM.search(room_label)
-            if not trailing:
+            room_number = parse_answers_room_number(room_label)
+            if room_number is None:
+                continue
+            room = room_index.resolve(building_label, room_number)
+            if room is None:
+                stats["unmatched"] += 1
+                if len(stats["unmatched_sample"]) < 10:
+                    stats["unmatched_sample"].append(
+                        f"{building_name} {room_number}"
+                    )
                 continue
             try:
                 details = parse_answers_room_page(
@@ -310,31 +428,27 @@ def scrape_answers_details(
                     ),
                     room_url,
                 )
-            except RuntimeError as exc:
+            except (RuntimeError, ValueError) as exc:
                 print(f"Skipping Answers room {room_label}: {exc}")
+                stats["failed_rooms"] += 1
+                if len(stats["failure_sample"]) < 10:
+                    stats["failure_sample"].append(room_label)
                 continue
             finally:
                 time.sleep(request_delay)
 
             stats["room_pages"] += 1
-            room_number = trailing.group(1).strip()
-            room = rooms_by_key.get((building_name, room_number))
-            if room is not None:
-                stats["enriched"] += 1
-                room["equipment"] = details["equipment"]
-                room["photo_urls"] = details["photo_urls"]
-                room["answers_url"] = room_url
-            else:
-                stats["unmatched"] += 1
-                if len(stats["unmatched_sample"]) < 10:
-                    stats["unmatched_sample"].append(
-                        f"{building_name} {trailing.group(1).strip()}"
-                    )
+            stats["enriched"] += 1
+            room["equipment"] = details["equipment"]
+            room["photo_urls"] = details["photo_urls"]
+            room["answers_url"] = room_url
 
     print(
         f"Answers crawl: {stats['room_pages']} room pages, "
         f"{stats['enriched']} Registrar rows enriched, "
-        f"{stats['unmatched']} unmatched"
+        f"{stats['unmatched']} unmatched, "
+        f"{stats['failed_buildings']} building failures, "
+        f"{stats['failed_rooms']} room failures"
     )
     return stats
 
@@ -385,7 +499,23 @@ def write_github_summary(
             )
 
 
-def load_to_postgres(rooms: list[dict]) -> int:
+def validate_answers_for_load(answers_stats: dict | None) -> None:
+    """Refuse to publish empty enrichment when the Answers crawl was incomplete."""
+    if answers_stats is None:
+        raise RuntimeError(
+            "Refusing to load without Answers enrichment; use --no-load with "
+            "--skip-answers"
+        )
+    failed_buildings = answers_stats.get("failed_buildings", 0)
+    failed_rooms = answers_stats.get("failed_rooms", 0)
+    if failed_buildings or failed_rooms:
+        raise RuntimeError(
+            "Refusing to load an incomplete Answers crawl "
+            f"({failed_buildings} building failure(s), {failed_rooms} room failure(s))"
+        )
+
+
+def load_to_postgres(rooms: list[dict], answers_stats: dict | None) -> int:
     """Upsert room details. Returns row count, or -1 when credentials are absent."""
     load_dotenv(find_dotenv(".env.local"))
     supabase_url = os.getenv("SUPABASE_URL")
@@ -393,6 +523,7 @@ def load_to_postgres(rooms: list[dict]) -> int:
     if not supabase_url or not supabase_key:
         print("SUPABASE_URL / SUPABASE_SECRET_KEY not set; skipping database load")
         return -1
+    validate_answers_for_load(answers_stats)
 
     from supabase import create_client
 
@@ -451,7 +582,7 @@ def main() -> str:
     parser.add_argument(
         "--skip-answers",
         action="store_true",
-        help="Skip the Answers equipment crawl (Registrar data only)",
+        help="Skip Answers for Registrar-only JSON (requires --no-load)",
     )
     parser.add_argument(
         "--answers-delay",
@@ -460,6 +591,8 @@ def main() -> str:
         help="Delay in seconds between Answers requests (default: 0.4)",
     )
     args = parser.parse_args()
+    if args.skip_answers and not args.no_load:
+        parser.error("--skip-answers requires --no-load to preserve stored enrichment")
 
     print("Step 1: Fetch Registrar classroom capacities")
     if args.html_file:
@@ -472,8 +605,7 @@ def main() -> str:
     answers_stats: dict | None = None
     if not args.skip_answers:
         print("Step 2: Crawl Answers equipment pages")
-        rooms_by_key = {(room["building_name"], room["room_number"]): room for room in rooms}
-        answers_stats = scrape_answers_details(rooms_by_key, args.answers_delay)
+        answers_stats = scrape_answers_details(rooms, args.answers_delay)
         print("Finished Step 2")
     else:
         print("Step 2 skipped (--skip-answers)")
@@ -485,7 +617,7 @@ def main() -> str:
     db_count = -1
     if not args.no_load:
         print("Step 4: Load data to PostgreSQL")
-        db_count = load_to_postgres(rooms)
+        db_count = load_to_postgres(rooms, answers_stats)
         print("Finished Step 4")
     else:
         print("Step 4 skipped (--no-load)")
