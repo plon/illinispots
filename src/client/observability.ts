@@ -21,6 +21,7 @@ export function initializeClientObservability(router: AnyRouter): void {
   if (Sentry.isInitialized()) return;
 
   const config = getClientConfig();
+  if (config.appEnv === "development") return;
   if (!config.sentryDsn) return;
 
   Sentry.init({

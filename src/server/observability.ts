@@ -23,7 +23,7 @@ function requestPathname(url: string | undefined): string {
 
 export function sentryTracing(app: Hono): MiddlewareHandler {
   const config = getServerConfig();
-  if (!config.sentryDsn) {
+  if (config.environment === "development" || !config.sentryDsn) {
     return async (_context, next) => await next();
   }
 
