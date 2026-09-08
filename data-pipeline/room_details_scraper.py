@@ -413,7 +413,6 @@ def load_to_postgres(rooms: list[dict]) -> int:
             "building_code": room["building_code"],
             "capacity": room["capacity"],
             "room_type": room["room_type"],
-            "source_url": SOURCE_URL,
             "equipment": room.get("equipment") or [],
             "photo_urls": room.get("photo_urls") or [],
             "answers_url": room.get("answers_url"),

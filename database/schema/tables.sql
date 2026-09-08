@@ -31,8 +31,6 @@ CREATE TABLE room_details (
     building_code TEXT NOT NULL,
     capacity INTEGER NOT NULL CHECK (capacity > 0),
     room_type TEXT NOT NULL,
-    source_url TEXT NOT NULL,
-    scraped_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     equipment TEXT[] NOT NULL DEFAULT '{}',
     photo_urls TEXT[] NOT NULL DEFAULT '{}',
     answers_url TEXT,

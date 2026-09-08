@@ -11,8 +11,6 @@ CREATE TABLE IF NOT EXISTS public.room_details (
     building_code TEXT NOT NULL,
     capacity INTEGER NOT NULL CHECK (capacity > 0),
     room_type TEXT NOT NULL,
-    source_url TEXT NOT NULL,
-    scraped_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (building_name, room_number)
 );
 
