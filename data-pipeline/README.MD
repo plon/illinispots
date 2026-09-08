@@ -70,6 +70,13 @@ This directory contains scripts for collecting and processing UIUC course and bu
    - Emits a GitHub Actions job-summary table with source rows, valid rows, inserted events, and skipped events
    - The repository must define `SUPABASE_URL` and `SUPABASE_SECRET_KEY` as GitHub Actions repository secrets; the key must be allowed to read `rooms`, replace `daily_events`, and invoke `refresh_room_availability_cache`
 
+9. **room_details_scraper.py**
+
+   - Scrapes General Assignment classroom capacities from the [Registrar](https://registrar.illinois.edu/faculty-staff/course-catalog-and-scheduling/classroom-capacities/) (`capacity` + `room_type` per room), then crawls Tech Services [Technology Enhanced Classrooms](https://answers.uillinois.edu/illinois/57128) building/room pages for per-room `equipment` and `photo_urls` (use `--skip-answers --no-load` for Registrar-only JSON, `--answers-delay` to tune politeness)
+   - Output: `data/room_details.json`; upserts the `room_details` table when `SUPABASE_URL` / `SUPABASE_SECRET_KEY` are set (use `--no-load` for JSON only, `--html-file` to parse a saved page)
+   - Maps Registrar/Answers building names to Course Explorer canonical names where they differ (e.g. Siebel) and splits combined rooms like `0027/1025`
+   - Runs monthly through [the room details workflow](../.github/workflows/room-details.yml), and can also be started manually from the Actions tab
+
 ## Data Flow Diagram
 
 ```
