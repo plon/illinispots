@@ -405,6 +405,9 @@ def load_to_postgres(rooms: list[dict]) -> int:
     from supabase import create_client
 
     supabase = create_client(supabase_url, supabase_key)
+    # Set explicitly (rather than relying on the column default) so repeat
+    # upserts refresh the timestamp instead of leaving the first-seen value.
+    scraped_at = datetime.now(timezone.utc).isoformat()
     records = [
         {
             "building_name": room["building_name"],
@@ -413,6 +416,7 @@ def load_to_postgres(rooms: list[dict]) -> int:
             "building_code": room["building_code"],
             "capacity": room["capacity"],
             "room_type": room["room_type"],
+            "scraped_at": scraped_at,
             "equipment": room.get("equipment") or [],
             "photo_urls": room.get("photo_urls") or [],
             "answers_url": room.get("answers_url"),
