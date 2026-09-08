@@ -13,8 +13,8 @@ upsert into the `room_details` Supabase table when credentials are present.
 
 Registrar building names differ slightly from Course Explorer canonical names
 (e.g. "Siebel Center for Computer Science" vs "Siebel Center for Comp Sci"),
-so known mappings are applied and both names are stored. Combined rooms like
-"0027/1025" are split into separate rows sharing capacity/type.
+so known mappings are applied and both names are stored. Combined labels like
+"0027/1025" denote a single physical room and are kept verbatim.
 """
 
 from __future__ import annotations
@@ -85,7 +85,7 @@ _BUILDING_LOOKUP = {
 }
 
 _PAREN_SUFFIX = re.compile(r"\s*\([^)]*\)\s*$")
-_TRAILING_ROOM = re.compile(r"([A-Za-z0-9]+)\s*$")
+_TRAILING_ROOM = re.compile(r"([A-Za-z0-9]+(?:\s*/\s*[A-Za-z0-9]+)*)\s*$")
 
 
 def map_building_name(raw_label: str) -> str:
@@ -158,26 +158,25 @@ def parse_registrar_html(html_text: str) -> list[dict]:
             continue
 
         building_name = map_building_name(registrar_building)
-        # Combined rooms (e.g. "0027/1025") are separate physical rooms.
-        room_numbers = [part.strip() for part in raw_room.split("/") if part.strip()]
-        for room_number in room_numbers:
-            key = (building_name, room_number)
-            if key in seen:
-                continue
-            seen.add(key)
-            rooms.append(
-                {
-                    "building_name": building_name,
-                    "registrar_building": registrar_building,
-                    "building_code": building_code,
-                    "room_number": room_number,
-                    "capacity": capacity,
-                    "room_type": room_type,
-                    "equipment": [],
-                    "photo_urls": [],
-                    "answers_url": None,
-                }
-            )
+        # Combined labels (e.g. "0027/1025") denote a single physical room.
+        room_number = raw_room.strip()
+        key = (building_name, room_number)
+        if key in seen:
+            continue
+        seen.add(key)
+        rooms.append(
+            {
+                "building_name": building_name,
+                "registrar_building": registrar_building,
+                "building_code": building_code,
+                "room_number": room_number,
+                "capacity": capacity,
+                "room_type": room_type,
+                "equipment": [],
+                "photo_urls": [],
+                "answers_url": None,
+            }
+        )
 
     if not rooms:
         raise ValueError("Registrar scrape produced no rooms; refusing to replace data")
@@ -262,10 +261,6 @@ def parse_answers_room_page(html_text: str, page_url: str) -> dict:
     }
 
 
-def split_room_token(raw_room: str) -> list[str]:
-    return [part.strip() for part in raw_room.split("/") if part.strip()]
-
-
 def scrape_answers_details(
     rooms_by_key: dict[tuple[str, str], dict],
     request_delay: float,
@@ -322,21 +317,18 @@ def scrape_answers_details(
                 time.sleep(request_delay)
 
             stats["room_pages"] += 1
-            matched = False
-            for room_number in split_room_token(trailing.group(1)):
-                room = rooms_by_key.get((building_name, room_number))
-                if room is None:
-                    continue
-                matched = True
+            room_number = trailing.group(1).strip()
+            room = rooms_by_key.get((building_name, room_number))
+            if room is not None:
                 stats["enriched"] += 1
                 room["equipment"] = details["equipment"]
                 room["photo_urls"] = details["photo_urls"]
                 room["answers_url"] = room_url
-            if not matched:
+            else:
                 stats["unmatched"] += 1
                 if len(stats["unmatched_sample"]) < 10:
                     stats["unmatched_sample"].append(
-                        f"{building_name} {trailing.group(1)}"
+                        f"{building_name} {trailing.group(1).strip()}"
                     )
 
     print(
