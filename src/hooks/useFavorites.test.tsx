@@ -1,5 +1,4 @@
 import { describe, expect, it, beforeEach } from "bun:test";
-import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   parseFavorites,
@@ -10,7 +9,6 @@ import {
   useFavorites,
   FAVORITES_STORAGE_KEY,
   type FavoriteItem,
-  type UseFavoritesResult,
 } from "./useFavorites";
 
 describe("useFavorites store and hook", () => {
@@ -119,21 +117,30 @@ describe("useFavorites store and hook", () => {
 
   describe("useFavorites hook", () => {
     it("provides safe SSR snapshot and bound actions during server rendering", () => {
-      let capturedFavorites: UseFavoritesResult | undefined;
-
       function TestComponent() {
-        capturedFavorites = useFavorites();
-        return <span data-testid="count">{capturedFavorites.favorites.length}</span>;
+        const favorites = useFavorites();
+        return (
+          <span
+            data-testid="count"
+            data-add-type={typeof favorites.addFavorite}
+            data-remove-type={typeof favorites.removeFavorite}
+            data-toggle-type={typeof favorites.toggleFavorite}
+            data-is-favorite-type={typeof favorites.isFavorite}
+            data-get-by-type={typeof favorites.getFavoritesByType}
+          >
+            {favorites.favorites.length}
+          </span>
+        );
       }
 
       const html = renderToStaticMarkup(<TestComponent />);
-      expect(html).toContain('data-testid="count">0</span>');
-      expect(capturedFavorites).toBeDefined();
-      expect(typeof capturedFavorites?.addFavorite).toBe("function");
-      expect(typeof capturedFavorites?.removeFavorite).toBe("function");
-      expect(typeof capturedFavorites?.toggleFavorite).toBe("function");
-      expect(typeof capturedFavorites?.isFavorite).toBe("function");
-      expect(typeof capturedFavorites?.getFavoritesByType).toBe("function");
+      expect(html).toContain('data-testid="count"');
+      expect(html).toContain('data-add-type="function"');
+      expect(html).toContain('data-remove-type="function"');
+      expect(html).toContain('data-toggle-type="function"');
+      expect(html).toContain('data-is-favorite-type="function"');
+      expect(html).toContain('data-get-by-type="function"');
+      expect(html).toContain(">0</span>");
     });
   });
 });

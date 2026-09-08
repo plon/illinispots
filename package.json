@@ -13,7 +13,7 @@
     "build": "vite build && bun run typecheck",
     "start": "NODE_ENV=production bun src/server/index.ts",
     "preview": "bun run build && bun run start",
-    "lint": "eslint .",
+    "lint": "oxlint .",
     "typecheck": "tsc --noEmit",
     "test": "NODE_ENV=test bun test",
     "test:watch": "NODE_ENV=test bun test --watch",
@@ -54,7 +54,6 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
     "@sentry/vite-plugin": "^5.4.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/router-plugin": "^1.168.35",
@@ -66,14 +65,10 @@
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
     "concurrently": "^10.0.5",
-    "eslint": "^10.10.0",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.5.6",
-    "globals": "^17.12.0",
+    "oxlint": "^1.82.0",
     "supabase": "^2.116.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^5",
-    "typescript-eslint": "^8.69.0",
     "vite": "^8.2.2"
   }
 }

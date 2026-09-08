@@ -1,5 +1,4 @@
 import { describe, expect, it, beforeEach } from "bun:test";
-import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createLocalStorageStore, useLocalStorage } from "./storageStore";
 
@@ -96,16 +95,19 @@ describe("storageStore", () => {
 
   it("integrates with useLocalStorage hook for SSR and component access", () => {
     const store = createLocalStorageStore("hook-key", "ssr-default");
-    let capturedSetter: React.Dispatch<React.SetStateAction<string>> | undefined;
 
     function TestComponent() {
       const [value, setValue] = useLocalStorage(store);
-      capturedSetter = setValue;
-      return <span data-testid="val">{value}</span>;
+      return (
+        <span data-testid="val" data-setter-type={typeof setValue}>
+          {value}
+        </span>
+      );
     }
 
     const html = renderToStaticMarkup(<TestComponent />);
-    expect(html).toContain('data-testid="val">ssr-default</span>');
-    expect(typeof capturedSetter).toBe("function");
+    expect(html).toContain('data-testid="val"');
+    expect(html).toContain('data-setter-type="function"');
+    expect(html).toContain(">ssr-default</span>");
   });
 });

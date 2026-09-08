@@ -1,5 +1,4 @@
 import { describe, expect, it, beforeEach } from "bun:test";
-import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   useShowMapPreference,
@@ -50,17 +49,19 @@ describe("useShowMapPreference store and hook", () => {
 
   describe("useShowMapPreference in React component", () => {
     it("provides safe SSR snapshot (true) and setter during server rendering", () => {
-      let capturedSetter: React.Dispatch<React.SetStateAction<boolean>> | undefined;
-
       function TestComponent() {
         const [showMap, setShowMap] = useShowMapPreference();
-        capturedSetter = setShowMap;
-        return <div data-testid="map-state">{showMap ? "visible" : "hidden"}</div>;
+        return (
+          <div data-testid="map-state" data-setter-type={typeof setShowMap}>
+            {showMap ? "visible" : "hidden"}
+          </div>
+        );
       }
 
       const html = renderToStaticMarkup(<TestComponent />);
-      expect(html).toContain('data-testid="map-state">visible</div>');
-      expect(typeof capturedSetter).toBe("function");
+      expect(html).toContain('data-testid="map-state"');
+      expect(html).toContain('data-setter-type="function"');
+      expect(html).toContain(">visible</div>");
     });
   });
 });

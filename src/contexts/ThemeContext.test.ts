@@ -9,7 +9,6 @@ import {
   applyThemeToDocument,
   useTheme,
   THEME_STORAGE_KEY,
-  type ThemeContextType,
 } from "./ThemeContext";
 
 describe("ThemeContext production exports", () => {
@@ -199,14 +198,16 @@ describe("ThemeContext production exports", () => {
     });
 
     it("provides theme context when rendered within ThemeProvider", () => {
-      let capturedContext: ThemeContextType | undefined;
-
       function Consumer() {
-        capturedContext = useTheme();
-        return React.createElement("span", null, capturedContext.theme);
+        const context = useTheme();
+        return React.createElement("span", {
+          "data-theme": context.theme,
+          "data-resolved-theme": context.resolvedTheme,
+          "data-set-theme-type": typeof context.setTheme,
+        });
       }
 
-      renderToStaticMarkup(
+      const html = renderToStaticMarkup(
         React.createElement(
           ThemeProvider,
           null,
@@ -214,10 +215,9 @@ describe("ThemeContext production exports", () => {
         ),
       );
 
-      expect(capturedContext).toBeDefined();
-      expect(capturedContext?.theme).toBe("system");
-      expect(capturedContext?.resolvedTheme).toBe("light");
-      expect(typeof capturedContext?.setTheme).toBe("function");
+      expect(html).toContain('data-theme="system"');
+      expect(html).toContain('data-resolved-theme="light"');
+      expect(html).toContain('data-set-theme-type="function"');
     });
   });
 });
