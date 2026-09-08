@@ -1,6 +1,6 @@
 curl_cffi==0.16.3
 supabase==2.31.0
 python-dotenv==1.2.3
-pandas==2.3.2
+pandas==3.0.5
 beautifulsoup4==4.15.0
 sentry-sdk==2.68.1
