@@ -182,7 +182,7 @@ const IlliniSpotsPage: React.FC = () => {
       timestamp:
         currentAcademicData?.timestamp || currentLibraryData?.timestamp || "",
       facilities: {
-        ...(currentAcademicData?.facilities || {}),
+        ...currentAcademicData?.facilities,
         ...matchingLibraryFacilities,
       },
     };
