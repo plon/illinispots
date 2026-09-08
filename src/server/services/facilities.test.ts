@@ -102,7 +102,7 @@ describe("getFacilityStatus", () => {
 
   it("maps LibCal slots into current, upcoming, and unavailable rooms", async () => {
     const target = atCampusTime("2026-08-24 08:15:00");
-    const requests: Array<{ url: string; body: URLSearchParams }> = [];
+    const requests: { url: string; body: URLSearchParams }[] = [];
     const fetchLibCal: FacilitiesFetch = async (input, init) => {
       requests.push({
         url: String(input),
@@ -248,7 +248,7 @@ describe("getFacilityStatus", () => {
           buildings: {
             cif: {
               name: "Campus Instructional Facility",
-              coordinates: { latitude: 40.0, longitude: -88.0 },
+              coordinates: { latitude: 40, longitude: -88 },
               hours: { open: "07:00:00", close: "22:00:00" },
               isOpen: true,
               roomCounts: { available: 0, total: 0 },

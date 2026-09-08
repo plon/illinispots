@@ -7,7 +7,7 @@ export function injectClientConfig(
   rawHtml: string,
   config: PublicClientConfig,
 ): string {
-  const safeJson = JSON.stringify(config).replace(/</g, "\\u003c");
+  const safeJson = JSON.stringify(config).replace(/</g, String.raw`\u003c`);
   const scriptTag = `<script>window.__APP_CONFIG__=${safeJson};</script>`;
 
   if (HEAD_TAG_REGEX.test(rawHtml)) {
@@ -20,5 +20,5 @@ export function loadIndexHtml(filePath: string): string {
   if (!existsSync(filePath)) {
     return "";
   }
-  return readFileSync(filePath, "utf-8");
+  return readFileSync(filePath, "utf8");
 }

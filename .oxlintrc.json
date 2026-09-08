@@ -8,7 +8,8 @@
   ],
   "categories": {
     "correctness": "error",
-    "perf": "warn"
+    "perf": "warn",
+    "style": "warn"
   },
   "env": {
     "builtin": true
@@ -41,7 +42,30 @@
     "typescript/no-namespace": "error",
     "typescript/no-require-imports": "error",
     "typescript/no-unnecessary-type-constraint": "error",
-    "typescript/no-unsafe-function-type": "error"
+    "typescript/no-unsafe-function-type": "error",
+    "typescript/consistent-type-imports": ["warn", { "fixStyle": "inline-type-imports" }],
+    "eslint/capitalized-comments": "off",
+    "eslint/func-style": "off",
+    "eslint/id-length": "off",
+    "eslint/init-declarations": "off",
+    "eslint/max-params": "off",
+    "eslint/max-statements": "off",
+    "eslint/no-continue": "off",
+    "eslint/no-magic-numbers": "off",
+    "eslint/no-nested-ternary": "off",
+    "eslint/no-ternary": "off",
+    "eslint/one-var": "off",
+    "eslint/sort-imports": "off",
+    "eslint/sort-keys": "off",
+    "react/function-component-definition": "off",
+    "react/jsx-max-depth": "off",
+    "react/jsx-props-no-spreading": "off",
+    "unicorn/filename-case": "off",
+    "unicorn/no-nested-ternary": "off",
+    "unicorn/no-null": "off",
+    "unicorn/numeric-separators-style": "off",
+    "unicorn/prefer-global-this": "off",
+    "unicorn/switch-case-braces": "off"
   },
   "overrides": [
     {

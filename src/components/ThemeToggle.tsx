@@ -2,11 +2,11 @@ import React from "react";
 import { Sun, Moon, Monitor } from "lucide-react";
 import { useTheme, type Theme } from "@/contexts/ThemeContext";
 
-const THEME_OPTIONS: Array<{
+const THEME_OPTIONS: {
   value: Theme;
   label: string;
   icon: React.ComponentType<{ size?: number }>;
-}> = [
+}[] = [
   { value: "light", label: "Light", icon: Sun },
   { value: "dark", label: "Dark", icon: Moon },
   { value: "system", label: "Auto", icon: Monitor },

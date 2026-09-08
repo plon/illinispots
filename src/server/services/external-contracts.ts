@@ -91,15 +91,15 @@ const academicAvailabilitySchema = z.object({
   buildings: z.record(z.string(), academicBuildingSchema),
 });
 
+const reservationSlotSchema = z.object({
+  itemId: finiteNumberSchema,
+  start: z.string(),
+  end: z.string(),
+  className: optionalStringSchema,
+});
+
 const reservationResponseSchema = z.object({
-  slots: z.array(
-    z.object({
-      itemId: finiteNumberSchema,
-      start: z.string(),
-      end: z.string(),
-      className: optionalStringSchema,
-    }),
-  ),
+  slots: z.array(reservationSlotSchema),
 });
 
 const blockDetailsSchema = z.object({
@@ -129,7 +129,7 @@ export type AcademicAvailabilityPayload = z.output<
 >;
 
 function formatIssuePath(path: PropertyKey[]): string {
-  if (path.length === 0) return "root";
+  if (path.length === 0) {return "root";}
 
   return path.reduce<string>((formatted, segment) => {
     if (typeof segment === "number") {
@@ -143,7 +143,7 @@ function formatIssuePath(path: PropertyKey[]): string {
 
 export class ExternalResponseError extends Error {
   constructor(source: string, error: z.ZodError) {
-    const issue = error.issues[0];
+    const [issue] = error.issues;
     const detail = issue
       ? ` at ${formatIssuePath(issue.path)}: ${issue.message}`
       : "";

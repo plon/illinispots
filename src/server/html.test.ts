@@ -43,7 +43,7 @@ describe("injectClientConfig", () => {
 
     const injected = injectClientConfig(rawHtml, config);
     expect(injected).not.toContain("</script><script>");
-    expect(injected).toContain("\\u003c/script>\\u003cscript>");
+    expect(injected).toContain(String.raw`\u003c/script>\u003cscript>`);
   });
 
   it("prepends script tag if no head tag exists", () => {

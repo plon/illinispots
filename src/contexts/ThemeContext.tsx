@@ -22,19 +22,19 @@ export const THEME_STORAGE_KEY = "theme";
 const MEDIA_QUERY = "(prefers-color-scheme: dark)";
 
 export function subscribeSystemTheme(callback: () => void) {
-  if (typeof window === "undefined") return () => {};
+  if (typeof window === "undefined") {return () => {};}
   const mq = window.matchMedia(MEDIA_QUERY);
   mq.addEventListener("change", callback);
   return () => mq.removeEventListener("change", callback);
 }
 
 export function getSystemThemeSnapshot(): ResolvedTheme {
-  if (typeof window === "undefined") return "light";
+  if (typeof window === "undefined") {return "light";}
   return window.matchMedia(MEDIA_QUERY).matches ? "dark" : "light";
 }
 
 export function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "system";
+  if (typeof window === "undefined") {return "system";}
   try {
     const stored = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
     if (stored === "light" || stored === "dark" || stored === "system") {
@@ -47,7 +47,7 @@ export function getInitialTheme(): Theme {
 }
 
 export function applyThemeToDocument(resolved: ResolvedTheme) {
-  if (typeof document === "undefined") return;
+  if (typeof document === "undefined") {return;}
 
   const root = document.documentElement;
   root.classList.toggle("dark", resolved === "dark");

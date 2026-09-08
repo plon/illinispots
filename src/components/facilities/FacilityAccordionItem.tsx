@@ -1,11 +1,12 @@
 import React, { useMemo, memo } from "react";
 import { usePostHog } from "@posthog/react";
 import { Badge } from "@/components/ui/badge";
+import { type Facility, RoomStatus } from "@/types";
 import {
-  Facility,
-  RoomStatus,
-} from "@/types";
-import { FilterCriteria, EMPTY_FILTER_CRITERIA, isRoomAvailable } from "@/utils/filterUtils";
+  type FilterCriteria,
+  EMPTY_FILTER_CRITERIA,
+  isRoomAvailable,
+} from "@/utils/filterUtils";
 import {
   STATUS_BADGE_STYLES,
   getFacilityAvailabilityBadgeStyle,
@@ -31,15 +32,15 @@ export const FacilityAccordionItem: React.FC<FacilityAccordionItemProps> = memo(
   }) => {
     const posthog = usePostHog();
 
-    const filteredAvailableCount = useMemo(() => {
-      return Object.values(facility.rooms).filter((room) => {
+    const filteredAvailableCount = useMemo(() => 
+      Object.values(facility.rooms).filter((room) => {
         const isAvailableOrPassing =
           room.status === RoomStatus.AVAILABLE ||
           room.status === RoomStatus.PASSING_PERIOD;
 
         return isAvailableOrPassing && isRoomAvailable(room, filterCriteria);
-      }).length;
-    }, [facility.rooms, filterCriteria]);
+      }).length
+    , [facility.rooms, filterCriteria]);
 
     const handleTriggerClick = () => {
       if (!isExpanded) {

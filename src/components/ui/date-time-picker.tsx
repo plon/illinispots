@@ -46,7 +46,7 @@ function DateTimePicker({
     selectedDate !== null && parseTimeToMinutes(localTimeValue) !== null;
 
   const handleConfirm = () => {
-    if (!selectedDate || !isValidSelection) return;
+    if (!selectedDate || !isValidSelection) {return;}
     onDateTimeChange({ date: selectedDate, time: `${localTimeValue}:00` });
   };
 

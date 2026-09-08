@@ -1,6 +1,10 @@
 import React, { useState, useMemo, memo } from "react";
-import { Facility, FacilityType } from "@/types";
-import { FilterCriteria, EMPTY_FILTER_CRITERIA, isRoomAvailable } from "@/utils/filterUtils";
+import { type Facility, FacilityType } from "@/types";
+import {
+  type FilterCriteria,
+  EMPTY_FILTER_CRITERIA,
+  isRoomAvailable,
+} from "@/utils/filterUtils";
 import { getLibraryHoursMessage } from "@/utils/libraryHours";
 import { formatTimeForDisplay } from "@/utils/time";
 import { RoomRow } from "./RoomRow";
@@ -20,16 +24,16 @@ export const FacilityRoomView: React.FC<FacilityRoomViewProps> = memo(
     const [expandedRoomId, setExpandedRoomId] = useState<string | null>(null);
 
     // Filter and sort rooms
-    const allRooms = useMemo(() => {
-      return Object.entries(facility.rooms)
+    const allRooms = useMemo(() => 
+      Object.entries(facility.rooms)
         .filter(([, room]) => isRoomAvailable(room, filterCriteria))
         .sort(([numA], [numB]) =>
           numA.localeCompare(numB, undefined, {
             numeric: true,
             sensitivity: "base",
           }),
-        );
-    }, [facility.rooms, filterCriteria]);
+        )
+    , [facility.rooms, filterCriteria]);
 
     const { availableRooms, occupiedRooms } = useMemo(
       () => groupAcademicRooms(allRooms),

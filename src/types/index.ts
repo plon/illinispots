@@ -90,9 +90,7 @@ export interface Library {
   isOpen?: boolean;
 }
 
-export interface Libraries {
-  [key: string]: Library;
-}
+export type Libraries = Record<string, Library>;
 
 export interface StudyRoom {
   id: string;
@@ -122,9 +120,7 @@ export interface RoomReservation {
   status: RoomStatus;
 }
 
-export interface RoomReservations {
-  [key: string]: RoomReservation;
-}
+export type RoomReservations = Record<string, RoomReservation>;
 
 export interface LibraryData {
   room_count: number;
@@ -134,9 +130,7 @@ export interface LibraryData {
   isOpen?: boolean;
 }
 
-export interface FormattedLibraryData {
-  [key: string]: LibraryData;
-}
+export type FormattedLibraryData = Record<string, LibraryData>;
 
 export interface APIResponse {
   timezone: string;
@@ -222,9 +216,7 @@ export interface FacilityRoomProps {
   facilityId: string;
   facilityName: string;
 }
-export interface AccordionRefs {
-  [key: string]: HTMLDivElement | null;
-}
+export type AccordionRefs = Record<string, HTMLDivElement | null>;
 
 export interface RoomBadgeProps {
   status: RoomStatus;

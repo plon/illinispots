@@ -16,7 +16,7 @@ export function getActiveLibraryHours(
   for (const dayOffset of [0, -1]) {
     const scheduleDate = target.plus({ days: dayOffset }).startOf("day");
     const hours = LIBRARY_HOURS[libraryName]?.[scheduleDate.weekdayLong ?? ""];
-    if (!hours) continue;
+    if (!hours) {continue;}
 
     const open = DateTime.fromFormat(
       `${scheduleDate.toFormat("yyyy-MM-dd")} ${hours.open}`,
@@ -28,7 +28,7 @@ export function getActiveLibraryHours(
       "yyyy-MM-dd HH:mm",
       { zone: CAMPUS_TIMEZONE },
     );
-    if (hours.nextDay) close = close.plus({ days: 1 });
+    if (hours.nextDay) {close = close.plus({ days: 1 });}
 
     if (open.isValid && close.isValid && target >= open && target < close) {
       return { open, close };

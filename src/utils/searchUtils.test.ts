@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { performSearch, getBuildingAliases, searchFacilities } from "@/utils/searchUtils";
-import { Facility, FacilityType, RoomStatus } from "@/types";
+import { type Facility, FacilityType, RoomStatus } from "@/types";
 
 const mockFacilities: Facility[] = [
   {

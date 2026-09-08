@@ -12,7 +12,7 @@ export function shouldTraceServerPath(pathname: string): boolean {
 }
 
 function requestPathname(url: string | undefined): string {
-  if (!url) return "";
+  if (!url) {return "";}
 
   try {
     return new URL(url, "http://sentry.local").pathname;
@@ -52,4 +52,4 @@ export function sentryRequestContext(): MiddlewareHandler {
   };
 }
 
-export { Sentry };
+export * as Sentry from "@sentry/hono/bun";

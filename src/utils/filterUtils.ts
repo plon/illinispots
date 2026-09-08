@@ -1,4 +1,4 @@
-import { FacilityRoom, RoomStatus } from "@/types";
+import { type FacilityRoom, RoomStatus } from "@/types";
 import { getCampusDateTimeParts, parseTimeToMinutes } from "@/utils/time";
 
 export interface FilterCriteria {

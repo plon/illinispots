@@ -2,7 +2,7 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import type { FeatureCollection, Point } from "geojson";
 import * as mapboxgl from "mapbox-gl/esm";
 import "mapbox-gl/dist/mapbox-gl.css";
-import {
+import type {
   MarkerData,
   MapProps,
   FacilityType,
@@ -51,11 +51,11 @@ export default function FacilityMap({
   }, [onMarkerClick, trackInitialLoad]);
 
   useEffect(() => {
-    if (!mapContainer.current) return;
+    if (!mapContainer.current) {return;}
 
     const mapLoadStartedAt = performance.now();
     const recordMapOutcome = (result: MapLoadResult) => {
-      if (mapLoadOutcomeRecorded.current) return;
+      if (mapLoadOutcomeRecorded.current) {return;}
 
       mapLoadOutcomeRecorded.current = true;
       recordMapLoadDuration(
@@ -176,7 +176,7 @@ export default function FacilityMap({
   }, []);
 
   useEffect(() => {
-    if (!map.current || !isMapLoaded || !facilityData) return;
+    if (!map.current || !isMapLoaded || !facilityData) {return;}
 
     if (activePopupRef.current) {
       activePopupRef.current.remove();
@@ -187,16 +187,12 @@ export default function FacilityMap({
       const markerEl = document.createElement("div");
       markerEl.className = "cursor-pointer";
 
-      if (!data.isOpen) {
-        markerEl.className += " h-2 w-2 rounded-full bg-gray-500 shadow-[0px_0px_4px_2px_rgba(107,114,128,0.7)]";
-      } else {
-        const hasAvailable = data.available > 0;
-        if (hasAvailable) {
-          markerEl.className += " h-2 w-2 rounded-full bg-green-400 shadow-[0px_0px_4px_2px_rgba(34,197,94,0.7)]";
-        } else {
-          markerEl.className += " h-2 w-2 rounded-full bg-red-500 shadow-[0px_0px_4px_2px_rgba(239,68,68,0.7)]";
-        }
-      }
+      const statusClass = !data.isOpen
+        ? " h-2 w-2 rounded-full bg-gray-500 shadow-[0px_0px_4px_2px_rgba(107,114,128,0.7)]"
+        : data.available > 0
+          ? " h-2 w-2 rounded-full bg-green-400 shadow-[0px_0px_4px_2px_rgba(34,197,94,0.7)]"
+          : " h-2 w-2 rounded-full bg-red-500 shadow-[0px_0px_4px_2px_rgba(239,68,68,0.7)]";
+      markerEl.className += statusClass;
 
       return markerEl;
     };
@@ -221,7 +217,7 @@ export default function FacilityMap({
       data: MarkerData,
     ) => {
       markerEl.addEventListener("mouseenter", () => {
-        if (!canShowBuildingHoverTooltip()) return;
+        if (!canShowBuildingHoverTooltip()) {return;}
 
         activePopupRef.current?.remove();
 
@@ -270,7 +266,7 @@ export default function FacilityMap({
 
     const createOrUpdateMarker = (markerKey: string, markerData: MarkerData) => {
       const existingMarker = markersRef.current.get(markerKey);
-      if (existingMarker) existingMarker.marker.remove();
+      if (existingMarker) {existingMarker.marker.remove();}
 
       const markerEl = createMarkerElement(markerData);
       const marker = new mapboxgl.Marker({ element: markerEl })
@@ -317,7 +313,7 @@ export default function FacilityMap({
             existing.data.available !== markerData.available ||
             existing.data.total !== markerData.total;
 
-          if (hasChanged) createOrUpdateMarker(markerKey, markerData);
+          if (hasChanged) {createOrUpdateMarker(markerKey, markerData);}
         }
       } else {
         createOrUpdateMarker(markerKey, markerData);
@@ -417,7 +413,7 @@ export default function FacilityMap({
             const type: FacilityType = props.type as FacilityType;
             const key = `${type}-${id}`;
             const data = markersRef.current.get(key)?.data;
-            if (!data) return;
+            if (!data) {return;}
 
             const coords =
               (feature.geometry && feature.geometry.coordinates) || null;
@@ -443,11 +439,11 @@ export default function FacilityMap({
 
         // oxlint-disable-next-line typescript/no-explicit-any
         mapRef.on("mouseenter", layerId, (e: any) => {
-          if (!canShowBuildingHoverTooltip()) return;
+          if (!canShowBuildingHoverTooltip()) {return;}
 
           mapRef.getCanvas().style.cursor = "pointer";
           const feature = e.features && e.features[0];
-          if (!feature) return;
+          if (!feature) {return;}
           showPopupForFeature(feature);
         });
 
@@ -460,7 +456,7 @@ export default function FacilityMap({
         // oxlint-disable-next-line typescript/no-explicit-any
         mapRef.on("click", layerId, (e: any) => {
           const feature = e.features && e.features[0];
-          if (!feature) return;
+          if (!feature) {return;}
           const props = feature.properties || {};
           const id: string = props.id;
           const type: FacilityType = props.type as FacilityType;
@@ -483,8 +479,8 @@ export default function FacilityMap({
           handleMarkerClick(id, type);
         });
       }
-    } catch (e) {
-      console.warn("Facility label layer setup failed:", e);
+    } catch (error) {
+      console.warn("Facility label layer setup failed:", error);
     }
 
     return () => {

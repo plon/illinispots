@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { isRoomAvailable } from "@/utils/filterUtils";
-import { AcademicRoom, FacilityRoom, RoomStatus } from "@/types";
+import { type AcademicRoom, type FacilityRoom, RoomStatus } from "@/types";
 
 const createRoom = (overrides: Partial<AcademicRoom> = {}): FacilityRoom => ({
   type: "academic",

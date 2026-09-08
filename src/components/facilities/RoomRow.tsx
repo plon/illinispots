@@ -1,10 +1,6 @@
 import React, { memo, useState } from "react";
 import { usePostHog } from "@posthog/react";
-import {
-  FacilityRoom,
-  FacilityType,
-  RoomStatus,
-} from "@/types";
+import { type FacilityRoom, FacilityType, RoomStatus } from "@/types";
 import { RoomBadge } from "@/components/RoomBadge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";

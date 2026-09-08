@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { TouchProvider } from "@/components/ui/HybridTooltip";
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  // oxlint-disable-next-line react/hook-use-state -- lazy singleton instance, the setter is intentionally unused
   const [queryClient] = React.useState(
     () =>
       new QueryClient({

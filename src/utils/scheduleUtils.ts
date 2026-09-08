@@ -1,4 +1,4 @@
-import { RoomScheduleBlock, HourlyScheduleBlock, BlockSection } from "@/types";
+import type { RoomScheduleBlock, HourlyScheduleBlock, BlockSection } from "@/types";
 import { formatMinutesAsTime, parseTimeToMinutes } from "@/utils/time";
 
 interface ParsedScheduleBlock {
@@ -17,7 +17,7 @@ export function processScheduleIntoHourlyBlocks(
       ? [{ block, start, end }]
       : [];
   });
-  if (parsed.length === 0) return [];
+  if (parsed.length === 0) {return [];}
 
   parsed.sort((left, right) => left.start - right.start);
   const firstStart = parsed[0].start;

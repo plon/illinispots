@@ -4,15 +4,11 @@ import {
   getDateWeekday,
 } from "./time";
 
-export interface LibraryHours {
-  [key: string]: {
-    [day: string]: {
+export type LibraryHours = Record<string, Record<string, {
       open: string;
       close: string;
       nextDay?: boolean;
-    };
-  };
-}
+    }>>;
 
 export const LIBRARY_HOURS: LibraryHours = {
   "Grainger Engineering Library": {
@@ -50,7 +46,7 @@ export const getLibraryHoursMessage = (
 ): string => {
   const dayOfWeek = getDateWeekday(date);
   const hours = dayOfWeek ? LIBRARY_HOURS[libraryName]?.[dayOfWeek] : undefined;
-  if (!hours) return "Hours not available for this day";
+  if (!hours) {return "Hours not available for this day";}
 
   return `Reservable hours for ${dayOfWeek}: ${formatTimeForDisplay(hours.open)} - ${formatTimeForDisplay(hours.close)}${hours.nextDay ? " (next day)" : ""}`;
 };

@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { performSearch } from "@/utils/searchUtils";
-import { Facility, FacilityStatus } from "@/types";
-import { FilterCriteria } from "@/utils/filterUtils";
+import type { Facility, FacilityStatus } from "@/types";
+import type { FilterCriteria } from "@/utils/filterUtils";
 import { RoomSearchResultCard } from "@/components/RoomSearchResultCard";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,18 +32,18 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
   isLibraryLoading = false,
 }) => {
   const facilitiesList = useMemo<Facility[]>(() => {
-    if (!facilityData) return [];
+    if (!facilityData) {return [];}
     return Object.values(facilityData.facilities);
   }, [facilityData]);
 
-  const rooms = useMemo(() => {
-    return performSearch(
+  const rooms = useMemo(() => 
+    performSearch(
       facilitiesList,
       searchTerm,
       filterCriteria,
       hasActiveFilters,
-    );
-  }, [facilitiesList, searchTerm, filterCriteria, hasActiveFilters]);
+    )
+  , [facilitiesList, searchTerm, filterCriteria, hasActiveFilters]);
 
   const isDataIncomplete = isLoading || isLibraryLoading;
 

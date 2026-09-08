@@ -1,4 +1,4 @@
-import { FacilityStatus, RoomStatus } from "@/types";
+import { type FacilityStatus, RoomStatus } from "@/types";
 
 export const LIVE_REFRESH_INTERVAL_MS = 5 * 60_000;
 
@@ -13,16 +13,16 @@ export function ageLiveAvailability(
   data: FacilityStatus | undefined,
   now: Date,
 ): FacilityStatus | undefined {
-  if (!data) return undefined;
+  if (!data) {return undefined;}
 
   const timestamp = Date.parse(data.timestamp);
-  if (!Number.isFinite(timestamp)) return data;
+  if (!Number.isFinite(timestamp)) {return data;}
 
   const elapsedMinutes = Math.max(
     0,
     Math.floor((now.getTime() - timestamp) / 60_000),
   );
-  if (elapsedMinutes === 0) return data;
+  if (elapsedMinutes === 0) {return data;}
 
   return {
     ...data,
