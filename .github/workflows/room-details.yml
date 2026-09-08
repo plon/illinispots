@@ -1,0 +1,72 @@
+name: Room details update
+
+on:
+  schedule:
+    # Monthly on the 1st at 10:19 AM UTC. Registrar capacities change rarely.
+    - cron: "19 10 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scheduling-data-writes
+  cancel-in-progress: false
+
+jobs:
+  update-room-details:
+    name: Update room details
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: data-pipeline
+
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      APP_ENV: production
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: data-pipeline/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install --requirement requirements.txt
+
+      - name: Start Sentry monitor
+        id: sentry-monitor
+        continue-on-error: true
+        run: >-
+          python sentry_monitor.py start
+          --monitor-slug room-details
+          --schedule "19 10 1 * *"
+          --checkin-margin 60
+          --max-runtime 30
+
+      - name: Scrape room details (Registrar + Answers equipment)
+        run: >-
+          python sentry_monitor.py run-stage
+          --monitor-slug room-details
+          --stage scrape-room-details
+          --label "Scrape room details"
+          -- python room_details_scraper.py
+
+      - name: Complete Sentry monitor
+        if: ${{ always() }}
+        continue-on-error: true
+        run: >-
+          python sentry_monitor.py finish
+          --monitor-slug room-details
+          --check-in-id "${{ steps.sentry-monitor.outputs.check_in_id }}"
+          --status "${{ job.status == 'success' && 'ok' || 'error' }}"

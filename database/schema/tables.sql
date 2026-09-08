@@ -24,6 +24,21 @@ CREATE TABLE rooms (
     PRIMARY KEY (building_name, room_number)
 );
 
+CREATE TABLE room_details (
+    building_name TEXT NOT NULL,
+    room_number TEXT NOT NULL,
+    registrar_building TEXT NOT NULL,
+    building_code TEXT NOT NULL,
+    capacity INTEGER NOT NULL CHECK (capacity > 0),
+    room_type TEXT NOT NULL,
+    source_url TEXT NOT NULL,
+    scraped_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    equipment TEXT[] NOT NULL DEFAULT '{}',
+    photo_urls TEXT[] NOT NULL DEFAULT '{}',
+    answers_url TEXT,
+    PRIMARY KEY (building_name, room_number)
+);
+
 CREATE TABLE class_schedule (
     id BIGSERIAL PRIMARY KEY,
     building_name TEXT,
