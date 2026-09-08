@@ -68,7 +68,7 @@
     "oxlint": "^1.82.0",
     "supabase": "^2.116.0",
     "tailwindcss": "^4.3.3",
-    "typescript": "^5",
+    "typescript": "^7.0.2",
     "vite": "^8.2.2"
   }
 }
