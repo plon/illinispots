@@ -73,13 +73,10 @@ export default function FacilityMap({
         "Mapbox style and access token are not configured.",
       );
       recordMapOutcome("missing_configuration");
-      // Without this update, missing credentials leave the loading overlay active.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setMapError("The map is not configured.");
       return;
     }
-
-    mapboxgl.setAccessToken(token);
 
     let timeoutId: number | undefined;
 
@@ -88,7 +85,6 @@ export default function FacilityMap({
         accessToken: token,
         container: mapContainer.current,
         style: styleUrl,
-        // minZoom: 15.2,
         antialias: true,
       });
       let hasLoaded = false;
@@ -120,6 +116,23 @@ export default function FacilityMap({
         }
       });
 
+      const POI_MIN_VISIBLE_ZOOM = 17;
+
+      const applyPoiVisibility = () => {
+        const show = mapInstance.getZoom() >= POI_MIN_VISIBLE_ZOOM;
+        try {
+          mapInstance.setConfigProperty(
+            "basemap",
+            "showPointOfInterestLabels",
+            show,
+          );
+        } catch {
+          // Non-standard style or config not supported
+        }
+      };
+
+      mapInstance.on("style.load", applyPoiVisibility);
+
       mapInstance.on("load", () => {
         hasLoaded = true;
         window.clearTimeout(timeoutId);
@@ -130,23 +143,6 @@ export default function FacilityMap({
         }
         setMapError(null);
         setIsMapLoaded(true);
-        // Hide/show POI labels depending on zoom level using Mapbox Standard basemap config
-        const POI_MIN_VISIBLE_ZOOM = 17; // Hide POI labels below this zoom
-
-        const applyPoiVisibility = () => {
-          const show = mapInstance.getZoom() >= POI_MIN_VISIBLE_ZOOM;
-          try {
-            mapInstance.setConfigProperty(
-              "basemap",
-              "showPointOfInterestLabels",
-              show,
-            );
-          } catch {
-            // Non-standard style or config not supported
-          }
-        };
-
-        // Initialize and bind to zoom updates
         applyPoiVisibility();
         mapInstance.on("zoom", applyPoiVisibility);
       });
@@ -289,7 +285,6 @@ export default function FacilityMap({
       markersRef.current.set(markerKey, { marker, data: markerData });
     };
 
-    // Process facilities
     Object.values(facilityData.facilities).forEach((facility) => {
       if (!facility.coordinates || !facility.roomCounts) {
         console.warn(`Facility ${facility.id} is missing required properties`);
@@ -331,7 +326,6 @@ export default function FacilityMap({
 
     removeUnusedMarkers(currentMarkerKeys);
 
-    // Add/update facility label layer
     try {
       const mapRef = map.current!;
       const sourceId = "facility-points";
@@ -377,6 +371,7 @@ export default function FacilityMap({
             id: layerId,
             type: "symbol",
             source: sourceId,
+            slot: "top",
             layout: {
               "text-field": ["coalesce", ["get", "name"], ["get", "Name"]],
               "text-font": [
@@ -412,7 +407,6 @@ export default function FacilityMap({
           firstTextLayer && firstTextLayer.id,
         );
 
-        // interactivity for facility labels (hover: popup, click: accordion)
         const showPopupForFeature = (feature: any) => {
           try {
             const props = feature?.properties || {};
