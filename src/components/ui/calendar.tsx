@@ -14,7 +14,7 @@ import {
 } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/buttonVariants";
+import { buttonVariants } from "@/components/ui/button";
 
 export interface CalendarProps {
   className?: string;

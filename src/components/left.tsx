@@ -44,7 +44,7 @@ import { SearchResults } from "@/components/SearchResults";
 import { FacilityListView } from "@/components/facilities/FacilityListView";
 import { useFavorites } from "@/hooks/useFavorites";
 import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
-import { useDateTimeContext } from "@/contexts/dateTime";
+import { useDateTimeContext } from "@/contexts/DateTimeContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
     parseTimeToMinutes,

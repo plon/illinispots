@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import {
   millisecondsUntilNextMinute,
-} from "./dateTime";
+} from "./DateTimeContext";
 
 describe("live date/time helpers", () => {
   it("schedules the next update on the exact minute boundary", () => {

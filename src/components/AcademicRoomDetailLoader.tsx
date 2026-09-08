@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { TimelineSchedule } from "@/components/TimelineSchedule";
 import { RoomScheduleBlock } from "@/types";
-import { useDateTimeContext } from "@/contexts/dateTime";
+import { useDateTimeContext } from "@/contexts/DateTimeContext";
 
 interface AcademicRoomDetailLoaderProps {
   buildingId: string;

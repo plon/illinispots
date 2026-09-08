@@ -13,11 +13,9 @@ import AcademicRoomDetailLoader from "@/components/AcademicRoomDetailLoader";
 import { RoomSchedule } from "@/components/RoomSchedule";
 import {
   getRoomAvailabilityMessage,
-} from "./roomUtils";
-import {
   RoomAvailabilityDetails,
   RoomOccupancyDetails,
-} from "./RoomDetails";
+} from "./roomUtils";
 
 interface RoomRowProps {
   roomName: string;

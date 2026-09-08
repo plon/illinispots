@@ -93,15 +93,7 @@
     "react/purity": "error",
     "react/set-state-in-render": "error",
     "react/unsupported-syntax": "warn",
-    "react/only-export-components": [
-      "error",
-      {
-        "allowConstantExport": true,
-        "allowExportNames": [
-          "Route"
-        ]
-      }
-    ],
+    "react/only-export-components": "off",
     "typescript/ban-ts-comment": "error",
     "typescript/no-duplicate-enum-values": "error",
     "typescript/no-empty-object-type": "error",

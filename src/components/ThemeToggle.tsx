@@ -1,6 +1,6 @@
 import React from "react";
 import { Sun, Moon, Monitor } from "lucide-react";
-import { useTheme, type Theme } from "@/contexts/theme";
+import { useTheme, type Theme } from "@/contexts/ThemeContext";
 
 const THEME_OPTIONS: Array<{
   value: Theme;
