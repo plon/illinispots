@@ -73,7 +73,7 @@ export default function FacilityMap({
         "Mapbox style and access token are not configured.",
       );
       recordMapOutcome("missing_configuration");
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      // oxlint-disable-next-line react/set-state-in-effect
       setMapError("The map is not configured.");
       return;
     }
