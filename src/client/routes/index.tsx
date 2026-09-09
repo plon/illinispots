@@ -68,7 +68,7 @@ const readInitialSidebarWidth = () => {
     const raw = window.localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY);
     const parsed = raw ? Number.parseInt(raw, 10) : Number.NaN;
     if (Number.isFinite(parsed)) {
-      return clampSidebarWidth(parsed);
+      return clampSidebarWidth(parsed, window.innerWidth);
     }
     return clampSidebarWidth(window.innerWidth * 0.37);
   } catch {
@@ -113,6 +113,28 @@ const IlliniSpotsPage: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null);
   const pendingWidthRef = useRef(sidebarWidth);
+  const [containerWidth, setContainerWidth] = useState<number | undefined>(() =>
+    typeof window === "undefined" ? undefined : window.innerWidth,
+  );
+
+  // Re-clamp the restored width whenever the container changes. The stored
+  // preference is untouched; only the effective width shrinks until there
+  // is room again, keeping the box, separator, and ARIA value in sync.
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element || typeof ResizeObserver === "undefined") {return;}
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width;
+      if (width) {setContainerWidth(width);}
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  const effectiveSidebarWidth = clampSidebarWidth(
+    sidebarWidth,
+    containerWidth,
+  );
 
   const commitSidebarWidth = useCallback((width: number) => {
     const next = clampSidebarWidth(
@@ -137,7 +159,10 @@ const IlliniSpotsPage: React.FC = () => {
       event.currentTarget.setPointerCapture(event.pointerId);
       dragRef.current = {
         startX: event.clientX,
-        startWidth: pendingWidthRef.current,
+        startWidth: clampSidebarWidth(
+          pendingWidthRef.current,
+          containerRef.current?.getBoundingClientRect().width,
+        ),
       };
       document.body.style.userSelect = "none";
       document.body.style.cursor = "col-resize";
@@ -172,10 +197,10 @@ const IlliniSpotsPage: React.FC = () => {
       const step = event.shiftKey ? 64 : 16;
       if (event.key === "ArrowLeft") {
         event.preventDefault();
-        commitSidebarWidth(pendingWidthRef.current - step);
+        commitSidebarWidth(effectiveSidebarWidth - step);
       } else if (event.key === "ArrowRight") {
         event.preventDefault();
-        commitSidebarWidth(pendingWidthRef.current + step);
+        commitSidebarWidth(effectiveSidebarWidth + step);
       } else if (event.key === "Home") {
         event.preventDefault();
         commitSidebarWidth(SIDEBAR_MIN_WIDTH);
@@ -184,7 +209,7 @@ const IlliniSpotsPage: React.FC = () => {
         commitSidebarWidth(SIDEBAR_MAX_WIDTH);
       }
     },
-    [commitSidebarWidth],
+    [commitSidebarWidth, effectiveSidebarWidth],
   );
 
   const handleExpandedFacilityIdsChange = useCallback(
@@ -363,7 +388,7 @@ const IlliniSpotsPage: React.FC = () => {
       className={mainContentClasses}
       style={
         showMap
-          ? ({ "--sidebar-width": `${sidebarWidth}px` } as React.CSSProperties)
+          ? ({ "--sidebar-width": `${effectiveSidebarWidth}px` } as React.CSSProperties)
           : undefined
       }
     >
@@ -400,7 +425,7 @@ const IlliniSpotsPage: React.FC = () => {
           aria-label="Resize sidebar"
           aria-valuemin={SIDEBAR_MIN_WIDTH}
           aria-valuemax={SIDEBAR_MAX_WIDTH}
-          aria-valuenow={sidebarWidth}
+          aria-valuenow={effectiveSidebarWidth}
           tabIndex={0}
           title="Drag to resize (double-click to reset)"
           onPointerDown={handleResizePointerDown}
