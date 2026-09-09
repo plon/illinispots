@@ -15,7 +15,7 @@ export function createLocalStorageStore<T>(
   serialize: (val: T) => string = (v) => JSON.stringify(v),
 ): StorageStore<T> {
   const read = (): T => {
-    if (typeof window === "undefined") return defaultValue;
+    if (typeof window === "undefined") {return defaultValue;}
     try {
       return parse(localStorage.getItem(key));
     } catch {
@@ -58,7 +58,7 @@ export function createLocalStorageStore<T>(
         typeof value === "function"
           ? (value as (prev: T) => T)(snapshot)
           : value;
-      if (snapshot === next) return;
+      if (snapshot === next) {return;}
       snapshot = next;
       if (typeof window !== "undefined") {
         try {

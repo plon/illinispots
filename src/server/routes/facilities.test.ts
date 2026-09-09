@@ -26,7 +26,7 @@ describe("GET /api/facilities", () => {
   });
 
   it("parses campus time and passes the requested scope to the service", async () => {
-    const calls: Array<{ timestamp: string; scope: FacilityScope }> = [];
+    const calls: { timestamp: string; scope: FacilityScope }[] = [];
     const expected: FacilityStatus = {
       timestamp: "2026-08-20T15:30:00.000-05:00",
       facilities: {},

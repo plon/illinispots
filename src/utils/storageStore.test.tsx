@@ -27,7 +27,7 @@ describe("storageStore", () => {
 
     globalThis.window = {
       addEventListener: (type: string, listener: (event: StorageEvent) => void) => {
-        if (type === "storage") storageListeners.push(listener);
+        if (type === "storage") {storageListeners.push(listener);}
       },
       removeEventListener: (type: string, listener: (event: StorageEvent) => void) => {
         if (type === "storage") {

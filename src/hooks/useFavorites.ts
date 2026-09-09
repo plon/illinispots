@@ -30,10 +30,10 @@ function isValidFavoriteItem(item: unknown): item is FavoriteItem {
 }
 
 export function parseFavorites(raw: string | null): FavoriteItem[] {
-  if (!raw) return [];
+  if (!raw) {return [];}
   try {
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
+    if (!Array.isArray(parsed)) {return [];}
     return parsed.filter(isValidFavoriteItem);
   } catch {
     return [];

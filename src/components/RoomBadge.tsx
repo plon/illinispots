@@ -29,7 +29,7 @@ export function getFacilityAvailabilityBadgeStyle(
   isOpen: boolean,
   availableCount: number,
 ): string {
-  if (!isOpen) return STATUS_BADGE_STYLES.closed;
+  if (!isOpen) {return STATUS_BADGE_STYLES.closed;}
   return availableCount > 0
     ? STATUS_BADGE_STYLES[RoomStatus.AVAILABLE]
     : STATUS_BADGE_STYLES[RoomStatus.OCCUPIED];
@@ -62,13 +62,13 @@ const getStatusText = (
 };
 
 export const RoomBadge: React.FC<RoomBadgeProps> = memo(
-  ({ status, facilityType }) => {
-    return (
+  ({ status, facilityType }) => 
+    (
       <Badge variant="outline" className={badgeStyles[status]}>
         {getStatusText(status, facilityType)}
       </Badge>
-    );
-  },
+    )
+  ,
 );
 
 RoomBadge.displayName = "RoomBadge";

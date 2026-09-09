@@ -1,5 +1,5 @@
 import {
-  PropsWithChildren,
+  type PropsWithChildren,
   createContext,
   useCallback,
   useContext,
@@ -8,19 +8,14 @@ import {
   useState,
 } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
-} from "./tooltip";
+import { Tooltip, TooltipTrigger, TooltipContent } from "./tooltip";
 import { Popover, PopoverTrigger, PopoverContent } from "./popover";
-import {
+import type {
   TooltipContentProps,
   TooltipProps,
   TooltipTriggerProps,
 } from "@radix-ui/react-tooltip";
-import {
+import type {
   PopoverContentProps,
   PopoverProps,
   PopoverTriggerProps,
@@ -94,7 +89,7 @@ export const HybridTooltipContent = (
   const { open, setOpen } = usePopoverOpen();
 
   useEffect(() => {
-    if (!isTouch || !open) return;
+    if (!isTouch || !open) {return;}
 
     const handleScroll = () => {
       // close the popover on mobile scroll
@@ -115,4 +110,4 @@ export const HybridTooltipContent = (
   );
 };
 
-export { TooltipProvider };
+export { TooltipProvider } from "./tooltip";

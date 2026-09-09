@@ -13,7 +13,7 @@ interface CapturedTransaction {
       data?: Record<string, unknown>;
     };
   };
-  spans?: Array<{ op?: string }>;
+  spans?: { op?: string }[];
 }
 
 function transactionsFrom(envelopes: string[]): CapturedTransaction[] {
@@ -41,7 +41,7 @@ async function waitFor(
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     // oxlint-disable-next-line no-await-in-loop -- polling helper: each check must run sequentially after the previous one
-    if (await predicate()) return;
+    if (await predicate()) {return;}
     // oxlint-disable-next-line no-await-in-loop -- polling delay must run sequentially between checks; Promise.all does not apply
     await new Promise((resolve) => setTimeout(resolve, 25));
   }
@@ -54,7 +54,7 @@ async function reservePort(): Promise<number> {
     port: 0,
     fetch: () => new Response("reserved"),
   });
-  const port = reservation.port;
+  const {port} = reservation;
   await reservation.stop(true);
   if (port === undefined) {
     throw new Error("Bun did not assign a test server port");
@@ -105,7 +105,8 @@ describe("server observability end to end", () => {
       try {
         await waitFor(async () => {
           try {
-            return (await fetch(`${applicationOrigin}/api/health`)).ok;
+            const healthResponse = await fetch(`${applicationOrigin}/api/health`);
+            return healthResponse.ok;
           } catch {
             return false;
           }

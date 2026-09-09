@@ -50,7 +50,7 @@ export function createApp(dependencies: AppDependencies = {}) {
       context.req.header("x-forwarded-host") ||
       context.req.header("host") ||
       url.hostname;
-    const hostname = hostHeader.split(":")[0];
+    const [hostname] = hostHeader.split(":");
 
     const isLocal =
       hostname === "localhost" ||

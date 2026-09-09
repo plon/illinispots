@@ -1,6 +1,6 @@
 import type { PublicClientConfig } from "@/types";
 
-export type { PublicClientConfig };
+export type { PublicClientConfig } from "@/types";
 
 declare global {
   interface Window {
@@ -8,7 +8,7 @@ declare global {
   }
 }
 
-export type FallbackClientEnvironment = {
+export interface FallbackClientEnvironment {
   readonly VITE_APP_ENV?: string;
   readonly VITE_MAPBOX_ACCESS_TOKEN?: string;
   readonly VITE_MAPBOX_STYLE_URL?: string;
@@ -16,7 +16,7 @@ export type FallbackClientEnvironment = {
   readonly VITE_PUBLIC_POSTHOG_PROJECT_TOKEN?: string;
   readonly VITE_PUBLIC_POSTHOG_HOST?: string;
   readonly MODE?: string;
-};
+}
 
 export function getClientConfig(
   fallbackEnv: FallbackClientEnvironment = import.meta.env,

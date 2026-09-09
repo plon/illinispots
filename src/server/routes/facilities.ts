@@ -27,7 +27,7 @@ function resolveTargetDateTime(
 ): DateTime {
   if (date && time) {
     const target = parseCampusRequestDateTime(date, time);
-    if (target.isValid) return target;
+    if (target.isValid) {return target;}
   }
 
   if (date || time) {

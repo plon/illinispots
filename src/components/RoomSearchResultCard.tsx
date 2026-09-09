@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { usePostHog } from "@posthog/react";
-import { SearchResultRoom } from "@/utils/searchUtils";
-import { AcademicRoom, FacilityType, LibraryRoom, RoomStatus } from "@/types";
+import type { SearchResultRoom } from "@/utils/searchUtils";
+import { type AcademicRoom, type LibraryRoom, FacilityType, RoomStatus } from "@/types";
 import { RoomBadge } from "@/components/RoomBadge";
 import { formatDuration } from "@/utils/format";
 import { formatTimeForDisplay } from "@/utils/time";

@@ -1,18 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
-import { DateTime } from "luxon";
+import type { DateTime } from "luxon";
 import {
-  StudyRoom,
-  TimeSlot,
-  RoomReservations,
-  FormattedLibraryData,
-  ReservationResponse,
+  type StudyRoom,
+  type TimeSlot,
+  type RoomReservations,
+  type FormattedLibraryData,
+  type ReservationResponse,
+  type Facility,
+  type FacilityStatus,
+  type AcademicRoom,
+  type LibraryRoom,
+  type RoomReservation,
   FacilityType,
-  Facility,
-  FacilityStatus,
-  RoomStatus,
-  AcademicRoom,
-  LibraryRoom,
-  RoomReservation,
+  RoomStatus
 } from "../../types";
 import {
   getActiveLibraryHours,
@@ -88,7 +88,7 @@ async function getReservation(
     : nextDay.toFormat("yyyy-MM-dd");
 
   const payload = {
-    lid: lid,
+    lid,
     gid: "0",
     eid: "-1",
     seat: "false",
@@ -150,7 +150,7 @@ function calculateAvailabilityDuration(
   if (libraryClosingTime && endTime > libraryClosingTime) {
     endTime = libraryClosingTime;
   }
-  if (endTime <= fromTime) return 0;
+  if (endTime <= fromTime) {return 0;}
 
   let duration = wholeMinutesBetween(endTime, fromTime);
   let lastEnd = endTime;
@@ -159,16 +159,16 @@ function calculateAvailabilityDuration(
   while (i < slots.length) {
     const nextSlot = slots[i];
     // Stop if the next slot is a reservation
-    if (nextSlot.className === "s-lc-eq-checkout") break;
+    if (nextSlot.className === "s-lc-eq-checkout") {break;}
 
     const nextStart = parseCampusTimestamp(nextSlot.start);
     let nextEnd = parseCampusTimestamp(nextSlot.end);
 
-    if (lastEnd.toMillis() !== nextStart.toMillis()) break;
+    if (lastEnd.toMillis() !== nextStart.toMillis()) {break;}
 
     if (libraryClosingTime) {
-      if (nextStart >= libraryClosingTime) break;
-      if (nextEnd > libraryClosingTime) nextEnd = libraryClosingTime;
+      if (nextStart >= libraryClosingTime) {break;}
+      if (nextEnd > libraryClosingTime) {nextEnd = libraryClosingTime;}
     }
 
     duration += wholeMinutesBetween(nextEnd, nextStart);
@@ -213,16 +213,16 @@ function linkRoomsReservations(
   const targetDateTimeString = targetDateTime.toFormat("yyyy-MM-dd HH:mm:ss");
 
   for (const room of roomsData) {
-    if (!libraryIds.has(room.lid)) continue;
+    if (!libraryIds.has(room.lid)) {continue;}
 
     const libraryName = Object.values(LIBRARIES).find(
       (l) => l.id === room.lid.toString(),
     )?.name;
-    if (!libraryName) continue; // Should not happen
+    if (!libraryName) {continue;} // Should not happen
 
     const roomId = room.eid;
     let availableAt: string | undefined = undefined;
-    let availableDuration: number = 0;
+    let availableDuration = 0;
     let isCurrentlyAvailable = false;
     let roomStatus: RoomStatus = RoomStatus.RESERVED; // Default status
 
@@ -316,16 +316,13 @@ function linkRoomsReservations(
           libraryClosingTime,
         );
 
-        if (
+        // It's available later, but not "soon", keep status as RESERVED/OCCUPIED for now
+        roomStatus =
           availableAt &&
           isOpeningSoon(availableAt, targetDateTime) &&
           availableDuration >= 30
-        ) {
-          roomStatus = RoomStatus.OPENING_SOON;
-        } else {
-          // It's available later, but not "soon", keep status as RESERVED/OCCUPIED for now
-          roomStatus = RoomStatus.RESERVED;
-        }
+            ? RoomStatus.OPENING_SOON
+            : RoomStatus.RESERVED;
       } else {
         // Not available now and no future availability found within operating hours
         roomStatus = RoomStatus.RESERVED; // Or OCCUPIED, depending on context, RESERVED fits library
@@ -414,7 +411,7 @@ async function getFormattedLibraryData(
   // isolated so one unavailable LibCal calendar does not erase other results.
   const libraryPromises = openLibraries.map(async (libraryName) => {
     const libraryInfo = LIBRARIES[libraryName];
-    if (!libraryInfo) return null; // Should not happen if openLibraries is correct
+    if (!libraryInfo) {return null;} // Should not happen if openLibraries is correct
 
     const lid = libraryInfo.id;
     const libraryRooms = STATIC_ROOMS_BY_LIBRARY[lid] || [];
@@ -575,22 +572,18 @@ async function fetchAcademicBuildingData(
     Object.entries(building.rooms).forEach(([roomNumber, roomData]) => {
       let status: RoomStatus;
       if (roomData.status === "available") {
-        if (roomData.passingPeriod) {
-          status = RoomStatus.PASSING_PERIOD;
-        } else {
-          status = RoomStatus.AVAILABLE;
-        }
+        status = roomData.passingPeriod
+          ? RoomStatus.PASSING_PERIOD
+          : RoomStatus.AVAILABLE;
+      } else if (
+        roomData.availableAt &&
+        isOpeningSoon(roomData.availableAt, targetDateTime) &&
+        roomData.availableFor &&
+        roomData.availableFor >= 30
+      ) {
+        status = RoomStatus.OPENING_SOON;
       } else {
-        if (
-          roomData.availableAt &&
-          isOpeningSoon(roomData.availableAt, targetDateTime) &&
-          roomData.availableFor &&
-          roomData.availableFor >= 30
-        ) {
-          status = RoomStatus.OPENING_SOON;
-        } else {
-          status = RoomStatus.OCCUPIED;
-        }
+        status = RoomStatus.OCCUPIED;
       }
 
       academicFacility.rooms[roomNumber] = {
@@ -701,7 +694,7 @@ async function updateLibraryFacilities(
 
   Object.entries(libraryData).forEach(([name, data]) => {
     const libraryFacility = libraryFacilities[name];
-    if (!libraryFacility?.isOpen) return;
+    if (!libraryFacility?.isOpen) {return;}
 
     libraryFacility.roomCounts = {
       available: data.currently_available,

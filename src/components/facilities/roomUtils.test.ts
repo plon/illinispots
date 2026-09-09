@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
-import { AcademicRoom, LibraryRoom, RoomStatus } from "@/types";
+import { type AcademicRoom, type LibraryRoom, RoomStatus } from "@/types";
 import {
   getRoomAvailabilityMessage,
   groupAcademicRooms,
+  type RoomEntry,
 } from "./roomUtils";
-import type { RoomEntry } from "./roomUtils";
 
 const renderAvailabilityMessage = (room: LibraryRoom) =>
   renderToStaticMarkup(getRoomAvailabilityMessage(room));

@@ -103,7 +103,7 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
 
   useEffect(() => {
     const container = scrollContainerRef.current;
-    if (!container) return;
+    if (!container) {return;}
 
     let targetScroll = 0;
     if (isToday) {
@@ -126,7 +126,7 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
 
   const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
     const container = scrollContainerRef.current;
-    if (!container) return;
+    if (!container) {return;}
 
     isDraggingRef.current = true;
     dragStartXRef.current = event.pageX - container.offsetLeft;
@@ -135,7 +135,7 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
 
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     const container = scrollContainerRef.current;
-    if (!isDraggingRef.current || !container) return;
+    if (!isDraggingRef.current || !container) {return;}
 
     event.preventDefault();
     const currentX = event.pageX - container.offsetLeft;
@@ -230,7 +230,7 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
                     const isAvailable = block.status === "available";
                     const isPast =
                       isToday && block.end <= currentCampusTime.time;
-                    const details = block.details;
+                    const {details} = block;
                     const displayLabel =
                       details?.course ||
                       (details?.identifier && details.identifier !== "Reserved"

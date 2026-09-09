@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { FacilityStatus, FacilityType, RoomStatus } from "@/types";
+import { type FacilityStatus, FacilityType, RoomStatus } from "@/types";
 import {
   ageLiveAvailability,
   shouldRefetchFacilitiesOnReconnect,

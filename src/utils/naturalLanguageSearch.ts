@@ -19,7 +19,7 @@ export interface NaturalLanguageSearchResult {
 
 function removeMatchedText(
   query: string,
-  matches: Array<{ index: number; text: string }>,
+  matches: { index: number; text: string }[],
 ): string {
   let locationQuery = query;
 
@@ -80,7 +80,7 @@ export function parseNaturalLanguageSearch(
     };
   }
 
-  const match = matches[0];
+  const [match] = matches;
   const hasExplicitHour = match.start.isCertain("hour");
   const hour = match.start.get("hour");
   if (
@@ -98,25 +98,22 @@ export function parseNaturalLanguageSearch(
     };
   }
 
-  let target: TZDate;
-  if (match.start.isCertain("timezoneOffset")) {
-    // Rebuilding relative durations from wall-clock parts loses time at DST boundaries.
-    target = TZDate.tz(CAMPUS_TIMEZONE, match.start.date());
-  } else {
-    target = TZDate.tz(
-      CAMPUS_TIMEZONE,
-      match.start.get("year") ?? campusReference.getFullYear(),
-      (match.start.get("month") ?? campusReference.getMonth() + 1) - 1,
-      match.start.get("day") ?? campusReference.getDate(),
-      hasExplicitHour
-        ? (match.start.get("hour") ?? campusReference.getHours())
-        : campusReference.getHours(),
-      hasExplicitHour
-        ? (match.start.get("minute") ?? 0)
-        : campusReference.getMinutes(),
-      0,
-    );
-  }
+  // Rebuilding relative durations from wall-clock parts loses time at DST boundaries.
+  const target: TZDate = match.start.isCertain("timezoneOffset")
+    ? TZDate.tz(CAMPUS_TIMEZONE, match.start.date())
+    : TZDate.tz(
+        CAMPUS_TIMEZONE,
+        match.start.get("year") ?? campusReference.getFullYear(),
+        (match.start.get("month") ?? campusReference.getMonth() + 1) - 1,
+        match.start.get("day") ?? campusReference.getDate(),
+        hasExplicitHour
+          ? (match.start.get("hour") ?? campusReference.getHours())
+          : campusReference.getHours(),
+        hasExplicitHour
+          ? (match.start.get("minute") ?? 0)
+          : campusReference.getMinutes(),
+        0,
+      );
 
   if (Number.isNaN(target.getTime())) {
     return {

@@ -17,7 +17,7 @@ export function recordInitialLoadMilestone(
   milestone: InitialLoadMilestone,
   mapEnabled: boolean,
 ): void {
-  if (typeof performance === "undefined") return;
+  if (typeof performance === "undefined") {return;}
 
   try {
     Sentry.metrics.distribution(

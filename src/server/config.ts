@@ -1,6 +1,6 @@
 import type { PublicClientConfig } from "../types";
 
-export type { PublicClientConfig };
+export type { PublicClientConfig } from "../types";
 
 export interface SupabaseConfig {
   url: string;

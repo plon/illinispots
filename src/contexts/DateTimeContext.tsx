@@ -1,11 +1,11 @@
 import React, {
+  type ReactNode,
   createContext,
   useCallback,
   useContext,
   useEffect,
   useMemo,
-  useState,
-  ReactNode,
+  useState
 } from "react";
 import { getCampusDateTimeParts, type CampusDateTime } from "@/utils/time";
 
@@ -56,7 +56,7 @@ export function DateTimeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!state.isLive) return;
+    if (!state.isLive) {return;}
 
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     const stopTimer = () => {
@@ -67,7 +67,7 @@ export function DateTimeProvider({ children }: { children: ReactNode }) {
     };
     const scheduleNextMinute = () => {
       stopTimer();
-      if (document.visibilityState !== "visible") return;
+      if (document.visibilityState !== "visible") {return;}
 
       timeoutId = setTimeout(() => {
         timeoutId = undefined;
@@ -84,7 +84,7 @@ export function DateTimeProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    if (document.visibilityState === "visible") scheduleNextMinute();
+    if (document.visibilityState === "visible") {scheduleNextMinute();}
     document.addEventListener("visibilitychange", catchUpToNow);
     window.addEventListener("focus", catchUpToNow);
 

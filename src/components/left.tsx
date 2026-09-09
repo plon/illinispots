@@ -1,7 +1,7 @@
 import React, {
+    type Dispatch,
+    type SetStateAction,
     useRef,
-    Dispatch,
-    SetStateAction,
     useEffect,
     useMemo,
     useCallback,
@@ -19,11 +19,7 @@ import {
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { TooltipProvider } from "@/components/ui/HybridTooltip";
-import {
-    Facility,
-    FacilityStatus,
-    FacilityType,
-} from "@/types";
+import { type Facility, type FacilityStatus, FacilityType } from "@/types";
 import {
     Map as MapIcon,
     BadgeHelp,
@@ -43,7 +39,7 @@ import RoomFilter from "@/components/RoomFilter";
 import { SearchResults } from "@/components/SearchResults";
 import { FacilityListView } from "@/components/facilities/FacilityListView";
 import { useFavorites } from "@/hooks/useFavorites";
-import { isRoomAvailable, FilterCriteria } from "@/utils/filterUtils";
+import { type FilterCriteria, isRoomAvailable } from "@/utils/filterUtils";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
@@ -200,7 +196,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         [minDuration, freeUntil, selectedDateTime],
     );
 
-    const hasActiveFilters = !!minDuration || !!freeUntil;
+    const hasActiveFilters = Boolean(minDuration) || Boolean(freeUntil);
     const isSearching = searchTerm.trim().length > 0;
     const naturalSearch = useMemo<NaturalLanguageSearchResult>(() => {
         if (naturalLanguageParser) {
@@ -225,7 +221,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     }, []);
 
     const applyNaturalSearch = useCallback(() => {
-        if (naturalSearch.error || !naturalSearch.dateTime) return;
+        if (naturalSearch.error || !naturalSearch.dateTime) {return;}
 
         posthog.capture("availability_search_applied", {
             has_location_query: Boolean(naturalSearch.locationQuery),
@@ -242,10 +238,10 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     };
 
     const facilityDataMatchesSelection = useMemo(() => {
-        if (!facilityData || isCurrentDateTime) return true;
+        if (!facilityData || isCurrentDateTime) {return true;}
 
         const responseInstant = new Date(facilityData.timestamp);
-        if (Number.isNaN(responseInstant.getTime())) return false;
+        if (Number.isNaN(responseInstant.getTime())) {return false;}
         const responseDateTime = getCampusDateTimeParts(responseInstant);
 
         return (
@@ -261,11 +257,11 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             if (!hasActiveFilters) {
                 return facilities;
             }
-            return facilities.filter((facility) => {
-                return Object.values(facility.rooms).some((room) =>
+            return facilities.filter((facility) => 
+                Object.values(facility.rooms).some((room) =>
                     isRoomAvailable(room, filterCriteria),
-                );
-            });
+                )
+            );
         },
         [hasActiveFilters, filterCriteria],
     );
@@ -308,7 +304,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
     // Auto-scroll ONLY when triggered by an external source (map or favorites)
     useEffect(() => {
-        if (!scrollTargetId) return;
+        if (!scrollTargetId) {return;}
         const element = document.getElementById(`facility-${scrollTargetId}`);
         if (element) {
             element.scrollIntoView({
@@ -422,7 +418,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                     </button>
 
                                     {/* Divider */}
-                                    <div className="h-px bg-border"></div>
+                                    <div className="h-px bg-border" />
 
                                     {/* Map Toggle */}
                                     <div className="flex items-center justify-between px-3 py-2">
@@ -442,12 +438,12 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                     </div>
 
                                     {/* Divider */}
-                                    <div className="h-px bg-border"></div>
+                                    <div className="h-px bg-border" />
 
                                     {/* Appearance / Theme Switcher */}
                                     <ThemeToggle />
                                     {/* Divider */}
-                                    <div className="h-px bg-border"></div>
+                                    <div className="h-px bg-border" />
 
                                     {/* Help Section */}
                                     <Popover>
@@ -494,7 +490,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                     </a>
 
                                     {/* Divider */}
-                                    <div className="h-px bg-border"></div>
+                                    <div className="h-px bg-border" />
 
                                     {/* Data Updates Section */}
                                     <div className="px-3 py-2 text-xs text-muted-foreground space-y-1">

@@ -1,7 +1,7 @@
 export const CAMPUS_TIMEZONE = "America/Chicago";
 
-const TIME_PATTERN = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/;
-const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+const TIME_PATTERN = /^(?<hour>\d{1,2}):(?<minute>\d{2})(?::(?<second>\d{2}))?$/;
+const DATE_PATTERN = /^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/;
 const MINUTES_PER_DAY = 24 * 60;
 
 const campusPartsFormatter = new Intl.DateTimeFormat("en-US", {
@@ -47,7 +47,7 @@ function readNumericPart(
   type: Intl.DateTimeFormatPartTypes,
 ): number {
   const part = parts.find((candidate) => candidate.type === type);
-  if (!part) throw new Error(`Intl formatter omitted ${type}`);
+  if (!part) {throw new Error(`Intl formatter omitted ${type}`);}
   return Number(part.value);
 }
 
@@ -73,7 +73,7 @@ export function getCampusDateTimeParts(
 
 export function parseTimeToMinutes(time: string): number | null {
   const match = TIME_PATTERN.exec(time);
-  if (!match) return null;
+  if (!match) {return null;}
 
   const hour = Number(match[1]);
   const minute = Number(match[2]);
@@ -103,9 +103,9 @@ export function formatMinutesAsTime(minutes: number): string {
 }
 
 export function formatTimeForDisplay(time: string | undefined): string {
-  if (!time) return "";
+  if (!time) {return "";}
   const minutes = parseTimeToMinutes(time);
-  if (minutes === null) return time;
+  if (minutes === null) {return time;}
 
   const hour = Math.floor(minutes / 60) % 24;
   const minute = Math.floor(minutes % 60);
@@ -130,13 +130,13 @@ export function getOvernightDurationMinutes(
   end: string,
 ): number {
   const duration = timeDifference(start, end);
-  if (duration === null) return 0;
+  if (duration === null) {return 0;}
   return duration < 0 ? duration + MINUTES_PER_DAY : duration;
 }
 
 function dateToUtc(date: string): Date | null {
   const match = DATE_PATTERN.exec(date);
-  if (!match) return null;
+  if (!match) {return null;}
 
   const year = Number(match[1]);
   const month = Number(match[2]);
@@ -154,7 +154,7 @@ function dateToUtc(date: string): Date | null {
 
 export function addDateDays(date: string, days: number): string | null {
   const value = dateToUtc(date);
-  if (!value) return null;
+  if (!value) {return null;}
   value.setUTCDate(value.getUTCDate() + days);
   return value.toISOString().slice(0, 10);
 }
@@ -162,13 +162,13 @@ export function addDateDays(date: string, days: number): string | null {
 export function differenceInCalendarDays(left: string, right: string): number | null {
   const leftDate = dateToUtc(left);
   const rightDate = dateToUtc(right);
-  if (!leftDate || !rightDate) return null;
+  if (!leftDate || !rightDate) {return null;}
   return Math.round((leftDate.getTime() - rightDate.getTime()) / 86_400_000);
 }
 
 export function getDateWeekday(date: string, short = false): string | null {
   const value = dateToUtc(date);
-  if (!value) return null;
+  if (!value) {return null;}
   return (short ? shortWeekdayFormatter : weekdayFormatter).format(value);
 }
 
@@ -179,7 +179,7 @@ export function formatDateForDisplay(date: string): string {
 
 export function formatShortMonthDay(date: string): string {
   const match = DATE_PATTERN.exec(date);
-  if (!match) return date;
+  if (!match) {return date;}
   return `${Number(match[2])}/${Number(match[3])}`;
 }
 

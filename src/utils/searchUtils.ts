@@ -1,6 +1,6 @@
-import { Facility, FacilityRoom, RoomStatus } from "@/types";
-import { FilterCriteria, isRoomAvailable } from "@/utils/filterUtils";
-import uFuzzy from "@leeoniya/ufuzzy";
+import { type Facility, type FacilityRoom, RoomStatus } from "@/types";
+import { type FilterCriteria, isRoomAvailable } from "@/utils/filterUtils";
+import UFuzzy from "@leeoniya/ufuzzy";
 
 export const BUILDING_ALIASES: Record<string, string[]> = {
   "Campus Instructional Facility": ["cif", "campus instructional", "instructional facility"],
@@ -80,10 +80,10 @@ export const getBuildingAliases = (buildingName: string): string[] => {
     }
   }
 
-  return Array.from(aliases);
+  return [...aliases];
 };
 
-const uf = new uFuzzy({ intraMode: 1, intraIns: 1 });
+const uf = new UFuzzy({ intraMode: 1, intraIns: 1 });
 
 const findRankedMatches = (haystack: string[], query: string): number[] => {
   const [idxs, info, order] = uf.search(
@@ -93,7 +93,7 @@ const findRankedMatches = (haystack: string[], query: string): number[] => {
     Number.POSITIVE_INFINITY,
   );
 
-  if (!idxs || idxs.length === 0) return [];
+  if (!idxs || idxs.length === 0) {return [];}
   return info && order ? order.map((index) => info.idx[index]) : idxs;
 };
 
@@ -120,7 +120,7 @@ const getStatusRank = (status: RoomStatus): number => {
  */
 export const searchFacilities = (facilities: Facility[], searchTerm: string): Facility[] => {
   const query = searchTerm.trim();
-  if (!query) return facilities;
+  if (!query) {return facilities;}
 
   const haystack = facilities.map(
     (facility) => `${facility.name} ${getBuildingAliases(facility.name).join(" ")}`
@@ -135,10 +135,10 @@ export const performSearch = (
   facilities: Facility[],
   searchTerm: string,
   filterCriteria: FilterCriteria = {},
-  hasActiveFilters: boolean = false,
+  hasActiveFilters = false,
 ): SearchResultRoom[] => {
   const query = searchTerm.trim().toLowerCase();
-  if (!query) return [];
+  if (!query) {return [];}
 
   const queryTokens = query.split(/\s+/).filter(Boolean);
 
@@ -174,11 +174,11 @@ export const performSearch = (
     });
   });
 
-  if (roomIndexItems.length === 0) return [];
+  if (roomIndexItems.length === 0) {return [];}
 
   const haystack = roomIndexItems.map((item) => item.searchableString);
   const matchedIndices = findRankedMatches(haystack, query);
-  if (matchedIndices.length === 0) return [];
+  if (matchedIndices.length === 0) {return [];}
 
   const getMatchPriority = (item: RoomIndexItem): number => {
     const r = item.roomNumber.toLowerCase();
@@ -216,11 +216,11 @@ export const performSearch = (
 
   matchedRooms.sort((a, b) => {
     // 1. Query specificity priority (compound match > exact room match > broad match)
-    if (a.priority !== b.priority) return b.priority - a.priority;
+    if (a.priority !== b.priority) {return b.priority - a.priority;}
 
     // 2. Room availability status (Available / Passing Period > Opening Soon > Occupied > Closed)
     const rankDiff = getStatusRank(b.item.room.status) - getStatusRank(a.item.room.status);
-    if (rankDiff !== 0) return rankDiff;
+    if (rankDiff !== 0) {return rankDiff;}
 
     // 3. uFuzzy relevance rank
     return a.uFuzzyRank - b.uFuzzyRank;

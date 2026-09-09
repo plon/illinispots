@@ -1,8 +1,8 @@
 import React from "react";
 import {
-  AcademicRoom,
-  FacilityRoom,
-  LibraryRoom,
+  type AcademicRoom,
+  type FacilityRoom,
+  type LibraryRoom,
   RoomStatus,
 } from "@/types";
 import { formatDuration } from "@/utils/format";

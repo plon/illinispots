@@ -1,6 +1,6 @@
 import React, { memo } from "react";
-import { Facility } from "@/types";
-import { FilterCriteria, EMPTY_FILTER_CRITERIA } from "@/utils/filterUtils";
+import type { Facility } from "@/types";
+import { type FilterCriteria, EMPTY_FILTER_CRITERIA } from "@/utils/filterUtils";
 import { Button } from "@/components/ui/button";
 import { Accordion } from "@/components/ui/accordion";
 import { FacilityAccordionItem } from "./FacilityAccordionItem";
@@ -30,8 +30,8 @@ export const FacilityListView: React.FC<FacilityListViewProps> = memo(
     error = null,
     onRetry,
     hasActiveFilters = false,
-  }) => {
-    return (
+  }) => 
+    (
       <div className="w-full">
         {/* Library Section */}
         {libraryFacilities.length > 0 ? (
@@ -179,10 +179,10 @@ export const FacilityListView: React.FC<FacilityListViewProps> = memo(
               No results found matching your criteria
             </p>
           )}
-        <div className="h-4"></div>
+        <div className="h-4" />
       </div>
-    );
-  },
+    )
+  ,
 );
 
 FacilityListView.displayName = "FacilityListView";

@@ -107,7 +107,7 @@ function Calendar({
               type="button"
               disabled={disabled}
               onClick={() => {
-                if (disabled) return;
+                if (disabled) {return;}
                 if (!isCurrentMonth) {
                   setCurrentMonth(startOfMonth(day));
                 }

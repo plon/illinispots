@@ -1,7 +1,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { FavoriteItem } from '@/hooks/useFavorites';
-import { Facility, FacilityStatus } from '@/types';
+import type { FavoriteItem } from '@/hooks/useFavorites';
+import type { Facility, FacilityStatus } from '@/types';
 import {
   STATUS_BADGE_STYLES,
   getFacilityAvailabilityBadgeStyle,
@@ -30,7 +30,7 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
   }
 
   const getFacilityData = (favoriteId: string): Facility | null => {
-    if (!facilityData) return null;
+    if (!facilityData) {return null;}
     return Object.values(facilityData.facilities).find(
       facility => facility.id === favoriteId
     ) || null;

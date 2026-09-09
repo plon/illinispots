@@ -10,7 +10,7 @@ export const CLIENT_TRACE_PROPAGATION_TARGETS = [
 
 export function shouldCreateClientRequestSpan(url: string): boolean {
   try {
-    const hostname = new URL(url, "https://illinispots.local").hostname;
+    const {hostname} = new URL(url, "https://illinispots.local");
     return hostname !== "mapbox.com" && !hostname.endsWith(".mapbox.com");
   } catch {
     return true;
@@ -18,11 +18,11 @@ export function shouldCreateClientRequestSpan(url: string): boolean {
 }
 
 export function initializeClientObservability(router: AnyRouter): void {
-  if (Sentry.isInitialized()) return;
+  if (Sentry.isInitialized()) {return;}
 
   const config = getClientConfig();
-  if (config.appEnv === "development") return;
-  if (!config.sentryDsn) return;
+  if (config.appEnv === "development") {return;}
+  if (!config.sentryDsn) {return;}
 
   Sentry.init({
     dsn: config.sentryDsn,
@@ -38,4 +38,4 @@ export function initializeClientObservability(router: AnyRouter): void {
   });
 }
 
-export { Sentry };
+export * as Sentry from "@sentry/react";

@@ -11,8 +11,8 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { Search } from 'lucide-react';
-import { Facility, FacilityStatus, FacilityType } from '@/types';
-import { FavoriteItem } from '@/hooks/useFavorites';
+import { type Facility, type FacilityStatus, FacilityType } from '@/types';
+import type { FavoriteItem } from '@/hooks/useFavorites';
 import { searchFacilities } from '@/utils/searchUtils';
 
 interface AddFavoritesDialogProps {
@@ -34,15 +34,15 @@ export const AddFavoritesDialog: React.FC<AddFavoritesDialogProps> = ({
     const [searchTerm, setSearchTerm] = useState("");
 
     const facilities = useMemo(() => {
-        if (!facilityData) return [];
+        if (!facilityData) {return [];}
         return Object.values(facilityData.facilities).sort((a, b) =>
             a.name.localeCompare(b.name)
         );
     }, [facilityData]);
 
-    const filteredFacilities = useMemo(() => {
-        return searchFacilities(facilities, searchTerm);
-    }, [facilities, searchTerm]);
+    const filteredFacilities = useMemo(() => 
+        searchFacilities(facilities, searchTerm)
+    , [facilities, searchTerm]);
 
     const isFavorite = (id: string) => favorites.some(f => f.id === id);
 

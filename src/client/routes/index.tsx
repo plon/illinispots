@@ -15,7 +15,7 @@ import {
   type CampusDateTime,
 } from "@/utils/time";
 import LeftSidebar from "@/components/left";
-import { FacilityStatus, FacilityType } from "@/types";
+import type { FacilityStatus, FacilityType } from "@/types";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
 import {
   recordInitialLoadMilestone,
@@ -189,13 +189,13 @@ const IlliniSpotsPage: React.FC = () => {
   }, [academicData, isCurrentDateTime, libraryData, liveNow]);
 
   useEffect(() => {
-    if (!isCurrentDateTime) return;
+    if (!isCurrentDateTime) {return;}
 
     let timeoutId: number | undefined;
     let cancelled = false;
 
     const scheduleNextRefresh = () => {
-      if (cancelled) return;
+      if (cancelled) {return;}
 
       timeoutId = window.setTimeout(() => {
         timeoutId = undefined;
@@ -208,7 +208,7 @@ const IlliniSpotsPage: React.FC = () => {
     scheduleNextRefresh();
     return () => {
       cancelled = true;
-      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+      if (timeoutId !== undefined) {window.clearTimeout(timeoutId);}
     };
   }, [isCurrentDateTime, refetchAcademic, refetchLibrary]);
 
@@ -254,7 +254,7 @@ const IlliniSpotsPage: React.FC = () => {
             <FacilityMap
               facilityData={facilityData || null}
               onMarkerClick={handleMarkerClick}
-              trackInitialLoad={true}
+              trackInitialLoad
             />
           </Suspense>
         </div>

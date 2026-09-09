@@ -72,7 +72,7 @@ export function formatDuration(minutes: number): string {
   if (hours > 0 && remainingMinutes > 0) {
     return `${hours}h ${remainingMinutes}m`;
   }
-  if (hours > 0) return `${hours}h`;
+  if (hours > 0) {return `${hours}h`;}
   return `${remainingMinutes}m`;
 }
 
@@ -154,7 +154,7 @@ export function buildTimelineModel(
     const clippedStart = Math.max(startMinutes, parsed.startMinutes);
     const clippedEnd = Math.min(endMinutes, parsed.endMinutes);
     const durationMinutes = clippedEnd - clippedStart;
-    if (durationMinutes <= 0) return [];
+    if (durationMinutes <= 0) {return [];}
 
     const offsetMinutes = clippedStart - startMinutes;
 
