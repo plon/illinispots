@@ -346,7 +346,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     return (
         <div
             className={`h-full bg-background flex flex-col relative ${
-                showMap ? "border-t md:border-t-0 md:border-r" : ""
+                showMap ? "border-t md:border-t-0" : ""
             }`}
         >
             <div className="sidebar-header py-2 px-3 md:py-3 md:px-4 border-b flex select-none items-center gap-2">

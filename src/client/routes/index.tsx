@@ -44,6 +44,38 @@ function MapLoadingFallback() {
   );
 }
 
+const SIDEBAR_WIDTH_STORAGE_KEY = "illinispots:sidebarWidth";
+const SIDEBAR_MIN_WIDTH = 320;
+const SIDEBAR_MAX_WIDTH = 720;
+const SIDEBAR_DEFAULT_WIDTH = 480;
+const MAP_MIN_WIDTH = 340;
+
+const clampSidebarWidth = (width: number, containerWidth?: number) => {
+  const maxByMap =
+    containerWidth && containerWidth > 0
+      ? containerWidth - MAP_MIN_WIDTH
+      : SIDEBAR_MAX_WIDTH;
+  return Math.min(
+    SIDEBAR_MAX_WIDTH,
+    maxByMap,
+    Math.max(SIDEBAR_MIN_WIDTH, Math.round(width)),
+  );
+};
+
+const readInitialSidebarWidth = () => {
+  if (typeof window === "undefined") {return SIDEBAR_DEFAULT_WIDTH;}
+  try {
+    const raw = window.localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY);
+    const parsed = raw ? Number.parseInt(raw, 10) : Number.NaN;
+    if (Number.isFinite(parsed)) {
+      return clampSidebarWidth(parsed);
+    }
+    return clampSidebarWidth(window.innerWidth * 0.37);
+  } catch {
+    return SIDEBAR_DEFAULT_WIDTH;
+  }
+};
+
 const fetchFacilityData = async (
   selectedDateTime: CampusDateTime,
   type: "academic" | "library",
@@ -75,6 +107,85 @@ const IlliniSpotsPage: React.FC = () => {
     id: string | null;
     timestamp: number;
   }>({ id: null, timestamp: 0 });
+  const [sidebarWidth, setSidebarWidth] = useState<number>(
+    readInitialSidebarWidth,
+  );
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ startX: number; startWidth: number } | null>(null);
+  const pendingWidthRef = useRef(sidebarWidth);
+
+  const commitSidebarWidth = useCallback((width: number) => {
+    const next = clampSidebarWidth(
+      width,
+      containerRef.current?.getBoundingClientRect().width,
+    );
+    pendingWidthRef.current = next;
+    containerRef.current?.style.setProperty("--sidebar-width", `${next}px`);
+    setSidebarWidth(next);
+    try {
+      window.localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(next));
+    } catch {
+      // Storage unavailable, width still applies for this session.
+    }
+  }, []);
+
+  // During a drag the width is written straight to the container's CSS
+  // variable so the list does not re-render on every pixel. React state
+  // only commits on release.
+  const handleResizePointerDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      event.currentTarget.setPointerCapture(event.pointerId);
+      dragRef.current = {
+        startX: event.clientX,
+        startWidth: pendingWidthRef.current,
+      };
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = "col-resize";
+    },
+    [],
+  );
+
+  const handleResizePointerMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const drag = dragRef.current;
+      if (!drag) {return;}
+      const next = clampSidebarWidth(
+        drag.startWidth + (event.clientX - drag.startX),
+        containerRef.current?.getBoundingClientRect().width,
+      );
+      pendingWidthRef.current = next;
+      containerRef.current?.style.setProperty("--sidebar-width", `${next}px`);
+    },
+    [],
+  );
+
+  const endResizeDrag = useCallback(() => {
+    if (!dragRef.current) {return;}
+    dragRef.current = null;
+    document.body.style.userSelect = "";
+    document.body.style.cursor = "";
+    commitSidebarWidth(pendingWidthRef.current);
+  }, [commitSidebarWidth]);
+
+  const handleResizeKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      const step = event.shiftKey ? 64 : 16;
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        commitSidebarWidth(pendingWidthRef.current - step);
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        commitSidebarWidth(pendingWidthRef.current + step);
+      } else if (event.key === "Home") {
+        event.preventDefault();
+        commitSidebarWidth(SIDEBAR_MIN_WIDTH);
+      } else if (event.key === "End") {
+        event.preventDefault();
+        commitSidebarWidth(SIDEBAR_MAX_WIDTH);
+      }
+    },
+    [commitSidebarWidth],
+  );
 
   const handleExpandedFacilityIdsChange = useCallback(
     (facilityIds: string[]) => {
@@ -242,30 +353,26 @@ const IlliniSpotsPage: React.FC = () => {
   );
 
   const showFetchingOverlay = isAcademicFetching && !isAcademicLoading;
-  const mainContentClasses = `h-screen flex ${
+  const mainContentClasses = `h-screen relative flex ${
     showMap ? "md:flex-row" : "items-center bg-muted/20"
   } flex-col`;
 
   return (
-    <div className={mainContentClasses}>
-      {showMap && (
-        <div className="h-[40vh] md:h-screen md:w-[63%] w-full order-1 md:order-2">
-          <Suspense fallback={<MapLoadingFallback />}>
-            <FacilityMap
-              facilityData={facilityData || null}
-              onMarkerClick={handleMarkerClick}
-              trackInitialLoad
-            />
-          </Suspense>
-        </div>
-      )}
-
+    <div
+      ref={containerRef}
+      className={mainContentClasses}
+      style={
+        showMap
+          ? ({ "--sidebar-width": `${sidebarWidth}px` } as React.CSSProperties)
+          : undefined
+      }
+    >
       <div
         className={`${
           showMap
-            ? "md:w-[37%] h-[60vh] md:h-screen order-2 md:order-1"
-            : "h-screen max-w-3xl md:border-x border-border shadow-xs"
-        } w-full flex-1 overflow-hidden relative`}
+            ? "h-[60vh] md:h-screen order-2 md:order-1 w-full md:w-[var(--sidebar-width)] md:min-w-[320px] md:max-w-[calc(100%-340px)] md:shrink-0 md:grow-0"
+            : "h-screen max-w-3xl md:border-x border-border shadow-xs w-full flex-1"
+        } overflow-hidden relative`}
       >
         <LeftSidebar
           facilityData={facilityData || null}
@@ -285,6 +392,40 @@ const IlliniSpotsPage: React.FC = () => {
           }}
         />
       </div>
+
+      {showMap && (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize sidebar"
+          aria-valuemin={SIDEBAR_MIN_WIDTH}
+          aria-valuemax={SIDEBAR_MAX_WIDTH}
+          aria-valuenow={sidebarWidth}
+          tabIndex={0}
+          title="Drag to resize (double-click to reset)"
+          onPointerDown={handleResizePointerDown}
+          onPointerMove={handleResizePointerMove}
+          onPointerUp={endResizeDrag}
+          onPointerCancel={endResizeDrag}
+          onKeyDown={handleResizeKeyDown}
+          onDoubleClick={() => commitSidebarWidth(SIDEBAR_DEFAULT_WIDTH)}
+          className="hidden md:flex md:absolute md:left-[var(--sidebar-width)] md:top-0 md:bottom-0 md:z-20 md:-translate-x-1/2 w-2 cursor-col-resize touch-none select-none items-stretch justify-center bg-transparent opacity-0 transition-[background-color,opacity] hover:bg-primary/15 hover:opacity-100 active:bg-primary/25 active:opacity-100 focus-visible:bg-primary/15 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset focus-visible:outline-none"
+        >
+          <div className="w-px bg-border" aria-hidden="true" />
+        </div>
+      )}
+
+      {showMap && (
+        <div className="h-[40vh] md:h-screen w-full md:w-auto md:flex-1 md:min-w-0 order-1 md:order-3">
+          <Suspense fallback={<MapLoadingFallback />}>
+            <FacilityMap
+              facilityData={facilityData || null}
+              onMarkerClick={handleMarkerClick}
+              trackInitialLoad
+            />
+          </Suspense>
+        </div>
+      )}
     </div>
   );
 };
