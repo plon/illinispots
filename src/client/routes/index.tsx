@@ -14,7 +14,7 @@ import {
   getCampusDateTimeParts,
   type CampusDateTime,
 } from "@/utils/time";
-import LeftSidebar from "@/components/left";
+import LeftSidebar from "@/components/LeftSidebar";
 import type { FacilityStatus, FacilityType } from "@/types";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
 import {
@@ -27,7 +27,7 @@ import {
   shouldRefetchFacilitiesOnReconnect,
 } from "@/utils/liveUpdates";
 import { useShowMapPreference } from "@/hooks/useShowMapPreference";
-const FacilityMap = lazy(() => import("@/components/map"));
+const FacilityMap = lazy(() => import("@/components/FacilityMap"));
 
 function MapLoadingFallback() {
   return (
