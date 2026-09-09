@@ -175,6 +175,27 @@ export default function FacilityMap({
     };
   }, []);
 
+  // Keep the map canvas in sync when the container is resized
+  // (e.g. sidebar drag). Throttled with rAF so continuous drags
+  // repaint instead of re-fetching tiles.
+  useEffect(() => {
+    if (!map.current || !mapContainer.current || !isMapLoaded) {return;}
+
+    let raf = 0;
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        map.current?.resize();
+      });
+    });
+    observer.observe(mapContainer.current);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      observer.disconnect();
+    };
+  }, [isMapLoaded]);
+
   useEffect(() => {
     if (!map.current || !isMapLoaded || !facilityData) {return;}
 
