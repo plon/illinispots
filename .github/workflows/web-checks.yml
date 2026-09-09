@@ -30,7 +30,16 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Validate application
+      - name: Lint
+        run: bun run lint
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Test
+        run: bun run test
+
+      - name: Build
         env:
           SENTRY_DISABLE_AUTO_UPLOAD: "true"
-        run: bun run check
+        run: bunx vite build
