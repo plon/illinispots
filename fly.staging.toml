@@ -5,7 +5,7 @@ primary_region = "ord"
   dockerfile = "Dockerfile"
 
 [deploy]
-  strategy = "rolling"
+  strategy = "immediate"
 
 [http_service]
   internal_port = 3000
