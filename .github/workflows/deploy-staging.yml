@@ -4,6 +4,11 @@ on:
   pull_request:
     types: [synchronize, labeled]
   workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch, tag, or commit SHA to deploy (defaults to selected branch tip)'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -23,13 +28,13 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.event.inputs.ref || github.event.pull_request.head.sha || github.sha }}
       - name: Create GitHub Deployment
         id: deployment
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TARGET_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          TARGET_SHA=$(git rev-parse HEAD)
           LOG_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           DEPLOY_ID=$(gh api repos/${{ github.repository }}/deployments --input - --jq '.id' <<EOF
           {
