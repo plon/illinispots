@@ -232,3 +232,40 @@ export const performSearch = (
     facility: item.facility,
   }));
 };
+
+/**
+ * Resolves a facility by dictionary key, ID (e.g. "grainger"), building name, or common acronym/alias (e.g. "cif").
+ */
+export const lookupFacility = (
+  facilities: Record<string, Facility> | undefined | null,
+  targetId: string | null | undefined,
+): Facility | null => {
+  if (!facilities || !targetId) {return null;}
+
+  // 1. Direct dictionary key match
+  if (facilities[targetId]) {return facilities[targetId];}
+
+  const lower = targetId.trim().toLowerCase();
+  const allFacilities = Object.values(facilities);
+
+  // 2. Exact match on facility.id or facility.name
+  const exactMatch = allFacilities.find(
+    (facility) => facility.id === targetId || facility.name === targetId,
+  );
+  if (exactMatch) {return exactMatch;}
+
+  // 3. Case-insensitive match on facility.id or facility.name
+  const caseInsensitiveMatch = allFacilities.find(
+    (facility) =>
+      facility.id.toLowerCase() === lower || facility.name.toLowerCase() === lower,
+  );
+  if (caseInsensitiveMatch) {return caseInsensitiveMatch;}
+
+  // 4. Common building acronym or alias match (e.g. "cif", "eceb", "siebel", "grainger")
+  return (
+    allFacilities.find((facility) =>
+      getBuildingAliases(facility.name).includes(lower),
+    ) ?? null
+  );
+};
+

@@ -2,7 +2,6 @@ import React, {
     type Dispatch,
     type SetStateAction,
     useRef,
-    useEffect,
     useMemo,
     useCallback,
     memo,
@@ -30,14 +29,20 @@ import {
     Star,
     CalendarClock,
     RotateCcw,
+    ArrowLeft,
 } from "lucide-react";
 import { GitHubLogoIcon } from "@radix-ui/react-icons";
 import DateTimeButton from "@/components/DateTimeButton";
 import { FavoritesSection } from "@/components/FavoritesSection";
 import { AddFavoritesDialog } from "@/components/AddFavoritesDialog";
 import RoomFilter from "@/components/RoomFilter";
+import { lookupFacility } from "@/utils/searchUtils";
 import { SearchResults } from "@/components/SearchResults";
 import { FacilityListView } from "@/components/facilities/FacilityListView";
+import {
+    FacilityDetailPage,
+    FacilityDetailSkeleton,
+} from "@/components/facilities/FacilityDetailPage";
 import { useFavorites } from "@/hooks/useFavorites";
 import { type FilterCriteria, isRoomAvailable } from "@/utils/filterUtils";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
@@ -58,11 +63,8 @@ interface LeftSidebarProps {
     facilityData: FacilityStatus | null;
     showMap: boolean;
     setShowMap: Dispatch<SetStateAction<boolean>>;
-    expandedFacilityIds: string[];
-    onExpandedFacilityIdsChange: (facilityIds: string[]) => void;
-    onExternalSelectFacility: (facilityId: string) => void;
-    scrollTargetId?: string | null;
-    scrollTargetTimestamp?: number;
+    selectedFacilityId: string | null;
+    onSelectFacility: (facilityId: string | null) => void;
     isFetching: boolean;
     isLibraryFetching: boolean;
     isAcademicLoading?: boolean;
@@ -161,11 +163,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     facilityData,
     showMap,
     setShowMap,
-    expandedFacilityIds,
-    onExpandedFacilityIdsChange,
-    onExternalSelectFacility,
-    scrollTargetId,
-    scrollTargetTimestamp,
+    selectedFacilityId,
+    onSelectFacility,
     isFetching,
     isLibraryFetching,
     isAcademicLoading = false,
@@ -175,8 +174,17 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const posthog = usePostHog();
     const scrollAreaRef = useRef<HTMLDivElement | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [facilityRoomSearch, setFacilityRoomSearch] = useState("");
+    const [prevSelectedFacilityId, setPrevSelectedFacilityId] =
+        useState(selectedFacilityId);
     const [naturalLanguageParser, setNaturalLanguageParser] =
         useState<NaturalLanguageParser | null>(null);
+
+    // Reset room filter when selected facility changes
+    if (selectedFacilityId !== prevSelectedFacilityId) {
+        setPrevSelectedFacilityId(selectedFacilityId);
+        setFacilityRoomSearch("");
+    }
     const { favorites, toggleFavorite } = useFavorites();
     const {
         selectedDateTime,
@@ -284,6 +292,54 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         return filterFacilitiesByAvailability(allAcademic);
     }, [facilityData, filterFacilitiesByAvailability]);
 
+    const selectedFacility = useMemo(
+        () => lookupFacility(facilityData?.facilities, selectedFacilityId),
+        [selectedFacilityId, facilityData],
+    );
+
+    const isFacilityFavorite = useMemo(() => {
+        if (!selectedFacility) {return false;}
+        return favorites.some((f) => f.id === selectedFacility.id);
+    }, [favorites, selectedFacility]);
+
+    const handleToggleFacilityFavorite = useCallback(() => {
+        if (!selectedFacility) {return;}
+        toggleFavorite({
+            id: selectedFacility.id,
+            name: selectedFacility.name,
+            type: selectedFacility.type === FacilityType.LIBRARY ? "library" : "academic",
+        });
+    }, [selectedFacility, toggleFavorite]);
+
+    const handleSelectFacilityFromList = useCallback(
+        (facilityId: string) => {
+            const fac = lookupFacility(facilityData?.facilities, facilityId);
+            posthog.capture("facility_selected", {
+                facility_id: facilityId,
+                facility_name: fac?.name,
+                facility_type: fac?.type,
+                selection_source: "list",
+            });
+            onSelectFacility(facilityId);
+        },
+        [facilityData, onSelectFacility, posthog],
+    );
+
+    const handleSelectFacilityFromSearch = useCallback(
+        (facilityId: string) => {
+            const fac = lookupFacility(facilityData?.facilities, facilityId);
+            posthog.capture("facility_selected", {
+                facility_id: facilityId,
+                facility_name: fac?.name,
+                facility_type: fac?.type,
+                selection_source: "search",
+            });
+            setSearchTerm("");
+            onSelectFacility(facilityId);
+        },
+        [facilityData, onSelectFacility, posthog],
+    );
+
     const handleFavoriteClick = useCallback(
         (
             facilityId: string,
@@ -297,22 +353,11 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 selection_source: "favorites",
             });
 
-            onExternalSelectFacility(facilityId);
+            onSelectFacility(facilityId);
         },
-        [onExternalSelectFacility, posthog],
+        [onSelectFacility, posthog],
     );
 
-    // Auto-scroll ONLY when triggered by an external source (map or favorites)
-    useEffect(() => {
-        if (!scrollTargetId) {return;}
-        const element = document.getElementById(`facility-${scrollTargetId}`);
-        if (element) {
-            element.scrollIntoView({
-                behavior: "smooth",
-                block: "start",
-            });
-        }
-    }, [scrollTargetId, scrollTargetTimestamp]);
     const matchingRoomsCount = useMemo(() => {
         const allFacilities = facilityData
             ? Object.values(facilityData.facilities)
@@ -343,6 +388,118 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
     const [isFavoritesDialogOpen, setIsFavoritesDialogOpen] = useState(false);
 
+    const menuPopover = (
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 rounded-full border border-input shrink-0 cursor-pointer"
+                    aria-label="Menu"
+                    title="Menu"
+                >
+                    <MoreHorizontal size={18} />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56 md:w-64" align="end">
+                <div className="space-y-1">
+                    {/* Favorites Option */}
+                    <button
+                        onClick={() => setIsFavoritesDialogOpen(true)}
+                        className="w-full flex items-center justify-start gap-2 px-3 py-2 rounded-md text-sm hover:bg-secondary transition-colors text-foreground text-left cursor-pointer"
+                    >
+                        <Star size={16} />
+                        Manage Favorites
+                    </button>
+
+                    {/* Divider */}
+                    <div className="h-px bg-border" />
+
+                    {/* Map Toggle */}
+                    <div className="flex items-center justify-between px-3 py-2">
+                        <label
+                            htmlFor="show-map-switch"
+                            className="text-sm font-medium text-foreground flex items-center gap-2"
+                        >
+                            <MapIcon size={16} />
+                            Show Map
+                        </label>
+                        <Switch
+                            id="show-map-switch"
+                            checked={showMap}
+                            onCheckedChange={setShowMap}
+                            aria-label="Toggle map display"
+                        />
+                    </div>
+
+                    {/* Divider */}
+                    <div className="h-px bg-border" />
+
+                    {/* Appearance / Theme Switcher */}
+                    <ThemeToggle />
+                    {/* Divider */}
+                    <div className="h-px bg-border" />
+
+                    {/* Help Section */}
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                className="w-full justify-start gap-2 px-3"
+                            >
+                                <BadgeHelp size={16} />
+                                Important Notes
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-64 md:w-80">
+                            <div className="text-sm space-y-2">
+                                <p className="font-medium">Important Notes:</p>
+                                <ul className="list-disc pl-4 space-y-1">
+                                    <li>
+                                        Building/room access may be restricted to specific
+                                        colleges or departments
+                                    </li>
+                                    <li>
+                                        Displayed availability only reflects official class
+                                        schedules and events
+                                    </li>
+                                    <li>
+                                        Rooms may be occupied by unofficial meetings or study
+                                        groups
+                                    </li>
+                                    <li>Different schedules may apply during exam periods</li>
+                                </ul>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+
+                    {/* GitHub Link */}
+                    <a
+                        href="https://github.com/plon/illinispots"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-start gap-2 px-3 py-2 rounded-md text-sm hover:bg-secondary transition-colors text-foreground"
+                    >
+                        <GitHubLogoIcon width={16} height={16} />
+                        View on GitHub
+                    </a>
+
+                    {/* Divider */}
+                    <div className="h-px bg-border" />
+
+                    {/* Data Updates Section */}
+                    <div className="px-3 py-2 text-xs text-muted-foreground space-y-1">
+                        <p>
+                            <span className="font-medium text-foreground">Data Updates:</span>
+                        </p>
+                        <p>• General campus events: Daily</p>
+                        <p>• Class schedules: Weekly</p>
+                    </div>
+                </div>
+            </PopoverContent>
+        </Popover>
+    );
+
     return (
         <div
             className={`h-full bg-background flex flex-col relative ${
@@ -350,161 +507,112 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             }`}
         >
             <div className="sidebar-header py-2 px-3 md:py-3 md:px-4 border-b flex select-none items-center gap-2">
-                <h1 className="text-base md:text-lg font-bold shrink-0 leading-none">
-                    <span style={{ color: "#FF5F05" }}>illini</span>
-                    <span className="text-[#13294B] dark:text-foreground">Spots</span>
-                </h1>
-                <TooltipProvider delayDuration={50}>
-                    <div className="flex-1 min-w-0 flex gap-2 items-center">
-                        <form
-                            className="relative flex-1 min-w-[70px]"
-                            onSubmit={handleSearchSubmit}
+                {selectedFacilityId ? (
+                    <>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                                setFacilityRoomSearch("");
+                                onSelectFacility(null);
+                            }}
+                            className="h-9 px-2 md:px-2.5 gap-1.5 shrink-0 text-xs md:text-sm font-medium hover:bg-muted/60 -ml-1 cursor-pointer"
+                            aria-label="Back to facilities list"
                         >
+                            <ArrowLeft className="h-4 w-4" />
+                            <span className="hidden sm:inline">Back</span>
+                        </Button>
+
+                        <div className="relative flex-1 min-w-[70px]">
                             <Search
                                 className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                                 aria-hidden="true"
                             />
                             <Input
                                 type="text"
-                                value={searchTerm}
-                                onFocus={loadNaturalLanguageParser}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Try CIF tmrw 2pm"
-                                className={`pl-8 ${searchTerm ? "pr-8" : ""} h-9 md:h-9 rounded-full text-sm`}
-                                aria-label="Search buildings, rooms, dates, and times"
+                                value={facilityRoomSearch}
+                                onChange={(e) => setFacilityRoomSearch(e.target.value)}
+                                placeholder="Filter rooms (e.g. 1025)..."
+                                className={`pl-8 ${facilityRoomSearch ? "pr-8" : ""} h-9 rounded-full text-sm`}
+                                aria-label={`Filter rooms in ${selectedFacility?.name ?? "facility"}`}
                             />
-                            {searchTerm && (
+                            {facilityRoomSearch && (
                                 <button
                                     type="button"
-                                    onClick={() => setSearchTerm("")}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                                    aria-label="Clear search"
+                                    onClick={() => setFacilityRoomSearch("")}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                                    aria-label="Clear room filter"
                                 >
                                     <X size={14} />
                                 </button>
                             )}
-                        </form>
-                        <RoomFilter
-                            minDuration={minDuration}
-                            setMinDuration={setMinDuration}
-                            freeUntil={freeUntil}
-                            setFreeUntil={setFreeUntil}
-                            hasActiveFilters={hasActiveFilters}
-                            onClearAll={clearFilters}
-                            matchingRoomsCount={matchingRoomsCount}
-                        />
-                        <DateTimeButton isFetching={isFetching} />
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-9 w-9 rounded-full border border-input shrink-0"
-                                    aria-label="Menu"
-                                    title="Menu"
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            <RoomFilter
+                                minDuration={minDuration}
+                                setMinDuration={setMinDuration}
+                                freeUntil={freeUntil}
+                                setFreeUntil={setFreeUntil}
+                                hasActiveFilters={hasActiveFilters}
+                                onClearAll={clearFilters}
+                                matchingRoomsCount={matchingRoomsCount}
+                            />
+                            <DateTimeButton isFetching={isFetching} />
+                            {menuPopover}
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <h1 className="text-base md:text-lg font-bold shrink-0 leading-none">
+                            <span style={{ color: "#FF5F05" }}>illini</span>
+                            <span className="text-[#13294B] dark:text-foreground">Spots</span>
+                        </h1>
+                        <TooltipProvider delayDuration={50}>
+                            <div className="flex-1 min-w-0 flex gap-2 items-center">
+                                <form
+                                    className="relative flex-1 min-w-[70px]"
+                                    onSubmit={handleSearchSubmit}
                                 >
-                                    <MoreHorizontal size={18} />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-56 md:w-64" align="end">
-                                <div className="space-y-1">
-                                    {/* Favorites Option */}
-                                    <button
-                                        onClick={() => setIsFavoritesDialogOpen(true)}
-                                        className="w-full flex items-center justify-start gap-2 px-3 py-2 rounded-md text-sm hover:bg-secondary transition-colors text-foreground text-left"
-                                    >
-                                        <Star size={16} />
-                                        Manage Favorites
-                                    </button>
-
-                                    {/* Divider */}
-                                    <div className="h-px bg-border" />
-
-                                    {/* Map Toggle */}
-                                    <div className="flex items-center justify-between px-3 py-2">
-                                        <label
-                                            htmlFor="show-map-switch"
-                                            className="text-sm font-medium text-foreground flex items-center gap-2"
+                                    <Search
+                                        className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                                        aria-hidden="true"
+                                    />
+                                    <Input
+                                        type="text"
+                                        value={searchTerm}
+                                        onFocus={loadNaturalLanguageParser}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        placeholder="Try CIF tmrw 2pm"
+                                        className={`pl-8 ${searchTerm ? "pr-8" : ""} h-9 md:h-9 rounded-full text-sm`}
+                                        aria-label="Search buildings, rooms, dates, and times"
+                                    />
+                                    {searchTerm && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setSearchTerm("")}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                                            aria-label="Clear search"
                                         >
-                                            <MapIcon size={16} />
-                                            Show Map
-                                        </label>
-                                        <Switch
-                                            id="show-map-switch"
-                                            checked={showMap}
-                                            onCheckedChange={setShowMap}
-                                            aria-label="Toggle map display"
-                                        />
-                                    </div>
-
-                                    {/* Divider */}
-                                    <div className="h-px bg-border" />
-
-                                    {/* Appearance / Theme Switcher */}
-                                    <ThemeToggle />
-                                    {/* Divider */}
-                                    <div className="h-px bg-border" />
-
-                                    {/* Help Section */}
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                className="w-full justify-start gap-2 px-3"
-                                            >
-                                                <BadgeHelp size={16} />
-                                                Important Notes
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-64 md:w-80">
-                                            <div className="text-sm space-y-2">
-                                                <p className="font-medium">Important Notes:</p>
-                                                <ul className="list-disc pl-4 space-y-1">
-                                                    <li>
-                                                        Building/room access may be restricted to specific
-                                                        colleges or departments
-                                                    </li>
-                                                    <li>
-                                                        Displayed availability only reflects official class
-                                                        schedules and events
-                                                    </li>
-                                                    <li>
-                                                        Rooms may be occupied by unofficial meetings or study
-                                                        groups
-                                                    </li>
-                                                    <li>Different schedules may apply during exam periods</li>
-                                                </ul>
-                                            </div>
-                                        </PopoverContent>
-                                    </Popover>
-
-                                    {/* GitHub Link */}
-                                    <a
-                                        href="https://github.com/plon/illinispots"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center justify-start gap-2 px-3 py-2 rounded-md text-sm hover:bg-secondary transition-colors text-foreground"
-                                    >
-                                        <GitHubLogoIcon width={16} height={16} />
-                                        View on GitHub
-                                    </a>
-
-                                    {/* Divider */}
-                                    <div className="h-px bg-border" />
-
-                                    {/* Data Updates Section */}
-                                    <div className="px-3 py-2 text-xs text-muted-foreground space-y-1">
-                                        <p>
-                                            <span className="font-medium text-foreground">Data Updates:</span>
-                                        </p>
-                                        <p>• General campus events: Daily</p>
-                                        <p>• Class schedules: Weekly</p>
-                                    </div>
-                                </div>
-                            </PopoverContent>
-                        </Popover>
-                    </div>
-                </TooltipProvider>
+                                            <X size={14} />
+                                        </button>
+                                    )}
+                                </form>
+                                <RoomFilter
+                                    minDuration={minDuration}
+                                    setMinDuration={setMinDuration}
+                                    freeUntil={freeUntil}
+                                    setFreeUntil={setFreeUntil}
+                                    hasActiveFilters={hasActiveFilters}
+                                    onClearAll={clearFilters}
+                                    matchingRoomsCount={matchingRoomsCount}
+                                />
+                                <DateTimeButton isFetching={isFetching} />
+                                {menuPopover}
+                            </div>
+                        </TooltipProvider>
+                    </>
+                )}
             </div>
 
             {!isCurrentDateTime && (
@@ -520,7 +628,45 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 viewportClassName="[&>div]:block! [&>div]:min-w-0!"
                 ref={scrollAreaRef}
             >
-                {isSearching && hasTemporalSearch ? (
+                {selectedFacilityId ? (
+                    selectedFacility ? (
+                        <FacilityDetailPage
+                            facility={selectedFacility}
+                            onBack={() => {
+                                setFacilityRoomSearch("");
+                                onSelectFacility(null);
+                            }}
+                            filterCriteria={filterCriteria}
+                            isFavorite={isFacilityFavorite}
+                            onToggleFavorite={handleToggleFacilityFavorite}
+                            roomSearchQuery={facilityRoomSearch}
+                            onClearRoomSearch={() => setFacilityRoomSearch("")}
+                        />
+                    ) : isAcademicLoading || isFetching || !facilityData ? (
+                        <FacilityDetailSkeleton onBack={() => {
+                            setFacilityRoomSearch("");
+                            onSelectFacility(null);
+                        }} />
+                    ) : (
+                        <div className="py-12 px-4 text-center space-y-3">
+                            <p className="text-sm font-medium text-foreground">Facility not found</p>
+                            <p className="text-xs text-muted-foreground">
+                                The requested facility could not be found.
+                            </p>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    setFacilityRoomSearch("");
+                                    onSelectFacility(null);
+                                }}
+                                className="cursor-pointer text-xs"
+                            >
+                                Back to all facilities
+                            </Button>
+                        </div>
+                    )
+                ) : isSearching && hasTemporalSearch ? (
                     <NaturalSearchPrompt
                         interpretation={naturalSearch}
                         onApply={applyNaturalSearch}
@@ -533,6 +679,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         hasActiveFilters={hasActiveFilters}
                         onClearFilters={clearFilters}
                         onClearSearch={() => setSearchTerm("")}
+                        onSelectFacility={handleSelectFacilityFromSearch}
                         isLoading={
                             isAcademicLoading || isFetching || !facilityDataMatchesSelection
                         }
@@ -549,8 +696,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         <FacilityListView
                             libraryFacilities={libraryFacilities}
                             academicFacilities={academicFacilities}
-                            expandedFacilityIds={expandedFacilityIds}
-                            onExpandedFacilityIdsChange={onExpandedFacilityIdsChange}
+                            onSelectFacility={handleSelectFacilityFromList}
                             filterCriteria={filterCriteria}
                             isLibraryFetching={isLibraryFetching}
                             isAcademicLoading={isAcademicLoading}
