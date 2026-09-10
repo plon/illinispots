@@ -26,6 +26,7 @@ import {
   LIVE_REFRESH_INTERVAL_MS,
   shouldRefetchFacilitiesOnReconnect,
 } from "@/utils/liveUpdates";
+import { lookupFacility } from "@/utils/searchUtils";
 import { useShowMapPreference } from "@/hooks/useShowMapPreference";
 const FacilityMap = lazy(() => import("@/components/FacilityMap"));
 
@@ -102,11 +103,23 @@ const IlliniSpotsPage: React.FC = () => {
   const posthog = usePostHog();
   const { selectedDateTime, liveNow, isCurrentDateTime } = useDateTimeContext();
   const [showMap, setShowMap] = useShowMapPreference();
-  const [expandedFacilityIds, setExpandedFacilityIds] = useState<string[]>([]);
-  const [scrollTarget, setScrollTarget] = useState<{
-    id: string | null;
-    timestamp: number;
-  }>({ id: null, timestamp: 0 });
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const selectedFacilityId = search.facility ?? null;
+
+  const handleSelectFacility = useCallback(
+    (facilityId: string | null) => {
+      navigate({
+        search: (prev) => ({
+          ...prev,
+          facility: facilityId || undefined,
+        }),
+        replace: facilityId === null,
+      });
+    },
+    [navigate],
+  );
+
   const [sidebarWidth, setSidebarWidth] = useState<number>(
     readInitialSidebarWidth,
   );
@@ -212,22 +225,6 @@ const IlliniSpotsPage: React.FC = () => {
     [commitSidebarWidth, effectiveSidebarWidth],
   );
 
-  const handleExpandedFacilityIdsChange = useCallback(
-    (facilityIds: string[]) => {
-      setExpandedFacilityIds(facilityIds);
-    },
-    [],
-  );
-
-  const handleExternalSelectFacility = useCallback((facilityId: string) => {
-    setExpandedFacilityIds((prev) =>
-      prev.includes(facilityId) ? prev : [...prev, facilityId],
-    );
-    setScrollTarget({
-      id: facilityId,
-      timestamp: Date.now(),
-    });
-  }, []);
   const recordedLoadMilestones = useRef(new Set<InitialLoadMilestone>());
 
   const recordLoadMilestone = useCallback(
@@ -364,7 +361,8 @@ const IlliniSpotsPage: React.FC = () => {
 
   const handleMarkerClick = useCallback(
     (id: string, facilityType: FacilityType) => {
-      const facilityName = facilityData?.facilities[id]?.name;
+      const fac = lookupFacility(facilityData?.facilities, id);
+      const facilityName = fac?.name;
       posthog.capture("facility_selected", {
         facility_id: id,
         facility_name: facilityName,
@@ -372,9 +370,9 @@ const IlliniSpotsPage: React.FC = () => {
         selection_source: "map",
       });
 
-      handleExternalSelectFacility(id);
+      handleSelectFacility(id);
     },
-    [facilityData, handleExternalSelectFacility, posthog],
+    [facilityData, handleSelectFacility, posthog],
   );
 
   const showFetchingOverlay = isAcademicFetching && !isAcademicLoading;
@@ -401,11 +399,8 @@ const IlliniSpotsPage: React.FC = () => {
       >
         <LeftSidebar
           facilityData={facilityData || null}
-          expandedFacilityIds={expandedFacilityIds}
-          onExpandedFacilityIdsChange={handleExpandedFacilityIdsChange}
-          onExternalSelectFacility={handleExternalSelectFacility}
-          scrollTargetId={scrollTarget.id}
-          scrollTargetTimestamp={scrollTarget.timestamp}
+          selectedFacilityId={selectedFacilityId}
+          onSelectFacility={handleSelectFacility}
           showMap={showMap}
           setShowMap={setShowMap}
           isFetching={showFetchingOverlay}
@@ -455,6 +450,16 @@ const IlliniSpotsPage: React.FC = () => {
   );
 };
 
+interface SpotsSearch {
+  facility?: string;
+}
+
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>): SpotsSearch => ({
+    facility:
+      typeof search.facility === "string" && search.facility.trim().length > 0
+        ? search.facility.trim()
+        : undefined,
+  }),
   component: IlliniSpotsPage,
 });

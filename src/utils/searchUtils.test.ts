@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { performSearch, getBuildingAliases, searchFacilities } from "@/utils/searchUtils";
+import { performSearch, getBuildingAliases, searchFacilities, lookupFacility } from "@/utils/searchUtils";
 import { type Facility, FacilityType, RoomStatus } from "@/types";
 
 const mockFacilities: Facility[] = [
@@ -182,5 +182,84 @@ describe("getBuildingAliases", () => {
     const aliases = getBuildingAliases("Campus Instructional Facility");
     expect(aliases).toContain("cif");
     expect(aliases).toContain("campus instructional facility");
+  });
+});
+
+describe("lookupFacility", () => {
+  const libraryCatalog: Record<string, Facility> = {
+    "Grainger Engineering Library": {
+      id: "grainger",
+      name: "Grainger Engineering Library",
+      type: FacilityType.LIBRARY,
+      coordinates: { latitude: 40.1125, longitude: -88.2269 },
+      hours: { open: "00:00", close: "23:59" },
+      isOpen: true,
+      roomCounts: { available: 5, total: 10 },
+      rooms: {},
+    },
+    "Campus Instructional Facility": {
+      id: "Campus Instructional Facility",
+      name: "Campus Instructional Facility",
+      type: FacilityType.ACADEMIC,
+      coordinates: { latitude: 40.1125, longitude: -88.2269 },
+      hours: { open: "07:00", close: "23:00" },
+      isOpen: true,
+      roomCounts: { available: 2, total: 4 },
+      rooms: {},
+    },
+  };
+
+  test("resolves library facility by its id ('grainger')", () => {
+    const facility = lookupFacility(libraryCatalog, "grainger");
+    expect(facility).not.toBeNull();
+    expect(facility?.name).toBe("Grainger Engineering Library");
+  });
+
+  test("resolves facility by dictionary key or full name", () => {
+    const facility = lookupFacility(libraryCatalog, "Grainger Engineering Library");
+    expect(facility).not.toBeNull();
+    expect(facility?.id).toBe("grainger");
+  });
+
+  test("resolves facility by acronym/alias ('cif')", () => {
+    const facility = lookupFacility(libraryCatalog, "cif");
+    expect(facility).not.toBeNull();
+    expect(facility?.name).toBe("Campus Instructional Facility");
+  });
+
+  test("returns null for non-existent facility", () => {
+    expect(lookupFacility(libraryCatalog, "nonexistent-building")).toBeNull();
+    expect(lookupFacility(undefined, "grainger")).toBeNull();
+  });
+
+  test("does not resolve inherited object properties as facilities", () => {
+    expect(lookupFacility(libraryCatalog, "constructor")).toBeNull();
+    expect(lookupFacility(libraryCatalog, "toString")).toBeNull();
+  });
+
+  test("resolves an own property even when it has a prototype property name", () => {
+    const [facility] = mockFacilities;
+    expect(lookupFacility({ constructor: facility }, "constructor")).toBe(
+      facility,
+    );
+  });
+
+  test("does not choose arbitrarily between ambiguous facility aliases", () => {
+    const newmark = {
+      ...mockFacilities[0],
+      id: "newmark",
+      name: "Newmark Civil Engineering Bldg",
+    };
+    const civilAndEnvironmental = {
+      ...mockFacilities[1],
+      id: "hydro",
+      name: "Civil & Envir Eng Bldg",
+    };
+    const facilities = { newmark, hydro: civilAndEnvironmental };
+
+    expect(lookupFacility(facilities, "cee")).toBeNull();
+    expect(lookupFacility(facilities, "civil")).toBeNull();
+    expect(lookupFacility(facilities, "newmark")).toBe(newmark);
+    expect(lookupFacility(facilities, "hydro")).toBe(civilAndEnvironmental);
   });
 });

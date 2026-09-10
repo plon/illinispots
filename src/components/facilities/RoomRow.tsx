@@ -55,7 +55,7 @@ export const RoomRow: React.FC<RoomRowProps> = memo(
           facility_name: facilityName,
           facility_type: facilityType,
           room_number: roomName,
-          selection_source: "accordion",
+          selection_source: "facility_detail",
         });
       }
       onToggleExpand();

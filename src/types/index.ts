@@ -216,7 +216,6 @@ export interface FacilityRoomProps {
   facilityId: string;
   facilityName: string;
 }
-export type AccordionRefs = Record<string, HTMLDivElement | null>;
 
 export interface RoomBadgeProps {
   status: RoomStatus;

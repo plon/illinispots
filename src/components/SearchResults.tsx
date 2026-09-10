@@ -17,6 +17,7 @@ interface SearchResultsProps {
   hasActiveFilters: boolean;
   onClearFilters: () => void;
   onClearSearch: () => void;
+  onSelectFacility?: (facilityId: string) => void;
   isLoading?: boolean;
   isLibraryLoading?: boolean;
 }
@@ -28,6 +29,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
   hasActiveFilters,
   onClearFilters,
   onClearSearch,
+  onSelectFacility,
   isLoading = false,
   isLibraryLoading = false,
 }) => {
@@ -175,6 +177,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
             <RoomSearchResultCard
               key={`room-${roomResult.facility.id}-${roomResult.roomNumber}`}
               roomResult={roomResult}
+              onSelectFacility={onSelectFacility}
             />
           ))}
         </div>

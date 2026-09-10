@@ -6,7 +6,8 @@ import {
   STATUS_BADGE_STYLES,
   getFacilityAvailabilityBadgeStyle,
 } from '@/components/RoomBadge';
-import { Star } from 'lucide-react';
+import { Star, ChevronRight } from 'lucide-react';
+import { lookupFacility } from '@/utils/searchUtils';
 
 interface FavoritesSectionProps {
   favorites: FavoriteItem[];
@@ -29,12 +30,8 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
     return null;
   }
 
-  const getFacilityData = (favoriteId: string): Facility | null => {
-    if (!facilityData) {return null;}
-    return Object.values(facilityData.facilities).find(
-      facility => facility.id === favoriteId
-    ) || null;
-  };
+  const getFacilityData = (favoriteId: string): Facility | null =>
+    lookupFacility(facilityData?.facilities, favoriteId);
 
   return (
     <div className="mt-2">
@@ -69,7 +66,7 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
                 <span className="truncate text-sm font-medium">
                   {favorite.name}
                 </span>
-                <span className="shrink-0">
+                <span className="shrink-0 flex items-center gap-1.5">
                   {facility ? (
                     !facility.isOpen ? (
                       <Badge
@@ -98,6 +95,7 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
                       --
                     </Badge>
                   )}
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/60" />
                 </span>
               </button>
             </div>

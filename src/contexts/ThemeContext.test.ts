@@ -81,6 +81,8 @@ describe("ThemeContext production exports", () => {
 
     // Mock window and matchMedia
     globalThis.window = {
+      addEventListener: () => {},
+      removeEventListener: () => {},
       matchMedia: (query: string) =>
         ({
           matches: matchMediaMatches,

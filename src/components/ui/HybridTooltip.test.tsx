@@ -15,6 +15,8 @@ describe("TouchProvider and HybridTooltip", () => {
   beforeEach(() => {
     coarseMatches = false;
     globalThis.window = {
+      addEventListener: () => {},
+      removeEventListener: () => {},
       matchMedia: (query: string) => ({
         matches: query.includes("pointer: coarse") ? coarseMatches : false,
         media: query,

@@ -22,10 +22,12 @@ import {
 
 interface RoomSearchResultCardProps {
   roomResult: SearchResultRoom;
+  onSelectFacility?: (facilityId: string) => void;
 }
 
 export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
   roomResult,
+  onSelectFacility,
 }) => {
   const posthog = usePostHog();
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -61,12 +63,26 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
           </span>
 
           {/* Building Link */}
-          <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
-            <Building2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-            <span className="truncate max-w-[200px] md:max-w-[260px] font-medium">
-              {facility.name}
-            </span>
-          </div>
+          {onSelectFacility ? (
+            <button
+              type="button"
+              onClick={() => onSelectFacility(facility.id)}
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 mt-0.5 group text-left cursor-pointer transition-colors"
+              title={`View ${facility.name} page`}
+            >
+              <Building2 className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+              <span className="truncate max-w-[200px] md:max-w-[260px] font-medium group-hover:text-primary group-hover:underline transition-colors">
+                {facility.name}
+              </span>
+            </button>
+          ) : (
+            <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+              <Building2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              <span className="truncate max-w-[200px] md:max-w-[260px] font-medium">
+                {facility.name}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Room Status Badge */}
