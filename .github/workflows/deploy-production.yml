@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: 'Branch, tag, or commit SHA to deploy (defaults to selected branch tip)'
+        description: 'Branch, tag, or full commit SHA to deploy (defaults to selected branch tip)'
         required: false
         default: ''
 
