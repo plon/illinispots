@@ -7,7 +7,6 @@ import {
   isRoomAvailable,
 } from "@/utils/filterUtils";
 import {
-  STATUS_BADGE_STYLES,
   getFacilityAvailabilityBadgeStyle,
 } from "@/components/RoomBadge";
 import { ChevronRight } from "lucide-react";
@@ -21,15 +20,18 @@ interface FacilityListItemProps {
 export const FacilityListItem: React.FC<FacilityListItemProps> = memo(
   ({ facility, onSelect, filterCriteria = EMPTY_FILTER_CRITERIA }) => {
     const filteredAvailableCount = useMemo(
-      () =>
-        Object.values(facility.rooms).filter((room) => {
+      () => {
+        if (!facility.isOpen) {return 0;}
+
+        return Object.values(facility.rooms).filter((room) => {
           const isAvailableOrPassing =
             room.status === RoomStatus.AVAILABLE ||
             room.status === RoomStatus.PASSING_PERIOD;
 
           return isAvailableOrPassing && isRoomAvailable(room, filterCriteria);
-        }).length,
-      [facility.rooms, filterCriteria],
+        }).length;
+      },
+      [facility.isOpen, facility.rooms, filterCriteria],
     );
 
     return (
@@ -46,24 +48,17 @@ export const FacilityListItem: React.FC<FacilityListItemProps> = memo(
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {!facility.isOpen ? (
-            <Badge
-              variant="outline"
-              className={`${STATUS_BADGE_STYLES.closed} text-xs`}
-            >
-              CLOSED
-            </Badge>
-          ) : (
-            <Badge
-              variant="outline"
-              className={`${getFacilityAvailabilityBadgeStyle(
-                true,
-                filteredAvailableCount,
-              )} text-xs`}
-            >
-              {filteredAvailableCount}/{facility.roomCounts.total}
-            </Badge>
-          )}
+          <Badge
+            variant="outline"
+            className={`${getFacilityAvailabilityBadgeStyle(
+              facility.isOpen,
+              filteredAvailableCount,
+            )} text-xs`}
+          >
+            {facility.isOpen
+              ? `${filteredAvailableCount}/${facility.roomCounts.total}`
+              : "CLOSED"}
+          </Badge>
           <ChevronRight className="h-4 w-4 text-muted-foreground/60 group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
         </div>
       </button>

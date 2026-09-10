@@ -127,7 +127,7 @@ export const FacilityListView: React.FC<FacilityListViewProps> = memo(
 
       {/* Error state */}
       {error && !isAcademicLoading && academicFacilities.length === 0 && (
-        <div className="p-4 text-center">
+        <div className="p-4 text-center" role="alert">
           <p className="text-sm text-destructive mb-2">{error}</p>
           {onRetry && (
             <Button

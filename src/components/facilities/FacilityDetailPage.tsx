@@ -29,6 +29,18 @@ interface FacilityDetailPageProps {
 
 type RoomTab = "available" | "occupied" | "all";
 
+const useEscapeToBack = (onBack: () => void) => {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !event.defaultPrevented) {
+        onBack();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onBack]);
+};
+
 export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
   ({
     facility,
@@ -43,42 +55,55 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
     const [activeTab, setActiveTab] = useState<RoomTab>("available");
     const [expandedRoomId, setExpandedRoomId] = useState<string | null>(null);
 
-    // Keyboard navigation: Escape key returns to facility list
-    useEffect(() => {
-      const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.key === "Escape" && !event.defaultPrevented) {
-          onBack();
-        }
-      };
-      window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [onBack]);
+    useEscapeToBack(onBack);
 
-    // Filter and sort all rooms based on availability filters
+    // Keep the full room set for the Academic Occupied and All tabs. The
+    // availability criteria only narrow available academic rooms and the
+    // library list, which has no separate status tabs.
     const allRooms = useMemo(
       () =>
         Object.entries(facility.rooms)
-          .filter(([, room]) => isRoomAvailable(room, filterCriteria))
           .sort(([numA], [numB]) =>
             numA.localeCompare(numB, undefined, {
               numeric: true,
               sensitivity: "base",
             }),
           ),
-      [facility.rooms, filterCriteria],
+      [facility.rooms],
     );
 
-    const { availableRooms, occupiedRooms } = useMemo(
+    const { availableRooms: allAvailableRooms, occupiedRooms } = useMemo(
       () => groupAcademicRooms(allRooms),
       [allRooms],
     );
 
+    const availableRooms = useMemo(
+      () =>
+        allAvailableRooms.filter(([, room]) =>
+          isRoomAvailable(room, filterCriteria),
+        ),
+      [allAvailableRooms, filterCriteria],
+    );
+
+    const libraryRooms = useMemo(
+      () =>
+        allRooms.filter(([, room]) => isRoomAvailable(room, filterCriteria)),
+      [allRooms, filterCriteria],
+    );
+
     const roomsByTab = useMemo(() => {
-      if (!isAcademic) {return allRooms;}
+      if (!isAcademic) {return libraryRooms;}
       if (activeTab === "available") {return availableRooms;}
       if (activeTab === "occupied") {return occupiedRooms;}
       return allRooms;
-    }, [isAcademic, activeTab, availableRooms, occupiedRooms, allRooms]);
+    }, [
+      isAcademic,
+      activeTab,
+      libraryRooms,
+      availableRooms,
+      occupiedRooms,
+      allRooms,
+    ]);
 
     const roomsToDisplay = useMemo(() => {
       const query = roomSearchQuery.trim().toLowerCase();
@@ -142,11 +167,10 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
                 variant="outline"
                 className={`${getFacilityAvailabilityBadgeStyle(
                   true,
-                  isAcademic ? totalAvailableCount : facility.roomCounts.available,
+                  totalAvailableCount,
                 )} text-xs font-medium`}
               >
-                {isAcademic ? totalAvailableCount : facility.roomCounts.available} of{" "}
-                {facility.roomCounts.total} spots available
+                {totalAvailableCount} of {facility.roomCounts.total} spots available
               </Badge>
             )}
 
@@ -297,45 +321,49 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
 FacilityDetailPage.displayName = "FacilityDetailPage";
 
 interface FacilityDetailSkeletonProps {
-  onBack?: () => void;
+  onBack: () => void;
 }
 
 export const FacilityDetailSkeleton: React.FC<FacilityDetailSkeletonProps> = memo(
-  () => (
-    <div className="w-full pb-8" role="status" aria-busy="true" aria-label="Loading facility details">
-      <span className="sr-only">Loading facility details…</span>
+  ({ onBack }) => {
+    useEscapeToBack(onBack);
 
-      {/* Hero skeleton */}
-      <div className="px-4 py-2.5 border-b border-border/70 space-y-1.5">
-        <div className="flex items-center justify-between">
-          <div className="h-6 w-52 rounded bg-muted animate-pulse" />
-          <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="h-4 w-24 rounded-full bg-muted animate-pulse" />
-          <div className="h-3 w-32 rounded bg-muted/60 animate-pulse" />
-        </div>
-      </div>
+    return (
+      <div className="w-full pb-8" role="status" aria-busy="true" aria-label="Loading facility details">
+        <span className="sr-only">Loading facility details…</span>
 
-      {/* Tabs skeleton - Sticky */}
-      <div className="sticky top-0 bg-background/95 z-10 px-4 py-2 border-b border-border/50">
-        <div className="h-7 rounded-lg bg-muted/60 animate-pulse" />
-      </div>
-
-      {/* Rooms skeleton */}
-      <div className="divide-y divide-border/50">
-        {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="py-3 px-4 flex items-center justify-between">
-            <div className="space-y-1.5">
-              <div className="h-4 w-24 rounded bg-muted animate-pulse" />
-              <div className="h-3 w-40 rounded bg-muted/60 animate-pulse" />
-            </div>
-            <div className="h-6 w-20 rounded-full bg-muted animate-pulse" />
+        {/* Hero skeleton */}
+        <div className="px-4 py-2.5 border-b border-border/70 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <div className="h-6 w-52 rounded bg-muted animate-pulse" />
+            <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
           </div>
-        ))}
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-24 rounded-full bg-muted animate-pulse" />
+            <div className="h-3 w-32 rounded bg-muted/60 animate-pulse" />
+          </div>
+        </div>
+
+        {/* Tabs skeleton - Sticky */}
+        <div className="sticky top-0 bg-background/95 z-10 px-4 py-2 border-b border-border/50">
+          <div className="h-7 rounded-lg bg-muted/60 animate-pulse" />
+        </div>
+
+        {/* Rooms skeleton */}
+        <div className="divide-y divide-border/50">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="py-3 px-4 flex items-center justify-between">
+              <div className="space-y-1.5">
+                <div className="h-4 w-24 rounded bg-muted animate-pulse" />
+                <div className="h-3 w-40 rounded bg-muted/60 animate-pulse" />
+              </div>
+              <div className="h-6 w-20 rounded-full bg-muted animate-pulse" />
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
-  ),
+    );
+  },
 );
 
 FacilityDetailSkeleton.displayName = "FacilityDetailSkeleton";

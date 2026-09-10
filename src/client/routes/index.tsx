@@ -114,6 +114,7 @@ const IlliniSpotsPage: React.FC = () => {
           ...prev,
           facility: facilityId || undefined,
         }),
+        replace: facilityId === null,
       });
     },
     [navigate],

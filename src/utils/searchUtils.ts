@@ -243,7 +243,7 @@ export const lookupFacility = (
   if (!facilities || !targetId) {return null;}
 
   // 1. Direct dictionary key match
-  if (facilities[targetId]) {return facilities[targetId];}
+  if (Object.hasOwn(facilities, targetId)) {return facilities[targetId];}
 
   const lower = targetId.trim().toLowerCase();
   const allFacilities = Object.values(facilities);
@@ -262,10 +262,8 @@ export const lookupFacility = (
   if (caseInsensitiveMatch) {return caseInsensitiveMatch;}
 
   // 4. Common building acronym or alias match (e.g. "cif", "eceb", "siebel", "grainger")
-  return (
-    allFacilities.find((facility) =>
-      getBuildingAliases(facility.name).includes(lower),
-    ) ?? null
+  const aliasMatches = allFacilities.filter((facility) =>
+    getBuildingAliases(facility.name).includes(lower),
   );
+  return aliasMatches.length === 1 ? aliasMatches[0] : null;
 };
-

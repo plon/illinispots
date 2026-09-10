@@ -1,12 +1,3 @@
-if (typeof globalThis.window !== "undefined") {
-  if (!globalThis.window.addEventListener) {
-    globalThis.window.addEventListener = () => {};
-  }
-  if (!globalThis.window.removeEventListener) {
-    globalThis.window.removeEventListener = () => {};
-  }
-}
-
 import { describe, expect, it, mock } from "bun:test";
 
 mock.module("posthog-js", () => ({
@@ -81,8 +72,32 @@ const mockLibraryFacility: Facility = {
   isOpen: true,
   coordinates: { latitude: 40.1125, longitude: -88.2269 },
   hours: { open: "00:00", close: "23:59" },
-  roomCounts: { available: 4, total: 10 },
-  rooms: {},
+  roomCounts: { available: 2, total: 3 },
+  rooms: {
+    "Study Room A": {
+      type: "library",
+      status: RoomStatus.AVAILABLE,
+      availableFor: 120,
+      url: "https://example.com/a",
+      thumbnail: "",
+      slots: [],
+    },
+    "Study Room B": {
+      type: "library",
+      status: RoomStatus.AVAILABLE,
+      availableFor: 30,
+      url: "https://example.com/b",
+      thumbnail: "",
+      slots: [],
+    },
+    "Study Room C": {
+      type: "library",
+      status: RoomStatus.OCCUPIED,
+      url: "https://example.com/c",
+      thumbnail: "",
+      slots: [],
+    },
+  },
 };
 
 describe("FacilityListItem", () => {
@@ -130,6 +145,20 @@ describe("FacilityListView", () => {
     // Should NOT contain accordion classes or accordion triggers
     expect(html).not.toContain("data-slot=\"accordion\"");
   });
+
+  it("announces academic loading errors", () => {
+    const html = renderToStaticMarkup(
+      <FacilityListView
+        libraryFacilities={[]}
+        academicFacilities={[]}
+        onSelectFacility={() => {}}
+        error="Unable to load facilities"
+      />,
+    );
+
+    expect(html).toContain('role="alert"');
+    expect(html).toContain("Unable to load facilities");
+  });
 });
 
 describe("FacilityDetailPage", () => {
@@ -163,6 +192,36 @@ describe("FacilityDetailPage", () => {
     expect(html).toContain("1025");
     expect(html).not.toContain("3025");
     expect(html).not.toContain("2035");
+  });
+
+  it("keeps occupied and all-room counts when availability filters are active", () => {
+    const html = renderToStaticMarkup(
+      <FacilityDetailPage
+        facility={mockAcademicFacility}
+        onBack={() => {}}
+        filterCriteria={{ minDuration: 75 }}
+      />,
+    );
+
+    expect(html).toContain("1 of 3 spots available");
+    expect(html).toContain("Available (1)");
+    expect(html).toContain("Occupied (1)");
+    expect(html).toContain("All (3)");
+  });
+
+  it("uses filtered availability for a library badge and room list", () => {
+    const html = renderToStaticMarkup(
+      <FacilityDetailPage
+        facility={mockLibraryFacility}
+        onBack={() => {}}
+        filterCriteria={{ minDuration: 60 }}
+      />,
+    );
+
+    expect(html).toContain("1 of 3 spots available");
+    expect(html).toContain("Study Room A");
+    expect(html).not.toContain("Study Room B");
+    expect(html).not.toContain("Study Room C");
   });
 
   it("renders closed notice when facility is closed", () => {

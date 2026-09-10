@@ -231,4 +231,35 @@ describe("lookupFacility", () => {
     expect(lookupFacility(libraryCatalog, "nonexistent-building")).toBeNull();
     expect(lookupFacility(undefined, "grainger")).toBeNull();
   });
+
+  test("does not resolve inherited object properties as facilities", () => {
+    expect(lookupFacility(libraryCatalog, "constructor")).toBeNull();
+    expect(lookupFacility(libraryCatalog, "toString")).toBeNull();
+  });
+
+  test("resolves an own property even when it has a prototype property name", () => {
+    const [facility] = mockFacilities;
+    expect(lookupFacility({ constructor: facility }, "constructor")).toBe(
+      facility,
+    );
+  });
+
+  test("does not choose arbitrarily between ambiguous facility aliases", () => {
+    const newmark = {
+      ...mockFacilities[0],
+      id: "newmark",
+      name: "Newmark Civil Engineering Bldg",
+    };
+    const civilAndEnvironmental = {
+      ...mockFacilities[1],
+      id: "hydro",
+      name: "Civil & Envir Eng Bldg",
+    };
+    const facilities = { newmark, hydro: civilAndEnvironmental };
+
+    expect(lookupFacility(facilities, "cee")).toBeNull();
+    expect(lookupFacility(facilities, "civil")).toBeNull();
+    expect(lookupFacility(facilities, "newmark")).toBe(newmark);
+    expect(lookupFacility(facilities, "hydro")).toBe(civilAndEnvironmental);
+  });
 });
