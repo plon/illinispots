@@ -2,6 +2,7 @@ import React, {
     type Dispatch,
     type SetStateAction,
     useRef,
+    useEffect,
     useMemo,
     useCallback,
     memo,
@@ -185,6 +186,16 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         setPrevSelectedFacilityId(selectedFacilityId);
         setFacilityRoomSearch("");
     }
+
+    // The list and detail page share the same Radix scroll viewport. Reset it
+    // whenever navigation swaps the content so the next view starts at its top.
+    useEffect(() => {
+        const viewport = scrollAreaRef.current?.querySelector<HTMLElement>(
+            '[data-slot="scroll-area-viewport"]',
+        );
+        if (viewport) {viewport.scrollTop = 0;}
+    }, [selectedFacilityId]);
+
     const { favorites, toggleFavorite } = useFavorites();
     const {
         selectedDateTime,
@@ -631,6 +642,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 {selectedFacilityId ? (
                     selectedFacility ? (
                         <FacilityDetailPage
+                            key={selectedFacility.id}
                             facility={selectedFacility}
                             onBack={() => {
                                 setFacilityRoomSearch("");
@@ -642,7 +654,10 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                             roomSearchQuery={facilityRoomSearch}
                             onClearRoomSearch={() => setFacilityRoomSearch("")}
                         />
-                    ) : isAcademicLoading || isFetching || !facilityData ? (
+                    ) : isAcademicLoading ||
+                      isFetching ||
+                      isLibraryFetching ||
+                      !facilityData ? (
                         <FacilityDetailSkeleton onBack={() => {
                             setFacilityRoomSearch("");
                             onSelectFacility(null);
