@@ -580,7 +580,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     <a
                         href="https://github.com/plon/illinispots"
                         target="_blank"
-                        rel="noopener noreferrer"
+                        rel="noopener"
                         className="flex items-center justify-start gap-2 px-3 py-2 rounded-md text-sm hover:bg-secondary transition-colors text-foreground"
                     >
                         <GitHubLogoIcon width={16} height={16} />
