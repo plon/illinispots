@@ -39,6 +39,7 @@ import { FavoritesSection } from "@/components/FavoritesSection";
 import { AddFavoritesDialog } from "@/components/AddFavoritesDialog";
 import RoomFilter from "@/components/RoomFilter";
 import { lookupFacility } from "@/utils/searchUtils";
+import { resolveSidebarScrollTarget } from "@/components/sidebarScroll";
 import { SearchResults } from "@/components/SearchResults";
 import { FacilityListView } from "@/components/facilities/FacilityListView";
 import {
@@ -161,9 +162,6 @@ const NaturalSearchPrompt: React.FC<NaturalSearchPromptProps> = ({
     );
 };
 
-const useIsomorphicLayoutEffect =
-    typeof window !== "undefined" ? useLayoutEffect : useEffect;
-
 const LeftSidebar: React.FC<LeftSidebarProps> = ({
     facilityData,
     showMap,
@@ -177,10 +175,12 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     onRetry,
 }) => {
     const posthog = usePostHog();
-    const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+    const scrollViewportRef = useRef<HTMLDivElement | null>(null);
     const listScrollTopRef = useRef(0);
-    const isRestoringScrollRef = useRef(false);
+    const selectedFacilityIdRef = useRef(selectedFacilityId);
     const prevFacilityIdRef = useRef(selectedFacilityId);
+    const isSearchingRef = useRef(false);
+    const prevIsSearchingRef = useRef(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [facilityRoomSearch, setFacilityRoomSearch] = useState("");
     const [prevSelectedFacilityId, setPrevSelectedFacilityId] =
@@ -199,16 +199,16 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         [selectedFacilityId, facilityData],
     );
 
-    // Track the building list scroll position while browsing the list
+    // Track the building list scroll position while browsing the list. The
+    // mirrors are updated synchronously in the layout effects below, so this
+    // handler never mistakes a programmatic reset for a user scroll.
     useEffect(() => {
-        if (selectedFacilityId !== null) {return;}
-        const viewport = scrollAreaRef.current?.querySelector<HTMLElement>(
-            '[data-slot="scroll-area-viewport"]',
-        );
+        const viewport = scrollViewportRef.current;
         if (!viewport) {return;}
 
         const handleScroll = () => {
-            if (isRestoringScrollRef.current) {return;}
+            if (selectedFacilityIdRef.current !== null) {return;}
+            if (isSearchingRef.current) {return;}
             listScrollTopRef.current = viewport.scrollTop;
         };
 
@@ -216,80 +216,28 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         return () => {
             viewport.removeEventListener("scroll", handleScroll);
         };
-    }, [selectedFacilityId]);
+    }, []);
 
-    // Reset list scroll position when starting a new search
-    useEffect(() => {
-        if (!searchTerm) {return;}
-        listScrollTopRef.current = 0;
-    }, [searchTerm]);
-
-    // Ensure scroll restoration also triggers when navigating via browser back/forward buttons
-    useEffect(() => {
-        const handlePopState = () => {
-            if (selectedFacilityId === null) {
-                const targetScroll = listScrollTopRef.current;
-                if (targetScroll > 0) {
-                    isRestoringScrollRef.current = true;
-                    requestAnimationFrame(() => {
-                        const viewport = scrollAreaRef.current?.querySelector<HTMLElement>(
-                            '[data-slot="scroll-area-viewport"]',
-                        );
-                        if (viewport) {
-                            viewport.scrollTop = targetScroll;
-                        }
-                        setTimeout(() => {
-                            isRestoringScrollRef.current = false;
-                        }, 50);
-                    });
-                }
-            }
-        };
-
-        window.addEventListener("popstate", handlePopState);
-        return () => window.removeEventListener("popstate", handlePopState);
-    }, [selectedFacilityId]);
-
-    // When opening a facility detail page, always start at the top (0).
-    // When returning to the facility list, restore the previous list scroll position.
-    useIsomorphicLayoutEffect(() => {
-        const viewport = scrollAreaRef.current?.querySelector<HTMLElement>(
-            '[data-slot="scroll-area-viewport"]',
+    // Opening a facility always starts at the top. Returning to the list
+    // restores the saved list position. List-to-list renders (search input,
+    // filters) leave the scroll position alone.
+    useLayoutEffect(() => {
+        const action = resolveSidebarScrollTarget(
+            prevFacilityIdRef.current,
+            selectedFacilityId,
+            listScrollTopRef.current,
         );
-        if (!viewport) {return;}
-
-        const wasList = prevFacilityIdRef.current === null;
-        const isList = selectedFacilityId === null;
-        const facilityChanged = prevFacilityIdRef.current !== selectedFacilityId;
         prevFacilityIdRef.current = selectedFacilityId;
+        selectedFacilityIdRef.current = selectedFacilityId;
 
-        if (wasList && !isList) {
+        const viewport = scrollViewportRef.current;
+        if (!viewport) {return;}
+        if (action.type === "restore") {
+            viewport.scrollTop = action.offset;
+        } else if (action.type === "reset") {
             viewport.scrollTop = 0;
-        } else if (!wasList && !isList) {
-            if (facilityChanged) {
-                viewport.scrollTop = 0;
-            }
-        } else if (!wasList && isList) {
-            const targetScroll = listScrollTopRef.current;
-            isRestoringScrollRef.current = true;
-            viewport.scrollTop = targetScroll;
-            if (typeof requestAnimationFrame !== "undefined") {
-                requestAnimationFrame(() => {
-                    const vp = scrollAreaRef.current?.querySelector<HTMLElement>(
-                        '[data-slot="scroll-area-viewport"]',
-                    );
-                    if (vp) {
-                        vp.scrollTop = targetScroll;
-                    }
-                    setTimeout(() => {
-                        isRestoringScrollRef.current = false;
-                    }, 50);
-                });
-            } else {
-                isRestoringScrollRef.current = false;
-            }
         }
-    }, [selectedFacilityId, selectedFacility?.id]);
+    }, [selectedFacilityId]);
 
     const { favorites, toggleFavorite } = useFavorites();
     const {
@@ -312,6 +260,19 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
     const hasActiveFilters = Boolean(minDuration) || Boolean(freeUntil);
     const isSearching = searchTerm.trim().length > 0;
+
+    // Starting a search parks the viewport at the top and clears the saved
+    // list position. The scroll listener stays muted while searching, so
+    // scrolling through results never leaks into the restored list offset.
+    useLayoutEffect(() => {
+        const wasSearching = prevIsSearchingRef.current;
+        prevIsSearchingRef.current = isSearching;
+        isSearchingRef.current = isSearching;
+        if (wasSearching || !isSearching) {return;}
+        listScrollTopRef.current = 0;
+        const viewport = scrollViewportRef.current;
+        if (viewport) {viewport.scrollTop = 0;}
+    }, [isSearching]);
     const naturalSearch = useMemo<NaturalLanguageSearchResult>(() => {
         if (naturalLanguageParser) {
             return naturalLanguageParser(searchTerm);
@@ -421,12 +382,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 facility_type: fac?.type,
                 selection_source: "list",
             });
-            const viewport = scrollAreaRef.current?.querySelector<HTMLElement>(
-                '[data-slot="scroll-area-viewport"]',
-            );
-            if (viewport) {
-                listScrollTopRef.current = viewport.scrollTop;
-            }
             onSelectFacility(facilityId);
         },
         [facilityData, onSelectFacility, posthog],
@@ -459,12 +414,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 facility_type: type,
                 selection_source: "favorites",
             });
-            const viewport = scrollAreaRef.current?.querySelector<HTMLElement>(
-                '[data-slot="scroll-area-viewport"]',
-            );
-            if (viewport) {
-                listScrollTopRef.current = viewport.scrollTop;
-            }
             onSelectFacility(facilityId);
         },
         [onSelectFacility, posthog],
@@ -738,7 +687,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             <ScrollArea
                 className="flex-1 relative"
                 viewportClassName="[&>div]:block! [&>div]:min-w-0!"
-                ref={scrollAreaRef}
+                viewportRef={scrollViewportRef}
             >
                 {selectedFacilityId ? (
                     selectedFacility ? (

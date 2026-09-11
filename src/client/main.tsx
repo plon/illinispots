@@ -6,10 +6,6 @@ import { initializeClientObservability } from "@/client/observability";
 import { Providers } from "@/client/providers";
 import { router } from "@/client/router";
 
-if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
-  window.history.scrollRestoration = "manual";
-}
-
 const rootElement = document.getElementById("root");
 
 if (!rootElement) {
