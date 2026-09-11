@@ -3,6 +3,7 @@ import React, {
     type SetStateAction,
     useRef,
     useEffect,
+    useLayoutEffect,
     useMemo,
     useCallback,
     memo,
@@ -38,6 +39,7 @@ import { FavoritesSection } from "@/components/FavoritesSection";
 import { AddFavoritesDialog } from "@/components/AddFavoritesDialog";
 import RoomFilter from "@/components/RoomFilter";
 import { lookupFacility } from "@/utils/searchUtils";
+import { resolveSidebarScrollTarget } from "@/components/sidebarScroll";
 import { SearchResults } from "@/components/SearchResults";
 import { FacilityListView } from "@/components/facilities/FacilityListView";
 import {
@@ -173,7 +175,14 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     onRetry,
 }) => {
     const posthog = usePostHog();
-    const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+    const scrollViewportRef = useRef<HTMLDivElement | null>(null);
+    const listScrollTopRef = useRef(0);
+    const selectedFacilityIdRef = useRef(selectedFacilityId);
+    const prevFacilityIdRef = useRef(selectedFacilityId);
+    const isSearchingRef = useRef(false);
+    const prevIsSearchingRef = useRef(false);
+    const pendingRestoreRef = useRef<number | null>(null);
+    const lastAppliedScrollRef = useRef(0);
     const [searchTerm, setSearchTerm] = useState("");
     const [facilityRoomSearch, setFacilityRoomSearch] = useState("");
     const [prevSelectedFacilityId, setPrevSelectedFacilityId] =
@@ -187,14 +196,88 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         setFacilityRoomSearch("");
     }
 
-    // The list and detail page share the same Radix scroll viewport. Reset it
-    // whenever navigation swaps the content so the next view starts at its top.
+    const selectedFacility = useMemo(
+        () => lookupFacility(facilityData?.facilities, selectedFacilityId),
+        [selectedFacilityId, facilityData],
+    );
+
+    // Track the building list scroll position while browsing the list. The
+    // mirrors are updated synchronously in the layout effects below, and
+    // restores set pendingRestoreRef, so this handler never records a
+    // programmatic write (possibly clamped while content is still growing)
+    // over the true saved offset.
     useEffect(() => {
-        const viewport = scrollAreaRef.current?.querySelector<HTMLElement>(
-            '[data-slot="scroll-area-viewport"]',
+        const viewport = scrollViewportRef.current;
+        if (!viewport) {return;}
+
+        const handleScroll = () => {
+            if (selectedFacilityIdRef.current !== null) {return;}
+            if (isSearchingRef.current) {return;}
+            if (pendingRestoreRef.current !== null) {return;}
+            listScrollTopRef.current = viewport.scrollTop;
+        };
+
+        viewport.addEventListener("scroll", handleScroll, { passive: true });
+        return () => {
+            viewport.removeEventListener("scroll", handleScroll);
+        };
+    }, []);
+
+    // Opening a facility always starts at the top. Returning to the list
+    // restores the saved list position. List-to-list renders (search input,
+    // filters) leave the scroll position alone.
+    useLayoutEffect(() => {
+        const action = resolveSidebarScrollTarget(
+            prevFacilityIdRef.current,
+            selectedFacilityId,
+            listScrollTopRef.current,
         );
-        if (viewport) {viewport.scrollTop = 0;}
+        prevFacilityIdRef.current = selectedFacilityId;
+        selectedFacilityIdRef.current = selectedFacilityId;
+
+        const viewport = scrollViewportRef.current;
+        if (!viewport) {return;}
+        if (action.type === "restore") {
+            // The write can clamp short while list content is still growing;
+            // pendingRestoreRef keeps the listener from storing that echo and
+            // lets the settle effect below re-apply the true offset.
+            pendingRestoreRef.current = action.offset;
+            viewport.scrollTop = action.offset;
+            lastAppliedScrollRef.current = viewport.scrollTop;
+        } else if (action.type === "reset") {
+            pendingRestoreRef.current = null;
+            lastAppliedScrollRef.current = 0;
+            viewport.scrollTop = 0;
+        }
     }, [selectedFacilityId]);
+
+    // Finish a clamped restore once list content lands. Runs again as facility
+    // data arrives; re-applies only while the viewport sits where the restore
+    // left it, so a user scroll in between takes over instead of being yanked.
+    useEffect(() => {
+        if (selectedFacilityId !== null) {
+            pendingRestoreRef.current = null;
+            return;
+        }
+        const pending = pendingRestoreRef.current;
+        if (pending === null) {return;}
+        const viewport = scrollViewportRef.current;
+        if (!viewport) {return;}
+        if (viewport.scrollTop !== lastAppliedScrollRef.current) {
+            listScrollTopRef.current = viewport.scrollTop;
+            pendingRestoreRef.current = null;
+            return;
+        }
+        if (viewport.scrollTop < pending) {
+            viewport.scrollTop = pending;
+            lastAppliedScrollRef.current = viewport.scrollTop;
+            if (viewport.scrollTop >= pending) {
+                pendingRestoreRef.current = null;
+            }
+        } else {
+            pendingRestoreRef.current = null;
+        }
+    }, [selectedFacilityId, facilityData, isLibraryFetching, isAcademicLoading]);
 
     const { favorites, toggleFavorite } = useFavorites();
     const {
@@ -217,6 +300,21 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
     const hasActiveFilters = Boolean(minDuration) || Boolean(freeUntil);
     const isSearching = searchTerm.trim().length > 0;
+
+    // Starting a search parks the viewport at the top and clears the saved
+    // list position. The scroll listener stays muted while searching, so
+    // scrolling through results never leaks into the restored list offset.
+    useLayoutEffect(() => {
+        const wasSearching = prevIsSearchingRef.current;
+        prevIsSearchingRef.current = isSearching;
+        isSearchingRef.current = isSearching;
+        if (wasSearching || !isSearching) {return;}
+        listScrollTopRef.current = 0;
+        pendingRestoreRef.current = null;
+        lastAppliedScrollRef.current = 0;
+        const viewport = scrollViewportRef.current;
+        if (viewport) {viewport.scrollTop = 0;}
+    }, [isSearching]);
     const naturalSearch = useMemo<NaturalLanguageSearchResult>(() => {
         if (naturalLanguageParser) {
             return naturalLanguageParser(searchTerm);
@@ -303,11 +401,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         return filterFacilitiesByAvailability(allAcademic);
     }, [facilityData, filterFacilitiesByAvailability]);
 
-    const selectedFacility = useMemo(
-        () => lookupFacility(facilityData?.facilities, selectedFacilityId),
-        [selectedFacilityId, facilityData],
-    );
-
     const isFacilityFavorite = useMemo(() => {
         if (!selectedFacility) {return false;}
         return favorites.some((f) => f.id === selectedFacility.id);
@@ -363,7 +456,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 facility_type: type,
                 selection_source: "favorites",
             });
-
             onSelectFacility(facilityId);
         },
         [onSelectFacility, posthog],
@@ -637,7 +729,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             <ScrollArea
                 className="flex-1 relative"
                 viewportClassName="[&>div]:block! [&>div]:min-w-0!"
-                ref={scrollAreaRef}
+                viewportRef={scrollViewportRef}
             >
                 {selectedFacilityId ? (
                     selectedFacility ? (
