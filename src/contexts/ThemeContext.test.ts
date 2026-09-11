@@ -17,6 +17,9 @@ describe("ThemeContext production exports", () => {
   const classListSet = new Set<string>();
   const metaAttributes: Record<string, string> = {};
   let mediaQueryListener: (() => void) | null = null;
+  const originalDocument = globalThis.document;
+  const originalWindow = globalThis.window;
+  const originalLocalStorage = globalThis.localStorage;
 
   beforeEach(() => {
     localStorageStore = {};
@@ -103,6 +106,9 @@ describe("ThemeContext production exports", () => {
 
   afterEach(() => {
     classListSet.clear();
+    globalThis.document = originalDocument;
+    globalThis.window = originalWindow;
+    globalThis.localStorage = originalLocalStorage;
   });
 
   describe("THEME_STORAGE_KEY", () => {

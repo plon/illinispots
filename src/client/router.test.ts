@@ -1,3 +1,10 @@
+if (typeof document !== "undefined" && !("getElementsByTagName" in document)) {
+  Object.defineProperty(document, "getElementsByTagName", {
+    value: () => [],
+    configurable: true,
+  });
+}
+
 import { describe, expect, it } from "bun:test";
 import { router } from "./router";
 
