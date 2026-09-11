@@ -222,17 +222,17 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
                 <div
                   role="tablist"
                   aria-label="Filter rooms by status"
-                  className="flex items-center bg-muted/60 p-0.5 rounded-lg text-xs font-medium border border-border/40"
+                  className="flex items-center bg-muted p-0.5 rounded-lg text-xs font-medium border border-border"
                 >
                   <button
                     type="button"
                     role="tab"
                     aria-selected={activeTab === "available"}
                     onClick={() => setActiveTab("available")}
-                    className={`flex-1 py-1 px-2.5 rounded-md transition-all text-center cursor-pointer ${
+                    className={`flex-1 py-1 px-2.5 rounded-md transition-all text-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
                       activeTab === "available"
-                        ? "bg-background text-foreground shadow-2xs font-semibold"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-background text-foreground shadow-sm ring-1 ring-border font-semibold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-background/60"
                     }`}
                   >
                     Available ({availableRooms.length})
@@ -242,10 +242,10 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
                     role="tab"
                     aria-selected={activeTab === "occupied"}
                     onClick={() => setActiveTab("occupied")}
-                    className={`flex-1 py-1 px-2.5 rounded-md transition-all text-center cursor-pointer ${
+                    className={`flex-1 py-1 px-2.5 rounded-md transition-all text-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
                       activeTab === "occupied"
-                        ? "bg-background text-foreground shadow-2xs font-semibold"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-background text-foreground shadow-sm ring-1 ring-border font-semibold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-background/60"
                     }`}
                   >
                     Occupied ({occupiedRooms.length})
@@ -255,10 +255,10 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
                     role="tab"
                     aria-selected={activeTab === "all"}
                     onClick={() => setActiveTab("all")}
-                    className={`flex-1 py-1 px-2.5 rounded-md transition-all text-center cursor-pointer ${
+                    className={`flex-1 py-1 px-2.5 rounded-md transition-all text-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
                       activeTab === "all"
-                        ? "bg-background text-foreground shadow-2xs font-semibold"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-background text-foreground shadow-sm ring-1 ring-border font-semibold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-background/60"
                     }`}
                   >
                     All ({allRooms.length})
