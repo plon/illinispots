@@ -32,9 +32,12 @@ type RoomTab = "available" | "occupied" | "all";
 const useEscapeToBack = (onBack: () => void) => {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !event.defaultPrevented) {
-        onBack();
-      }
+      if (event.key !== "Escape" || event.defaultPrevented) {return;}
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.closest?.('[role="dialog"], input, textarea, select, [contenteditable="true"]')
+      ) {return;}
+      onBack();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);

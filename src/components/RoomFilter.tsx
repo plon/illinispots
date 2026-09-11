@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { ListFilter, Clock } from "lucide-react";
-import { getCampusDateTimeParts } from "@/utils/time";
 
 const PRESET_DURATIONS = [30, 60, 120, 240] as const;
 const MIN_CUSTOM_DURATION = 1;
@@ -84,12 +83,12 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
         }
     };
 
-    const applyFreeUntil = (value: string, selectionSource: "picker" | "focus_default") => {
+    const applyFreeUntil = (value: string) => {
         setFreeUntil(value);
         posthog.capture("room_filter_applied", {
             filter_type: "free_until",
             ...(value
-                ? { free_until: value, selection_source: selectionSource }
+                ? { free_until: value, selection_source: "picker" }
                 : { action: "cleared" }),
         });
     };
@@ -149,7 +148,7 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                 ? "border-primary bg-primary text-primary-foreground shadow-md"
                 : "border-input hover:border-foreground/40"
                 }`}
-            aria-label="Filter options"
+            aria-label={hasActiveFilters ? "Filter options, filters active" : "Filter options"}
         >
             <ListFilter size={16} />
         </Button>
@@ -198,14 +197,9 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
                         <Input
                             type="time"
                             value={freeUntil}
-                            onChange={(e) => applyFreeUntil(e.target.value, "picker")}
-                            onFocus={() => {
-                                if (!freeUntil) {
-                                    const campusNow = getCampusDateTimeParts();
-                                    applyFreeUntil(campusNow.time.slice(0, 5), "focus_default");
-                                }
-                            }}
+                            onChange={(e) => applyFreeUntil(e.target.value)}
                             className="h-9 pl-9 pr-3 font-mono text-sm appearance-none [&::-webkit-date-and-time-value]:text-left [&::-webkit-date-and-time-value]:min-h-0 [&::-webkit-calendar-picker-indicator]:hidden"
+                            aria-label="Free until time"
                             placeholder="Custom time"
                         />
                         <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />

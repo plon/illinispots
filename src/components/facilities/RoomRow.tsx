@@ -104,6 +104,7 @@ export const RoomRow: React.FC<RoomRowProps> = memo(
         </button>
 
         <div
+          hidden={!isExpanded}
           className={`grid transition-all duration-200 ease-out ${
             isExpanded
               ? "grid-rows-[1fr] opacity-100"

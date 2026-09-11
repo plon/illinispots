@@ -817,8 +817,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
             {/* Dimming Overlay*/}
             {isFetching && (
-                <div className="absolute inset-0 bg-background/70 flex items-center justify-center z-10 pointer-events-none">
-                    <LoaderPinwheel className="h-6 w-6 animate-spin text-primary" />
+                <div className="absolute inset-0 bg-background/70 flex items-center justify-center z-10 pointer-events-none" role="status" aria-label="Refreshing availability">
+                    <LoaderPinwheel className="h-6 w-6 animate-spin text-primary" aria-hidden="true" />
                 </div>
             )}
 

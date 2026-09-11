@@ -78,6 +78,7 @@ export const AddFavoritesDialog: React.FC<AddFavoritesDialogProps> = ({
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="pl-9"
+                            aria-label="Search buildings to add to favorites"
                         />
                     </div>
                 </DialogHeader>

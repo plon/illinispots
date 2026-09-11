@@ -69,7 +69,6 @@ const DateTimeButton: React.FC<DateTimeButtonProps> = ({
                 isCurrentDateTime ? "live" : `${formattedDate} ${formattedTimeStr}`
             }`}
             title={`Selected: ${formattedDate} ${formattedTimeStr}`}
-            disabled={isFetching}
         >
             <CalendarClock size={16} className="lg:w-4 lg:h-4" />
             <span className="hidden lg:inline text-sm font-light">
