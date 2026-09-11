@@ -216,8 +216,7 @@ function linkRoomsReservations(
   const closingTimeByLibrary = new Map<string, DateTime | null>();
   const targetDateTimeString = targetDateTime.toFormat("yyyy-MM-dd HH:mm:ss");
 
-  // Group slots once. Filtering the full slot list per room re-scans every
-  // slot for every room, so this loop is O(rooms x slots) before it starts.
+  // Group slots once; filtering per room re-scans every slot per room. Each group belongs to one room, so sorting below mutates no shared state.
   const slotsByRoomId = new Map<number, ReservationResponse["slots"]>();
   for (const slot of reservationsData.slots) {
     const group = slotsByRoomId.get(slot.itemId);
@@ -240,8 +239,7 @@ function linkRoomsReservations(
     let isCurrentlyAvailable = false;
     let roomStatus: RoomStatus = RoomStatus.RESERVED; // Default status
 
-    // Every room in a call shares its library's hours; parsing the schedule
-    // once per library skips N-1 redundant lookups.
+    // All rooms in a call share one library's hours, so parse them once.
     let libraryClosingTime = closingTimeByLibrary.get(libraryName);
     if (libraryClosingTime === undefined) {
       libraryClosingTime =
@@ -249,8 +247,6 @@ function linkRoomsReservations(
       closingTimeByLibrary.set(libraryName, libraryClosingTime);
     }
 
-    // Each group belongs to a single room, so this sorts each room's slots
-    // exactly once instead of re-filtering the full list per room.
     const roomSpecificSlots = slotsByRoomId.get(roomId) ?? [];
     roomSpecificSlots.sort((a, b) => parseCampusTimestamp(a.start).toMillis() - parseCampusTimestamp(b.start).toMillis());
 
