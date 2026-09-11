@@ -207,17 +207,30 @@ function linkRoomsReservations(
   targetDateTime: DateTime,
 ): RoomReservations {
   const roomReservations: RoomReservations = {};
-  const libraryIds = new Set(
-    Object.values(LIBRARIES).map((lib) => parseInt(lib.id)),
-  );
+  const libraries = Object.values(LIBRARIES);
+  const libraryIds = new Set(libraries.map((lib) => parseInt(lib.id)));
+  const libraryNameByLid = new Map<number, string>();
+  for (const lib of libraries) {
+    libraryNameByLid.set(parseInt(lib.id), lib.name);
+  }
+  const closingTimeByLibrary = new Map<string, DateTime | null>();
   const targetDateTimeString = targetDateTime.toFormat("yyyy-MM-dd HH:mm:ss");
+
+  // Group slots once; filtering per room re-scans every slot per room. Each group belongs to one room, so sorting below mutates no shared state.
+  const slotsByRoomId = new Map<number, ReservationResponse["slots"]>();
+  for (const slot of reservationsData.slots) {
+    const group = slotsByRoomId.get(slot.itemId);
+    if (group) {
+      group.push(slot);
+    } else {
+      slotsByRoomId.set(slot.itemId, [slot]);
+    }
+  }
 
   for (const room of roomsData) {
     if (!libraryIds.has(room.lid)) {continue;}
 
-    const libraryName = Object.values(LIBRARIES).find(
-      (l) => l.id === room.lid.toString(),
-    )?.name;
+    const libraryName = libraryNameByLid.get(room.lid);
     if (!libraryName) {continue;} // Should not happen
 
     const roomId = room.eid;
@@ -226,15 +239,16 @@ function linkRoomsReservations(
     let isCurrentlyAvailable = false;
     let roomStatus: RoomStatus = RoomStatus.RESERVED; // Default status
 
-    const libraryClosingTime = getActiveLibraryHours(
-      libraryName,
-      targetDateTime,
-    )?.close ?? null;
+    // All rooms in a call share one library's hours, so parse them once.
+    let libraryClosingTime = closingTimeByLibrary.get(libraryName);
+    if (libraryClosingTime === undefined) {
+      libraryClosingTime =
+        getActiveLibraryHours(libraryName, targetDateTime)?.close ?? null;
+      closingTimeByLibrary.set(libraryName, libraryClosingTime);
+    }
 
-    // Filter slots relevant to the room and sort them
-    const roomSpecificSlots = reservationsData.slots
-      .filter((slot) => slot.itemId === roomId)
-      .sort((a, b) => parseCampusTimestamp(a.start).toMillis() - parseCampusTimestamp(b.start).toMillis());
+    const roomSpecificSlots = slotsByRoomId.get(roomId) ?? [];
+    roomSpecificSlots.sort((a, b) => parseCampusTimestamp(a.start).toMillis() - parseCampusTimestamp(b.start).toMillis());
 
     let nextAvailableSlotIndex = -1;
     let nextAvailableStartTime: DateTime | null = null;
