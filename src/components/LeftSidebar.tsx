@@ -3,6 +3,7 @@ import React, {
     type SetStateAction,
     useRef,
     useEffect,
+    useLayoutEffect,
     useMemo,
     useCallback,
     memo,
@@ -160,6 +161,9 @@ const NaturalSearchPrompt: React.FC<NaturalSearchPromptProps> = ({
     );
 };
 
+const useIsomorphicLayoutEffect =
+    typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
 const LeftSidebar: React.FC<LeftSidebarProps> = ({
     facilityData,
     showMap,
@@ -174,6 +178,9 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 }) => {
     const posthog = usePostHog();
     const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+    const listScrollTopRef = useRef(0);
+    const isRestoringScrollRef = useRef(false);
+    const prevFacilityIdRef = useRef(selectedFacilityId);
     const [searchTerm, setSearchTerm] = useState("");
     const [facilityRoomSearch, setFacilityRoomSearch] = useState("");
     const [prevSelectedFacilityId, setPrevSelectedFacilityId] =
@@ -187,14 +194,102 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         setFacilityRoomSearch("");
     }
 
-    // The list and detail page share the same Radix scroll viewport. Reset it
-    // whenever navigation swaps the content so the next view starts at its top.
+    const selectedFacility = useMemo(
+        () => lookupFacility(facilityData?.facilities, selectedFacilityId),
+        [selectedFacilityId, facilityData],
+    );
+
+    // Track the building list scroll position while browsing the list
     useEffect(() => {
+        if (selectedFacilityId !== null) {return;}
         const viewport = scrollAreaRef.current?.querySelector<HTMLElement>(
             '[data-slot="scroll-area-viewport"]',
         );
-        if (viewport) {viewport.scrollTop = 0;}
+        if (!viewport) {return;}
+
+        const handleScroll = () => {
+            if (isRestoringScrollRef.current) {return;}
+            listScrollTopRef.current = viewport.scrollTop;
+        };
+
+        viewport.addEventListener("scroll", handleScroll, { passive: true });
+        return () => {
+            viewport.removeEventListener("scroll", handleScroll);
+        };
     }, [selectedFacilityId]);
+
+    // Reset list scroll position when starting a new search
+    useEffect(() => {
+        if (!searchTerm) {return;}
+        listScrollTopRef.current = 0;
+    }, [searchTerm]);
+
+    // Ensure scroll restoration also triggers when navigating via browser back/forward buttons
+    useEffect(() => {
+        const handlePopState = () => {
+            if (selectedFacilityId === null) {
+                const targetScroll = listScrollTopRef.current;
+                if (targetScroll > 0) {
+                    isRestoringScrollRef.current = true;
+                    requestAnimationFrame(() => {
+                        const viewport = scrollAreaRef.current?.querySelector<HTMLElement>(
+                            '[data-slot="scroll-area-viewport"]',
+                        );
+                        if (viewport) {
+                            viewport.scrollTop = targetScroll;
+                        }
+                        setTimeout(() => {
+                            isRestoringScrollRef.current = false;
+                        }, 50);
+                    });
+                }
+            }
+        };
+
+        window.addEventListener("popstate", handlePopState);
+        return () => window.removeEventListener("popstate", handlePopState);
+    }, [selectedFacilityId]);
+
+    // When opening a facility detail page, always start at the top (0).
+    // When returning to the facility list, restore the previous list scroll position.
+    useIsomorphicLayoutEffect(() => {
+        const viewport = scrollAreaRef.current?.querySelector<HTMLElement>(
+            '[data-slot="scroll-area-viewport"]',
+        );
+        if (!viewport) {return;}
+
+        const wasList = prevFacilityIdRef.current === null;
+        const isList = selectedFacilityId === null;
+        const facilityChanged = prevFacilityIdRef.current !== selectedFacilityId;
+        prevFacilityIdRef.current = selectedFacilityId;
+
+        if (wasList && !isList) {
+            viewport.scrollTop = 0;
+        } else if (!wasList && !isList) {
+            if (facilityChanged) {
+                viewport.scrollTop = 0;
+            }
+        } else if (!wasList && isList) {
+            const targetScroll = listScrollTopRef.current;
+            isRestoringScrollRef.current = true;
+            viewport.scrollTop = targetScroll;
+            if (typeof requestAnimationFrame !== "undefined") {
+                requestAnimationFrame(() => {
+                    const vp = scrollAreaRef.current?.querySelector<HTMLElement>(
+                        '[data-slot="scroll-area-viewport"]',
+                    );
+                    if (vp) {
+                        vp.scrollTop = targetScroll;
+                    }
+                    setTimeout(() => {
+                        isRestoringScrollRef.current = false;
+                    }, 50);
+                });
+            } else {
+                isRestoringScrollRef.current = false;
+            }
+        }
+    }, [selectedFacilityId, selectedFacility?.id]);
 
     const { favorites, toggleFavorite } = useFavorites();
     const {
@@ -303,11 +398,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         return filterFacilitiesByAvailability(allAcademic);
     }, [facilityData, filterFacilitiesByAvailability]);
 
-    const selectedFacility = useMemo(
-        () => lookupFacility(facilityData?.facilities, selectedFacilityId),
-        [selectedFacilityId, facilityData],
-    );
-
     const isFacilityFavorite = useMemo(() => {
         if (!selectedFacility) {return false;}
         return favorites.some((f) => f.id === selectedFacility.id);
@@ -331,6 +421,12 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 facility_type: fac?.type,
                 selection_source: "list",
             });
+            const viewport = scrollAreaRef.current?.querySelector<HTMLElement>(
+                '[data-slot="scroll-area-viewport"]',
+            );
+            if (viewport) {
+                listScrollTopRef.current = viewport.scrollTop;
+            }
             onSelectFacility(facilityId);
         },
         [facilityData, onSelectFacility, posthog],
@@ -363,7 +459,12 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 facility_type: type,
                 selection_source: "favorites",
             });
-
+            const viewport = scrollAreaRef.current?.querySelector<HTMLElement>(
+                '[data-slot="scroll-area-viewport"]',
+            );
+            if (viewport) {
+                listScrollTopRef.current = viewport.scrollTop;
+            }
             onSelectFacility(facilityId);
         },
         [onSelectFacility, posthog],
