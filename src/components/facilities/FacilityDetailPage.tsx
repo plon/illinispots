@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RoomRow } from "./RoomRow";
+import { RoomStatusTabs, type RoomTab } from "./RoomStatusTabs";
 import { groupAcademicRooms } from "./roomUtils";
 import { Clock, Star } from "lucide-react";
 
@@ -26,8 +27,6 @@ interface FacilityDetailPageProps {
   roomSearchQuery?: string;
   onClearRoomSearch?: () => void;
 }
-
-type RoomTab = "available" | "occupied" | "all";
 
 export function shouldIgnoreEscapeForBack(target: unknown): boolean {
   if (
@@ -238,51 +237,15 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
             {/* Academic Room Status Tabs - Sticky */}
             {isAcademic && (
               <div className="sticky top-0 bg-background/95 backdrop-blur-xs z-10 px-4 py-2 border-b border-border/50">
-                <div
-                  role="tablist"
-                  aria-label="Filter rooms by status"
-                  className="flex items-center bg-muted p-0.5 rounded-lg text-xs font-medium border border-border"
-                >
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={activeTab === "available"}
-                    onClick={() => setActiveTab("available")}
-                    className={`flex-1 py-1 px-2.5 rounded-md transition-all text-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
-                      activeTab === "available"
-                        ? "bg-background text-foreground shadow-sm ring-1 ring-border font-semibold"
-                        : "text-muted-foreground hover:text-foreground hover:bg-background/60"
-                    }`}
-                  >
-                    Available ({availableRooms.length})
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={activeTab === "occupied"}
-                    onClick={() => setActiveTab("occupied")}
-                    className={`flex-1 py-1 px-2.5 rounded-md transition-all text-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
-                      activeTab === "occupied"
-                        ? "bg-background text-foreground shadow-sm ring-1 ring-border font-semibold"
-                        : "text-muted-foreground hover:text-foreground hover:bg-background/60"
-                    }`}
-                  >
-                    Occupied ({occupiedRooms.length})
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={activeTab === "all"}
-                    onClick={() => setActiveTab("all")}
-                    className={`flex-1 py-1 px-2.5 rounded-md transition-all text-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
-                      activeTab === "all"
-                        ? "bg-background text-foreground shadow-sm ring-1 ring-border font-semibold"
-                        : "text-muted-foreground hover:text-foreground hover:bg-background/60"
-                    }`}
-                  >
-                    All ({allRooms.length})
-                  </button>
-                </div>
+                <RoomStatusTabs
+                  value={activeTab}
+                  onValueChange={setActiveTab}
+                  counts={{
+                    available: availableRooms.length,
+                    occupied: occupiedRooms.length,
+                    all: allRooms.length,
+                  }}
+                />
               </div>
             )}
 
