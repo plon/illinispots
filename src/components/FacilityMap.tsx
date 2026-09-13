@@ -287,6 +287,9 @@ export default function FacilityMap({
 
       markerEl.addEventListener("keydown", (e) => {
         if (e.key !== "Enter" && e.key !== " ") {return;}
+        // Ignore key auto-repeat so a held key fires a single navigation,
+        // matching native button behavior for Space.
+        if (e.repeat) {return;}
 
         e.preventDefault();
         markerEl.click();
