@@ -234,6 +234,42 @@ export const performSearch = (
 };
 
 /**
+ * Finds closed facilities matching a search term by building name/alias.
+ * Used to explain "no spots" results (e.g. "Grainger is closed").
+ * Room-number-only queries intentionally match nothing since they carry
+ * no building information. Compound "building + room" queries fall back
+ * to per-token matching so "siebel 1404" still surfaces Siebel when closed.
+ */
+export const searchClosedFacilities = (
+  facilities: Facility[],
+  searchTerm: string,
+): Facility[] => {
+  const query = searchTerm.trim();
+  if (!query) {return [];}
+
+  const closed = facilities.filter((facility) => !facility.isOpen);
+  if (closed.length === 0) {return [];}
+
+  const direct = searchFacilities(closed, query);
+  if (direct.length > 0) {return direct;}
+
+  const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
+  if (tokens.length < 2) {return [];}
+
+  const seen = new Set<string>();
+  const matches: Facility[] = [];
+  for (const token of tokens) {
+    for (const facility of searchFacilities(closed, token)) {
+      if (!seen.has(facility.id)) {
+        seen.add(facility.id);
+        matches.push(facility);
+      }
+    }
+  }
+  return matches;
+};
+
+/**
  * Resolves a facility by dictionary key, ID (e.g. "grainger"), building name, or common acronym/alias (e.g. "cif").
  */
 export const lookupFacility = (

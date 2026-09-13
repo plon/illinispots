@@ -1,10 +1,16 @@
 import React, { useMemo } from "react";
-import { performSearch } from "@/utils/searchUtils";
-import type { Facility, FacilityStatus } from "@/types";
+import { performSearch, searchClosedFacilities } from "@/utils/searchUtils";
+import { type Facility, type FacilityStatus, FacilityType } from "@/types";
 import type { FilterCriteria } from "@/utils/filterUtils";
 import { RoomSearchResultCard } from "@/components/RoomSearchResultCard";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { STATUS_BADGE_STYLES } from "@/components/RoomBadge";
+import { formatTimeForDisplay } from "@/utils/time";
+import { getLibraryHoursMessage } from "@/utils/libraryHours";
 import {
+  Building2,
+  Clock,
   Search,
   XCircle,
   FilterX,
@@ -21,6 +27,50 @@ interface SearchResultsProps {
   isLoading?: boolean;
   isLibraryLoading?: boolean;
 }
+
+const ClosedSearchResultRow: React.FC<{
+  facility: Facility;
+  message: string;
+  onSelectFacility?: (facilityId: string) => void;
+}> = ({ facility, message, onSelectFacility }) => {
+  const content = (
+    <>
+      <div className="min-w-0 flex-1">
+        <span className="font-medium text-sm text-foreground truncate block">
+          {facility.name}
+        </span>
+        <span className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+          <Clock className="w-3 h-3 shrink-0" />
+          <span className="truncate">{message}</span>
+        </span>
+      </div>
+      <Badge variant="outline" className={`${STATUS_BADGE_STYLES.closed} text-xs shrink-0`}>
+        CLOSED
+      </Badge>
+    </>
+  );
+
+  if (!onSelectFacility) {
+    return (
+      <div className="rounded-lg border border-border/80 bg-card p-3.5 flex items-center gap-2">
+        <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSelectFacility(facility.id)}
+      aria-label={`View ${facility.name} details (currently closed)`}
+      className="w-full rounded-lg border border-border/80 bg-card p-3.5 flex items-center gap-2 text-left hover:border-primary/40 transition-colors cursor-pointer"
+    >
+      <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
+      {content}
+    </button>
+  );
+};
 
 export const SearchResults: React.FC<SearchResultsProps> = ({
   facilityData,
@@ -46,6 +96,25 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
       hasActiveFilters,
     )
   , [facilitiesList, searchTerm, filterCriteria, hasActiveFilters]);
+
+  const closedMatches = useMemo(() =>
+    searchClosedFacilities(facilitiesList, searchTerm)
+  , [facilitiesList, searchTerm]);
+
+  const visibleClosedMatches = useMemo(
+    () => closedMatches.slice(0, 3),
+    [closedMatches],
+  );
+  const hiddenClosedCount = closedMatches.length - visibleClosedMatches.length;
+
+  const getClosedHoursMessage = (facility: Facility): string => {
+    if (facility.type === FacilityType.LIBRARY) {
+      return getLibraryHoursMessage(facility.name);
+    }
+    return facility.hours?.open
+      ? `Opens ${formatTimeForDisplay(facility.hours.open)}`
+      : "Not open today";
+  };
 
   const isDataIncomplete = isLoading || isLibraryLoading;
 
@@ -137,40 +206,91 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
 
       {/* Results List */}
       {rooms.length === 0 ? (
-        <div className="py-8 text-center space-y-3">
-          <div className="w-10 h-10 rounded-full bg-muted/60 flex items-center justify-center mx-auto text-muted-foreground">
-            <Search className="w-5 h-5" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-foreground">
-              No spots found matching &ldquo;{searchTerm}&rdquo;
-            </p>
-            <p className="text-xs text-muted-foreground max-w-xs mx-auto">
-              Try searching by room number (e.g. 1404) or building name (e.g. Siebel, Grainger, CIF).
-            </p>
-          </div>
+        visibleClosedMatches.length > 0 ? (
+          <div className="space-y-2.5">
+            <div className="space-y-2.5">
+              {visibleClosedMatches.map((facility) => (
+                <ClosedSearchResultRow
+                  key={`closed-${facility.id}`}
+                  facility={facility}
+                  message={getClosedHoursMessage(facility)}
+                  onSelectFacility={onSelectFacility}
+                />
+              ))}
+            </div>
+            {hiddenClosedCount > 0 && (
+              <p className="text-[11px] text-muted-foreground text-center">
+                +{hiddenClosedCount} more closed {hiddenClosedCount === 1 ? "building" : "buildings"} matching &ldquo;{searchTerm}&rdquo;
+              </p>
+            )}
+            <div className="py-4 text-center space-y-3">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">
+                  No open spots matching &ldquo;{searchTerm}&rdquo;
+                </p>
+                <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+                  The matching {visibleClosedMatches.length === 1 && hiddenClosedCount === 0 ? "building is" : "buildings are"} currently closed.
+                </p>
+              </div>
 
-          <div className="flex items-center justify-center gap-2 pt-1">
-            {hasActiveFilters && (
+              <div className="flex items-center justify-center gap-2 pt-1">
+                {hasActiveFilters && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onClearFilters}
+                    className="text-xs h-8"
+                  >
+                    Clear Filters
+                  </Button>
+                )}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={onClearSearch}
+                  className="text-xs h-8"
+                >
+                  Clear Search
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="py-8 text-center space-y-3">
+            <div className="w-10 h-10 rounded-full bg-muted/60 flex items-center justify-center mx-auto text-muted-foreground">
+              <Search className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">
+                No spots found matching &ldquo;{searchTerm}&rdquo;
+              </p>
+              <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+                Try searching by room number (e.g. 1404) or building name (e.g. Siebel, Grainger, CIF).
+              </p>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 pt-1">
+              {hasActiveFilters && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onClearFilters}
+                  className="text-xs h-8"
+                >
+                  Clear Filters
+                </Button>
+              )}
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
-                onClick={onClearFilters}
+                onClick={onClearSearch}
                 className="text-xs h-8"
               >
-                Clear Filters
+                Clear Search
               </Button>
-            )}
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onClearSearch}
-              className="text-xs h-8"
-            >
-              Clear Search
-            </Button>
+            </div>
           </div>
-        </div>
+        )
       ) : (
         <div className="space-y-2.5">
           {rooms.map((roomResult) => (
@@ -180,6 +300,26 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
               onSelectFacility={onSelectFacility}
             />
           ))}
+          {visibleClosedMatches.length > 0 && (
+            <div className="space-y-2 pt-1">
+              <p className="text-[11px] text-muted-foreground font-medium">
+                Closed matching &ldquo;{searchTerm}&rdquo;
+              </p>
+              {visibleClosedMatches.map((facility) => (
+                <ClosedSearchResultRow
+                  key={`closed-${facility.id}`}
+                  facility={facility}
+                  message={getClosedHoursMessage(facility)}
+                  onSelectFacility={onSelectFacility}
+                />
+              ))}
+              {hiddenClosedCount > 0 && (
+                <p className="text-[11px] text-muted-foreground text-center">
+                  +{hiddenClosedCount} more closed {hiddenClosedCount === 1 ? "building" : "buildings"}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

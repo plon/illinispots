@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { performSearch, getBuildingAliases, searchFacilities, lookupFacility } from "@/utils/searchUtils";
+import { performSearch, getBuildingAliases, searchFacilities, searchClosedFacilities, lookupFacility } from "@/utils/searchUtils";
 import { type Facility, FacilityType, RoomStatus } from "@/types";
 
 const mockFacilities: Facility[] = [
@@ -174,6 +174,50 @@ describe("searchFacilities", () => {
     const siebelResults = searchFacilities(mockFacilities, "sibel");
     expect(siebelResults).toHaveLength(1);
     expect(siebelResults[0].id).toBe("siebel-cs");
+  });
+});
+
+describe("searchClosedFacilities", () => {
+  const closedGrainger: Facility = {
+    id: "grainger",
+    name: "Grainger Engineering Library",
+    type: FacilityType.LIBRARY,
+    isOpen: false,
+    coordinates: { latitude: 40.1125, longitude: -88.2269 },
+    hours: { open: "08:00", close: "23:59" },
+    roomCounts: { available: 0, total: 0 },
+    rooms: {},
+  };
+
+  test("returns empty list for empty query", () => {
+    expect(searchClosedFacilities(mockFacilities, "")).toHaveLength(0);
+    expect(searchClosedFacilities([closedGrainger], "   ")).toHaveLength(0);
+  });
+
+  test("finds closed buildings by name or alias", () => {
+    const facilities = [...mockFacilities, closedGrainger];
+    const results = searchClosedFacilities(facilities, "grainger");
+    expect(results).toHaveLength(1);
+    expect(results[0].id).toBe("grainger");
+  });
+
+  test("ignores open buildings", () => {
+    expect(searchClosedFacilities(mockFacilities, "siebel")).toHaveLength(0);
+    expect(searchClosedFacilities(mockFacilities, "cif")).toHaveLength(0);
+  });
+
+  test("ignores room-number-only queries", () => {
+    const facilities = [...mockFacilities, closedGrainger];
+    expect(searchClosedFacilities(facilities, "1404")).toHaveLength(0);
+  });
+
+  test("matches building token in compound building + room queries", () => {
+    const closedSiebel: Facility = {
+      ...mockFacilities[0],
+      isOpen: false,
+      rooms: {},
+    };
+    expect(searchClosedFacilities([closedSiebel], "siebel 1404")).toHaveLength(1);
   });
 });
 
