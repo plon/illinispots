@@ -52,14 +52,11 @@ function DateTimePicker({
 
   return (
     <div className="w-[280px]">
-      <div
-        className={`rounded-lg border border-border overflow-hidden bg-card ${isFetching ? "opacity-70" : ""}`}
-      >
+      <div className="rounded-lg border border-border overflow-hidden bg-card">
         <Calendar
           className="p-1 bg-background"
           selected={localSelectedDate}
           onSelect={setLocalSelectedDate}
-          disabled={isFetching}
         />
 
         <div className="border-t border-border p-3 bg-muted/10">
@@ -75,7 +72,7 @@ function DateTimePicker({
                 value={localTimeValue}
                 onChange={(event) => setLocalTimeValue(event.target.value)}
                 className="peer pl-8 pr-2.5 h-8 text-xs font-mono appearance-none [&::-webkit-date-and-time-value]:text-left [&::-webkit-date-and-time-value]:min-h-0 [&::-webkit-calendar-picker-indicator]:hidden"
-                disabled={isFetching}
+                aria-busy={isFetching}
               />
               <div className="pointer-events-none absolute inset-y-0 inset-s-0 flex items-center justify-center ps-2.5 text-muted-foreground/80 peer-disabled:opacity-50">
                 <Clock size={13} strokeWidth={2} aria-hidden="true" />
@@ -92,7 +89,6 @@ function DateTimePicker({
           size="sm"
           onClick={onResetToNow}
           className="h-8 text-xs flex-1 font-normal"
-          disabled={isFetching}
         >
           <RotateCcw size={13} className="mr-1.5" />
           Now
@@ -102,9 +98,10 @@ function DateTimePicker({
           size="sm"
           onClick={handleConfirm}
           className="h-8 text-xs flex-1 font-medium"
-          disabled={isFetching || !isValidSelection}
+          disabled={!isValidSelection}
+          aria-busy={isFetching}
         >
-          Apply
+          {isFetching ? "Applying…" : "Apply"}
         </Button>
       </div>
     </div>

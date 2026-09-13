@@ -206,14 +206,26 @@ export default function FacilityMap({
 
     const createMarkerElement = (data: MarkerData) => {
       const markerEl = document.createElement("div");
-      markerEl.className = "cursor-pointer";
+      markerEl.className =
+        "flex h-7 w-7 cursor-pointer items-center justify-center";
+      markerEl.setAttribute(
+        "aria-label",
+        `${data.name}: ${
+          data.isOpen
+            ? `${data.available} of ${data.total} available`
+            : "closed"
+        }`,
+      );
+      markerEl.setAttribute("role", "button");
 
-      const statusClass = !data.isOpen
-        ? " h-2 w-2 rounded-full bg-gray-500 shadow-[0px_0px_4px_2px_rgba(107,114,128,0.7)]"
+      const dot = document.createElement("div");
+      dot.setAttribute("aria-hidden", "true");
+      dot.className = !data.isOpen
+        ? "h-2 w-2 rounded-full bg-gray-500 shadow-[0px_0px_4px_2px_rgba(107,114,128,0.7)]"
         : data.available > 0
-          ? " h-2 w-2 rounded-full bg-green-400 shadow-[0px_0px_4px_2px_rgba(34,197,94,0.7)]"
-          : " h-2 w-2 rounded-full bg-red-500 shadow-[0px_0px_4px_2px_rgba(239,68,68,0.7)]";
-      markerEl.className += statusClass;
+          ? "h-2 w-2 rounded-full bg-green-400 shadow-[0px_0px_4px_2px_rgba(34,197,94,0.7)]"
+          : "h-2 w-2 rounded-full bg-red-500 shadow-[0px_0px_4px_2px_rgba(239,68,68,0.7)]";
+      markerEl.appendChild(dot);
 
       return markerEl;
     };

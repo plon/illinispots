@@ -29,12 +29,31 @@ interface FacilityDetailPageProps {
 
 type RoomTab = "available" | "occupied" | "all";
 
+export function shouldIgnoreEscapeForBack(target: unknown): boolean {
+  if (
+    typeof target !== "object" ||
+    target === null ||
+    typeof (target as HTMLElement).closest !== "function"
+  ) {
+    return false;
+  }
+  return (
+    (target as HTMLElement).closest(
+      'input, textarea, select, [contenteditable="true"], [role="dialog"], [role="menu"]',
+    ) !== null
+  );
+}
+
 const useEscapeToBack = (onBack: () => void) => {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !event.defaultPrevented) {
-        onBack();
+      if (event.key !== "Escape" || event.defaultPrevented) {
+        return;
       }
+      if (shouldIgnoreEscapeForBack(event.target)) {
+        return;
+      }
+      onBack();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);

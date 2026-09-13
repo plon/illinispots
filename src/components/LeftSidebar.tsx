@@ -26,7 +26,6 @@ import {
     BadgeHelp,
     Search,
     X,
-    LoaderPinwheel,
     MoreHorizontal,
     Star,
     CalendarClock,
@@ -113,11 +112,13 @@ const ActiveTimeBanner: React.FC<ActiveTimeBannerProps> = ({
 interface NaturalSearchPromptProps {
     interpretation: NaturalLanguageSearchResult;
     onApply: () => void;
+    onClear: () => void;
 }
 
-const NaturalSearchPrompt: React.FC<NaturalSearchPromptProps> = ({
+export const NaturalSearchPrompt: React.FC<NaturalSearchPromptProps> = ({
     interpretation,
     onApply,
+    onClear,
 }) => {
     const errorMessage =
         interpretation.error === "ambiguous-time"
@@ -135,6 +136,14 @@ const NaturalSearchPrompt: React.FC<NaturalSearchPromptProps> = ({
                     <>
                         <p className="text-sm font-medium">Clarify your search</p>
                         <p className="text-xs text-muted-foreground">{errorMessage}</p>
+                        {interpretation.locationQuery && (
+                            <p className="text-xs text-muted-foreground">
+                                Showing matches for &ldquo;{interpretation.locationQuery}&rdquo; below.
+                            </p>
+                        )}
+                        <Button variant="outline" size="sm" onClick={onClear} className="h-8 text-xs">
+                            Clear search
+                        </Button>
                     </>
                 ) : target ? (
                     <>
@@ -774,10 +783,36 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         </div>
                     )
                 ) : isSearching && hasTemporalSearch ? (
-                    <NaturalSearchPrompt
-                        interpretation={naturalSearch}
-                        onApply={applyNaturalSearch}
-                    />
+                    naturalSearch.error ? (
+                        <>
+                            <NaturalSearchPrompt
+                                interpretation={naturalSearch}
+                                onApply={applyNaturalSearch}
+                                onClear={() => setSearchTerm("")}
+                            />
+                            {naturalSearch.locationQuery && (
+                                <SearchResults
+                                    facilityData={searchFacilityData}
+                                    searchTerm={naturalSearch.locationQuery}
+                                    filterCriteria={filterCriteria}
+                                    hasActiveFilters={hasActiveFilters}
+                                    onClearFilters={clearFilters}
+                                    onClearSearch={() => setSearchTerm("")}
+                                    onSelectFacility={handleSelectFacilityFromSearch}
+                                    isLoading={
+                                        isAcademicLoading || isFetching || !facilityDataMatchesSelection
+                                    }
+                                    isLibraryLoading={isLibraryFetching}
+                                />
+                            )}
+                        </>
+                    ) : (
+                        <NaturalSearchPrompt
+                            interpretation={naturalSearch}
+                            onApply={applyNaturalSearch}
+                            onClear={() => setSearchTerm("")}
+                        />
+                    )
                 ) : isSearching ? (
                     <SearchResults
                         facilityData={searchFacilityData}
@@ -815,10 +850,17 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 )}
             </ScrollArea>
 
-            {/* Dimming Overlay*/}
+            {/* Subtle top progress during background refreshes; keeps list interactive */}
             {isFetching && (
-                <div className="absolute inset-0 bg-background/70 flex items-center justify-center z-10 pointer-events-none">
-                    <LoaderPinwheel className="h-6 w-6 animate-spin text-primary" />
+                <div
+                    className="absolute inset-x-0 top-0 z-10 pointer-events-none"
+                    role="status"
+                    aria-live="polite"
+                >
+                    <div className="h-0.5 w-full overflow-hidden bg-transparent">
+                        <div className="loading-bar h-full w-full" />
+                    </div>
+                    <span className="sr-only">Updating availability…</span>
                 </div>
             )}
 
