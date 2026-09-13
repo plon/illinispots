@@ -101,7 +101,7 @@ function DateTimePicker({
           disabled={!isValidSelection}
           aria-busy={isFetching}
         >
-          {isFetching ? "Applying…" : "Apply"}
+          Apply
         </Button>
       </div>
     </div>

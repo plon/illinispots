@@ -217,6 +217,7 @@ export default function FacilityMap({
         }`,
       );
       markerEl.setAttribute("role", "button");
+      markerEl.tabIndex = 0;
 
       const dot = document.createElement("div");
       dot.setAttribute("aria-hidden", "true");
@@ -282,6 +283,13 @@ export default function FacilityMap({
 
         handleMarkerClick(data.id, data.type);
         e.stopPropagation();
+      });
+
+      markerEl.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") {return;}
+
+        e.preventDefault();
+        markerEl.click();
       });
     };
 
