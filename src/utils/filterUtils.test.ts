@@ -35,20 +35,15 @@ describe("isRoomAvailable", () => {
   });
 
   test("filters by freeUntil time", () => {
-    // Current time 14:00 (840 min), available for 120 min (until 16:00)
     const room = createRoom({ availableFor: 120 });
-    const nowMinutes = 14 * 60; // 840
+    const nowMinutes = 14 * 60;
 
-    // Free until 15:30 (90 min from now) -> valid
     expect(isRoomAvailable(room, { freeUntil: "15:30", nowMinutes })).toBe(true);
 
-    // Free until 16:00 (120 min from now) -> valid
     expect(isRoomAvailable(room, { freeUntil: "16:00", nowMinutes })).toBe(true);
 
-    // Free until 16:30 (150 min from now) -> invalid (only available 120 min)
     expect(isRoomAvailable(room, { freeUntil: "16:30", nowMinutes })).toBe(false);
 
-    // Past time 13:00 -> invalid
     expect(isRoomAvailable(room, { freeUntil: "13:00", nowMinutes })).toBe(false);
   });
 
@@ -56,10 +51,8 @@ describe("isRoomAvailable", () => {
     const room = createRoom({ availableFor: 120 });
     const nowMinutes = 14 * 60;
 
-    // Needs 60 min and free until 15:30 (90 min) -> passes both
     expect(isRoomAvailable(room, { minDuration: 60, freeUntil: "15:30", nowMinutes })).toBe(true);
 
-    // Needs 150 min and free until 15:30 -> fails minDuration
     expect(isRoomAvailable(room, { minDuration: 150, freeUntil: "15:30", nowMinutes })).toBe(false);
   });
 });

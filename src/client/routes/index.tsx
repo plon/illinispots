@@ -92,7 +92,6 @@ const fetchFacilityData = async (
     throw new Error(`Request failed with status ${res.status}. URL: ${apiUrl}`);
   }
   const data = await res.json();
-  // Ensure facilities object exists, even if empty
   if (!data.facilities) {
     data.facilities = {};
   }

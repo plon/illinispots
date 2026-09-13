@@ -64,7 +64,7 @@ export function createLocalStorageStore<T>(
         try {
           localStorage.setItem(key, serialize(next));
         } catch {
-          // Continue without persistence if storage is unavailable.
+          // Persistence is best-effort; in-memory state still applies.
         }
       }
       notify();

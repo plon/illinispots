@@ -27,7 +27,6 @@ describe("ThemeContext production exports", () => {
     classListSet.clear();
     mediaQueryListener = null;
 
-    // Mock document and documentElement
     const mockMetaElement = {
       setAttribute: (name: string, value: string) => {
         metaAttributes[name] = value;
@@ -66,7 +65,6 @@ describe("ThemeContext production exports", () => {
       },
     } as unknown as Document;
 
-    // Mock localStorage
     globalThis.localStorage = {
       getItem: (key: string) => localStorageStore[key] ?? null,
       setItem: (key: string, value: string) => {
@@ -82,7 +80,6 @@ describe("ThemeContext production exports", () => {
       key: () => null,
     };
 
-    // Mock window and matchMedia
     globalThis.window = {
       addEventListener: () => {},
       removeEventListener: () => {},

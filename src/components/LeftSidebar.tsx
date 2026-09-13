@@ -199,7 +199,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const [naturalLanguageParser, setNaturalLanguageParser] =
         useState<NaturalLanguageParser | null>(null);
 
-    // Reset room filter when selected facility changes
     if (selectedFacilityId !== prevSelectedFacilityId) {
         setPrevSelectedFacilityId(selectedFacilityId);
         setFacilityRoomSearch("");
@@ -515,7 +514,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             </PopoverTrigger>
             <PopoverContent className="w-56 md:w-64" align="end">
                 <div className="space-y-1">
-                    {/* Favorites Option */}
                     <button
                         onClick={() => setIsFavoritesDialogOpen(true)}
                         className="w-full flex items-center justify-start gap-2 px-3 py-2 rounded-md text-sm hover:bg-secondary transition-colors text-foreground text-left cursor-pointer"
@@ -524,10 +522,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         Manage Favorites
                     </button>
 
-                    {/* Divider */}
                     <div className="h-px bg-border" />
 
-                    {/* Map Toggle */}
                     <div className="flex items-center justify-between px-3 py-2">
                         <label
                             htmlFor="show-map-switch"
@@ -544,15 +540,11 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         />
                     </div>
 
-                    {/* Divider */}
                     <div className="h-px bg-border" />
 
-                    {/* Appearance / Theme Switcher */}
                     <ThemeToggle />
-                    {/* Divider */}
                     <div className="h-px bg-border" />
 
-                    {/* Help Section */}
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button
@@ -585,7 +577,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         </PopoverContent>
                     </Popover>
 
-                    {/* GitHub Link */}
                     <a
                         href="https://github.com/plon/illinispots"
                         target="_blank"
@@ -596,10 +587,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         View on GitHub
                     </a>
 
-                    {/* Divider */}
                     <div className="h-px bg-border" />
 
-                    {/* Data Updates Section */}
                     <div className="px-3 py-2 text-xs text-muted-foreground space-y-1">
                         <p>
                             <span className="font-medium text-foreground">Data Updates:</span>
@@ -850,7 +839,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 )}
             </ScrollArea>
 
-            {/* Subtle top progress during background refreshes; keeps list interactive */}
             {isFetching && (
                 <div
                     className="absolute inset-x-0 top-0 z-10 pointer-events-none"

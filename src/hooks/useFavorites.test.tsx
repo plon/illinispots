@@ -92,7 +92,6 @@ describe("useFavorites store and hook", () => {
         JSON.stringify([item1]),
       );
 
-      // Adding again is a no-op
       addFavorite(item1);
       expect(favoritesStore.getSnapshot()).toEqual([item1]);
     });

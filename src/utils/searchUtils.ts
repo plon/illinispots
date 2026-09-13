@@ -66,10 +66,8 @@ export const getBuildingAliases = (buildingName: string): string[] => {
 
   const aliases = new Set<string>(custom.map((a) => a.toLowerCase()));
 
-  // Add lowercase full name
   aliases.add(buildingName.toLowerCase());
 
-  // Generate acronym from initials (e.g., Campus Instructional Facility -> cif)
   if (words.length > 1) {
     const acronym = words
       .map((w) => w[0])
@@ -184,7 +182,6 @@ export const performSearch = (
     const r = item.roomNumber.toLowerCase();
     const facilityNameLower = item.facility.name.toLowerCase();
 
-    // 1. Compound building + room match (e.g. "siebel 1404")
     if (queryTokens.length >= 2) {
       const roomMatched = queryTokens.includes(r);
       const buildingMatched = queryTokens.some(
@@ -197,7 +194,6 @@ export const performSearch = (
       }
     }
 
-    // 2. Direct room match (e.g. "1404" or "room 1404")
     if (r === query || `room ${r}` === query || queryTokens.includes(r)) {
       return 1;
     }
@@ -278,26 +274,22 @@ export const lookupFacility = (
 ): Facility | null => {
   if (!facilities || !targetId) {return null;}
 
-  // 1. Direct dictionary key match
   if (Object.hasOwn(facilities, targetId)) {return facilities[targetId];}
 
   const lower = targetId.trim().toLowerCase();
   const allFacilities = Object.values(facilities);
 
-  // 2. Exact match on facility.id or facility.name
   const exactMatch = allFacilities.find(
     (facility) => facility.id === targetId || facility.name === targetId,
   );
   if (exactMatch) {return exactMatch;}
 
-  // 3. Case-insensitive match on facility.id or facility.name
   const caseInsensitiveMatch = allFacilities.find(
     (facility) =>
       facility.id.toLowerCase() === lower || facility.name.toLowerCase() === lower,
   );
   if (caseInsensitiveMatch) {return caseInsensitiveMatch;}
 
-  // 4. Common building acronym or alias match (e.g. "cif", "eceb", "siebel", "grainger")
   const aliasMatches = allFacilities.filter((facility) =>
     getBuildingAliases(facility.name).includes(lower),
   );

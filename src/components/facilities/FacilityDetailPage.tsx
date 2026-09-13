@@ -136,7 +136,6 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
 
     return (
       <div className="w-full pb-8">
-        {/* Facility Hero Header */}
         <div className="px-4 py-2.5 border-b border-border/70 bg-card/40">
           <div className="flex items-start justify-between gap-2">
             <h1 className="text-lg md:text-xl font-bold tracking-tight text-foreground leading-snug flex-1 min-w-0">
@@ -211,7 +210,6 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
           </div>
         </div>
 
-        {/* Closed notice */}
         {!facility.isOpen && (
           <div className="m-4 rounded-lg border border-border/80 bg-muted/20 p-3.5 text-xs text-muted-foreground space-y-1">
             {facility.type === FacilityType.LIBRARY ? (
@@ -231,10 +229,8 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
           </div>
         )}
 
-        {/* Open Facility Content */}
         {facility.isOpen && (
           <div>
-            {/* Academic Room Status Tabs - Sticky */}
             {isAcademic && (
               <div className="sticky top-0 bg-background/95 backdrop-blur-xs z-10 px-4 py-2 border-b border-border/50">
                 <RoomStatusTabs
@@ -249,7 +245,6 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
               </div>
             )}
 
-            {/* Continuous Room List */}
             <div className="divide-y divide-border/50">
               {roomsToDisplay.length === 0 ? (
                 <div className="py-8 px-4 text-center text-xs text-muted-foreground space-y-1">
@@ -314,7 +309,6 @@ export const FacilityDetailSkeleton: React.FC<FacilityDetailSkeletonProps> = mem
       <div className="w-full pb-8" role="status" aria-busy="true" aria-label="Loading facility details">
         <span className="sr-only">Loading facility details…</span>
 
-        {/* Hero skeleton */}
         <div className="px-4 py-2.5 border-b border-border/70 space-y-1.5">
           <div className="flex items-center justify-between">
             <div className="h-6 w-52 rounded bg-muted animate-pulse" />
@@ -326,12 +320,10 @@ export const FacilityDetailSkeleton: React.FC<FacilityDetailSkeletonProps> = mem
           </div>
         </div>
 
-        {/* Tabs skeleton - Sticky */}
         <div className="sticky top-0 bg-background/95 z-10 px-4 py-2 border-b border-border/50">
           <div className="h-7 rounded-lg bg-muted/60 animate-pulse" />
         </div>
 
-        {/* Rooms skeleton */}
         <div className="divide-y divide-border/50">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="py-3 px-4 flex items-center justify-between">

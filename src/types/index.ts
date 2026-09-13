@@ -22,7 +22,6 @@ export interface FacilityStatus {
   facilities: Record<string, Facility>;
 }
 
-// Unified Facility type to represent both academic buildings and libraries
 export interface Facility {
   id: string;
   name: string;
@@ -41,18 +40,15 @@ export interface Facility {
     available: number;
     total: number;
   };
-  // Library-specific fields (optional)
   address?: string;
 }
 
-// Base facility room with common properties
 export interface BaseFacilityRoom {
   status: RoomStatus;
   availableAt?: string;
   availableFor?: number;
 }
 
-// Academic-specific room properties
 export interface AcademicRoom extends BaseFacilityRoom {
   // Not redundant with FacilityType.ACADEMIC since specific rooms do not have to be the facility type
   type: "academic";
@@ -62,7 +58,6 @@ export interface AcademicRoom extends BaseFacilityRoom {
   availableUntil?: string;
 }
 
-// Library-specific room properties
 export interface LibraryRoom extends BaseFacilityRoom {
   type: "library";
   url: string;
@@ -70,7 +65,6 @@ export interface LibraryRoom extends BaseFacilityRoom {
   slots: TimeSlot[];
 }
 
-// Discriminated union for FacilityRoom
 export type FacilityRoom = AcademicRoom | LibraryRoom;
 
 export interface ClassInfo {

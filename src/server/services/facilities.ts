@@ -94,8 +94,8 @@ async function getReservation(
     seat: "false",
     seatId: "0",
     zone: "0",
-    start: startDate, // Fetch for the target date
-    end: endDate, // Fetch until the start of the day after the target date when needed
+    start: startDate,
+    end: endDate,
     pageIndex: "0",
     pageSize: "10000",
   };
@@ -141,8 +141,8 @@ async function getReservation(
 function calculateAvailabilityDuration(
   slots: ReservationResponse["slots"],
   startIndex: number,
-  fromTime: DateTime, // Time to calculate duration
-  libraryClosingTime: DateTime | null, // Pass closing time, null if not applicable
+  fromTime: DateTime,
+  libraryClosingTime: DateTime | null,
 ): number {
   const currentSlot = slots[startIndex];
   let endTime = parseCampusTimestamp(currentSlot.end);
@@ -158,7 +158,6 @@ function calculateAvailabilityDuration(
 
   while (i < slots.length) {
     const nextSlot = slots[i];
-    // Stop if the next slot is a reservation
     if (nextSlot.className === "s-lc-eq-checkout") {break;}
 
     const nextStart = parseCampusTimestamp(nextSlot.start);
@@ -172,18 +171,18 @@ function calculateAvailabilityDuration(
     }
 
     duration += wholeMinutesBetween(nextEnd, nextStart);
-    lastEnd = nextEnd; // Update the end time for the next iteration
+    lastEnd = nextEnd;
     i++;
   }
 
-  return Math.max(0, duration); // Ensure duration is not negative
+  return Math.max(0, duration);
 }
 
 /**
  * Determines if a room will be available soon (within 20 minutes) based on the target time
  */
 const isOpeningSoon = (
-  availableAt: string, // HH:mm:ss format
+  availableAt: string,
   targetDateTime: DateTime,
 ): boolean => {
   let availableTime = parseCampusTimestamp(
@@ -194,7 +193,6 @@ const isOpeningSoon = (
   }
 
   const diffInMinutes = wholeMinutesBetween(availableTime, targetDateTime);
-  // Check if it's opening within the next 20 minutes (inclusive of 0)
   return diffInMinutes <= 20 && diffInMinutes >= 0;
 };
 
@@ -231,13 +229,13 @@ function linkRoomsReservations(
     if (!libraryIds.has(room.lid)) {continue;}
 
     const libraryName = libraryNameByLid.get(room.lid);
-    if (!libraryName) {continue;} // Should not happen
+    if (!libraryName) {continue;}
 
     const roomId = room.eid;
     let availableAt: string | undefined = undefined;
     let availableDuration = 0;
     let isCurrentlyAvailable = false;
-    let roomStatus: RoomStatus = RoomStatus.RESERVED; // Default status
+    let roomStatus: RoomStatus = RoomStatus.RESERVED;
 
     // All rooms in a call share one library's hours, so parse them once.
     let libraryClosingTime = closingTimeByLibrary.get(libraryName);
@@ -254,61 +252,47 @@ function linkRoomsReservations(
     let nextAvailableStartTime: DateTime | null = null;
     let currentStatusDetermined = false;
 
-    // Loop through slots to determine the status and next availability
     for (let index = 0; index < roomSpecificSlots.length; index++) {
       const slot = roomSpecificSlots[index];
       const startTime = parseCampusTimestamp(slot.start);
       const endTime = parseCampusTimestamp(slot.end);
       const isAvailableSlot = slot.className !== "s-lc-eq-checkout";
 
-      // Only determine status once
       if (!currentStatusDetermined) {
-        // Check if the slot is currently available at targetDateTime
         if (
           isAvailableSlot &&
           startTime <= targetDateTime &&
           endTime > targetDateTime
         ) {
-          // Check if it's actually within library hours if closing time is known
           if (
             !libraryClosingTime ||
             targetDateTime < libraryClosingTime
           ) {
             isCurrentlyAvailable = true;
             roomStatus = RoomStatus.AVAILABLE;
-            // Calculate duration from targetDateTime until end of contiguous block or closing time
             availableDuration = calculateAvailabilityDuration(
               roomSpecificSlots,
               index,
-              targetDateTime, // Start calculating from targetDateTime
+              targetDateTime,
               libraryClosingTime,
             );
-            currentStatusDetermined = true; // Status found
-            nextAvailableSlotIndex = -1; // Reset this as we are currently available
+            currentStatusDetermined = true;
+            nextAvailableSlotIndex = -1;
           }
         }
 
-        // If not currently available, find the next available slot starting after targetDateTime
         if (
-          !isCurrentlyAvailable && // Only look if not already found available
+          !isCurrentlyAvailable &&
           isAvailableSlot &&
           startTime > targetDateTime
         ) {
-          // Ensure the potential next slot starts before the library closes
           if (!libraryClosingTime || startTime < libraryClosingTime) {
-            // If this is the first future available slot we've found
             if (nextAvailableSlotIndex === -1) {
               nextAvailableSlotIndex = index;
               nextAvailableStartTime = startTime;
             }
           }
         }
-      }
-
-      // If targetDateTime is past the end of this slot, and we haven't found the status yet,
-      // it means the targetDateTime falls between slots (or after the last one).
-      if (!currentStatusDetermined && targetDateTime >= endTime) {
-        // Continue searching for the next available slot
       }
     }
 
@@ -319,10 +303,8 @@ function linkRoomsReservations(
       availableDuration = 0;
       availableAt = undefined;
     } else if (!isCurrentlyAvailable) {
-      // If not currently available, check if we found a future available slot
       if (nextAvailableSlotIndex !== -1 && nextAvailableStartTime) {
         availableAt = nextAvailableStartTime.toFormat("HH:mm:ss");
-        // Calculate duration from the start of that future slot
         availableDuration = calculateAvailabilityDuration(
           roomSpecificSlots,
           nextAvailableSlotIndex,
@@ -330,7 +312,6 @@ function linkRoomsReservations(
           libraryClosingTime,
         );
 
-        // It's available later, but not "soon", keep status as RESERVED/OCCUPIED for now
         roomStatus =
           availableAt &&
           isOpeningSoon(availableAt, targetDateTime) &&
@@ -338,9 +319,8 @@ function linkRoomsReservations(
             ? RoomStatus.OPENING_SOON
             : RoomStatus.RESERVED;
       } else {
-        // Not available now and no future availability found within operating hours
-        roomStatus = RoomStatus.RESERVED; // Or OCCUPIED, depending on context, RESERVED fits library
-        availableDuration = 0; // Ensure duration is 0 if no future availability
+        roomStatus = RoomStatus.RESERVED;
+        availableDuration = 0;
         availableAt = undefined;
       }
     }
@@ -349,8 +329,6 @@ function linkRoomsReservations(
 
     let firstRelevantSlotIndex = -1;
     for (let i = 0; i < roomSpecificSlots.length; i++) {
-      // Find the first slot that ends after the targetDateTime.
-      // This includes the currently active slot or the next future slot.
       if (roomSpecificSlots[i].end > targetDateTimeString) {
         firstRelevantSlotIndex = i;
         break;
@@ -368,13 +346,10 @@ function linkRoomsReservations(
         let endTime = parseCampusTimestamp(slot.end);
         const isAvailableSlot = slot.className !== "s-lc-eq-checkout";
 
-        // Apply library closing time cap
         if (libraryClosingTime && endTime > libraryClosingTime) {
           endTime = libraryClosingTime;
         }
 
-        // Only include the slot if its start time is before the (potentially capped) end time
-        // and before the library closing time (if applicable)
         if (
           startTime < endTime &&
           (!libraryClosingTime || startTime < libraryClosingTime)
@@ -385,7 +360,7 @@ function linkRoomsReservations(
             available: isAvailableSlot,
           };
         }
-        return null; // Exclude slots that start at or after closing or have invalid times
+        return null;
       })
       .filter((slot): slot is TimeSlot => slot !== null);
 
@@ -405,27 +380,25 @@ function linkRoomsReservations(
   return roomReservations;
 }
 
-// ===== Library Hours Functions =====
-
 /**
  * Gets formatted library data with room availability for a specific time
  */
 async function getFormattedLibraryData(
-  openLibraries: string[], // Libraries determined to be open at targetDateTime
+  openLibraries: string[],
   targetDateTime: DateTime,
   fetcher: FacilitiesFetch,
 ): Promise<FormattedLibraryData> {
   const result: FormattedLibraryData = {};
 
   if (openLibraries.length === 0) {
-    return result; // No open libraries to process
+    return result;
   }
 
   // Process only the libraries that are open at targetDateTime. Keep failures
   // isolated so one unavailable LibCal calendar does not erase other results.
   const libraryPromises = openLibraries.map(async (libraryName) => {
     const libraryInfo = LIBRARIES[libraryName];
-    if (!libraryInfo) {return null;} // Should not happen if openLibraries is correct
+    if (!libraryInfo) {return null;}
 
     const lid = libraryInfo.id;
     const libraryRooms = STATIC_ROOMS_BY_LIBRARY[lid] || [];
@@ -482,8 +455,6 @@ async function getFormattedLibraryData(
 
   return result;
 }
-
-// ===== Main API Handler =====
 
 /**
  * Fetches academic building data from Supabase for a specific time
@@ -556,7 +527,7 @@ async function fetchAcademicBuildingData(
       });
       Sentry.getActiveSpan()?.setAttribute("result.partial", true);
       console.error("Error fetching building data from Supabase:", error);
-      return facilities; // Return empty on error
+      return facilities;
     }
     if (!data) {
       return facilities;
@@ -632,9 +603,9 @@ function initializeLibraryFacilities(): Record<string, Facility> {
         latitude: 40.11247372608236,
         longitude: -88.2268586691797,
       },
-      hours: { open: "", close: "" }, // Will be updated if needed
+      hours: { open: "", close: "" },
       rooms: {},
-      isOpen: false, // Will be updated based on target time
+      isOpen: false,
       roomCounts: { available: 0, total: 0 },
       address: "1301 W Springfield Ave, Urbana, IL 61801",
     },

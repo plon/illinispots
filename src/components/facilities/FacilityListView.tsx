@@ -29,7 +29,6 @@ export const FacilityListView: React.FC<FacilityListViewProps> = memo(
     hasActiveFilters = false,
   }) => (
     <div className="w-full pb-6">
-      {/* Library Section */}
       {libraryFacilities.length > 0 ? (
         <div className="mt-2">
           <h2 className="text-sm font-normal text-muted-foreground pl-6 mb-1">
@@ -77,7 +76,6 @@ export const FacilityListView: React.FC<FacilityListViewProps> = memo(
         </div>
       ) : null}
 
-      {/* Academic Section */}
       {academicFacilities.length > 0 ? (
         <div className="mt-5">
           <h2 className="text-sm font-normal text-muted-foreground pl-6 mb-1">
@@ -125,7 +123,6 @@ export const FacilityListView: React.FC<FacilityListViewProps> = memo(
         </div>
       ) : null}
 
-      {/* Error state */}
       {error && !isAcademicLoading && academicFacilities.length === 0 && (
         <div className="p-4 text-center" role="alert">
           <p className="text-sm text-destructive mb-2">{error}</p>
@@ -142,7 +139,6 @@ export const FacilityListView: React.FC<FacilityListViewProps> = memo(
         </div>
       )}
 
-      {/* Filter empty state */}
       {hasActiveFilters &&
         !isAcademicLoading &&
         !isLibraryFetching &&

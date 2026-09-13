@@ -142,7 +142,6 @@ describe("FacilityListView", () => {
     expect(html).toContain("Grainger Engineering Library");
     expect(html).toContain("Campus Instructional Facility");
     expect(html).toContain("Siebel Center for CS");
-    // Should NOT contain accordion classes or accordion triggers
     expect(html).not.toContain("data-slot=\"accordion\"");
   });
 

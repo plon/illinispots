@@ -160,7 +160,6 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
 
   return (
     <div className="px-3 md:px-4 py-3 space-y-3.5">
-      {/* Header */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -186,7 +185,6 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
           </button>
         </div>
 
-        {/* Active Availability Filters Indicator */}
         {hasActiveFilters && (
           <div className="text-[11px] bg-primary/5 text-foreground border border-primary/20 rounded-md px-2.5 py-1.5 flex items-center justify-between">
             <span className="text-foreground/80 font-medium">
@@ -204,7 +202,6 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
         )}
       </div>
 
-      {/* Results List */}
       {rooms.length === 0 ? (
         visibleClosedMatches.length > 0 ? (
           <div className="space-y-2.5">

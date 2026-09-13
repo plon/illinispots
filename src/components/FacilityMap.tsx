@@ -127,7 +127,7 @@ export default function FacilityMap({
             show,
           );
         } catch {
-          // Non-standard style or config not supported
+          // Best-effort POI toggle; not all styles support the basemap config.
         }
       };
 
@@ -477,7 +477,7 @@ export default function FacilityMap({
               .setHTML(createPopupContent(data))
               .addTo(mapRef);
           } catch {
-            // no-op
+            // Hover popup is best-effort; skip it on malformed features or teardown races.
           }
         };
 

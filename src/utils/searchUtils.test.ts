@@ -90,7 +90,6 @@ describe("searchUtils performSearch with uFuzzy", () => {
   test("finds all rooms in a building when searching by building alias", () => {
     const rooms = performSearch(mockFacilities, "siebel");
     expect(rooms).toHaveLength(3);
-    // Available rooms should be prioritized before occupied rooms
     expect(rooms[0].roomNumber).toBe("0216");
     expect(rooms[1].roomNumber).toBe("2405");
     expect(rooms[2].roomNumber).toBe("1404");
@@ -154,7 +153,6 @@ describe("searchUtils performSearch with uFuzzy", () => {
       { minDuration: 90 },
       true
     );
-    // Only 0216 has availableFor >= 90
     expect(rooms).toHaveLength(1);
     expect(rooms[0].roomNumber).toBe("0216");
   });

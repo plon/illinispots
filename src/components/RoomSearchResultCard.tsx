@@ -55,14 +55,12 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
 
   return (
     <div className="rounded-lg border border-border/80 bg-card p-3.5 shadow-2xs hover:border-primary/40 transition-colors duration-150 space-y-2.5">
-      {/* Header: Room Name & Status */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <span className="font-semibold text-base text-foreground tracking-tight">
             {isAcademic ? `Room ${roomNumber}` : roomNumber}
           </span>
 
-          {/* Building Link */}
           {onSelectFacility ? (
             <button
               type="button"
@@ -85,13 +83,11 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
           )}
         </div>
 
-        {/* Room Status Badge */}
         <div className="shrink-0">
           <RoomBadge status={room.status} facilityType={facilityType} />
         </div>
       </div>
 
-      {/* Availability / Course Status Info */}
       <div className="text-xs space-y-1 bg-muted/30 rounded-md p-2 border border-border/40">
         {isAcademic && academicRoom && (
           <>
@@ -153,10 +149,8 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
         )}
       </div>
 
-      {/* Action Buttons Row */}
       <div className="flex items-center gap-2 pt-1">
         <div className="flex items-center gap-2">
-          {/* Schedule Toggle Button */}
           <Button
             type="button"
             variant="outline"
@@ -175,7 +169,6 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
             )}
           </Button>
 
-          {/* Library specific buttons: Reserve & Photo */}
           {!isAcademic && libraryRoom && (
             <>
               {libraryRoom.url && (
@@ -237,7 +230,6 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
         </div>
       </div>
 
-      {/* Collapsible Detailed Schedule */}
       {isScheduleOpen && (
         <div className="pt-2 border-t border-border/60 mt-2 w-full min-w-0 max-w-full overflow-hidden">
           {isAcademic ? (

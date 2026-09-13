@@ -92,7 +92,6 @@ export const HybridTooltipContent = (
     if (!isTouch || !open) {return;}
 
     const handleScroll = () => {
-      // close the popover on mobile scroll
       setOpen?.(false);
     };
 
