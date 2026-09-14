@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { afterEach, describe, expect, it, mock, spyOn } from "bun:test";
 import type { RoomDetails } from "../../types";
 import { createApp } from "../app";
 
@@ -15,6 +15,10 @@ const details: RoomDetails[] = [
 ];
 
 describe("GET /api/room-details", () => {
+  afterEach(() => {
+    mock.restore();
+  });
+
   it("requires a building name", async () => {
     const app = createApp();
     const response = await app.request("/api/room-details");
@@ -46,5 +50,26 @@ describe("GET /api/room-details", () => {
       { buildingName: "Campus Instructional Facility" },
     ]);
     expect(await response.json()).toEqual(details);
+  });
+
+  it("does not expose unexpected loader errors", async () => {
+    spyOn(console, "error").mockImplementation(() => {});
+    const app = createApp({
+      roomDetails: {
+        loadRoomDetails: async () => {
+          throw new Error("private database details");
+        },
+      },
+    });
+
+    const response = await app.request(
+      "/api/room-details?buildingName=Campus%20Instructional%20Facility",
+    );
+
+    expect(response.status).toBe(500);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(await response.json()).toEqual({
+      error: "Failed to fetch room details",
+    });
   });
 });

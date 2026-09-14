@@ -19,6 +19,8 @@ import { RoomStatusTabs, type RoomTab } from "./RoomStatusTabs";
 import { groupAcademicRooms } from "./roomUtils";
 import { Clock, Star } from "lucide-react";
 
+const ROOM_DETAILS_CACHE_TIME_MS = 10 * 60 * 1000;
+
 interface FacilityDetailPageProps {
   facility: Facility;
   onBack: () => void;
@@ -88,7 +90,9 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
         return response.json();
       },
       enabled: isAcademic && facility.isOpen,
-      staleTime: 10 * 60 * 1000,
+      staleTime: ROOM_DETAILS_CACHE_TIME_MS,
+      gcTime: ROOM_DETAILS_CACHE_TIME_MS,
+      refetchOnMount: true,
       retry: 1,
     });
 

@@ -76,10 +76,10 @@ describe("GET /api/room-image", () => {
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(bytes);
     expect(requests).toHaveLength(1);
     expect(requests[0]?.input).toBe(answersImage);
-    expect(requests[0]?.init?.redirect).toBe("follow");
+    expect(requests[0]?.init?.redirect).toBe("manual");
   });
 
-  it("does not proxy upstream errors or non-images", async () => {
+  it("does not proxy upstream errors", async () => {
     const app = createApp({
       roomImage: {
         fetchImage: async () =>
@@ -98,5 +98,77 @@ describe("GET /api/room-image", () => {
     expect(await response.json()).toEqual({
       error: "Room image source unavailable",
     });
+  });
+
+  it("does not proxy a successful non-image response", async () => {
+    const app = createApp({
+      roomImage: {
+        fetchImage: async () =>
+          new Response("Not an image", {
+            headers: { "Content-Type": "text/plain" },
+          }),
+      },
+    });
+
+    const response = await app.request(
+      `/api/room-image?url=${encodeURIComponent(answersImage)}`,
+    );
+
+    expect(response.status).toBe(502);
+    expect(await response.json()).toEqual({
+      error: "Room image source unavailable",
+    });
+  });
+
+  it("does not follow redirects from an allowed source", async () => {
+    const requests: { input: string; init?: RequestInit }[] = [];
+    const app = createApp({
+      roomImage: {
+        fetchImage: async (input, init) => {
+          requests.push({ input: String(input), init });
+          return new Response(null, {
+            status: 302,
+            headers: { Location: "https://example.com/private.jpg" },
+          });
+        },
+      },
+    });
+
+    const response = await app.request(
+      `/api/room-image?url=${encodeURIComponent(answersImage)}`,
+    );
+
+    expect(response.status).toBe(502);
+    expect(requests).toHaveLength(1);
+    expect(requests[0]?.init?.redirect).toBe("manual");
+  });
+
+  it("rejects an oversized body without a content-length header", async () => {
+    const oversizedBytes = new Uint8Array(15 * 1024 * 1024 + 1);
+    let bodyWasCancelled = false;
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(oversizedBytes.subarray(0, 8 * 1024 * 1024));
+        controller.enqueue(oversizedBytes.subarray(8 * 1024 * 1024));
+      },
+      cancel() {
+        bodyWasCancelled = true;
+      },
+    });
+    const app = createApp({
+      roomImage: {
+        fetchImage: async () =>
+          new Response(body, {
+            headers: { "Content-Type": "image/jpeg" },
+          }),
+      },
+    });
+
+    const response = await app.request(
+      `/api/room-image?url=${encodeURIComponent(answersImage)}`,
+    );
+
+    expect(response.status).toBe(502);
+    expect(bodyWasCancelled).toBe(true);
   });
 });

@@ -23,15 +23,22 @@ mock.module("@posthog/react", () => ({
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { DateTimeProvider } from "@/contexts/DateTimeContext";
 import { FacilityListItem } from "./FacilityListItem";
 import { FacilityListView } from "./FacilityListView";
 import { FacilityDetailPage } from "./FacilityDetailPage";
-import { type Facility, FacilityType, RoomStatus } from "@/types";
+import { RoomRow, restoreOriginalImage } from "./RoomRow";
+import {
+  type Facility,
+  type RoomDetails,
+  FacilityType,
+  RoomStatus,
+} from "@/types";
 
 function renderDetailPage(
   props: React.ComponentProps<typeof FacilityDetailPage>,
+  queryClient = new QueryClient(),
 ) {
-  const queryClient = new QueryClient();
   return renderToStaticMarkup(
     <QueryClientProvider client={queryClient}>
       <FacilityDetailPage {...props} />
@@ -237,5 +244,89 @@ describe("FacilityDetailPage", () => {
     expect(html).toContain("CLOSED");
     expect(html).toContain("Building is currently closed");
     expect(html).toContain("Opens at 8:00 AM");
+  });
+
+  it("overrides the shared infinite room-details cache policy", () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          staleTime: Infinity,
+          gcTime: Infinity,
+          refetchOnMount: false,
+        },
+      },
+    });
+
+    renderDetailPage(
+      { facility: mockAcademicFacility, onBack: () => {} },
+      queryClient,
+    );
+
+    const query = queryClient.getQueryCache().find({
+      queryKey: ["roomDetails", mockAcademicFacility.name],
+    });
+    const options = query?.options as
+      | {
+          staleTime?: number;
+          gcTime?: number;
+          refetchOnMount?: boolean;
+        }
+      | undefined;
+    expect(options?.staleTime).toBe(10 * 60 * 1000);
+    expect(options?.gcTime).toBe(10 * 60 * 1000);
+    expect(options?.refetchOnMount).toBe(true);
+  });
+});
+
+describe("RoomRow", () => {
+  const roomDetails: RoomDetails = {
+    buildingName: "Campus Instructional Facility",
+    roomNumber: "1025",
+    capacity: 36,
+    roomType: "Classroom",
+    equipment: ["PC", "HDMI input"],
+    photoUrls: [],
+    answersUrl: null,
+  };
+
+  it("renders equipment from room details", () => {
+    const queryClient = new QueryClient();
+    const html = renderToStaticMarkup(
+      <QueryClientProvider client={queryClient}>
+        <DateTimeProvider>
+          <RoomRow
+            roomName="1025"
+            room={mockAcademicFacility.rooms["1025"]}
+            facilityId={mockAcademicFacility.id}
+            facilityName={mockAcademicFacility.name}
+            roomDetails={roomDetails}
+            isExpanded
+            onToggleExpand={() => {}}
+          />
+        </DateTimeProvider>
+      </QueryClientProvider>,
+    );
+
+    expect(html).toContain("Equipment:");
+    expect(html).toContain("PC, HDMI input");
+  });
+
+  it("allows each gallery photo to fall back independently", () => {
+    const image = {
+      dataset: {} as DOMStringMap,
+      src: "optimized-first",
+      srcset: "optimized-first 1x",
+    };
+
+    restoreOriginalImage({ currentTarget: image }, "original-first");
+    expect(image.src).toBe("original-first");
+    expect(image.srcset).toBe("");
+
+    image.src = "optimized-second";
+    image.srcset = "optimized-second 1x";
+    restoreOriginalImage({ currentTarget: image }, "original-second");
+
+    expect(image.src).toBe("original-second");
+    expect(image.srcset).toBe("");
   });
 });

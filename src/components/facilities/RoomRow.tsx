@@ -8,7 +8,12 @@ import {
 } from "@/types";
 import { RoomBadge } from "@/components/RoomBadge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   ChevronDown,
   ChevronLeft,
@@ -46,18 +51,24 @@ function seatsSummary(details: RoomDetails): string {
 }
 
 function hasTechDetails(details: RoomDetails): boolean {
-  return details.photoUrls.length > 0 || details.answersUrl !== null;
+  return (
+    details.equipment.length > 0 ||
+    details.photoUrls.length > 0 ||
+    details.answersUrl !== null
+  );
 }
 
-function restoreOriginalImage(
-  event: React.SyntheticEvent<HTMLImageElement>,
+export function restoreOriginalImage(
+  event: {
+    currentTarget: Pick<HTMLImageElement, "dataset" | "src" | "srcset">;
+  },
   originalUrl: string,
 ) {
   const image = event.currentTarget;
-  if (image.dataset.originalFallback === "true") {
+  if (image.dataset.originalFallback === originalUrl) {
     return;
   }
-  image.dataset.originalFallback = "true";
+  image.dataset.originalFallback = originalUrl;
   image.srcset = "";
   image.src = originalUrl;
 }
@@ -75,6 +86,12 @@ function RoomDetailsSection({ details }: { details: RoomDetails }) {
   return (
     <div className="mt-2 space-y-2 border-t border-border/40 px-1 pt-2 text-xs">
       {summary && <p className="text-muted-foreground">{summary}</p>}
+      {details.equipment.length > 0 && (
+        <p className="text-muted-foreground">
+          <span className="font-medium text-foreground">Equipment:</span>{" "}
+          {details.equipment.join(", ")}
+        </p>
+      )}
       {photoCount > 0 && (
         <Dialog
           onOpenChange={(open) => {
@@ -121,6 +138,7 @@ function RoomDetailsSection({ details }: { details: RoomDetails }) {
             </button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-lg">
+            <DialogTitle className="sr-only">Room photos</DialogTitle>
             <div className="relative">
               <a
                 href={details.photoUrls[photoIndex]}
@@ -354,6 +372,9 @@ export const RoomRow: React.FC<RoomRowProps> = memo(
                             </Button>
                           </DialogTrigger>
                           <DialogContent>
+                            <DialogTitle className="sr-only">
+                              {roomName} photo
+                            </DialogTitle>
                             <div className="relative w-full aspect-video">
                               {isImageLoading && (
                                 <div className="absolute inset-0 w-full h-full bg-muted animate-pulse rounded-md" />

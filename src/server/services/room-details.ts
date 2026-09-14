@@ -25,42 +25,39 @@ export class RoomDetailsDatabaseError extends Error {
   }
 }
 
-interface RoomDetailsRow {
-  building_name: unknown;
-  room_number: unknown;
-  capacity: unknown;
-  room_type: unknown;
-  equipment: unknown;
-  photo_urls: unknown;
-  answers_url: unknown;
-}
+function parseRow(row: unknown): RoomDetails | null {
+  if (typeof row !== "object" || row === null || Array.isArray(row)) {
+    return null;
+  }
 
-function parseRow(row: RoomDetailsRow): RoomDetails | null {
+  const candidate = row as Record<string, unknown>;
   if (
-    typeof row.building_name !== "string" ||
-    typeof row.room_number !== "string" ||
-    typeof row.capacity !== "number" ||
-    typeof row.room_type !== "string"
+    typeof candidate.building_name !== "string" ||
+    typeof candidate.room_number !== "string" ||
+    typeof candidate.capacity !== "number" ||
+    typeof candidate.room_type !== "string"
   ) {
     return null;
   }
   return {
-    buildingName: row.building_name,
-    roomNumber: row.room_number,
-    capacity: row.capacity,
-    roomType: row.room_type,
-    equipment: Array.isArray(row.equipment)
-      ? row.equipment.filter(
+    buildingName: candidate.building_name,
+    roomNumber: candidate.room_number,
+    capacity: candidate.capacity,
+    roomType: candidate.room_type,
+    equipment: Array.isArray(candidate.equipment)
+      ? candidate.equipment.filter(
           (item): item is string => typeof item === "string",
         )
       : [],
-    photoUrls: Array.isArray(row.photo_urls)
-      ? row.photo_urls.filter(
+    photoUrls: Array.isArray(candidate.photo_urls)
+      ? candidate.photo_urls.filter(
           (item): item is string => typeof item === "string",
         )
       : [],
     answersUrl:
-      typeof row.answers_url === "string" ? row.answers_url : null,
+      typeof candidate.answers_url === "string"
+        ? candidate.answers_url
+        : null,
   };
 }
 
@@ -104,7 +101,7 @@ export async function loadRoomDetails(
     return [];
   }
 
-  return (data as RoomDetailsRow[])
+  return data
     .map(parseRow)
     .filter((row): row is RoomDetails => row !== null);
 }

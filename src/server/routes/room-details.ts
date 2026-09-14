@@ -54,12 +54,7 @@ export function createRoomDetailsRoutes(
       );
 
       return context.json(
-        {
-          error:
-            error instanceof Error
-              ? error.message
-              : "Failed to fetch room details",
-        },
+        { error: "Failed to fetch room details" },
         500,
       );
     }
