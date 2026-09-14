@@ -143,7 +143,7 @@ describe("GET /api/room-image", () => {
     expect(requests[0]?.init?.redirect).toBe("manual");
   });
 
-  it("rejects an oversized body without a content-length header", async () => {
+  it("aborts an oversized body without buffering it", async () => {
     const oversizedBytes = new Uint8Array(15 * 1024 * 1024 + 1);
     let bodyWasCancelled = false;
     const body = new ReadableStream<Uint8Array>({
@@ -168,7 +168,47 @@ describe("GET /api/room-image", () => {
       `/api/room-image?url=${encodeURIComponent(answersImage)}`,
     );
 
-    expect(response.status).toBe(502);
+    expect(response.status).toBe(200);
+    await expect(response.arrayBuffer()).rejects.toThrow(
+      "Room image source exceeds size limit",
+    );
     expect(bodyWasCancelled).toBe(true);
+  });
+
+  it("limits concurrent image streams", async () => {
+    let fetchCount = 0;
+    const app = createApp({
+      roomImage: {
+        maxConcurrentStreams: 1,
+        fetchImage: async () => {
+          fetchCount += 1;
+          return new Response(new ReadableStream<Uint8Array>(), {
+            headers: { "Content-Type": "image/jpeg" },
+          });
+        },
+      },
+    });
+
+    const first = await app.request(
+      `/api/room-image?url=${encodeURIComponent(answersImage)}`,
+    );
+    const busy = await app.request(
+      `/api/room-image?url=${encodeURIComponent(answersImage)}`,
+    );
+
+    expect(first.status).toBe(200);
+    expect(busy.status).toBe(503);
+    expect(busy.headers.get("retry-after")).toBe("1");
+    expect(await busy.json()).toEqual({ error: "Room image proxy busy" });
+    expect(fetchCount).toBe(1);
+
+    await first.body?.cancel();
+
+    const afterCancellation = await app.request(
+      `/api/room-image?url=${encodeURIComponent(answersImage)}`,
+    );
+    expect(afterCancellation.status).toBe(200);
+    expect(fetchCount).toBe(2);
+    await afterCancellation.body?.cancel();
   });
 });

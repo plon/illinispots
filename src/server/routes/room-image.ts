@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { Sentry } from "../observability";
 
 const MAX_SOURCE_BYTES = 15 * 1024 * 1024;
+const MAX_CONCURRENT_IMAGE_STREAMS = 4;
 const SOURCE_TIMEOUT_MS = 15_000;
 const ANSWERS_IMAGE_PATH =
   /^\/images\/group\d+\/\d+\/[^/]+\.(?:jpe?g|png|webp)$/i;
@@ -11,40 +12,48 @@ export interface RoomImageRouteDependencies {
     input: string,
     init?: RequestInit,
   ) => Promise<Response>;
+  maxConcurrentStreams?: number;
 }
 
-async function readLimitedBody(
+function createLimitedBodyStream(
   body: ReadableStream<Uint8Array>,
-): Promise<Uint8Array | null> {
+  releaseStreamSlot: () => void,
+): ReadableStream<Uint8Array> {
   const reader = body.getReader();
-  const chunks: Uint8Array[] = [];
   let totalBytes = 0;
 
-  while (true) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- stream reads require sequential backpressure
-    const { done, value } = await reader.read();
-    if (done) {
-      break;
-    }
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        const { done, value } = await reader.read();
+        if (done) {
+          releaseStreamSlot();
+          controller.close();
+          return;
+        }
 
-    totalBytes += value.byteLength;
-    if (totalBytes > MAX_SOURCE_BYTES) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- finish cancellation before returning
-      await reader.cancel();
-      return null;
-    }
+        totalBytes += value.byteLength;
+        if (totalBytes > MAX_SOURCE_BYTES) {
+          await reader.cancel("Room image source exceeds size limit");
+          releaseStreamSlot();
+          controller.error(new Error("Room image source exceeds size limit"));
+          return;
+        }
 
-    chunks.push(value);
-  }
-
-  const result = new Uint8Array(totalBytes);
-  let offset = 0;
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-
-  return result;
+        controller.enqueue(value);
+      } catch (error) {
+        releaseStreamSlot();
+        controller.error(error);
+      }
+    },
+    async cancel(reason) {
+      try {
+        await reader.cancel(reason);
+      } finally {
+        releaseStreamSlot();
+      }
+    },
+  });
 }
 
 export function isAllowedRoomImageUrl(sourceUrl: string): boolean {
@@ -75,12 +84,29 @@ export function createRoomImageRoutes(
   dependencies: RoomImageRouteDependencies = {},
 ) {
   const fetchImage = dependencies.fetchImage ?? fetch;
+  const maxConcurrentStreams =
+    dependencies.maxConcurrentStreams ?? MAX_CONCURRENT_IMAGE_STREAMS;
+  let activeStreams = 0;
 
   return new Hono().get("/", async (context) => {
     const sourceUrl = context.req.query("url");
     if (!sourceUrl || !isAllowedRoomImageUrl(sourceUrl)) {
       return context.json({ error: "Invalid room image URL" }, 400);
     }
+
+    if (activeStreams >= maxConcurrentStreams) {
+      context.header("Retry-After", "1");
+      return context.json({ error: "Room image proxy busy" }, 503);
+    }
+
+    activeStreams += 1;
+    let streamSlotReleased = false;
+    const releaseStreamSlot = () => {
+      if (!streamSlotReleased) {
+        streamSlotReleased = true;
+        activeStreams -= 1;
+      }
+    };
 
     try {
       const upstream = await fetchImage(sourceUrl, {
@@ -100,16 +126,24 @@ export function createRoomImageRoutes(
           Number.isSafeInteger(contentLength) &&
           contentLength > MAX_SOURCE_BYTES)
       ) {
+        await upstream.body?.cancel();
+        releaseStreamSlot();
         return context.json({ error: "Room image source unavailable" }, 502);
       }
 
-      const imageBytes = await readLimitedBody(upstream.body);
-      if (!imageBytes) {
-        return context.json({ error: "Room image source unavailable" }, 502);
-      }
+      const imageStream = createLimitedBodyStream(
+        upstream.body,
+        releaseStreamSlot,
+      );
 
       context.header("Content-Type", contentType);
-      context.header("Content-Length", String(imageBytes.byteLength));
+      if (
+        contentLength !== null &&
+        Number.isSafeInteger(contentLength) &&
+        contentLength >= 0
+      ) {
+        context.header("Content-Length", String(contentLength));
+      }
       context.header(
         "Cache-Control",
         "public, max-age=2592000, immutable",
@@ -119,8 +153,9 @@ export function createRoomImageRoutes(
         "public, max-age=2592000, stale-while-revalidate=86400",
       );
 
-      return context.body(imageBytes.buffer as ArrayBuffer);
+      return context.body(imageStream);
     } catch (error) {
+      releaseStreamSlot();
       Sentry.captureException(error, {
         tags: { component: "api", route: "/api/room-image" },
       });
