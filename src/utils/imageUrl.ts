@@ -49,12 +49,11 @@ export function getOptimizedImageUrl(
 }
 
 function getPublicAppOrigin(): string | undefined {
-  const location = typeof window === "undefined" ? undefined : window.location;
-  if (!location) {
+  if (typeof window === "undefined") {
     return undefined;
   }
 
-  const { hostname, origin, protocol } = location;
+  const { hostname, origin, protocol } = window.location;
   if (
     (protocol !== "http:" && protocol !== "https:") ||
     hostname === "localhost" ||

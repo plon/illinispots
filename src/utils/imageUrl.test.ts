@@ -1,6 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import { getOptimizedImageUrl } from "./imageUrl";
 
+const NO_PUBLIC_APP_ORIGIN = "";
+
 describe("getOptimizedImageUrl", () => {
   it("builds an encoded wsrv.nl URL with the requested transform", () => {
     const result = getOptimizedImageUrl(
@@ -24,10 +26,14 @@ describe("getOptimizedImageUrl", () => {
 
   it("uses inside fitting and accepts a custom quality", () => {
     const result = new URL(
-      getOptimizedImageUrl("http://example.com/room.jpg", {
-        width: 960,
-        quality: 80,
-      }),
+      getOptimizedImageUrl(
+        "http://example.com/room.jpg",
+        {
+          width: 960,
+          quality: 80,
+        },
+        NO_PUBLIC_APP_ORIGIN,
+      ),
     );
 
     expect(result.searchParams.get("h")).toBeNull();
@@ -38,7 +44,7 @@ describe("getOptimizedImageUrl", () => {
   it("uses the source directly when no public app origin is available", () => {
     const sourceUrl = "https://answers.uillinois.edu/images/room.jpg";
     const result = new URL(
-      getOptimizedImageUrl(sourceUrl, { width: 96 }, undefined),
+      getOptimizedImageUrl(sourceUrl, { width: 96 }, NO_PUBLIC_APP_ORIGIN),
     );
 
     expect(result.searchParams.get("url")).toBe(sourceUrl);
@@ -58,25 +64,16 @@ describe("getOptimizedImageUrl", () => {
     expect(result.searchParams.get("url")).toBe(sourceUrl);
   });
 
-  it("handles a window shim without a location", () => {
-    const originalWindow = globalThis.window;
-    globalThis.window = {} as Window & typeof globalThis;
-
-    try {
-      const sourceUrl =
-        "https://answers.uillinois.edu/images/group180/12345/room.jpg";
-      const result = new URL(getOptimizedImageUrl(sourceUrl, { width: 96 }));
-
-      expect(result.searchParams.get("url")).toBe(sourceUrl);
-    } finally {
-      globalThis.window = originalWindow;
-    }
-  });
-
   it.each(["/room.jpg", "data:image/png;base64,abc", "not a url"])(
     "leaves a non-remote source unchanged: %s",
     (sourceUrl) => {
-      expect(getOptimizedImageUrl(sourceUrl, { width: 96 })).toBe(sourceUrl);
+      expect(
+        getOptimizedImageUrl(
+          sourceUrl,
+          { width: 96 },
+          NO_PUBLIC_APP_ORIGIN,
+        ),
+      ).toBe(sourceUrl);
     },
   );
 });
