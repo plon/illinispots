@@ -58,6 +58,21 @@ describe("getOptimizedImageUrl", () => {
     expect(result.searchParams.get("url")).toBe(sourceUrl);
   });
 
+  it("handles a window shim without a location", () => {
+    const originalWindow = globalThis.window;
+    globalThis.window = {} as Window & typeof globalThis;
+
+    try {
+      const sourceUrl =
+        "https://answers.uillinois.edu/images/group180/12345/room.jpg";
+      const result = new URL(getOptimizedImageUrl(sourceUrl, { width: 96 }));
+
+      expect(result.searchParams.get("url")).toBe(sourceUrl);
+    } finally {
+      globalThis.window = originalWindow;
+    }
+  });
+
   it.each(["/room.jpg", "data:image/png;base64,abc", "not a url"])(
     "leaves a non-remote source unchanged: %s",
     (sourceUrl) => {
