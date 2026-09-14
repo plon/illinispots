@@ -22,10 +22,22 @@ mock.module("@posthog/react", () => ({
 
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { FacilityListItem } from "./FacilityListItem";
 import { FacilityListView } from "./FacilityListView";
 import { FacilityDetailPage } from "./FacilityDetailPage";
 import { type Facility, FacilityType, RoomStatus } from "@/types";
+
+function renderDetailPage(
+  props: React.ComponentProps<typeof FacilityDetailPage>,
+) {
+  const queryClient = new QueryClient();
+  return renderToStaticMarkup(
+    <QueryClientProvider client={queryClient}>
+      <FacilityDetailPage {...props} />
+    </QueryClientProvider>,
+  );
+}
 
 const mockAcademicFacility: Facility = {
   id: "cif",
@@ -162,12 +174,10 @@ describe("FacilityListView", () => {
 
 describe("FacilityDetailPage", () => {
   it("renders building title, hours, and available rooms", () => {
-    const html = renderToStaticMarkup(
-      <FacilityDetailPage
-        facility={mockAcademicFacility}
-        onBack={() => {}}
-      />,
-    );
+    const html = renderDetailPage({
+      facility: mockAcademicFacility,
+      onBack: () => {},
+    });
 
     expect(html).toContain("Campus Instructional Facility");
     expect(html).toContain("2 of 3 spots available");
@@ -180,13 +190,11 @@ describe("FacilityDetailPage", () => {
   });
 
   it("filters rooms by roomSearchQuery prop", () => {
-    const html = renderToStaticMarkup(
-      <FacilityDetailPage
-        facility={mockAcademicFacility}
-        onBack={() => {}}
-        roomSearchQuery="1025"
-      />,
-    );
+    const html = renderDetailPage({
+      facility: mockAcademicFacility,
+      onBack: () => {},
+      roomSearchQuery: "1025",
+    });
 
     expect(html).toContain("1025");
     expect(html).not.toContain("3025");
@@ -194,13 +202,11 @@ describe("FacilityDetailPage", () => {
   });
 
   it("keeps occupied and all-room counts when availability filters are active", () => {
-    const html = renderToStaticMarkup(
-      <FacilityDetailPage
-        facility={mockAcademicFacility}
-        onBack={() => {}}
-        filterCriteria={{ minDuration: 75 }}
-      />,
-    );
+    const html = renderDetailPage({
+      facility: mockAcademicFacility,
+      onBack: () => {},
+      filterCriteria: { minDuration: 75 },
+    });
 
     expect(html).toContain("1 of 3 spots available");
     expect(html).toContain("Available (1)");
@@ -209,13 +215,11 @@ describe("FacilityDetailPage", () => {
   });
 
   it("uses filtered availability for a library badge and room list", () => {
-    const html = renderToStaticMarkup(
-      <FacilityDetailPage
-        facility={mockLibraryFacility}
-        onBack={() => {}}
-        filterCriteria={{ minDuration: 60 }}
-      />,
-    );
+    const html = renderDetailPage({
+      facility: mockLibraryFacility,
+      onBack: () => {},
+      filterCriteria: { minDuration: 60 },
+    });
 
     expect(html).toContain("1 of 3 spots available");
     expect(html).toContain("Study Room A");
@@ -224,12 +228,10 @@ describe("FacilityDetailPage", () => {
   });
 
   it("renders closed notice when facility is closed", () => {
-    const html = renderToStaticMarkup(
-      <FacilityDetailPage
-        facility={mockClosedFacility}
-        onBack={() => {}}
-      />,
-    );
+    const html = renderDetailPage({
+      facility: mockClosedFacility,
+      onBack: () => {},
+    });
 
     expect(html).toContain("Siebel Center for CS");
     expect(html).toContain("CLOSED");

@@ -1,12 +1,25 @@
 import React, { memo, useState } from "react";
 import { usePostHog } from "@posthog/react";
-import { type FacilityRoom, FacilityType, RoomStatus } from "@/types";
+import {
+  type FacilityRoom,
+  type RoomDetails,
+  FacilityType,
+  RoomStatus,
+} from "@/types";
 import { RoomBadge } from "@/components/RoomBadge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { ChevronDown, ExternalLink, Image as ImageIcon } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Image as ImageIcon,
+  Info,
+} from "lucide-react";
 import AcademicRoomDetailLoader from "@/components/AcademicRoomDetailLoader";
 import { RoomSchedule } from "@/components/RoomSchedule";
+import { getOptimizedImageUrl } from "@/utils/imageUrl";
 import {
   getRoomAvailabilityMessage,
   RoomAvailabilityDetails,
@@ -18,8 +31,168 @@ interface RoomRowProps {
   room: FacilityRoom;
   facilityId: string;
   facilityName: string;
+  roomDetails?: RoomDetails;
   isExpanded: boolean;
   onToggleExpand: () => void;
+}
+
+function seatsSummary(details: RoomDetails): string {
+  return [
+    details.capacity ? `Seats ${details.capacity}` : null,
+    details.roomType || null,
+  ]
+    .filter(Boolean)
+    .join(" • ");
+}
+
+function hasTechDetails(details: RoomDetails): boolean {
+  return details.photoUrls.length > 0 || details.answersUrl !== null;
+}
+
+function restoreOriginalImage(
+  event: React.SyntheticEvent<HTMLImageElement>,
+  originalUrl: string,
+) {
+  const image = event.currentTarget;
+  if (image.dataset.originalFallback === "true") {
+    return;
+  }
+  image.dataset.originalFallback = "true";
+  image.srcset = "";
+  image.src = originalUrl;
+}
+
+function RoomDetailsSection({ details }: { details: RoomDetails }) {
+  const summary = seatsSummary(details);
+  const photoCount = details.photoUrls.length;
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const [thumbnailSource] = details.photoUrls;
+  const activePhotoSource = details.photoUrls[photoIndex];
+
+  if (!summary && !hasTechDetails(details)) {
+    return null;
+  }
+  return (
+    <div className="mt-2 space-y-2 border-t border-border/40 px-1 pt-2 text-xs">
+      {summary && <p className="text-muted-foreground">{summary}</p>}
+      {photoCount > 0 && (
+        <Dialog
+          onOpenChange={(open) => {
+            if (open) {
+              setPhotoIndex(0);
+            }
+          }}
+        >
+          <DialogTrigger asChild>
+            <button
+              type="button"
+              onClick={(e) => e.stopPropagation()}
+              aria-label={`View ${photoCount} room photo${photoCount === 1 ? "" : "s"}`}
+              className="group relative block shrink-0 overflow-hidden rounded-md border border-border/60 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              <img
+                src={getOptimizedImageUrl(thumbnailSource, {
+                  width: 96,
+                  height: 64,
+                  fit: "cover",
+                })}
+                srcSet={`${getOptimizedImageUrl(thumbnailSource, {
+                  width: 96,
+                  height: 64,
+                  fit: "cover",
+                })} 1x, ${getOptimizedImageUrl(thumbnailSource, {
+                  width: 192,
+                  height: 128,
+                  fit: "cover",
+                })} 2x`}
+                alt={`Room photo 1 of ${photoCount}`}
+                loading="lazy"
+                decoding="async"
+                referrerPolicy="no-referrer"
+                onError={(event) => restoreOriginalImage(event, thumbnailSource)}
+                className="h-16 w-24 object-cover transition group-hover:opacity-90"
+              />
+              {photoCount > 1 && (
+                <span className="absolute right-1 bottom-1 inline-flex items-center gap-0.5 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                  <ImageIcon className="h-2.5 w-2.5" />
+                  {photoCount}
+                </span>
+              )}
+            </button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-lg">
+            <div className="relative">
+              <a
+                href={details.photoUrls[photoIndex]}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <img
+                  src={getOptimizedImageUrl(activePhotoSource, { width: 480 })}
+                  srcSet={`${getOptimizedImageUrl(activePhotoSource, {
+                    width: 480,
+                  })} 480w, ${getOptimizedImageUrl(activePhotoSource, {
+                    width: 960,
+                  })} 960w`}
+                  sizes="(min-width: 640px) 480px, calc(100vw - 4rem)"
+                  alt={`Room photo ${photoIndex + 1} of ${photoCount}`}
+                  loading="lazy"
+                  decoding="async"
+                  referrerPolicy="no-referrer"
+                  onError={(event) =>
+                    restoreOriginalImage(event, activePhotoSource)
+                  }
+                  className="w-full rounded-md object-cover"
+                />
+              </a>
+              {photoCount > 1 && (
+                <>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="icon"
+                    aria-label="Previous photo"
+                    onClick={() =>
+                      setPhotoIndex((i) => (i - 1 + photoCount) % photoCount)
+                    }
+                    className="absolute top-1/2 left-2 h-8 w-8 -translate-y-1/2 rounded-full opacity-90"
+                  >
+                    <ChevronLeft />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="icon"
+                    aria-label="Next photo"
+                    onClick={() => setPhotoIndex((i) => (i + 1) % photoCount)}
+                    className="absolute top-1/2 right-2 h-8 w-8 -translate-y-1/2 rounded-full opacity-90"
+                  >
+                    <ChevronRight />
+                  </Button>
+                  <span className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded bg-black/70 px-2 py-0.5 text-[11px] font-medium text-white">
+                    {photoIndex + 1} / {photoCount}
+                  </span>
+                </>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+      {details.answersUrl && (
+        <a
+          href={details.answersUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="inline-flex items-center gap-1 text-muted-foreground underline decoration-muted-foreground/40 underline-offset-2 hover:text-foreground"
+        >
+          Tech Services details
+          <ExternalLink className="h-3 w-3" />
+        </a>
+      )}
+    </div>
+  );
 }
 
 export const RoomRow: React.FC<RoomRowProps> = memo(
@@ -28,6 +201,7 @@ export const RoomRow: React.FC<RoomRowProps> = memo(
     room,
     facilityId,
     facilityName,
+    roomDetails,
     isExpanded,
     onToggleExpand,
   }) => {
@@ -67,13 +241,30 @@ export const RoomRow: React.FC<RoomRowProps> = memo(
           type="button"
           onClick={handleRowClick}
           aria-expanded={isExpanded}
-          aria-label={`Room ${roomName} in ${facilityName}`}
+          aria-label={`Room ${roomName} in ${facilityName}${roomDetails ? ", has room info" : ""}`}
           className={`w-full text-left py-2.5 px-4 flex items-center justify-between hover:bg-muted/30 transition-colors gap-2 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring ${
             isExpanded ? "bg-muted/20" : ""
           }`}
         >
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="font-medium text-sm text-foreground">{roomName}</span>
+            <span className="inline-flex items-center gap-1.5 font-medium text-sm text-foreground">
+              {roomName}
+              {isAcademic && roomDetails && (
+                <span
+                  title={
+                    hasTechDetails(roomDetails)
+                      ? "Room info available"
+                      : "Seats and room type available"
+                  }
+                  className="inline-flex shrink-0"
+                >
+                  <Info
+                    aria-hidden="true"
+                    className="h-3 w-3 text-muted-foreground/60"
+                  />
+                </span>
+              )}
+            </span>
             {isAcademic && academicRoom && (
               isAvailable ? (
                 <RoomAvailabilityDetails room={academicRoom} />
@@ -114,10 +305,13 @@ export const RoomRow: React.FC<RoomRowProps> = memo(
             {hasBeenExpanded && (
               <div className="border-t border-border/40 bg-muted/20 px-4 py-2.5 min-w-0">
                 {isAcademic ? (
-                  <AcademicRoomDetailLoader
-                    buildingId={facilityName}
-                    roomNumber={roomName}
-                  />
+                  <>
+                    <AcademicRoomDetailLoader
+                      buildingId={facilityName}
+                      roomNumber={roomName}
+                    />
+                    {roomDetails && <RoomDetailsSection details={roomDetails} />}
+                  </>
                 ) : libraryRoom ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
@@ -159,7 +353,7 @@ export const RoomRow: React.FC<RoomRowProps> = memo(
                               Photo
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="p-5">
+                          <DialogContent>
                             <div className="relative w-full aspect-video">
                               {isImageLoading && (
                                 <div className="absolute inset-0 w-full h-full bg-muted animate-pulse rounded-md" />

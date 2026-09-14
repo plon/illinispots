@@ -1,5 +1,6 @@
 import React, { useState, useMemo, memo, useEffect } from "react";
-import { type Facility, FacilityType } from "@/types";
+import { useQuery } from "@tanstack/react-query";
+import { type Facility, type RoomDetails, FacilityType } from "@/types";
 import {
   type FilterCriteria,
   EMPTY_FILTER_CRITERIA,
@@ -74,6 +75,30 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
     const [expandedRoomId, setExpandedRoomId] = useState<string | null>(null);
 
     useEscapeToBack(onBack);
+
+    const { data: roomDetails } = useQuery<RoomDetails[], Error>({
+      queryKey: ["roomDetails", facility.name],
+      queryFn: async () => {
+        const response = await fetch(
+          `/api/room-details?buildingName=${encodeURIComponent(facility.name)}`,
+        );
+        if (!response.ok) {
+          throw new Error(`Failed to fetch room details: ${response.statusText}`);
+        }
+        return response.json();
+      },
+      enabled: isAcademic && facility.isOpen,
+      staleTime: 10 * 60 * 1000,
+      retry: 1,
+    });
+
+    const detailsByRoom = useMemo(() => {
+      const map = new Map<string, RoomDetails>();
+      for (const details of roomDetails ?? []) {
+        map.set(details.roomNumber, details);
+      }
+      return map;
+    }, [roomDetails]);
 
     // Keep the full room set for the Academic Occupied and All tabs. The
     // availability criteria only narrow available academic rooms and the
@@ -278,6 +303,7 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
                     room={room}
                     facilityId={facility.id}
                     facilityName={facility.name}
+                    roomDetails={detailsByRoom.get(roomNumber)}
                     isExpanded={expandedRoomId === roomNumber}
                     onToggleExpand={() =>
                       setExpandedRoomId((prev) =>

@@ -12,6 +12,14 @@ import {
   createRoomScheduleRoutes,
   type RoomScheduleRouteDependencies,
 } from "./routes/room-schedule";
+import {
+  createRoomDetailsRoutes,
+  type RoomDetailsRouteDependencies,
+} from "./routes/room-details";
+import {
+  createRoomImageRoutes,
+  type RoomImageRouteDependencies,
+} from "./routes/room-image";
 import { sentryRequestContext, sentryTracing } from "./observability";
 import { getPublicClientConfig } from "./config";
 import { injectClientConfig, loadIndexHtml } from "./html";
@@ -19,6 +27,8 @@ import { injectClientConfig, loadIndexHtml } from "./html";
 export interface AppDependencies {
   facilities?: FacilitiesRouteDependencies;
   roomSchedule?: RoomScheduleRouteDependencies;
+  roomDetails?: RoomDetailsRouteDependencies;
+  roomImage?: RoomImageRouteDependencies;
   indexHtmlPath?: string;
   rawIndexHtml?: string;
   environment?: Record<string, string | undefined>;
@@ -114,6 +124,14 @@ export function createApp(dependencies: AppDependencies = {}) {
   app.route(
     "/api/room-schedule",
     createRoomScheduleRoutes(dependencies.roomSchedule),
+  );
+  app.route(
+    "/api/room-details",
+    createRoomDetailsRoutes(dependencies.roomDetails),
+  );
+  app.route(
+    "/api/room-image",
+    createRoomImageRoutes(dependencies.roomImage),
   );
 
   app.all("/api/*", (context) =>
