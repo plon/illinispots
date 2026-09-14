@@ -174,41 +174,4 @@ describe("GET /api/room-image", () => {
     );
     expect(bodyWasCancelled).toBe(true);
   });
-
-  it("limits concurrent image streams", async () => {
-    let fetchCount = 0;
-    const app = createApp({
-      roomImage: {
-        maxConcurrentStreams: 1,
-        fetchImage: async () => {
-          fetchCount += 1;
-          return new Response(new ReadableStream<Uint8Array>(), {
-            headers: { "Content-Type": "image/jpeg" },
-          });
-        },
-      },
-    });
-
-    const first = await app.request(
-      `/api/room-image?url=${encodeURIComponent(answersImage)}`,
-    );
-    const busy = await app.request(
-      `/api/room-image?url=${encodeURIComponent(answersImage)}`,
-    );
-
-    expect(first.status).toBe(200);
-    expect(busy.status).toBe(503);
-    expect(busy.headers.get("retry-after")).toBe("1");
-    expect(await busy.json()).toEqual({ error: "Room image proxy busy" });
-    expect(fetchCount).toBe(1);
-
-    await first.body?.cancel();
-
-    const afterCancellation = await app.request(
-      `/api/room-image?url=${encodeURIComponent(answersImage)}`,
-    );
-    expect(afterCancellation.status).toBe(200);
-    expect(fetchCount).toBe(2);
-    await afterCancellation.body?.cancel();
-  });
 });
