@@ -3,8 +3,7 @@ import { Sentry } from "../observability";
 
 const MAX_SOURCE_BYTES = 15 * 1024 * 1024;
 const SOURCE_TIMEOUT_MS = 15_000;
-const ANSWERS_IMAGE_PATH =
-  /^\/images\/group\d+\/\d+\/[^/]+\.(?:jpe?g|png|webp)$/i;
+const ANSWERS_IMAGE_PATH = /^\/images\/.+\.(?:jpe?g|png|webp)$/i;
 
 export interface RoomImageRouteDependencies {
   fetchImage?: (

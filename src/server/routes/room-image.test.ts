@@ -9,6 +9,9 @@ describe("GET /api/room-image", () => {
   it("only accepts known public room-image paths", () => {
     expect(isAllowedRoomImageUrl(answersImage)).toBe(true);
     expect(
+      isAllowedRoomImageUrl("https://answers.uillinois.edu/images/room.jpg"),
+    ).toBe(true);
+    expect(
       isAllowedRoomImageUrl(
         "https://uofi.box.com/shared/static/d28q7f6bgko529428b1un5pwypk2lt2v.jpg",
       ),
