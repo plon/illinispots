@@ -208,7 +208,7 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
                       Photo
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="p-5">
+                  <DialogContent>
                     <div className="relative w-full aspect-video">
                       {isImageLoading && (
                         <div className="absolute inset-0 w-full h-full bg-muted animate-pulse rounded-md" />

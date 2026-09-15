@@ -67,6 +67,16 @@ export interface LibraryRoom extends BaseFacilityRoom {
 
 export type FacilityRoom = AcademicRoom | LibraryRoom;
 
+export interface RoomDetails {
+  buildingName: string;
+  roomNumber: string;
+  capacity: number;
+  roomType: string;
+  equipment: string[];
+  photoUrls: string[];
+  answersUrl: string | null;
+}
+
 export interface ClassInfo {
   course: string;
   title: string;
