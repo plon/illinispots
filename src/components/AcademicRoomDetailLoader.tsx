@@ -76,6 +76,7 @@ function AcademicRoomScheduleLoader({
       scheduleData={scheduleData || []}
       selectedDate={selectedDate}
       onDateChange={setSelectedDate}
+      emptyMessage="Room not available on this day."
     />
   );
 }

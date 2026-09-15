@@ -149,8 +149,17 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
 
   if (scheduleData.length === 0) {
     return (
-      <div className="w-full min-w-0 max-w-full rounded-md border border-border/50 bg-muted/20 p-3 text-center text-xs text-muted-foreground">
-        {emptyMessage ?? "No schedule slots available for this room."}
+      <div className="w-full min-w-0 max-w-full space-y-1.5 overflow-hidden pb-0.5 pt-1">
+        {onDateChange && (
+          <DaySelector
+            selectedDate={activeDate}
+            today={today}
+            onDateChange={onDateChange}
+          />
+        )}
+        <div className="w-full min-w-0 max-w-full rounded-md border border-border/50 bg-muted/20 p-3 text-center text-xs text-muted-foreground">
+          {emptyMessage ?? "No schedule slots available for this room."}
+        </div>
       </div>
     );
   }
