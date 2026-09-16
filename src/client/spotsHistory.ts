@@ -33,3 +33,17 @@ export function markRoomOpen(
       : {}),
   };
 }
+
+export function markSameViewPush(
+  current: SpotsNavigationState | undefined,
+): SpotsNavigationState | undefined {
+  if (!current) {return undefined;}
+  return {
+    ...(current.facilityBackSteps
+      ? { facilityBackSteps: current.facilityBackSteps + 1 }
+      : {}),
+    ...(current.roomBackSteps
+      ? { roomBackSteps: current.roomBackSteps + 1 }
+      : {}),
+  };
+}

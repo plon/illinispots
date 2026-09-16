@@ -33,6 +33,7 @@ import {
 import {
   markFacilityOpen,
   markRoomOpen,
+  markSameViewPush,
 } from "@/client/spotsHistory";
 import {
   recordInitialLoadMilestone,
@@ -132,7 +133,14 @@ const IlliniSpotsPageContent: React.FC = () => {
       navigate({
         search: (prev) => ({ ...prev, ...updates }),
         replace,
-        state: true,
+        state: replace
+          ? true
+          : (prev) => ({
+              ...prev,
+              illiniSpotsNavigation: markSameViewPush(
+                prev.illiniSpotsNavigation,
+              ),
+            }),
       });
     },
     [navigate],
@@ -627,7 +635,12 @@ const IlliniSpotsPage: React.FC = () => {
               ? undefined
               : formatMinutesAsTime(minutes).slice(0, 5),
         }),
-        state: true,
+        state: (prev) => ({
+          ...prev,
+          illiniSpotsNavigation: markSameViewPush(
+            prev.illiniSpotsNavigation,
+          ),
+        }),
       });
     },
     [navigate],
