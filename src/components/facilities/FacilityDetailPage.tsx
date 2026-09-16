@@ -95,6 +95,7 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
     const isAcademic = facility.type === FacilityType.ACADEMIC;
     const [activeTab, setActiveTab] = useState<RoomTab>("available");
     const [expandedRoomId, setExpandedRoomId] = useState<string | null>(null);
+    const [directionsOpen, setDirectionsOpen] = useState(false);
 
     useEscapeToBack(onBack);
 
@@ -192,7 +193,7 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
             </h1>
 
             <div className="flex items-center gap-1 shrink-0">
-              <Popover>
+              <Popover open={directionsOpen} onOpenChange={setDirectionsOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="ghost"
@@ -219,6 +220,7 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
                     )}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => setDirectionsOpen(false)}
                     className="flex items-center justify-between gap-2 rounded-md px-2.5 py-2 text-sm text-foreground hover:bg-muted/60"
                     aria-label={`Open directions to ${facility.name} in Google Maps`}
                   >
@@ -233,6 +235,7 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
                     )}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => setDirectionsOpen(false)}
                     className="flex items-center justify-between gap-2 rounded-md px-2.5 py-2 text-sm text-foreground hover:bg-muted/60"
                     aria-label={`Open directions to ${facility.name} in Apple Maps`}
                   >
