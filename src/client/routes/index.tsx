@@ -7,7 +7,11 @@ import React, {
   lazy,
   Suspense,
 } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  useLocation,
+  useRouter,
+} from "@tanstack/react-router";
 import { usePostHog } from "@posthog/react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
@@ -26,6 +30,10 @@ import {
   type SpotsSearch,
   validateSpotsSearch,
 } from "@/client/spotsSearch";
+import {
+  markFacilityOpen,
+  markRoomOpen,
+} from "@/client/spotsHistory";
 import {
   recordInitialLoadMilestone,
   type InitialLoadMilestone,
@@ -113,6 +121,10 @@ const IlliniSpotsPageContent: React.FC = () => {
   const [showMap, setShowMap] = useShowMapPreference();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
+  const router = useRouter();
+  const navigationState = useLocation({
+    select: (location) => location.state.illiniSpotsNavigation,
+  });
   const selectedFacilityId = search.facility ?? null;
 
   const updateSearch = useCallback(
@@ -120,6 +132,7 @@ const IlliniSpotsPageContent: React.FC = () => {
       navigate({
         search: (prev) => ({ ...prev, ...updates }),
         replace,
+        state: true,
       });
     },
     [navigate],
@@ -130,23 +143,83 @@ const IlliniSpotsPageContent: React.FC = () => {
       facilityId: string | null,
       options?: { clearSearch?: boolean },
     ) => {
-      updateSearch(
-        {
+      if (facilityId === null) {
+        if (navigationState?.facilityBackSteps) {
+          router.history.go(-navigationState.facilityBackSteps);
+          return;
+        }
+        navigate({
+          search: (prev) => ({
+            ...prev,
+            facility: undefined,
+            room: undefined,
+          }),
+          replace: true,
+          state: (prev) => ({
+            ...prev,
+            illiniSpotsNavigation: undefined,
+          }),
+        });
+        return;
+      }
+
+      const switchingFacility = selectedFacilityId !== null;
+      const nextNavigationState = markFacilityOpen(
+        navigationState,
+        switchingFacility,
+      );
+      navigate({
+        search: (prev) => ({
+          ...prev,
           facility: facilityId || undefined,
           room: undefined,
           ...(options?.clearSearch ? { q: undefined } : {}),
-        },
-        facilityId === null,
-      );
+        }),
+        replace: switchingFacility,
+        state: (prev) => ({
+          ...prev,
+          illiniSpotsNavigation: nextNavigationState,
+        }),
+      });
     },
-    [updateSearch],
+    [navigationState, navigate, router.history, selectedFacilityId],
   );
 
   const handleSelectRoom = useCallback(
     (room: string | null) => {
-      updateSearch({ room: room || undefined }, room === null);
+      if (room === null) {
+        if (navigationState?.roomBackSteps) {
+          router.history.go(-navigationState.roomBackSteps);
+          return;
+        }
+        navigate({
+          search: (prev) => ({ ...prev, room: undefined }),
+          replace: true,
+          state: (prev) => ({
+            ...prev,
+            illiniSpotsNavigation: navigationState?.facilityBackSteps
+              ? { facilityBackSteps: navigationState.facilityBackSteps }
+              : undefined,
+          }),
+        });
+        return;
+      }
+
+      const switchingRoom = search.room !== undefined;
+      const nextNavigationState = markRoomOpen(
+        navigationState,
+        switchingRoom,
+      );
+      navigate({
+        search: (prev) => ({ ...prev, room }),
+        replace: switchingRoom,
+        state: (prev) => ({
+          ...prev,
+          illiniSpotsNavigation: nextNavigationState,
+        }),
+      });
     },
-    [updateSearch],
+    [navigationState, navigate, router.history, search.room],
   );
 
   const handleSearchChange = useCallback(
@@ -554,6 +627,7 @@ const IlliniSpotsPage: React.FC = () => {
               ? undefined
               : formatMinutesAsTime(minutes).slice(0, 5),
         }),
+        state: true,
       });
     },
     [navigate],
