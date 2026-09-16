@@ -497,6 +497,11 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         resetToCurrentDateTime();
     }, [posthog, resetToCurrentDateTime]);
 
+    const handleGoHome = useCallback(() => {
+        setSearchTerm("");
+        onSelectFacility(null);
+    }, [onSelectFacility]);
+
     const [isFavoritesDialogOpen, setIsFavoritesDialogOpen] = useState(false);
 
     const menuPopover = (
@@ -665,9 +670,17 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     </>
                 ) : (
                     <>
-                        <h1 className="text-base md:text-lg font-bold shrink-0 leading-none">
-                            <span style={{ color: "#FF5F05" }}>illini</span>
-                            <span className="text-[#13294B] dark:text-foreground">Spots</span>
+                        <h1 className="shrink-0 leading-none">
+                            <button
+                                type="button"
+                                onClick={handleGoHome}
+                                aria-label="illiniSpots home"
+                                title="Back to home"
+                                className="flex h-9 cursor-pointer items-center rounded-md text-base md:text-lg font-bold leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
+                                <span style={{ color: "#FF5F05" }}>illini</span>
+                                <span className="text-[#13294B] dark:text-foreground">Spots</span>
+                            </button>
                         </h1>
                         <TooltipProvider delayDuration={50}>
                             <div className="flex-1 min-w-0 flex gap-2 items-center">
