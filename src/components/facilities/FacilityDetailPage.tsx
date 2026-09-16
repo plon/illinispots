@@ -14,12 +14,32 @@ import {
 } from "@/components/RoomBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { RoomRow } from "./RoomRow";
 import { RoomStatusTabs, type RoomTab } from "./RoomStatusTabs";
 import { groupAcademicRooms } from "./roomUtils";
-import { Clock, Star } from "lucide-react";
+import { Clock, ExternalLink, Navigation, Star } from "lucide-react";
 
 const ROOM_DETAILS_CACHE_TIME_MS = 10 * 60 * 1000;
+
+export function getGoogleMapsDirectionsUrl(
+  latitude: number,
+  longitude: number,
+): string {
+  return `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+}
+
+export function getAppleMapsDirectionsUrl(
+  latitude: number,
+  longitude: number,
+  name: string,
+): string {
+  return `https://maps.apple.com/?daddr=${latitude},${longitude}&q=${encodeURIComponent(name)}`;
+}
 
 interface FacilityDetailPageProps {
   facility: Facility;
@@ -75,6 +95,7 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
     const isAcademic = facility.type === FacilityType.ACADEMIC;
     const [activeTab, setActiveTab] = useState<RoomTab>("available");
     const [expandedRoomId, setExpandedRoomId] = useState<string | null>(null);
+    const [directionsOpen, setDirectionsOpen] = useState(false);
 
     useEscapeToBack(onBack);
 
@@ -171,7 +192,60 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
               {facility.name}
             </h1>
 
-            {onToggleFavorite && (
+            <div className="flex items-center gap-1 shrink-0">
+              <Popover open={directionsOpen} onOpenChange={setDirectionsOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-full shrink-0 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    aria-label={`Get directions to ${facility.name}`}
+                    title="Get directions"
+                  >
+                    <Navigation className="h-5 w-5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-56 p-1.5"
+                  side="bottom"
+                  align="end"
+                >
+                  <p className="px-2.5 py-1.5 text-xs font-medium text-muted-foreground">
+                    Open directions in
+                  </p>
+                  <a
+                    href={getGoogleMapsDirectionsUrl(
+                      facility.coordinates.latitude,
+                      facility.coordinates.longitude,
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setDirectionsOpen(false)}
+                    className="flex items-center justify-between gap-2 rounded-md px-2.5 py-2 text-sm text-foreground hover:bg-muted/60"
+                    aria-label={`Open directions to ${facility.name} in Google Maps`}
+                  >
+                    Google Maps
+                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                  </a>
+                  <a
+                    href={getAppleMapsDirectionsUrl(
+                      facility.coordinates.latitude,
+                      facility.coordinates.longitude,
+                      facility.name,
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setDirectionsOpen(false)}
+                    className="flex items-center justify-between gap-2 rounded-md px-2.5 py-2 text-sm text-foreground hover:bg-muted/60"
+                    aria-label={`Open directions to ${facility.name} in Apple Maps`}
+                  >
+                    Apple Maps
+                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                  </a>
+                </PopoverContent>
+              </Popover>
+
+              {onToggleFavorite && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -197,7 +271,8 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
                   fill={isFavorite ? "currentColor" : "none"}
                 />
               </Button>
-            )}
+              )}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">

@@ -26,7 +26,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DateTimeProvider } from "@/contexts/DateTimeContext";
 import { FacilityListItem } from "./FacilityListItem";
 import { FacilityListView } from "./FacilityListView";
-import { FacilityDetailPage } from "./FacilityDetailPage";
+import {
+  FacilityDetailPage,
+  getAppleMapsDirectionsUrl,
+  getGoogleMapsDirectionsUrl,
+} from "./FacilityDetailPage";
 import { RoomRow, restoreOriginalImage } from "./RoomRow";
 import {
   type Facility,
@@ -244,6 +248,29 @@ describe("FacilityDetailPage", () => {
     expect(html).toContain("CLOSED");
     expect(html).toContain("Building is currently closed");
     expect(html).toContain("Opens at 8:00 AM");
+  });
+
+  it("links out to Google and Apple Maps directions", () => {
+    expect(getGoogleMapsDirectionsUrl(40.1125, -88.2269)).toBe(
+      "https://www.google.com/maps/dir/?api=1&destination=40.1125,-88.2269",
+    );
+    expect(
+      getAppleMapsDirectionsUrl(
+        40.1125,
+        -88.2269,
+        "Campus Instructional Facility",
+      ),
+    ).toBe(
+      "https://maps.apple.com/?daddr=40.1125,-88.2269&q=Campus%20Instructional%20Facility",
+    );
+
+    const html = renderDetailPage({
+      facility: mockAcademicFacility,
+      onBack: () => {},
+    });
+    expect(html).toContain(
+      'aria-label="Get directions to Campus Instructional Facility"',
+    );
   });
 
   it("overrides the shared infinite room-details cache policy", () => {
