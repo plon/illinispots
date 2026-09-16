@@ -674,9 +674,9 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                             <button
                                 type="button"
                                 onClick={handleGoHome}
-                                aria-label="Back to home - clear search and show all facilities"
+                                aria-label="illiniSpots home"
                                 title="Back to home"
-                                className="cursor-pointer rounded-md text-base md:text-lg font-bold leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                className="flex h-9 cursor-pointer items-center rounded-md text-base md:text-lg font-bold leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
                                 <span style={{ color: "#FF5F05" }}>illini</span>
                                 <span className="text-[#13294B] dark:text-foreground">Spots</span>
