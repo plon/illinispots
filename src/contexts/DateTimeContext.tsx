@@ -79,7 +79,7 @@ export function DateTimeProvider({
   }, [isControlled, onSelectionChange]);
 
   useEffect(() => {
-    if (!isControlled && !state.isLive) {return;}
+    if (!isLive) {return;}
 
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     const stopTimer = () => {
@@ -107,7 +107,7 @@ export function DateTimeProvider({
       }
     };
 
-    if (document.visibilityState === "visible") {scheduleNextMinute();}
+    catchUpToNow();
     document.addEventListener("visibilitychange", catchUpToNow);
     window.addEventListener("focus", catchUpToNow);
 
@@ -116,7 +116,7 @@ export function DateTimeProvider({
       document.removeEventListener("visibilitychange", catchUpToNow);
       window.removeEventListener("focus", catchUpToNow);
     };
-  }, [isControlled, state.isLive]);
+  }, [isLive]);
 
   const value = useMemo<DateTimeContextType>(
     () => ({

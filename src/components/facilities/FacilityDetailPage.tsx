@@ -216,15 +216,14 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
       if (!query) {return roomsByTab;}
 
       return roomsByTab.filter(([roomNumber]) =>
-        roomNumber === expandedRoomId ||
         roomNumber.toLowerCase().includes(query),
       );
-    }, [expandedRoomId, roomsByTab, roomSearchQuery]);
+    }, [roomsByTab, roomSearchQuery]);
 
     useLayoutEffect(() => {
       if (!expandedRoomId || !selectedRoomRef.current) {return;}
       selectedRoomRef.current.scrollIntoView({ block: "nearest" });
-    }, [expandedRoomId, roomsToDisplay]);
+    }, [expandedRoomId]);
 
     const selectRoom = (roomId: string | null) => {
       if (roomId === null && expandedRoomId) {

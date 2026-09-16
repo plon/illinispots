@@ -34,7 +34,7 @@ function normalizedTime(value: unknown): string | undefined {
   const raw = nonEmptyString(value);
   if (!raw) {return undefined;}
   const minutes = parseTimeToMinutes(raw);
-  if (minutes === null || !Number.isInteger(minutes) || minutes >= 24 * 60) {
+  if (minutes === null || minutes >= 24 * 60) {
     return undefined;
   }
   return formatMinutesAsTime(minutes).slice(0, 5);

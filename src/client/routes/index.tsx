@@ -126,12 +126,15 @@ const IlliniSpotsPageContent: React.FC = () => {
   );
 
   const handleSelectFacility = useCallback(
-    (facilityId: string | null) => {
+    (
+      facilityId: string | null,
+      options?: { clearSearch?: boolean },
+    ) => {
       updateSearch(
         {
           facility: facilityId || undefined,
           room: undefined,
-          q: undefined,
+          ...(options?.clearSearch ? { q: undefined } : {}),
         },
         facilityId === null,
       );

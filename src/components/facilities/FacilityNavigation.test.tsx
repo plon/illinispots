@@ -227,6 +227,21 @@ describe("FacilityDetailPage", () => {
     );
   });
 
+  it("lets an explicit room search hide a different deep-linked room", () => {
+    const html = renderDetailPage({
+      facility: mockAcademicFacility,
+      onBack: () => {},
+      roomSearchQuery: "9999",
+      selectedRoomId: "1025",
+      onSelectRoom: () => {},
+    });
+
+    expect(html).toContain("No matching rooms");
+    expect(html).not.toContain(
+      'aria-label="Room 1025 in Campus Instructional Facility"',
+    );
+  });
+
   it("keeps occupied and all-room counts when availability filters are active", () => {
     const html = renderDetailPage({
       facility: mockAcademicFacility,

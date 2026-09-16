@@ -67,7 +67,10 @@ interface LeftSidebarProps {
     showMap: boolean;
     setShowMap: Dispatch<SetStateAction<boolean>>;
     selectedFacilityId: string | null;
-    onSelectFacility: (facilityId: string | null) => void;
+    onSelectFacility: (
+        facilityId: string | null,
+        options?: { clearSearch?: boolean },
+    ) => void;
     selectedRoomId: string | null;
     onSelectRoom: (roomId: string | null) => void;
     searchQuery: string;
@@ -213,12 +216,18 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const prevIsSearchingRef = useRef(false);
     const pendingRestoreRef = useRef<number | null>(null);
     const lastAppliedScrollRef = useRef(0);
+    const [facilityRoomSearch, setFacilityRoomSearch] = useState("");
+    const [prevSelectedFacilityId, setPrevSelectedFacilityId] =
+        useState(selectedFacilityId);
     const [naturalLanguageParser, setNaturalLanguageParser] =
         useState<NaturalLanguageParser | null>(null);
-    const searchTerm = selectedFacilityId ? "" : searchQuery;
-    const facilityRoomSearch = selectedFacilityId ? searchQuery : "";
+    const searchTerm = searchQuery;
     const setSearchTerm = onSearchQueryChange;
-    const setFacilityRoomSearch = onSearchQueryChange;
+
+    if (selectedFacilityId !== prevSelectedFacilityId) {
+        setPrevSelectedFacilityId(selectedFacilityId);
+        setFacilityRoomSearch("");
+    }
 
     const selectedFacility = useMemo(
         () => lookupFacility(facilityData?.facilities, selectedFacilityId),
@@ -461,7 +470,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 facility_type: fac?.type,
                 selection_source: "search",
             });
-            onSelectFacility(facilityId);
+            onSelectFacility(facilityId, { clearSearch: true });
         },
         [facilityData, onSelectFacility, posthog],
     );

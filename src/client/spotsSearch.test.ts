@@ -37,6 +37,12 @@ describe("validateSpotsSearch", () => {
     ).toMatchObject({ room: "100", q: "10" });
   });
 
+  it("normalizes second-bearing times instead of dropping the selection", () => {
+    expect(
+      validateSpotsSearch({ date: "2026-09-17", time: "14:30:30" }),
+    ).toMatchObject({ date: "2026-09-17", time: "14:30" });
+  });
+
   it("requires a complete, valid date and time pair", () => {
     expect(
       validateSpotsSearch({ date: "2026-02-29", time: "14:30" }),
