@@ -8,6 +8,7 @@ import {
 } from "@/types";
 import { RoomBadge } from "@/components/RoomBadge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -73,6 +74,79 @@ export function restoreOriginalImage(
   image.src = originalUrl;
 }
 
+function RoomThumbnailImage({
+  source,
+  alt,
+}: {
+  source: string;
+  alt: string;
+}) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  return (
+    <>
+      {!isLoaded && (
+        <Skeleton aria-hidden="true" className="absolute inset-0" />
+      )}
+      <img
+        src={getOptimizedImageUrl(source, {
+          width: 96,
+          height: 64,
+          fit: "cover",
+        })}
+        srcSet={`${getOptimizedImageUrl(source, {
+          width: 96,
+          height: 64,
+          fit: "cover",
+        })} 1x, ${getOptimizedImageUrl(source, {
+          width: 192,
+          height: 128,
+          fit: "cover",
+        })} 2x`}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+        onLoad={() => setIsLoaded(true)}
+        onError={(event) => restoreOriginalImage(event, source)}
+        className={`h-16 w-24 object-cover transition group-hover:opacity-90 ${isLoaded ? "opacity-100" : "opacity-0"}`}
+      />
+    </>
+  );
+}
+
+function RoomGalleryImage({
+  source,
+  alt,
+}: {
+  source: string;
+  alt: string;
+}) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  return (
+    <>
+      {!isLoaded && (
+        <Skeleton aria-hidden="true" className="absolute inset-0" />
+      )}
+      <img
+        src={getOptimizedImageUrl(source, { width: 480 })}
+        srcSet={`${getOptimizedImageUrl(source, {
+          width: 480,
+        })} 480w, ${getOptimizedImageUrl(source, {
+          width: 960,
+        })} 960w`}
+        sizes="(min-width: 640px) 480px, calc(100vw - 4rem)"
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+        onLoad={() => setIsLoaded(true)}
+        onError={(event) => restoreOriginalImage(event, source)}
+        className={`block h-auto w-full ${isLoaded ? "opacity-100" : "opacity-0"}`}
+      />
+    </>
+  );
+}
+
 function RoomDetailsSection({ details }: { details: RoomDetails }) {
   const summary = seatsSummary(details);
   const photoCount = details.photoUrls.length;
@@ -105,29 +179,12 @@ function RoomDetailsSection({ details }: { details: RoomDetails }) {
               type="button"
               onClick={(e) => e.stopPropagation()}
               aria-label={`View ${photoCount} room photo${photoCount === 1 ? "" : "s"}`}
-              className="group relative block shrink-0 overflow-hidden rounded-md border border-border/60 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+              className="group relative block h-16 w-24 shrink-0 overflow-hidden rounded-md border border-border/60 bg-muted focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
             >
-              <img
-                src={getOptimizedImageUrl(thumbnailSource, {
-                  width: 96,
-                  height: 64,
-                  fit: "cover",
-                })}
-                srcSet={`${getOptimizedImageUrl(thumbnailSource, {
-                  width: 96,
-                  height: 64,
-                  fit: "cover",
-                })} 1x, ${getOptimizedImageUrl(thumbnailSource, {
-                  width: 192,
-                  height: 128,
-                  fit: "cover",
-                })} 2x`}
+              <RoomThumbnailImage
+                key={thumbnailSource}
+                source={thumbnailSource}
                 alt={`Room photo 1 of ${photoCount}`}
-                loading="lazy"
-                decoding="async"
-                referrerPolicy="no-referrer"
-                onError={(event) => restoreOriginalImage(event, thumbnailSource)}
-                className="h-16 w-24 object-cover transition group-hover:opacity-90"
               />
               {photoCount > 1 && (
                 <span className="absolute right-1 bottom-1 inline-flex items-center gap-0.5 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white">
@@ -139,29 +196,18 @@ function RoomDetailsSection({ details }: { details: RoomDetails }) {
           </DialogTrigger>
           <DialogContent className="sm:max-w-lg">
             <DialogTitle className="sr-only">Room photos</DialogTitle>
-            <div className="relative">
+            <div className="relative min-h-48 w-full overflow-hidden rounded-md bg-muted">
               <a
                 href={details.photoUrls[photoIndex]}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
+                className="block w-full"
               >
-                <img
-                  src={getOptimizedImageUrl(activePhotoSource, { width: 480 })}
-                  srcSet={`${getOptimizedImageUrl(activePhotoSource, {
-                    width: 480,
-                  })} 480w, ${getOptimizedImageUrl(activePhotoSource, {
-                    width: 960,
-                  })} 960w`}
-                  sizes="(min-width: 640px) 480px, calc(100vw - 4rem)"
+                <RoomGalleryImage
+                  key={activePhotoSource}
+                  source={activePhotoSource}
                   alt={`Room photo ${photoIndex + 1} of ${photoCount}`}
-                  loading="lazy"
-                  decoding="async"
-                  referrerPolicy="no-referrer"
-                  onError={(event) =>
-                    restoreOriginalImage(event, activePhotoSource)
-                  }
-                  className="w-full rounded-md object-cover"
                 />
               </a>
               {photoCount > 1 && (
@@ -377,7 +423,7 @@ export const RoomRow: React.FC<RoomRowProps> = memo(
                             </DialogTitle>
                             <div className="relative w-full aspect-video">
                               {isImageLoading && (
-                                <div className="absolute inset-0 w-full h-full bg-muted animate-pulse rounded-md" />
+                                <Skeleton className="absolute inset-0 h-full w-full" />
                               )}
                               <img
                                 src={libraryRoom.thumbnail}
