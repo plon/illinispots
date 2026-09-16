@@ -11,12 +11,21 @@ import { createFileRoute } from "@tanstack/react-router";
 import { usePostHog } from "@posthog/react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
+  formatMinutesAsTime,
   getCampusDateTimeParts,
+  parseTimeToMinutes,
   type CampusDateTime,
 } from "@/utils/time";
 import LeftSidebar from "@/components/LeftSidebar";
 import type { FacilityStatus, FacilityType } from "@/types";
-import { useDateTimeContext } from "@/contexts/DateTimeContext";
+import {
+  DateTimeProvider,
+  useDateTimeContext,
+} from "@/contexts/DateTimeContext";
+import {
+  type SpotsSearch,
+  validateSpotsSearch,
+} from "@/client/spotsSearch";
 import {
   recordInitialLoadMilestone,
   type InitialLoadMilestone,
@@ -98,7 +107,7 @@ const fetchFacilityData = async (
   return data;
 };
 
-const IlliniSpotsPage: React.FC = () => {
+const IlliniSpotsPageContent: React.FC = () => {
   const posthog = usePostHog();
   const { selectedDateTime, liveNow, isCurrentDateTime } = useDateTimeContext();
   const [showMap, setShowMap] = useShowMapPreference();
@@ -106,18 +115,82 @@ const IlliniSpotsPage: React.FC = () => {
   const navigate = Route.useNavigate();
   const selectedFacilityId = search.facility ?? null;
 
-  const handleSelectFacility = useCallback(
-    (facilityId: string | null) => {
+  const updateSearch = useCallback(
+    (updates: Partial<SpotsSearch>, replace = true) => {
       navigate({
-        search: (prev) => ({
-          ...prev,
-          facility: facilityId || undefined,
-        }),
-        replace: facilityId === null,
+        search: (prev) => ({ ...prev, ...updates }),
+        replace,
       });
     },
     [navigate],
   );
+
+  const handleSelectFacility = useCallback(
+    (
+      facilityId: string | null,
+      options?: { clearSearch?: boolean },
+    ) => {
+      updateSearch(
+        {
+          facility: facilityId || undefined,
+          room: undefined,
+          ...(options?.clearSearch ? { q: undefined } : {}),
+        },
+        facilityId === null,
+      );
+    },
+    [updateSearch],
+  );
+
+  const handleSelectRoom = useCallback(
+    (room: string | null) => {
+      updateSearch({ room: room || undefined }, room === null);
+    },
+    [updateSearch],
+  );
+
+  const handleSearchChange = useCallback(
+    (query: string) => {
+      updateSearch({ q: query || undefined });
+    },
+    [updateSearch],
+  );
+
+  const handleApplyNaturalSearch = useCallback(
+    (dateTime: CampusDateTime, query: string) => {
+      const minutes = parseTimeToMinutes(dateTime.time);
+      updateSearch(
+        {
+          date: dateTime.date,
+          time:
+            minutes === null
+              ? undefined
+              : formatMinutesAsTime(minutes).slice(0, 5),
+          q: query || undefined,
+        },
+        false,
+      );
+    },
+    [updateSearch],
+  );
+
+  const handleMinDurationChange = useCallback(
+    (minDuration: number | undefined) => {
+      updateSearch({ minDuration });
+    },
+    [updateSearch],
+  );
+
+  const handleFreeUntilChange = useCallback(
+    (freeUntil: string) => {
+      updateSearch({ freeUntil: freeUntil || undefined });
+    },
+    [updateSearch],
+  );
+
+  const handleClearFilters = useCallback(() => {
+    updateSearch({ minDuration: undefined, freeUntil: undefined });
+  }, [updateSearch]);
 
   const [sidebarWidth, setSidebarWidth] = useState<number>(
     readInitialSidebarWidth,
@@ -400,6 +473,16 @@ const IlliniSpotsPage: React.FC = () => {
           facilityData={facilityData || null}
           selectedFacilityId={selectedFacilityId}
           onSelectFacility={handleSelectFacility}
+          selectedRoomId={search.room ?? null}
+          onSelectRoom={handleSelectRoom}
+          searchQuery={search.q ?? ""}
+          onSearchQueryChange={handleSearchChange}
+          onApplyNaturalSearch={handleApplyNaturalSearch}
+          minDuration={search.minDuration}
+          onMinDurationChange={handleMinDurationChange}
+          freeUntil={search.freeUntil ?? ""}
+          onFreeUntilChange={handleFreeUntilChange}
+          onClearFilters={handleClearFilters}
           showMap={showMap}
           setShowMap={setShowMap}
           isFetching={showFetchingOverlay}
@@ -449,16 +532,44 @@ const IlliniSpotsPage: React.FC = () => {
   );
 };
 
-interface SpotsSearch {
-  facility?: string;
-}
+const IlliniSpotsPage: React.FC = () => {
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const selection: CampusDateTime | null =
+    search.date && search.time
+      ? { date: search.date, time: `${search.time}:00` }
+      : null;
+
+  const handleSelectionChange = useCallback(
+    (dateTime: CampusDateTime | null) => {
+      const minutes = dateTime
+        ? parseTimeToMinutes(dateTime.time)
+        : null;
+      navigate({
+        search: (prev) => ({
+          ...prev,
+          date: dateTime?.date,
+          time:
+            minutes === null
+              ? undefined
+              : formatMinutesAsTime(minutes).slice(0, 5),
+        }),
+      });
+    },
+    [navigate],
+  );
+
+  return (
+    <DateTimeProvider
+      selection={selection}
+      onSelectionChange={handleSelectionChange}
+    >
+      <IlliniSpotsPageContent />
+    </DateTimeProvider>
+  );
+};
 
 export const Route = createFileRoute("/")({
-  validateSearch: (search: Record<string, unknown>): SpotsSearch => ({
-    facility:
-      typeof search.facility === "string" && search.facility.trim().length > 0
-        ? search.facility.trim()
-        : undefined,
-  }),
+  validateSearch: validateSpotsSearch,
   component: IlliniSpotsPage,
 });
