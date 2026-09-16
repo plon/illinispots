@@ -1,4 +1,11 @@
-import React, { useState, useMemo, memo, useEffect } from "react";
+import React, {
+  useState,
+  useMemo,
+  memo,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+} from "react";
 import { useQuery } from "@tanstack/react-query";
 import { type Facility, type RoomDetails, FacilityType } from "@/types";
 import {
@@ -29,6 +36,8 @@ interface FacilityDetailPageProps {
   onToggleFavorite?: () => void;
   roomSearchQuery?: string;
   onClearRoomSearch?: () => void;
+  selectedRoomId?: string | null;
+  onSelectRoom?: (roomId: string | null) => void;
 }
 
 export function shouldIgnoreEscapeForBack(target: unknown): boolean {
@@ -71,10 +80,16 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
     onToggleFavorite,
     roomSearchQuery = "",
     onClearRoomSearch,
+    selectedRoomId,
+    onSelectRoom,
   }) => {
     const isAcademic = facility.type === FacilityType.ACADEMIC;
     const [activeTab, setActiveTab] = useState<RoomTab>("available");
-    const [expandedRoomId, setExpandedRoomId] = useState<string | null>(null);
+    const [localExpandedRoomId, setLocalExpandedRoomId] =
+      useState<string | null>(null);
+    const expandedRoomId =
+      selectedRoomId === undefined ? localExpandedRoomId : selectedRoomId;
+    const selectedRoomRef = useRef<HTMLDivElement>(null);
 
     useEscapeToBack(onBack);
 
@@ -138,14 +153,58 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
       [allRooms, filterCriteria],
     );
 
+    const displayedTab = useMemo<RoomTab>(() => {
+      if (!isAcademic || !expandedRoomId) {return activeTab;}
+
+      const activeRooms =
+        activeTab === "available"
+          ? availableRooms
+          : activeTab === "occupied"
+            ? occupiedRooms
+            : allRooms;
+      if (activeRooms.some(([roomNumber]) => roomNumber === expandedRoomId)) {
+        return activeTab;
+      }
+      if (availableRooms.some(([roomNumber]) => roomNumber === expandedRoomId)) {
+        return "available";
+      }
+      if (occupiedRooms.some(([roomNumber]) => roomNumber === expandedRoomId)) {
+        return "occupied";
+      }
+      if (allRooms.some(([roomNumber]) => roomNumber === expandedRoomId)) {
+        return "all";
+      }
+      return activeTab;
+    }, [
+      activeTab,
+      allRooms,
+      availableRooms,
+      expandedRoomId,
+      isAcademic,
+      occupiedRooms,
+    ]);
+
     const roomsByTab = useMemo(() => {
-      if (!isAcademic) {return libraryRooms;}
-      if (activeTab === "available") {return availableRooms;}
-      if (activeTab === "occupied") {return occupiedRooms;}
+      if (!isAcademic) {
+        if (
+          !expandedRoomId ||
+          libraryRooms.some(([roomNumber]) => roomNumber === expandedRoomId)
+        ) {
+          return libraryRooms;
+        }
+        return allRooms.filter(
+          ([roomNumber]) =>
+            roomNumber === expandedRoomId ||
+            libraryRooms.some(([visibleRoom]) => visibleRoom === roomNumber),
+        );
+      }
+      if (displayedTab === "available") {return availableRooms;}
+      if (displayedTab === "occupied") {return occupiedRooms;}
       return allRooms;
     }, [
       isAcademic,
-      activeTab,
+      expandedRoomId,
+      displayedTab,
       libraryRooms,
       availableRooms,
       occupiedRooms,
@@ -160,6 +219,27 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
         roomNumber.toLowerCase().includes(query),
       );
     }, [roomsByTab, roomSearchQuery]);
+
+    useLayoutEffect(() => {
+      if (!expandedRoomId || !selectedRoomRef.current) {return;}
+      selectedRoomRef.current.scrollIntoView({ block: "nearest" });
+    }, [expandedRoomId]);
+
+    const selectRoom = (roomId: string | null) => {
+      if (roomId === null && expandedRoomId) {
+        setActiveTab(displayedTab);
+      }
+      if (onSelectRoom) {
+        onSelectRoom(roomId);
+      } else {
+        setLocalExpandedRoomId(roomId);
+      }
+    };
+
+    const selectTab = (tab: RoomTab) => {
+      selectRoom(null);
+      setActiveTab(tab);
+    };
 
     const totalAvailableCount = availableRooms.length;
 
@@ -263,8 +343,8 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
             {isAcademic && (
               <div className="sticky top-0 bg-background/95 backdrop-blur-xs z-10 px-4 py-2 border-b border-border/50">
                 <RoomStatusTabs
-                  value={activeTab}
-                  onValueChange={setActiveTab}
+                  value={displayedTab}
+                  onValueChange={selectTab}
                   counts={{
                     available: availableRooms.length,
                     occupied: occupiedRooms.length,
@@ -291,9 +371,9 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
                         </button>
                       )}
                     </>
-                  ) : activeTab === "available" ? (
+                  ) : displayedTab === "available" ? (
                     <p>No rooms currently available in this building.</p>
-                  ) : activeTab === "occupied" ? (
+                  ) : displayedTab === "occupied" ? (
                     <p>No rooms currently occupied in this building.</p>
                   ) : (
                     <p>No rooms match your filter criteria.</p>
@@ -301,20 +381,28 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
                 </div>
               ) : (
                 roomsToDisplay.map(([roomNumber, room]) => (
-                  <RoomRow
+                  <div
                     key={roomNumber}
-                    roomName={roomNumber}
-                    room={room}
-                    facilityId={facility.id}
-                    facilityName={facility.name}
-                    roomDetails={detailsByRoom.get(roomNumber)}
-                    isExpanded={expandedRoomId === roomNumber}
-                    onToggleExpand={() =>
-                      setExpandedRoomId((prev) =>
-                        prev === roomNumber ? null : roomNumber,
-                      )
+                    ref={
+                      expandedRoomId === roomNumber
+                        ? selectedRoomRef
+                        : undefined
                     }
-                  />
+                  >
+                    <RoomRow
+                      roomName={roomNumber}
+                      room={room}
+                      facilityId={facility.id}
+                      facilityName={facility.name}
+                      roomDetails={detailsByRoom.get(roomNumber)}
+                      isExpanded={expandedRoomId === roomNumber}
+                      onToggleExpand={() =>
+                        selectRoom(
+                          expandedRoomId === roomNumber ? null : roomNumber,
+                        )
+                      }
+                    />
+                  </div>
                 ))
               )}
             </div>
