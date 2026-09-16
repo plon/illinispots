@@ -263,3 +263,16 @@ export interface PublicClientConfig {
   posthogProjectToken?: string;
   posthogHost?: string;
 }
+
+export interface DataSourceStatus {
+  id: string;
+  label: string;
+  cadence: string;
+  updatedAt: string | null;
+  htmlUrl: string | null;
+}
+
+export interface DataStatusResponse {
+  fetchedAt: string;
+  sources: DataSourceStatus[];
+}

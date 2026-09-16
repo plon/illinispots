@@ -183,3 +183,18 @@ export function formatShortMonthDay(date: string): string {
   return `${Number(match[2])}/${Number(match[3])}`;
 }
 
+export function formatDataStatusTime(iso: string | null): string | null {
+  if (!iso) {return null;}
+  const instant = new Date(iso);
+  if (Number.isNaN(instant.getTime())) {return null;}
+  const parts = getCampusDateTimeParts(instant);
+  const match = DATE_PATTERN.exec(parts.date);
+  const year = match ? Number(match.groups?.year) : Number.NaN;
+  const month = match ? Number(match.groups?.month) : Number.NaN;
+  const day = match ? Number(match.groups?.day) : Number.NaN;
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+    return null;
+  }
+  return `${month}/${day}/${year % 100} at ${formatTimeForDisplay(parts.time)}`;
+}
+

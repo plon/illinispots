@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import {
   addDateDays,
   differenceInCalendarDays,
+  formatDataStatusTime,
   formatMinutesAsTime,
   formatShortMonthDay,
   formatTimeForDisplay,
@@ -36,6 +37,17 @@ describe("time helpers", () => {
     expect(addDateDays("2026-03-08", 1)).toBe("2026-03-09");
     expect(differenceInCalendarDays("2026-03-09", "2026-03-08")).toBe(1);
     expect(addDateDays("2026-02-30", 1)).toBeNull();
+  });
+
+  it("formats data status timestamps as numerical campus time", () => {
+    expect(formatDataStatusTime(null)).toBeNull();
+    expect(formatDataStatusTime("not-a-date")).toBeNull();
+    expect(formatDataStatusTime("2026-01-15T15:30:00.000Z")).toBe(
+      "1/15/26 at 9:30 AM",
+    );
+    expect(formatDataStatusTime("2026-08-15T15:30:00.000Z")).toBe(
+      "8/15/26 at 10:30 AM",
+    );
   });
 
   it("extracts campus wall time from an absolute timestamp", () => {
