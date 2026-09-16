@@ -41,7 +41,9 @@ function renderDetailPage(
 ) {
   return renderToStaticMarkup(
     <QueryClientProvider client={queryClient}>
-      <FacilityDetailPage {...props} />
+      <DateTimeProvider>
+        <FacilityDetailPage {...props} />
+      </DateTimeProvider>
     </QueryClientProvider>,
   );
 }
@@ -208,6 +210,23 @@ describe("FacilityDetailPage", () => {
     expect(html).not.toContain("2035");
   });
 
+  it("shows a deep-linked occupied room on its matching tab", () => {
+    const html = renderDetailPage({
+      facility: mockAcademicFacility,
+      onBack: () => {},
+      selectedRoomId: "2035",
+      onSelectRoom: () => {},
+    });
+
+    expect(html).toContain(
+      'aria-label="Room 2035 in Campus Instructional Facility"',
+    );
+    expect(html).toContain('aria-expanded="true"');
+    expect(html).not.toContain(
+      'aria-label="Room 1025 in Campus Instructional Facility"',
+    );
+  });
+
   it("keeps occupied and all-room counts when availability filters are active", () => {
     const html = renderDetailPage({
       facility: mockAcademicFacility,
@@ -232,6 +251,24 @@ describe("FacilityDetailPage", () => {
     expect(html).toContain("Study Room A");
     expect(html).not.toContain("Study Room B");
     expect(html).not.toContain("Study Room C");
+  });
+
+  it("keeps a deep-linked library room visible when filters exclude it", () => {
+    const html = renderDetailPage({
+      facility: mockLibraryFacility,
+      onBack: () => {},
+      filterCriteria: { minDuration: 60 },
+      selectedRoomId: "Study Room B",
+      onSelectRoom: () => {},
+    });
+
+    expect(html).toContain(
+      'aria-label="Room Study Room B in Grainger Engineering Library"',
+    );
+    expect(html).toContain('aria-expanded="true"');
+    expect(html).not.toContain(
+      'aria-label="Room Study Room C in Grainger Engineering Library"',
+    );
   });
 
   it("renders closed notice when facility is closed", () => {

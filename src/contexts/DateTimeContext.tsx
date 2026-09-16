@@ -29,6 +29,12 @@ interface DateTimeState {
   isLive: boolean;
 }
 
+interface DateTimeProviderProps {
+  children: ReactNode;
+  selection?: CampusDateTime | null;
+  onSelectionChange?: (selection: CampusDateTime | null) => void;
+}
+
 const DateTimeContext = createContext<DateTimeContextType | undefined>(undefined);
 
 function createLiveState(now = new Date()): DateTimeState {
@@ -40,23 +46,40 @@ function createLiveState(now = new Date()): DateTimeState {
   };
 }
 
-export function DateTimeProvider({ children }: { children: ReactNode }) {
+export function DateTimeProvider({
+  children,
+  selection,
+  onSelectionChange,
+}: DateTimeProviderProps) {
   const [state, setState] = useState<DateTimeState>(createLiveState);
+  const isControlled = selection !== undefined;
+  const isLive = isControlled ? selection === null : state.isLive;
+  const selectedDateTime = isControlled
+    ? selection ?? state.selectedDateTime
+    : state.selectedDateTime;
 
   const setSelectedDateTime = useCallback((dateTime: CampusDateTime) => {
+    if (isControlled) {
+      onSelectionChange?.(dateTime);
+      return;
+    }
     setState((current) => ({
       ...current,
       selectedDateTime: dateTime,
       isLive: false,
     }));
-  }, []);
+  }, [isControlled, onSelectionChange]);
 
   const resetToCurrentDateTime = useCallback(() => {
+    if (isControlled) {
+      onSelectionChange?.(null);
+      return;
+    }
     setState(createLiveState());
-  }, []);
+  }, [isControlled, onSelectionChange]);
 
   useEffect(() => {
-    if (!state.isLive) {return;}
+    if (!isControlled && !state.isLive) {return;}
 
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     const stopTimer = () => {
@@ -93,20 +116,20 @@ export function DateTimeProvider({ children }: { children: ReactNode }) {
       document.removeEventListener("visibilitychange", catchUpToNow);
       window.removeEventListener("focus", catchUpToNow);
     };
-  }, [state.isLive]);
+  }, [isControlled, state.isLive]);
 
   const value = useMemo<DateTimeContextType>(
     () => ({
-      selectedDateTime: state.selectedDateTime,
+      selectedDateTime,
       liveNow: state.liveNow,
       setSelectedDateTime,
-      isCurrentDateTime: state.isLive,
+      isCurrentDateTime: isLive,
       resetToCurrentDateTime,
     }),
     [
-      state.selectedDateTime,
+      selectedDateTime,
       state.liveNow,
-      state.isLive,
+      isLive,
       setSelectedDateTime,
       resetToCurrentDateTime,
     ],

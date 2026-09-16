@@ -54,6 +54,7 @@ import {
     formatDateForDisplay,
     formatTimeForDisplay,
     getCampusDateTimeParts,
+    type CampusDateTime,
 } from "@/utils/time";
 import type {
     NaturalLanguageSearchResult,
@@ -67,6 +68,16 @@ interface LeftSidebarProps {
     setShowMap: Dispatch<SetStateAction<boolean>>;
     selectedFacilityId: string | null;
     onSelectFacility: (facilityId: string | null) => void;
+    selectedRoomId: string | null;
+    onSelectRoom: (roomId: string | null) => void;
+    searchQuery: string;
+    onSearchQueryChange: (query: string) => void;
+    onApplyNaturalSearch: (dateTime: CampusDateTime, query: string) => void;
+    minDuration: number | undefined;
+    onMinDurationChange: (duration: number | undefined) => void;
+    freeUntil: string;
+    onFreeUntilChange: (time: string) => void;
+    onClearFilters: () => void;
     isFetching: boolean;
     isLibraryFetching: boolean;
     isAcademicLoading?: boolean;
@@ -177,6 +188,16 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     setShowMap,
     selectedFacilityId,
     onSelectFacility,
+    selectedRoomId,
+    onSelectRoom,
+    searchQuery,
+    onSearchQueryChange,
+    onApplyNaturalSearch,
+    minDuration,
+    onMinDurationChange,
+    freeUntil,
+    onFreeUntilChange,
+    onClearFilters,
     isFetching,
     isLibraryFetching,
     isAcademicLoading = false,
@@ -192,17 +213,12 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const prevIsSearchingRef = useRef(false);
     const pendingRestoreRef = useRef<number | null>(null);
     const lastAppliedScrollRef = useRef(0);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [facilityRoomSearch, setFacilityRoomSearch] = useState("");
-    const [prevSelectedFacilityId, setPrevSelectedFacilityId] =
-        useState(selectedFacilityId);
     const [naturalLanguageParser, setNaturalLanguageParser] =
         useState<NaturalLanguageParser | null>(null);
-
-    if (selectedFacilityId !== prevSelectedFacilityId) {
-        setPrevSelectedFacilityId(selectedFacilityId);
-        setFacilityRoomSearch("");
-    }
+    const searchTerm = selectedFacilityId ? "" : searchQuery;
+    const facilityRoomSearch = selectedFacilityId ? searchQuery : "";
+    const setSearchTerm = onSearchQueryChange;
+    const setFacilityRoomSearch = onSearchQueryChange;
 
     const selectedFacility = useMemo(
         () => lookupFacility(facilityData?.facilities, selectedFacilityId),
@@ -290,12 +306,9 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const { favorites, toggleFavorite } = useFavorites();
     const {
         selectedDateTime,
-        setSelectedDateTime,
         isCurrentDateTime,
         resetToCurrentDateTime,
     } = useDateTimeContext();
-    const [minDuration, setMinDuration] = useState<number | undefined>(undefined);
-    const [freeUntil, setFreeUntil] = useState<string>("");
 
     const filterCriteria: FilterCriteria = useMemo(
         () => ({
@@ -353,9 +366,11 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             selected_date: naturalSearch.dateTime.date,
             selected_time: naturalSearch.dateTime.time,
         });
-        setSelectedDateTime(naturalSearch.dateTime);
-        setSearchTerm(naturalSearch.locationQuery);
-    }, [naturalSearch, posthog, setSelectedDateTime]);
+        onApplyNaturalSearch(
+            naturalSearch.dateTime,
+            naturalSearch.locationQuery,
+        );
+    }, [naturalSearch, onApplyNaturalSearch, posthog]);
 
     const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -446,7 +461,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 facility_type: fac?.type,
                 selection_source: "search",
             });
-            setSearchTerm("");
             onSelectFacility(facilityId);
         },
         [facilityData, onSelectFacility, posthog],
@@ -485,8 +499,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     }, [facilityData, filterCriteria]);
 
     const clearFilters = () => {
-        setMinDuration(undefined);
-        setFreeUntil("");
+        onClearFilters();
     };
 
     const resetSelectedDateTime = useCallback(() => {
@@ -613,10 +626,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                                setFacilityRoomSearch("");
-                                onSelectFacility(null);
-                            }}
+                            onClick={() => onSelectFacility(null)}
                             className="h-9 px-2 md:px-2.5 gap-1.5 shrink-0 text-xs md:text-sm font-medium hover:bg-muted/60 -ml-1 cursor-pointer"
                             aria-label="Back to facilities list"
                         >
@@ -652,9 +662,9 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         <div className="flex items-center gap-1.5 shrink-0">
                             <RoomFilter
                                 minDuration={minDuration}
-                                setMinDuration={setMinDuration}
+                                setMinDuration={onMinDurationChange}
                                 freeUntil={freeUntil}
-                                setFreeUntil={setFreeUntil}
+                                setFreeUntil={onFreeUntilChange}
                                 hasActiveFilters={hasActiveFilters}
                                 onClearAll={clearFilters}
                                 matchingRoomsCount={matchingRoomsCount}
@@ -701,9 +711,9 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                                 </form>
                                 <RoomFilter
                                     minDuration={minDuration}
-                                    setMinDuration={setMinDuration}
+                                    setMinDuration={onMinDurationChange}
                                     freeUntil={freeUntil}
-                                    setFreeUntil={setFreeUntil}
+                                    setFreeUntil={onFreeUntilChange}
                                     hasActiveFilters={hasActiveFilters}
                                     onClearAll={clearFilters}
                                     matchingRoomsCount={matchingRoomsCount}
@@ -734,24 +744,22 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                         <FacilityDetailPage
                             key={selectedFacility.id}
                             facility={selectedFacility}
-                            onBack={() => {
-                                setFacilityRoomSearch("");
-                                onSelectFacility(null);
-                            }}
+                            onBack={() => onSelectFacility(null)}
                             filterCriteria={filterCriteria}
                             isFavorite={isFacilityFavorite}
                             onToggleFavorite={handleToggleFacilityFavorite}
                             roomSearchQuery={facilityRoomSearch}
                             onClearRoomSearch={() => setFacilityRoomSearch("")}
+                            selectedRoomId={selectedRoomId}
+                            onSelectRoom={onSelectRoom}
                         />
                     ) : isAcademicLoading ||
                       isFetching ||
                       isLibraryFetching ||
                       !facilityData ? (
-                        <FacilityDetailSkeleton onBack={() => {
-                            setFacilityRoomSearch("");
-                            onSelectFacility(null);
-                        }} />
+                        <FacilityDetailSkeleton
+                            onBack={() => onSelectFacility(null)}
+                        />
                     ) : (
                         <div className="py-12 px-4 text-center space-y-3">
                             <p className="text-sm font-medium text-foreground">Facility not found</p>
@@ -761,10 +769,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => {
-                                    setFacilityRoomSearch("");
-                                    onSelectFacility(null);
-                                }}
+                                onClick={() => onSelectFacility(null)}
                                 className="cursor-pointer text-xs"
                             >
                                 Back to all facilities
