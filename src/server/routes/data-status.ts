@@ -68,31 +68,32 @@ export function createDataStatusRoutes(
       return context.json(cache.data);
     }
 
-    try {
-      const sources = await Promise.all(
-        DATA_SOURCES.map(async (source) => {
-          const latest = await fetchLatestSuccess(
-            fetchRuns,
-            source.workflowFile,
-            githubToken,
-          );
-          return {
-            id: source.id,
-            label: source.label,
-            cadence: source.cadence,
-            updatedAt: latest.updatedAt,
-            htmlUrl: latest.htmlUrl,
-          };
-        }),
-      );
-      const data = { sources };
-      cache = { data, expiresAt: requestedAt + CACHE_TTL_MS };
-      return context.json(data);
-    } catch (error) {
-      Sentry.captureException(error, {
+    const results = await Promise.allSettled(
+      DATA_SOURCES.map((source) =>
+        fetchLatestSuccess(fetchRuns, source.workflowFile, githubToken)
+      ),
+    );
+    const failures = results.filter((result) => result.status === "rejected");
+    for (const failure of failures) {
+      Sentry.captureException(failure.reason, {
         tags: { component: "api", route: "/api/data-status" },
       });
+    }
+    if (failures.length === results.length) {
       return context.json({ error: "Data status unavailable" }, 503);
     }
+
+    const sources = results.map((result, index) => ({
+      id: DATA_SOURCES[index].id,
+      label: DATA_SOURCES[index].label,
+      cadence: DATA_SOURCES[index].cadence,
+      updatedAt: result.status === "fulfilled" ? result.value.updatedAt : null,
+      htmlUrl: result.status === "fulfilled" ? result.value.htmlUrl : null,
+    }));
+    const data = { sources };
+    if (failures.length === 0) {
+      cache = { data, expiresAt: requestedAt + CACHE_TTL_MS };
+    }
+    return context.json(data);
   });
 }

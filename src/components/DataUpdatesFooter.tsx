@@ -23,7 +23,9 @@ export function DataUpdatesFooter() {
   const { data } = useQuery<DataStatusResponse>({
     queryKey: ["data-status"],
     queryFn: fetchDataStatus,
+    staleTime: 0,
     retry: false,
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });

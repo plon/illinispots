@@ -74,6 +74,41 @@ describe("GET /api/data-status", () => {
     expect(calls).toBe(DATA_SOURCES.length * 2);
   });
 
+  it("omits authorization when no GitHub token is configured", async () => {
+    const headers: Record<string, string>[] = [];
+    const app = createApp({
+      dataStatus: {
+        githubToken: "",
+        fetchRuns: async (_url, init) => {
+          headers.push(init?.headers as Record<string, string>);
+          return runResponse();
+        },
+      },
+    });
+
+    await app.request("/api/data-status");
+    expect(headers.every((header) => header.Authorization === undefined)).toBe(
+      true,
+    );
+  });
+
+  it("preserves successful sources when another source fails", async () => {
+    const app = createApp({
+      dataStatus: {
+        fetchRuns: async (url) =>
+          url.includes("tableau-daily-events.yml")
+            ? new Response("not found", { status: 404 })
+            : runResponse(),
+      },
+    });
+
+    const response = await app.request("/api/data-status");
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.sources[0].updatedAt).toBeNull();
+    expect(body.sources[1].updatedAt).toBe(UPDATED_AT);
+  });
+
   it("returns 503 on failure and retries the next request", async () => {
     let shouldFail = true;
     let calls = 0;
