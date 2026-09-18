@@ -49,6 +49,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { type FilterCriteria, isRoomAvailable } from "@/utils/filterUtils";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { DataUpdatesFooter } from "@/components/DataUpdatesFooter";
 import {
     parseTimeToMinutes,
     formatDateForDisplay,
@@ -594,13 +595,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
                     <div className="h-px bg-border" />
 
-                    <div className="px-3 py-2 text-xs text-muted-foreground space-y-1">
-                        <p>
-                            <span className="font-medium text-foreground">Data Updates:</span>
-                        </p>
-                        <p>• General campus events: Daily</p>
-                        <p>• Class schedules: Weekly</p>
-                    </div>
+                    <DataUpdatesFooter />
                 </div>
             </PopoverContent>
         </Popover>

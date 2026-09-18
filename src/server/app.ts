@@ -20,6 +20,10 @@ import {
   createRoomImageRoutes,
   type RoomImageRouteDependencies,
 } from "./routes/room-image";
+import {
+  createDataStatusRoutes,
+  type DataStatusRouteDependencies,
+} from "./routes/data-status";
 import { sentryRequestContext, sentryTracing } from "./observability";
 import { getPublicClientConfig } from "./config";
 import { injectClientConfig, loadIndexHtml } from "./html";
@@ -29,6 +33,7 @@ export interface AppDependencies {
   roomSchedule?: RoomScheduleRouteDependencies;
   roomDetails?: RoomDetailsRouteDependencies;
   roomImage?: RoomImageRouteDependencies;
+  dataStatus?: DataStatusRouteDependencies;
   indexHtmlPath?: string;
   rawIndexHtml?: string;
   environment?: Record<string, string | undefined>;
@@ -132,6 +137,10 @@ export function createApp(dependencies: AppDependencies = {}) {
   app.route(
     "/api/room-image",
     createRoomImageRoutes(dependencies.roomImage),
+  );
+  app.route(
+    "/api/data-status",
+    createDataStatusRoutes(dependencies.dataStatus),
   );
 
   app.all("/api/*", (context) =>
