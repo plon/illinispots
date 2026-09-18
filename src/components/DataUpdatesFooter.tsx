@@ -1,25 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import type { DataSourceStatus, DataStatusResponse } from "@/types";
+import { DATA_SOURCES } from "@/lib/data-sources";
 import { formatDataStatusTime } from "@/utils/time";
 
 const DATA_STATUS_CACHE_TIME_MS = 10 * 60_000;
 
-const FALLBACK_SOURCES: DataSourceStatus[] = [
-  {
-    id: "daily-events",
-    label: "General campus events",
-    cadence: "Daily",
-    updatedAt: null,
-    htmlUrl: null,
-  },
-  {
-    id: "class-schedules",
-    label: "Class schedules",
-    cadence: "Weekly",
-    updatedAt: null,
-    htmlUrl: null,
-  },
-];
+const FALLBACK_SOURCES: DataSourceStatus[] = DATA_SOURCES.map((source) => ({
+  id: source.id,
+  label: source.label,
+  cadence: source.cadence,
+  updatedAt: null,
+  htmlUrl: null,
+}));
 
 async function fetchDataStatus(): Promise<DataStatusResponse> {
   const response = await fetch("/api/data-status");

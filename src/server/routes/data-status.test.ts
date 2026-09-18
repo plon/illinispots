@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { createApp } from "../app";
+import { DATA_SOURCES } from "./data-status";
 
 function jsonResponse(body: unknown, status = 200) {
   return Response.json(body, { status });
@@ -39,7 +40,9 @@ describe("GET /api/data-status", () => {
     const response = await app.request("/api/data-status");
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toBe("public, max-age=600");
+    expect(response.headers.get("cache-control")).toBe(
+      "public, max-age=0, s-maxage=600",
+    );
     const body = await response.json();
     expect(body.sources).toEqual([
       {
@@ -57,7 +60,7 @@ describe("GET /api/data-status", () => {
         htmlUrl: "https://github.com/plon/illinispots/actions/runs/2",
       },
     ]);
-    expect(urls).toHaveLength(2);
+    expect(urls).toHaveLength(DATA_SOURCES.length);
     for (const url of urls) {
       expect(url).toContain("status=success");
       expect(url).toContain("per_page=1");
@@ -78,9 +81,13 @@ describe("GET /api/data-status", () => {
     });
 
     await app.request("/api/data-status");
-    await app.request("/api/data-status");
-
-    expect(calls).toBe(2);
+    const afterFirst = calls;
+    expect(afterFirst).toBe(DATA_SOURCES.length);
+    const cachedResponse = await app.request("/api/data-status");
+    expect(calls - afterFirst).toBe(0);
+    expect(cachedResponse.headers.get("cache-control")).toBe(
+      "public, max-age=0, s-maxage=600",
+    );
   });
 
   it("refetches once the cache TTL expires", async () => {
@@ -100,11 +107,12 @@ describe("GET /api/data-status", () => {
 
     await app.request("/api/data-status");
     await app.request("/api/data-status");
-    expect(calls).toBe(2);
+    const afterTwoCached = calls;
+    expect(afterTwoCached).toBe(DATA_SOURCES.length);
 
     now += 10 * 60_000 + 1;
     await app.request("/api/data-status");
-    expect(calls).toBe(4);
+    expect(calls - afterTwoCached).toBe(DATA_SOURCES.length);
   });
 
   it("does not cache a fully degraded response", async () => {
@@ -132,6 +140,9 @@ describe("GET /api/data-status", () => {
     const degradedResponse = await app.request("/api/data-status");
     const degradedBody = await degradedResponse.json();
     expect(degradedBody.sources[0].updatedAt).toBeNull();
+    expect(degradedResponse.headers.get("cache-control")).toBe("no-store");
+    const afterDegraded = calls;
+    expect(afterDegraded).toBe(DATA_SOURCES.length);
 
     fail = false;
     const recoveredResponse = await app.request("/api/data-status");
@@ -139,7 +150,33 @@ describe("GET /api/data-status", () => {
     expect(recoveredBody.sources[0].updatedAt).toBe(
       "2026-09-15T12:05:00Z",
     );
-    expect(calls).toBe(4);
+    expect(calls - afterDegraded).toBe(DATA_SOURCES.length);
+  });
+
+  it("caches successful empty run lists instead of refetching", async () => {
+    let calls = 0;
+    const app = createApp({
+      dataStatus: {
+        fetchRuns: async () => {
+          calls += 1;
+          return jsonResponse({ workflow_runs: [] });
+        },
+      },
+    });
+
+    const first = await app.request("/api/data-status");
+    const firstBody = await first.json();
+    expect(firstBody.sources.every((s: { updatedAt: null }) => s.updatedAt === null)).toBe(
+      true,
+    );
+    expect(first.headers.get("cache-control")).toBe(
+      "public, max-age=0, s-maxage=600",
+    );
+    const afterFirst = calls;
+    expect(afterFirst).toBe(DATA_SOURCES.length);
+
+    await app.request("/api/data-status");
+    expect(calls - afterFirst).toBe(0);
   });
 
   it("sends the GitHub token only when configured", async () => {

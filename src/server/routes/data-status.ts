@@ -1,21 +1,8 @@
 import { Hono } from "hono";
 import { Sentry } from "../observability";
 import type { DataStatusResponse } from "../../types";
-
-export const DATA_SOURCES = [
-  {
-    id: "daily-events",
-    label: "General campus events",
-    workflowFile: "tableau-daily-events.yml",
-    cadence: "Daily",
-  },
-  {
-    id: "class-schedules",
-    label: "Class schedules",
-    workflowFile: "course-explorer-weekly.yml",
-    cadence: "Weekly",
-  },
-] as const;
+export { DATA_SOURCES } from "../../lib/data-sources";
+import { DATA_SOURCES } from "../../lib/data-sources";
 
 const GITHUB_API_VERSION = "2022-11-28";
 const FETCH_TIMEOUT_MS = 10_000;
@@ -77,11 +64,11 @@ export function createDataStatusRoutes(
   return new Hono().get("/", async (context) => {
     const now = nowFn();
     if (cached && now < cached.expiresAt) {
-      context.header("Cache-Control", "public, max-age=600");
+      context.header("Cache-Control", "public, max-age=0, s-maxage=600");
       return context.json(cached.data);
     }
 
-    const sources = await Promise.all(
+    const results = await Promise.all(
       DATA_SOURCES.map(async (source) => {
         try {
           const latest = await fetchLatestSuccess(
@@ -95,6 +82,7 @@ export function createDataStatusRoutes(
             cadence: source.cadence,
             updatedAt: latest.updatedAt,
             htmlUrl: latest.htmlUrl,
+            ok: true as const,
           };
         } catch (error) {
           Sentry.captureException(error, {
@@ -110,20 +98,31 @@ export function createDataStatusRoutes(
             cadence: source.cadence,
             updatedAt: null,
             htmlUrl: null,
+            ok: false as const,
           };
         }
       }),
     );
 
+    const allSucceeded = results.every((result) => result.ok);
+    const sources = results.map((result) => ({
+      id: result.id,
+      label: result.label,
+      cadence: result.cadence,
+      updatedAt: result.updatedAt,
+      htmlUrl: result.htmlUrl,
+    }));
+
     const data: DataStatusResponse = {
       fetchedAt: new Date(now).toISOString(),
       sources,
     };
-    if (sources.some((source) => source.updatedAt !== null)) {
+    if (allSucceeded) {
       cached = { expiresAt: now + CACHE_TTL_MS, data };
+      context.header("Cache-Control", "public, max-age=0, s-maxage=600");
+    } else {
+      context.header("Cache-Control", "no-store");
     }
-
-    context.header("Cache-Control", "public, max-age=600");
     return context.json(data);
   });
 }
