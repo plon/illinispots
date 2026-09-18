@@ -273,6 +273,5 @@ export interface DataSourceStatus {
 }
 
 export interface DataStatusResponse {
-  fetchedAt: string;
   sources: DataSourceStatus[];
 }

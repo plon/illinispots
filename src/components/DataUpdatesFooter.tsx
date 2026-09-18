@@ -3,8 +3,6 @@ import type { DataSourceStatus, DataStatusResponse } from "@/types";
 import { DATA_SOURCES } from "@/lib/data-sources";
 import { formatDataStatusTime } from "@/utils/time";
 
-const DATA_STATUS_CACHE_TIME_MS = 10 * 60_000;
-
 const FALLBACK_SOURCES: DataSourceStatus[] = DATA_SOURCES.map((source) => ({
   id: source.id,
   label: source.label,
@@ -25,9 +23,9 @@ export function DataUpdatesFooter() {
   const { data } = useQuery<DataStatusResponse>({
     queryKey: ["data-status"],
     queryFn: fetchDataStatus,
-    staleTime: DATA_STATUS_CACHE_TIME_MS,
-    gcTime: DATA_STATUS_CACHE_TIME_MS,
-    refetchOnMount: true,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
   const sources = data?.sources ?? FALLBACK_SOURCES;
 
