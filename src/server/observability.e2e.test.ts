@@ -16,22 +16,28 @@ interface CapturedSpan {
   attributes: Record<string, { value: unknown }>;
 }
 
-function spansFrom(envelopes: string[]): CapturedSpan[] {
+function jsonLines<T extends object>(envelopes: string[]): T[] {
   return envelopes.flatMap((envelope) =>
     envelope.split("\n").flatMap((line) => {
       try {
-        const container = JSON.parse(line) as {
-          version?: number;
-          items?: CapturedSpan[];
-        };
-        return container.version === 2 && Array.isArray(container.items)
-          ? container.items
+        const item: unknown = JSON.parse(line);
+        return item && typeof item === "object" && !Array.isArray(item)
+          ? [item as T]
           : [];
       } catch {
         return [];
       }
     }),
   );
+}
+
+function spansFrom(envelopes: string[]): CapturedSpan[] {
+  return jsonLines<{ version?: number; items?: CapturedSpan[] }>(envelopes)
+    .flatMap((container) =>
+      container.version === 2 && Array.isArray(container.items)
+        ? container.items
+        : [],
+    );
 }
 
 async function waitFor(
@@ -200,13 +206,10 @@ describe("server observability end to end", () => {
         );
         expect(errorSpans).toHaveLength(1);
         expect(errorSpans[0].attributes.request_id?.value).toBe("req-error-test");
-        const events = envelopes
-          .flatMap((envelope) => envelope.split("\n"))
-          .map((line) => JSON.parse(line) as CapturedError)
-          .filter(
-            (item) =>
-              item.exception && item.contexts?.trace?.trace_id === errorTraceId,
-          );
+        const events = jsonLines<CapturedError>(envelopes).filter(
+          (item) =>
+            item.exception && item.contexts?.trace?.trace_id === errorTraceId,
+        );
         expect(events).toHaveLength(1);
         expect(events[0].exception?.values[0].value).toBe(
           "Sentry migration test error",
