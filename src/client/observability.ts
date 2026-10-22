@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/react";
 import type { AnyRouter } from "@tanstack/react-router";
+import { SENTRY_DATA_COLLECTION } from "../lib/sentry";
 import { getClientConfig } from "./config";
 export const CLIENT_TRACE_PROPAGATION_TARGETS = [
   /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:[/:?#]|$)/,
@@ -34,7 +35,7 @@ export function initializeClientObservability(router: AnyRouter): void {
     ],
     tracesSampleRate: 1,
     tracePropagationTargets: CLIENT_TRACE_PROPAGATION_TARGETS,
-    sendDefaultPii: false,
+    dataCollection: SENTRY_DATA_COLLECTION,
   });
 }
 

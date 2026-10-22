@@ -1,36 +1,36 @@
 import { describe, expect, it } from "bun:test";
 
-interface CapturedTransaction {
-  type?: string;
-  transaction?: string;
-  tags?: Record<string, unknown>;
-  contexts?: {
-    trace?: {
-      trace_id?: string;
-      parent_span_id?: string;
-      op?: string;
-      origin?: string;
-      data?: Record<string, unknown>;
-    };
-  };
-  spans?: { op?: string }[];
+interface CapturedError {
+  exception?: { values: { value: string }[] };
+  contexts?: { trace?: { trace_id?: string } };
+  tags?: Record<string, string>;
+  environment?: string;
+  user?: { ip_address?: string };
 }
 
-function transactionsFrom(envelopes: string[]): CapturedTransaction[] {
+interface CapturedSpan {
+  trace_id: string;
+  parent_span_id?: string;
+  name: string;
+  is_segment: boolean;
+  attributes: Record<string, { value: unknown }>;
+}
+
+function spansFrom(envelopes: string[]): CapturedSpan[] {
   return envelopes.flatMap((envelope) =>
-    envelope
-      .split("\n")
-      .map((line) => {
-        try {
-          return JSON.parse(line) as CapturedTransaction;
-        } catch {
-          return undefined;
-        }
-      })
-      .filter(
-        (item): item is CapturedTransaction =>
-          item?.type === "transaction" && Boolean(item.contexts?.trace),
-      ),
+    envelope.split("\n").flatMap((line) => {
+      try {
+        const container = JSON.parse(line) as {
+          version?: number;
+          items?: CapturedSpan[];
+        };
+        return container.version === 2 && Array.isArray(container.items)
+          ? container.items
+          : [];
+      } catch {
+        return [];
+      }
+    }),
   );
 }
 
@@ -64,7 +64,7 @@ async function reservePort(): Promise<number> {
 
 describe("server observability end to end", () => {
   it(
-    "emits one focused Hono transaction and filters health checks",
+    "streams one Hono server span and filters health checks",
     async () => {
       const envelopes: string[] = [];
       const collector = Bun.serve({
@@ -83,7 +83,7 @@ describe("server observability end to end", () => {
       const applicationPort = await reservePort();
       const applicationOrigin = `http://127.0.0.1:${applicationPort}`;
       const application = Bun.spawn(
-        [process.execPath, "src/server/index.ts"],
+        [process.execPath, "src/server/fixtures/observability-app.ts"],
         {
           cwd: process.cwd(),
           env: {
@@ -100,6 +100,7 @@ describe("server observability end to end", () => {
 
       const apiTraceId = "4bf92f3577b34da6a3ce929d0e0e4736";
       const apiParentSpanId = "00f067aa0ba902b7";
+      const errorTraceId = "8bf92f3577b34da6a3ce929d0e0e4736";
       const healthTraceId = "7bf92f3577b34da6a3ce929d0e0e4736";
 
       try {
@@ -131,9 +132,8 @@ describe("server observability end to end", () => {
         expect(apiResponse.status).toBe(400);
 
         await waitFor(() =>
-          transactionsFrom(envelopes).some(
-            (transaction) =>
-              transaction.contexts?.trace?.trace_id === apiTraceId,
+          spansFrom(envelopes).some(
+            (span) => span.trace_id === apiTraceId && span.is_segment,
           ),
         );
 
@@ -142,35 +142,90 @@ describe("server observability end to end", () => {
             "sentry-trace": `${healthTraceId}-10f067aa0ba902b7-1`,
           },
         });
-        await new Promise((resolve) => setTimeout(resolve, 100));
 
-        const apiTransactions = transactionsFrom(envelopes).filter(
-          (transaction) =>
-            transaction.contexts?.trace?.trace_id === apiTraceId,
+        const apiSpans = spansFrom(envelopes).filter(
+          (span) => span.trace_id === apiTraceId,
         );
-        expect(apiTransactions).toHaveLength(1);
+        const serverSpans = apiSpans.filter(
+          (span) => span.attributes["sentry.op"]?.value === "http.server",
+        );
+        expect(serverSpans).toHaveLength(1);
 
-        const [transaction] = apiTransactions;
-        expect(transaction.transaction).toBe("GET /api/room-schedule");
-        expect(transaction.contexts?.trace).toMatchObject({
-          op: "http.server",
-          origin: "auto.http.bun.serve",
-          parent_span_id: apiParentSpanId,
-          trace_id: apiTraceId,
-        });
-        expect(transaction.contexts?.trace?.data?.["http.request_id"]).toBe(
+        const [span] = serverSpans;
+        expect(span.name).toBe("GET /api/room-schedule");
+        expect(span.is_segment).toBe(true);
+        expect(span.parent_span_id).toBe(apiParentSpanId);
+        expect(span.attributes["sentry.origin"]?.value).toBe(
+          "auto.http.bun.serve",
+        );
+        expect(span.attributes["http.request_id"]?.value).toBe(
           "req-waterfall-test",
         );
-        expect(transaction.tags?.request_id).toBe("req-waterfall-test");
+        expect(span.attributes.request_id?.value).toBe("req-waterfall-test");
         expect(
-          transaction.spans?.some((span) => span.op === "middleware.hono"),
-        ).toBe(false);
-        expect(
-          transactionsFrom(envelopes).some(
-            (captured) =>
-              captured.contexts?.trace?.trace_id === healthTraceId,
+          apiSpans.some(
+            (item) =>
+              item.attributes["sentry.origin"]?.value === "auto.middleware.hono",
           ),
         ).toBe(false);
+
+        const errorResponse = await fetch(
+          `${applicationOrigin}/api/room-schedule?buildingId=test&roomNumber=1&token=private-query-sentinel`,
+          {
+            headers: {
+              "sentry-trace": `${errorTraceId}-${apiParentSpanId}-1`,
+              "x-request-id": "req-error-test",
+              authorization: "Bearer private-auth-sentinel",
+              cookie: "session=private-cookie-sentinel",
+              "x-forwarded-for": "198.51.100.42",
+            },
+          },
+        );
+        expect(errorResponse.status).toBe(500);
+        await waitFor(() =>
+          envelopes.some(
+            (envelope) =>
+              envelope.includes('"exception"') && envelope.includes(errorTraceId),
+          ),
+        );
+        await waitFor(() =>
+          spansFrom(envelopes).some(
+            (item) => item.trace_id === errorTraceId && item.is_segment,
+          ),
+        );
+        const errorSpans = spansFrom(envelopes).filter(
+          (item) =>
+            item.trace_id === errorTraceId &&
+            item.attributes["sentry.op"]?.value === "http.server",
+        );
+        expect(errorSpans).toHaveLength(1);
+        expect(errorSpans[0].attributes.request_id?.value).toBe("req-error-test");
+        const events = envelopes
+          .flatMap((envelope) => envelope.split("\n"))
+          .map((line) => JSON.parse(line) as CapturedError)
+          .filter(
+            (item) =>
+              item.exception && item.contexts?.trace?.trace_id === errorTraceId,
+          );
+        expect(events).toHaveLength(1);
+        expect(events[0].exception?.values[0].value).toBe(
+          "Sentry migration test error",
+        );
+        expect(events[0].tags?.request_id).toBe("req-error-test");
+        expect(events[0].environment).toBe("test");
+        expect(events[0].user?.ip_address).toBeUndefined();
+        expect(
+          spansFrom(envelopes).some((item) => item.trace_id === healthTraceId),
+        ).toBe(false);
+        const payload = envelopes.join("\n");
+        for (const sensitive of [
+          "private-query-sentinel",
+          "private-auth-sentinel",
+          "private-cookie-sentinel",
+          "198.51.100.42",
+        ]) {
+          expect(payload).not.toContain(sensitive);
+        }
       } finally {
         application.kill();
         await application.exited;
