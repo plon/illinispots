@@ -61,6 +61,7 @@ test.beforeEach(async ({ page }) => {
   });
   await page.route("**/api/room-details?*", (route) => route.fulfill({ json: [] }));
   await page.route("**/api/room-schedule?*", (route) => route.fulfill({ json: [] }));
+  await page.route("**/api/data-status", (route) => route.fulfill({ json: { sources: [] } }));
 });
 
 test("restores a room, time, and availability filters from a shared URL", async ({ page }) => {

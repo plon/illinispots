@@ -131,7 +131,7 @@ for direct API access.
 bun run check
 ```
 
-This runs ESLint, Bun's route and service tests, the Vite production build, and
+This runs Oxlint, Bun's route and service tests, the Vite production build, and
 TypeScript validation.
 
 Run the Chromium navigation tests separately:
