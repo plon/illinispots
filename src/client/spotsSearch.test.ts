@@ -1,5 +1,18 @@
 import { describe, expect, it } from "bun:test";
 import { validateSpotsSearch } from "./spotsSearch";
+import { router } from "./router";
+
+describe("spots search URL serialization", () => {
+  for (const q of ["true", "false", "10", "CIF tomorrow 2pm"]) {
+    it(`round-trips the text query ${JSON.stringify(q)} with a numeric room`, () => {
+      const search = { facility: "cif", room: "00159", q, minDuration: 45 };
+      const url = router.options.stringifySearch(search);
+
+      expect(url).toContain("room=00159");
+      expect(validateSpotsSearch(router.options.parseSearch(url))).toMatchObject(search);
+    });
+  }
+});
 
 describe("validateSpotsSearch", () => {
   it("normalizes supported search parameters", () => {
