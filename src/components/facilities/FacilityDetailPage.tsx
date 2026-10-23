@@ -220,10 +220,14 @@ export const FacilityDetailPage: React.FC<FacilityDetailPageProps> = memo(
       );
     }, [roomsByTab, roomSearchQuery]);
 
+    const isExpandedRoomDisplayed = roomsToDisplay.some(
+      ([roomNumber]) => roomNumber === expandedRoomId,
+    );
+
     useLayoutEffect(() => {
       if (!expandedRoomId || !selectedRoomRef.current) {return;}
       selectedRoomRef.current.scrollIntoView({ block: "nearest" });
-    }, [expandedRoomId]);
+    }, [expandedRoomId, isExpandedRoomDisplayed]);
 
     const selectRoom = (roomId: string | null) => {
       if (roomId === null && expandedRoomId) {

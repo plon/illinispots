@@ -367,6 +367,12 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         );
     }, []);
 
+    useEffect(() => {
+        if (searchTerm.trim() && !naturalLanguageParser) {
+            loadNaturalLanguageParser();
+        }
+    }, [searchTerm, naturalLanguageParser, loadNaturalLanguageParser]);
+
     const applyNaturalSearch = useCallback(() => {
         if (naturalSearch.error || !naturalSearch.dateTime) {return;}
 

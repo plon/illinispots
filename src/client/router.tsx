@@ -1,6 +1,5 @@
 import {
   createRouter,
-  parseSearchWith,
   stringifySearchWith,
 } from "@tanstack/react-router";
 import { routeTree } from "@/client/routeTree.gen";
@@ -18,8 +17,7 @@ export const router = createRouter({
   defaultPreload: "intent",
   defaultPreloadStaleTime: 0,
   scrollRestoration: false,
-  // Preserve plain numeric room IDs instead of emitting quoted JSON strings.
-  parseSearch: parseSearchWith((value) => value),
+  parseSearch: (search) => Object.fromEntries(new URLSearchParams(search)),
   stringifySearch: stringifySearchWith(JSON.stringify),
 });
 
