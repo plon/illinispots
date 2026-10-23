@@ -131,8 +131,20 @@ for direct API access.
 bun run check
 ```
 
-This runs ESLint, Bun's route and service tests, the Vite production build, and
+This runs Oxlint, Bun's route and service tests, the Vite production build, and
 TypeScript validation.
+
+Run the Chromium navigation tests separately:
+
+```bash
+bunx playwright install --with-deps chromium
+bun run test:e2e
+```
+
+Playwright builds and serves the frontend locally. The tests use fixed campus
+time and intercepted API responses, so no database or deployment credentials
+are required. GitHub Actions runs them as the Browser tests check and uploads
+the report and traces when a test fails.
 
 ### Production
 

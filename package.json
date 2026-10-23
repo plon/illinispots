@@ -15,8 +15,9 @@
     "preview": "bun run build && bun run start",
     "lint": "oxlint .",
     "typecheck": "tsc --noEmit",
-    "test": "NODE_ENV=test bun test",
-    "test:watch": "NODE_ENV=test bun test --watch",
+    "test": "NODE_ENV=test bun test ./src",
+    "test:watch": "NODE_ENV=test bun test --watch ./src",
+    "test:e2e": "playwright test",
     "check": "bun run lint && bun run test && bun run build"
   },
   "dependencies": {
@@ -54,6 +55,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@sentry/vite-plugin": "^5.4.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/router-plugin": "^1.168.46",
