@@ -1,138 +1,80 @@
 # illiniSpots
 
-illiniSpots is a web application that helps UIUC students find available study spaces and classrooms across campus. The app shows live building availability on an interactive map and provides detailed room status information.
+Find available classrooms and library study rooms at the University of Illinois Urbana-Champaign.
+
+**[Open illiniSpots](https://illinispots.com)**
+
+Campus room availability is spread across class schedules, university events, building hours, and library reservation systems. illiniSpots brings these sources into one map and schedule view so students can find a place to study.
 
 ## Features
 
-- Interactive map and list: Visualize building availability or browse a searchable list.
-- Real-time and time travel: check now or any date/time.
-- Coverage: Academic classrooms and reservable library study rooms (Grainger, Funk ACES, Main Library).
-- Room details:
-  - **Academic Rooms:** See current/next class or event, availability duration, and view the full daily schedule (classes + events) for the selected date.
-  - **Library Rooms:** View reservation timelines, direct reservation links, and room photos (where available).
-- PWA: install on your phone as an app for quick access.  
-    [Need help? See this guide on installing PWAs.](https://www.installpwa.com/from/illinispots.com)
-- Search and filters: find buildings and libraries fast.
+- Browse campus buildings on an interactive map or search the list.
+- Check availability now or select another date and time.
+- View classroom schedules, current and upcoming classes or events, and how long a room is available.
+- Browse reservable rooms at Grainger, Funk ACES, and Main Library, with reservation links and room photos where available.
+- Install the app on your phone using the [PWA installation guide](https://www.installpwa.com/from/illinispots.com).
 
-## How It Works
+Availability is based on published schedules, building hours, and library reservations. Unofficial use, access restrictions, and last-minute changes may not be reflected. See [availability and data sources](docs/architecture.md#availability-and-data-sources) for details.
 
-- Combines official class schedules with daily university event data to determine whether a room is in use at a specific date/time.
-- Academic rooms: a room is unavailable if any class or daily event overlaps the selected time; otherwise it’s available. Availability ends at the earliest of the next class/event or building close. Very short gaps (< ~30 minutes) are not surfaced as “available” to avoid unusable slivers.
-- Library rooms: uses the UIUC LibCal reservation grid; a room is available if the current slot is free, and the duration lasts until the next booking or closing time.
-- Time travel: daily events are included for past dates and for future dates up to 14 days ahead; for dates further in the future, only class schedules and building hours are used.
-- Timezone: all times are evaluated in campus local time (America/Chicago), handling DST.
+## Tech stack
 
-## Accuracy & Reliability
+React, TypeScript, Vite, TanStack Router and Query, Tailwind CSS, and Mapbox on the frontend; Hono on Bun and Supabase PostgreSQL on the backend; Python for data collection. The app runs on Fly.io, with GitHub Actions for CI, deployment, and scheduled data pipelines.
 
-- Sources: class data from Course Explorer, daily events from the university Tableau feed, building hours from Facilities, and library reservations from LibCal (links below).
-- Freshness: library reservations are read live; daily events are scraped and updated regularly via a cron job; class/building data is refreshed via the data pipeline.
-- Deterministic rules: availability for academic rooms is computed in SQL ([`get_spots` migration](supabase/migrations/20260819000100_optimize_get_spots.sql)), using only official schedules + events and building hours.
-- Known limitations:
-  - Unofficial use (study groups, ad‑hoc meetings) and last‑minute changes may not be reflected.
-  - Departmental access restrictions can make an “available” room unusable.
-  - Special schedules (exams/holidays), maintenance closures, or data source outages can reduce accuracy.
-  - Short “micro‑gaps” are intentionally filtered out (< ~30 minutes) to avoid noise.
-  - Future dates exclude daily events; academic availability for future times uses class schedules + building hours only (events are only available per-day as they are published).
+See [architecture](docs/architecture.md) for code organization and availability rules.
 
-## Data Sources
+## Run locally
 
-- Class data: [Course Explorer](https://courses.illinois.edu/). See the data flow in [`data-pipeline/README.MD`](data-pipeline/README.MD).
-- Daily events: [Tableau Daily Event Summary](https://tableau.admin.uillinois.edu/views/DailyEventSummary/DailyEvents).
-- Building hours: [Facility Scheduling and Resources](https://operations.illinois.edu/facility-scheduling-and-resources/daily-event-summaries/).
-- Library reservations: [UIUC LibCal](https://libcal.library.illinois.edu/allspaces).
+You need Bun 1.4.2 or later, a Supabase project, and a public Mapbox token and style URL.
 
-## Tech Stack
+1. Clone the repository and install dependencies:
 
-- Frontend: React 19, Vite 8, TanStack Router, TanStack Query, TypeScript, Tailwind CSS, shadcn/ui, and Mapbox.
-- Backend: Hono on Bun, Supabase (PostgreSQL), and SQL functions (`database/functions`).
-- Analytics: PostHog for browser usage analytics.
-- Observability: Sentry for the React client, Bun server, API dependencies, and scheduled data pipelines.
+   ```bash
+   git clone https://github.com/plon/illinispots
+   cd illinispots
+   bun install
+   ```
 
-### Application Architecture
+2. Link your Supabase project and apply the schema:
 
-The Vite client and Hono API live in one package and are deployed as one
-same-origin application:
+   ```bash
+   bunx supabase link --project-ref <project-ref>
+   bunx supabase db push
+   ```
 
-```text
-src/client/          React entrypoint, providers, routes, and browser telemetry
-src/server/routes/   HTTP validation and response contracts
-src/server/services/ availability, Supabase, and LibCal domain services
-src/components/      shared React UI
-src/types/           shared API and UI types
-```
+   Migrations create the schema and security policies. To populate academic buildings and schedules, follow the [data pipeline guide](data-pipeline/README.MD).
 
-During development Vite runs on port 5173 and proxies `/api/*` to Hono on port
-3000. In production Hono serves the built Vite assets and the API from the same
-port. The two public data endpoints remain `/api/facilities` and
-`/api/room-schedule`.
+3. Copy the environment template:
 
-## Getting Started
+   ```bash
+   cp .env.example .env.local
+   ```
 
-### Prerequisites
+   Set these values in `.env.local`:
 
-- Bun 1.4+
-- Supabase project (PostgreSQL)
+   ```env
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_PUBLISHABLE_KEY=your_publishable_anon_key
+   VITE_MAPBOX_ACCESS_TOKEN=your_public_mapbox_token
+   VITE_MAPBOX_STYLE_URL=mapbox://styles/your-user/your-style
+   ```
 
-### Setup
+   See [configuration](docs/configuration.md) for optional analytics and observability settings.
 
-1) Install dependencies
+4. Start the app:
 
-```bash
-git clone https://github.com/plon/illinispots
-cd illinispots
-bun install
-```
+   ```bash
+   bun run dev
+   ```
 
-2) Supabase database
+   Open [localhost:5173](http://localhost:5173). Vite proxies API requests to the Hono server on port 3000.
 
-- Create a database (e.g., via Supabase).
-- Link the project with `bunx supabase link --project-ref <project-ref>`.
-- Apply the versioned schema and security policies with `bunx supabase db push`.
-- The files under [`database/`](database) remain readable references for the
-  current tables and functions; [`supabase/migrations`](supabase/migrations) is
-  the deployment source of truth.
-
-3) Environment
-
-Copy `.env.example` to `.env.local` and configure:
-
-```env
-SUPABASE_URL=your_supabase_url
-SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_publishable_key
-VITE_MAPBOX_ACCESS_TOKEN=your_public_mapbox_token
-VITE_MAPBOX_STYLE_URL=mapbox://styles/<user>/<style-id>
-```
-
-PostHog analytics and Sentry observability are optional. To enable them, add
-the relevant variables:
-
-```env
-VITE_PUBLIC_POSTHOG_PROJECT_TOKEN=your_posthog_project_token
-VITE_PUBLIC_POSTHOG_HOST=https://your-posthog-host
-SENTRY_DSN=your_sentry_dsn
-VITE_SENTRY_DSN=your_sentry_dsn
-SENTRY_AUTH_TOKEN=your_sentry_auth_token
-```
-
-`SUPABASE_PUBLISHABLE_KEY` is used by the Hono server for read-only database queries. In local development, Mapbox, PostHog, and Sentry configuration is read from `.env` (`VITE_*`). In production/staging, the server injects configuration at runtime from environment variables / Fly secrets. `SENTRY_AUTH_TOKEN` is only needed to upload source maps during a production build. Writing pipeline scrapers (`data-pipeline/`) use `SUPABASE_SECRET_KEY` (service role).
-
-4) Run locally
-
-```bash
-bun run dev
-```
-
-Open http://localhost:5173. Hono continues to listen on http://localhost:3000
-for direct API access.
-
-### Verification
+## Verify changes
 
 ```bash
 bun run check
 ```
 
-This runs Oxlint, Bun's route and service tests, the Vite production build, and
-TypeScript validation.
+This runs Oxlint, Bun tests, the Vite production build, and TypeScript validation.
 
 Run the Chromium navigation tests separately:
 
@@ -141,53 +83,15 @@ bunx playwright install --with-deps chromium
 bun run test:e2e
 ```
 
-Playwright builds and serves the frontend locally. The tests use fixed campus
-time and intercepted API responses, so no database or deployment credentials
-are required. GitHub Actions runs them as the Browser tests check and uploads
-the report and traces when a test fails.
+The browser tests use fixed campus time and intercepted API responses, so no database or deployment credentials are required. GitHub Actions uploads the report and traces when a browser test fails.
 
-### Production
+## Project documentation
 
-The application runs as a long-lived Bun server in Docker containers on
-[Fly.io Machines](https://fly.io/docs/machines/). Hono serves both the Vite
-production build and `/api/*` from port 3000, keeping the frontend and API on
-the same origin.
-
-Production uses [`fly.toml`](fly.toml), and staging uses
-[`fly.staging.toml`](fly.staging.toml). Both environments use rolling deploys
-and health checks against `/api/health`; production keeps at least two Machines
-running. Pushes to `main` deploy production through GitHub Actions. Pull
-requests deploy to staging when labeled `deploy:staging`.
-
-The Hono API can also run as a Vercel Function using the serverless entrypoint
-at [`api/[...route].ts`](api/%5B...route%5D.ts).
-
-Configure the production and staging environment variables shown above as Fly
-secrets, then deploy with `flyctl`:
-
-```bash
-flyctl deploy --config fly.toml
-flyctl deploy --config fly.staging.toml
-```
-
-To run the production server locally without Docker:
-
-```bash
-bun run build
-bun run start
-```
-
-Or use the same Docker image deployed to Fly:
-
-```bash
-docker build -t illinispots .
-docker run --env-file .env.local -p 3000:3000 illinispots
-```
-
-### Optional: Data Pipeline
-
-For collecting and loading source data, see [`data-pipeline/README.MD`](data-pipeline/README.MD) for Python setup, script order, and outputs (including the daily events job).
+- [Architecture, availability rules, and data sources](docs/architecture.md)
+- [Environment configuration](docs/configuration.md)
+- [Production and staging deployment](docs/deployment.md)
+- [Data collection and loading](data-pipeline/README.MD)
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE).
+[MIT](LICENSE)
