@@ -529,7 +529,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     const handleGoHome = useCallback(() => {
         setSearchTerm("");
         onSelectFacility(null);
-    }, [onSelectFacility]);
+    }, [onSelectFacility, setSearchTerm]);
 
     const [isFavoritesDialogOpen, setIsFavoritesDialogOpen] = useState(false);
 
