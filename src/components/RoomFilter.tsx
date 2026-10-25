@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { usePostHog } from "@posthog/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,21 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
             ? String(minDuration)
             : "",
     );
+    const lastDurationRef = useRef(minDuration);
+
+    useEffect(() => {
+        if (lastDurationRef.current === minDuration) {return;}
+        lastDurationRef.current = minDuration;
+        const isCustom = minDuration !== undefined &&
+            !PRESET_DURATIONS.some((duration) => duration === minDuration);
+        setCustomDuration(isCustom ? String(minDuration) : "");
+        setIsCustomDurationOpen(isCustom);
+    }, [minDuration]);
+
+    const updateMinDuration = (duration: number | undefined) => {
+        lastDurationRef.current = duration;
+        setMinDuration(duration);
+    };
 
     const customDurationNumber = customDuration === "" ? undefined : Number(customDuration);
     const isCustomDurationValid =
@@ -58,7 +73,7 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
         setCustomDuration(value);
 
         if (value === "") {
-            setMinDuration(undefined);
+            updateMinDuration(undefined);
             return;
         }
 
@@ -67,9 +82,9 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
             Number.isInteger(parsedValue) &&
             parsedValue >= MIN_CUSTOM_DURATION
         ) {
-            setMinDuration(parsedValue);
+            updateMinDuration(parsedValue);
         } else {
-            setMinDuration(undefined);
+            updateMinDuration(undefined);
         }
     };
 
@@ -117,7 +132,7 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
         });
         setIsCustomDurationOpen(false);
         setCustomDuration("");
-        setMinDuration(duration);
+        updateMinDuration(duration);
     };
 
     const clearMinimumDuration = () => {
@@ -127,7 +142,7 @@ const RoomFilterPopover: React.FC<RoomFilterPopoverProps> = ({
         });
         setIsCustomDurationOpen(false);
         setCustomDuration("");
-        setMinDuration(undefined);
+        updateMinDuration(undefined);
     };
 
     const clearAllFilters = () => {

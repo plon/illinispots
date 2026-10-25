@@ -1,4 +1,7 @@
-import { createRouter } from "@tanstack/react-router";
+import {
+  createRouter,
+  stringifySearchWith,
+} from "@tanstack/react-router";
 import { routeTree } from "@/client/routeTree.gen";
 
 // TanStack's restoration copies nested scroll offsets onto new history entries,
@@ -14,6 +17,8 @@ export const router = createRouter({
   defaultPreload: "intent",
   defaultPreloadStaleTime: 0,
   scrollRestoration: false,
+  parseSearch: (search) => Object.fromEntries(new URLSearchParams(search)),
+  stringifySearch: stringifySearchWith(JSON.stringify),
 });
 
 declare module "@tanstack/react-router" {
