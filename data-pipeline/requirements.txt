@@ -1,4 +1,4 @@
-curl_cffi==0.16.3
+curl_cffi==0.17.0
 supabase==2.33.0
 python-dotenv==1.2.4
 pandas==3.1.0
