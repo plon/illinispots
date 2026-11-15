@@ -40,25 +40,32 @@ function DaySelector({
   );
 
   return (
-    <div className="flex w-full min-w-0 items-center gap-1 overflow-x-auto py-0.5 no-scrollbar">
-      {days.map((day) => {
-        const isSelected = day.date === selectedDate;
-        return (
-          <button
-            key={day.date}
-            type="button"
-            onClick={() => onDateChange(day.date)}
-            aria-pressed={isSelected}
-            className={`shrink-0 cursor-pointer rounded-md px-2.5 py-1 text-xs transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring ${
-              isSelected
-                ? "bg-secondary font-medium text-foreground"
-                : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
-            }`}
-          >
-            {day.label}
-          </button>
-        );
-      })}
+    <div className="w-full min-w-0 space-y-1">
+      <p className="text-xs font-medium text-muted-foreground">View schedule for</p>
+      <div
+        role="group"
+        aria-label="View schedule for"
+        className="flex w-full min-w-0 items-center gap-1 overflow-x-auto py-0.5 no-scrollbar"
+      >
+        {days.map((day) => {
+          const isSelected = day.date === selectedDate;
+          return (
+            <button
+              key={day.date}
+              type="button"
+              onClick={() => onDateChange(day.date)}
+              aria-pressed={isSelected}
+              className={`shrink-0 cursor-pointer rounded-md px-2.5 py-1 text-xs transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring ${
+                isSelected
+                  ? "bg-primary font-semibold text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+              }`}
+            >
+              {day.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
