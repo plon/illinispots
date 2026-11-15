@@ -38,7 +38,7 @@ You need Bun 1.4.2 or later, a Supabase project, and a public Mapbox token and s
 
    ```bash
    bunx supabase link --project-ref <project-ref>
-   bunx supabase db push
+   bunx supabase db push --remote
    ```
 
    Migrations create the schema and security policies. To populate academic buildings and schedules, follow the [data pipeline guide](data-pipeline/README.MD).
