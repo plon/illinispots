@@ -121,7 +121,7 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
       }
     }
 
-    container.scrollTo({ left: targetScroll, behavior: "smooth" });
+    container.scrollTo({ left: targetScroll, behavior: "instant" });
   }, [isToday, activeDate, timeline.endMinutes, timeline.startMinutes, timeline.totalHours]);
 
   const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
