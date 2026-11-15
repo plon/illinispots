@@ -35,6 +35,7 @@ export default function FacilityMap({
 
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const resizeFrameRef = useRef(0);
   const markersRef = useRef<
     Map<string, { marker: mapboxgl.Marker; data: MarkerData }>
   >(new Map());
@@ -181,17 +182,16 @@ export default function FacilityMap({
   useEffect(() => {
     if (!map.current || !mapContainer.current || !isMapLoaded) {return;}
 
-    let raf = 0;
     const observer = new ResizeObserver(() => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
+      cancelAnimationFrame(resizeFrameRef.current);
+      resizeFrameRef.current = requestAnimationFrame(() => {
         map.current?.resize();
       });
     });
     observer.observe(mapContainer.current);
 
     return () => {
-      cancelAnimationFrame(raf);
+      cancelAnimationFrame(resizeFrameRef.current);
       observer.disconnect();
     };
   }, [isMapLoaded]);
