@@ -6,7 +6,7 @@ import { RoomBadge } from "@/components/RoomBadge";
 import { formatDuration } from "@/utils/format";
 import { formatTimeForDisplay } from "@/utils/time";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import AcademicRoomDetailLoader from "@/components/AcademicRoomDetailLoader";
 import { RoomSchedule } from "@/components/RoomSchedule";
 import { getRoomAvailabilityMessage } from "@/components/facilities/roomUtils";
@@ -208,7 +208,8 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
                       Photo
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent aria-describedby={undefined}>
+                    <DialogTitle className="sr-only">{roomNumber} photo</DialogTitle>
                     <div className="relative w-full aspect-video">
                       {isImageLoading && (
                         <div className="absolute inset-0 w-full h-full bg-muted animate-pulse rounded-md" />
