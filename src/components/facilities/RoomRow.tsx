@@ -271,7 +271,10 @@ export const RoomRow: React.FC<RoomRowProps> = memo(
   }) => {
     const posthog = usePostHog();
     const [isImageLoading, setIsImageLoading] = useState(true);
-    const [hasBeenExpanded, setHasBeenExpanded] = useState(isExpanded);
+    const [hasBeenExpanded, setHasBeenExpanded] = useState(false);
+    if (isExpanded && !hasBeenExpanded) {
+      setHasBeenExpanded(true);
+    }
 
     const academicRoom = room.type === "academic" ? room : null;
     const libraryRoom = room.type === "library" ? room : null;
@@ -287,7 +290,6 @@ export const RoomRow: React.FC<RoomRowProps> = memo(
     const handleRowClick = () => {
       const willExpand = !isExpanded;
       if (willExpand) {
-        setHasBeenExpanded(true);
         posthog.capture("room_schedule_viewed", {
           facility_id: facilityId,
           facility_name: facilityName,
@@ -359,6 +361,7 @@ export const RoomRow: React.FC<RoomRowProps> = memo(
         </button>
 
         <div
+          inert={!isExpanded}
           className={`grid transition-all duration-200 ease-out ${
             isExpanded
               ? "grid-rows-[1fr] opacity-100"
@@ -371,7 +374,7 @@ export const RoomRow: React.FC<RoomRowProps> = memo(
                 {isAcademic ? (
                   <>
                     <AcademicRoomDetailLoader
-                      buildingId={facilityName}
+                      facilityName={facilityName}
                       roomNumber={roomName}
                     />
                     {roomDetails && <RoomDetailsSection details={roomDetails} />}
@@ -438,7 +441,11 @@ export const RoomRow: React.FC<RoomRowProps> = memo(
                         </Dialog>
                       )}
                     </div>
-                    <RoomSchedule slots={libraryRoom.slots} />
+                    <RoomSchedule
+                      facilityName={facilityName}
+                      roomNumber={roomName}
+                      slots={libraryRoom.slots}
+                    />
                   </div>
                 ) : null}
               </div>

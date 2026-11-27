@@ -1,10 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
-import { type Facility, FacilityType, RoomStatus } from "../src/types";
+import { type Facility, FacilityType, type RoomScheduleBlock, RoomStatus } from "../src/types";
 
 const NOW = "2026-10-23T18:00:00.000Z";
 const SEARCH_LABEL = "Search buildings, rooms, dates, and times";
 const DURATION_LABEL = "Custom minimum availability duration in minutes";
 const BUILDING = "Campus Instructional Facility";
+const availableSchedule: RoomScheduleBlock[] = [
+  { start: "07:00:00", end: "23:00:00", status: "available", details: null },
+];
 const facility: Facility = {
   id: "cif",
   name: BUILDING,
@@ -123,6 +126,106 @@ test("scrolls to the linked room when it appears after changing time", async ({ 
   const room = roomButton(page, "159");
   await expect(room).toHaveAttribute("aria-expanded", "true");
   await expect(room).toBeInViewport();
+});
+
+test("loads a room schedule when the URL selects an already rendered row", async ({ page }) => {
+  await page.goto("/?facility=cif");
+  const room = roomButton(page, "100");
+  await expect(room).toHaveAttribute("aria-expanded", "false");
+
+  await page.evaluate(() => {
+    window.history.replaceState(window.history.state, "", "/?facility=cif&room=100");
+  });
+
+  await expect(room).toHaveAttribute("aria-expanded", "true");
+  const schedule = page.getByText("Room not available on this day.", { exact: true });
+  await expect(schedule).toBeVisible();
+  await room.click();
+  await expect(room).toHaveAttribute("aria-expanded", "false");
+  await expect(schedule).toBeAttached();
+  await page.keyboard.press("Tab");
+  await expect(roomButton(page, "101")).toBeFocused();
+
+  await room.click();
+  await expect(schedule).toBeVisible();
+});
+
+test("scrolls the room schedule with the keyboard", async ({ page }) => {
+  await page.route("**/api/room-schedule?*", (route) =>
+    route.fulfill({ json: availableSchedule }),
+  );
+  await page.goto("/?facility=cif&room=100&date=2026-10-24&time=13:00");
+
+  const timeline = page.getByRole("region", {
+    name: `Schedule timeline for room 100 in ${BUILDING}`,
+    exact: true,
+  });
+  await expect(timeline).toHaveAttribute("tabindex", "0");
+  await timeline.focus();
+  await expect(timeline).toBeFocused();
+  const initialScroll = await timeline.evaluate((element) => element.scrollLeft);
+  await timeline.press("ArrowRight");
+  await expect.poll(() => timeline.evaluate((element) => element.scrollLeft)).toBeGreaterThan(initialScroll);
+});
+
+test("distinguishes open schedule landmarks in search results", async ({ page }) => {
+  await page.route("**/api/room-schedule?*", (route) =>
+    route.fulfill({ json: availableSchedule }),
+  );
+  await page.goto("/?q=CIF");
+
+  await page.getByRole("button", {
+    name: `View schedule for room 100 in ${BUILDING}`,
+    exact: true,
+  }).click();
+  await page.getByRole("button", {
+    name: `View schedule for room 101 in ${BUILDING}`,
+    exact: true,
+  }).click();
+  await expect(page.getByRole("region", {
+    name: `Schedule timeline for room 100 in ${BUILDING}`,
+    exact: true,
+  })).toBeVisible();
+  await expect(page.getByRole("region", {
+    name: `Schedule timeline for room 101 in ${BUILDING}`,
+    exact: true,
+  })).toBeVisible();
+});
+
+test("names the room photo dialog in search results", async ({ page }) => {
+  await page.route("**/api/facilities?*type=library*", (route) =>
+    route.fulfill({
+      json: {
+        timestamp: NOW,
+        facilities: {
+          grainger: {
+            ...facility,
+            id: "grainger",
+            name: "Grainger Engineering Library",
+            type: FacilityType.LIBRARY,
+            roomCounts: { available: 1, total: 1 },
+            rooms: {
+              "777": {
+                type: "library",
+                status: RoomStatus.AVAILABLE,
+                url: "",
+                thumbnail: "/icon-32.png",
+                slots: [],
+              },
+            },
+          },
+        },
+      },
+    }),
+  );
+  await page.goto("/?q=777");
+
+  const photo = page.getByRole("button", { name: "Photo", exact: true });
+  await photo.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("dialog", { name: "777 photo" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(photo).toBeFocused();
 });
 
 test("closing a room after a time change lets Back reach the list", async ({ page }) => {

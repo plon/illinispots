@@ -18,6 +18,8 @@ import {
 } from "@/utils/timelineSchedule";
 
 interface TimelineScheduleProps {
+  facilityName: string;
+  roomNumber: string;
   scheduleData: RoomScheduleBlock[];
   selectedDate?: string;
   onDateChange?: (newDate: string) => void;
@@ -64,6 +66,8 @@ function DaySelector({
 }
 
 export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
+  facilityName,
+  roomNumber,
   scheduleData,
   selectedDate,
   onDateChange,
@@ -177,11 +181,14 @@ export const TimelineSchedule: React.FC<TimelineScheduleProps> = ({
       <div className="w-full min-w-0 max-w-full overflow-hidden rounded-md border border-border/50 bg-muted/20">
         <div
           ref={scrollContainerRef}
+          role="region"
+          aria-label={`Schedule timeline for room ${roomNumber} in ${facilityName}`}
+          tabIndex={0}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={stopDragging}
           onMouseLeave={stopDragging}
-          className="w-full min-w-0 max-w-full cursor-grab select-none overflow-x-auto overflow-y-hidden px-3 pb-3 pt-2 active:cursor-grabbing"
+          className="w-full min-w-0 max-w-full cursor-grab select-none overflow-x-auto overflow-y-hidden px-3 pb-3 pt-2 active:cursor-grabbing focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
           style={{
             scrollbarWidth: "thin",
             WebkitOverflowScrolling: "touch",
