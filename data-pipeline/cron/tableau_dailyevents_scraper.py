@@ -78,6 +78,7 @@ def get_events_df():
             customer_contact, event_name, room.
     """
 
+    previous_response_was_empty = False
     for attempt in range(1, TABLEAU_REQUEST_ATTEMPTS + 1):
         try:
             response = requests.get(
@@ -87,28 +88,44 @@ def get_events_df():
             )
             response.raise_for_status()
             csv_data = response.text
-            break
         except requests.exceptions.RequestException as exc:
+            previous_response_was_empty = False
             if attempt == TABLEAU_REQUEST_ATTEMPTS:
                 raise RuntimeError(
                     f"Unable to fetch Tableau daily events after "
                     f"{TABLEAU_REQUEST_ATTEMPTS} attempts"
                 ) from exc
 
-            delay = min(
-                TABLEAU_RETRY_BACKOFF_SECONDS * (2 ** (attempt - 1)),
-                TABLEAU_RETRY_MAX_BACKOFF_SECONDS,
+            retry_reason = f"Tableau request failed: {exc}"
+        else:
+            content_type = response.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+            is_empty_csv = (
+                response.status_code == 200 and content_type == "text/csv" and csv_data == "\r\n"
             )
-            sleep_for = random.uniform(delay / 2, delay)
-            print(
-                f"Tableau request failed (attempt {attempt}/"
-                f"{TABLEAU_REQUEST_ATTEMPTS}): {exc}. "
-                f"Retrying in {sleep_for:.0f} seconds"
-            )
-            time.sleep(sleep_for)
+            if not is_empty_csv:
+                break
+            if previous_response_was_empty:
+                print("Tableau returned two consecutive zero-event CSV responses")
+                return pd.DataFrame(
+                    columns=["start_time", "end_time", "building_name", "occupant", "event_name", "room_number"]
+                )
+            if attempt == TABLEAU_REQUEST_ATTEMPTS:
+                raise RuntimeError("Unable to confirm Tableau's zero-event CSV snapshot")
+            previous_response_was_empty = True
+            retry_reason = "Tableau returned an empty CSV that needs confirmation"
+
+        delay = min(
+            TABLEAU_RETRY_BACKOFF_SECONDS * (2 ** (attempt - 1)),
+            TABLEAU_RETRY_MAX_BACKOFF_SECONDS,
+        )
+        sleep_for = random.uniform(delay / 2, delay)
+        print(
+            f"{retry_reason} (attempt {attempt}/{TABLEAU_REQUEST_ATTEMPTS}). "
+            f"Retrying in {sleep_for:.0f} seconds"
+        )
+        time.sleep(sleep_for)
 
     print("Fetched data from Tableau")
-
     df = pd.read_csv(StringIO(csv_data))
 
     # Fix EndTime column, delete old one
