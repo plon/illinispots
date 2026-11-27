@@ -374,7 +374,7 @@ export const RoomRow: React.FC<RoomRowProps> = memo(
                 {isAcademic ? (
                   <>
                     <AcademicRoomDetailLoader
-                      buildingId={facilityName}
+                      facilityName={facilityName}
                       roomNumber={roomName}
                     />
                     {roomDetails && <RoomDetailsSection details={roomDetails} />}
@@ -441,7 +441,11 @@ export const RoomRow: React.FC<RoomRowProps> = memo(
                         </Dialog>
                       )}
                     </div>
-                    <RoomSchedule slots={libraryRoom.slots} />
+                    <RoomSchedule
+                      facilityName={facilityName}
+                      roomNumber={roomName}
+                      slots={libraryRoom.slots}
+                    />
                   </div>
                 ) : null}
               </div>

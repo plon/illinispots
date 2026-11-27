@@ -5,7 +5,7 @@ import type { RoomScheduleBlock } from "@/types";
 import { useDateTimeContext } from "@/contexts/DateTimeContext";
 
 interface AcademicRoomDetailLoaderProps {
-  buildingId: string;
+  facilityName: string;
   roomNumber: string;
 }
 
@@ -33,7 +33,7 @@ interface AcademicRoomScheduleLoaderProps extends AcademicRoomDetailLoaderProps 
 }
 
 function AcademicRoomScheduleLoader({
-  buildingId,
+  facilityName,
   roomNumber,
   initialDate,
 }: AcademicRoomScheduleLoaderProps) {
@@ -45,8 +45,8 @@ function AcademicRoomScheduleLoader({
     isError,
     error,
   } = useQuery<RoomScheduleBlock[], Error>({
-    queryKey: ["roomSchedule", buildingId, roomNumber, selectedDate],
-    queryFn: () => fetchScheduleForDate(buildingId, roomNumber, selectedDate),
+    queryKey: ["roomSchedule", facilityName, roomNumber, selectedDate],
+    queryFn: () => fetchScheduleForDate(facilityName, roomNumber, selectedDate),
   });
 
   if (isLoading) {
@@ -73,6 +73,8 @@ function AcademicRoomScheduleLoader({
 
   return (
     <TimelineSchedule
+      facilityName={facilityName}
+      roomNumber={roomNumber}
       scheduleData={scheduleData || []}
       selectedDate={selectedDate}
       onDateChange={setSelectedDate}
@@ -82,7 +84,7 @@ function AcademicRoomScheduleLoader({
 }
 
 function AcademicRoomDetailLoader({
-  buildingId,
+  facilityName,
   roomNumber,
 }: AcademicRoomDetailLoaderProps) {
   const { selectedDateTime } = useDateTimeContext();
@@ -90,7 +92,7 @@ function AcademicRoomDetailLoader({
   return (
     <AcademicRoomScheduleLoader
       key={selectedDateTime.date}
-      buildingId={buildingId}
+      facilityName={facilityName}
       roomNumber={roomNumber}
       initialDate={selectedDateTime.date}
     />

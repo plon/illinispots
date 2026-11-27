@@ -204,6 +204,8 @@ export interface TimeBlockProps {
 }
 
 export interface RoomScheduleProps {
+  facilityName: string;
+  roomNumber: string;
   slots: {
     start: string;
     end: string;

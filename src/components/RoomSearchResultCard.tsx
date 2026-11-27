@@ -235,11 +235,17 @@ export const RoomSearchResultCard: React.FC<RoomSearchResultCardProps> = ({
         <div className="pt-2 border-t border-border/60 mt-2 w-full min-w-0 max-w-full overflow-hidden">
           {isAcademic ? (
             <AcademicRoomDetailLoader
-              buildingId={facility.name}
+              facilityName={facility.name}
               roomNumber={roomNumber}
             />
           ) : (
-            libraryRoom && <RoomSchedule slots={libraryRoom.slots} />
+            libraryRoom && (
+              <RoomSchedule
+                facilityName={facility.name}
+                roomNumber={roomNumber}
+                slots={libraryRoom.slots}
+              />
+            )
           )}
         </div>
       )}
