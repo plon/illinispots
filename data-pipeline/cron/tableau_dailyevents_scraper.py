@@ -109,6 +109,13 @@ def get_events_df():
 
     print("Fetched data from Tableau")
 
+    content_type = response.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+    if response.status_code == 200 and content_type == "text/csv" and csv_data == "\r\n":
+        print("Tableau returned a zero-event CSV snapshot")
+        return pd.DataFrame(
+            columns=["start_time", "end_time", "building_name", "occupant", "event_name", "room_number"]
+        )
+
     df = pd.read_csv(StringIO(csv_data))
 
     # Fix EndTime column, delete old one
